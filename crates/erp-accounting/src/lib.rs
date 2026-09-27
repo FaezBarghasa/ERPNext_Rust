@@ -1,17 +1,25 @@
 pub mod assets;
+pub mod benford;
 pub mod coa;
 pub mod decimal_ledger;
+pub mod intercompany;
 pub mod ledger;
+pub mod multibook;
 pub mod receivables;
+pub mod treasury;
 
 pub use assets::straight_line_depreciation;
+pub use benford::BenfordGuard;
 pub use coa::{Account, RootType};
 pub use decimal_ledger::{straight_line_dec, verify_balanced_dec, DecLine};
+pub use intercompany::{EliminationJournalEntry, IntercompanyEliminationEngine, IntercompanyTransaction};
 pub use ledger::{
     AccountingError, GlEntry, JournalEntry, JournalEntryLine, LedgerPostingEngine,
     PeriodClosingLog, StatementGenerator, TrialBalanceRow,
 };
+pub use multibook::{AccountingBook, MultiBookJournalLine, MultiBookPostingEngine, MultiBookTransaction};
 pub use receivables::{ArApEngine, OpenInvoice, PaymentAllocationResult};
+pub use treasury::{BankAccount, TreasuryPoolingEngine, ZbaSweepTransaction};
 
 #[cfg(test)]
 mod tests {

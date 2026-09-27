@@ -1,9 +1,17 @@
+pub mod buying_center;
+pub mod clm;
+pub mod cpq;
 pub mod pipeline;
+pub mod revops;
 pub mod scoring;
 
+pub use buying_center::{BuyingCenterGraph, CorporateHierarchy, InfluenceEdge, Stakeholder, StakeholderRole};
+pub use clm::{ClauseLibrary, ClauseVariant, ContractClause, ContractRedliner};
+pub use cpq::{CpqSolver, OptionConstraint, PriceWaterfall};
 pub use pipeline::{
     CrmError, CrmPipeline, Lead, LeadStatus, Quotation, QuotationItem, QuotationStatus, SalesOrder,
 };
+pub use revops::{PerformanceObligation, RevenueContract, RevOpsEngine, SatisfactionMethod};
 pub use scoring::calculate_lead_score;
 
 #[cfg(test)]

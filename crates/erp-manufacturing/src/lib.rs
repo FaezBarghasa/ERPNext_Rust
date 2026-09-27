@@ -1,8 +1,20 @@
 pub mod bom;
+pub mod capa;
+pub mod ebr;
+pub mod eco;
+pub mod milp_scheduler;
 pub mod mrp;
+pub mod quad_bom;
+pub mod spc;
 
 pub use bom::{Bom, BomEngine, BomItem, BomOperation, ManufacturingError};
+pub use capa::{EightDPhase, EightDReport, IshikawaCategory};
+pub use ebr::{BatchStepRecord, ElectronicBatchRecord, WitnessSignature};
+pub use eco::{DispositionMode, EcoStatus, EngineeringChangeOrder};
+pub use milp_scheduler::{ProductionJob, SequenceOptimizer, WorkCenterSchedule};
 pub use mrp::{MrpEngine, OrderType, PlannedOrder, ScheduledSlot, WorkstationScheduler};
+pub use quad_bom::{BomDivergence, BomLineItem, BomType, QuadBomSynchronizer, StructuredBom};
+pub use spc::{ControlLimits, SpcEngine, SpcRuleViolation, SpcSubgroup};
 
 #[cfg(test)]
 mod tests {
