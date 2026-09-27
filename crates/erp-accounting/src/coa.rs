@@ -1,6 +1,33 @@
-/// Chart of Accounts graph rollup (Stage 4.1.2).
-pub fn child_edge(parent: &str, child: &str) -> String { format!("RELATE tab_account:{}->child_of->tab_account:{};", child, parent) }
-pub fn rollup_query() -> &'static str {
-    "SELECT id, name, math::sum(->child_of->tab_gl_entry.debit) - math::sum(->child_of->tab_gl_entry.credit) AS balance FROM tab_account;"
+use serde::{Deserialize, Serialize};
+
+/// Root account classification according to standard GAAP/IFRS.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+pub enum RootType {
+    /// Economic resources owned (e.g. Cash, Bank, Receivables, Inventory, Fixed Assets).
+    Asset,
+    /// Financial debts or obligations (e.g. Payables, Loans, Taxes).
+    Liability,
+    /// Net worth / Owner's residual interest (e.g. Share Capital, Retained Earnings).
+    Equity,
+    /// Gross revenue generated (e.g. Sales, Service Income, Interest Income).
+    Income,
+    /// Operational and administrative costs (e.g. COGS, Salary, Rent, Depreciation).
+    Expense,
 }
-#[cfg(test)] mod t { use super::*; #[test] fn edge_ok(){ assert!(child_edge("assets","current").contains("child_of")); } }
+
+/// Chart of Accounts node record.
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+pub struct Account {
+    /// Unique account name / path (e.g. "1110 - Bank Account - ACME").
+    pub name: String,
+    /// Standard account number code.
+    pub account_number: Option<String>,
+    /// Parent group account name in tree.
+    pub parent_account: Option<String>,
+    /// Is this account a non-posting group folder?
+    pub is_group: bool,
+    /// Root GAAP classification.
+    pub root_type: RootType,
+    /// Currency code (e.g. "USD", "EUR", "IRR").
+    pub account_currency: String,
+}
