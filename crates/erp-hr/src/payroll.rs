@@ -1,6 +1,6 @@
 use crate::attendance::HrError;
 use chrono::NaiveDate;
-use erp_accounting::{GlEntry, JournalEntry, JournalEntryLine};
+use erp_accounting::{JournalEntry, JournalEntryLine};
 use rust_decimal::Decimal;
 use serde::{Deserialize, Serialize};
 use std::panic::AssertUnwindSafe;

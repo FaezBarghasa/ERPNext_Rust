@@ -138,6 +138,21 @@ impl DeduplicatedStorage {
         Ok(data.clone())
     }
 
+    /// Creates a virtual drive folder.
+    pub fn create_folder(&self, folder: DriveFolder) -> Result<(), StorageError> {
+        let mut folders = self
+            .folders
+            .write()
+            .map_err(|e| StorageError::UploadFailed(e.to_string()))?;
+        folders.insert(folder.id.clone(), folder);
+        Ok(())
+    }
+
+    /// Retrieves a virtual drive folder by ID.
+    pub fn get_folder(&self, folder_id: &str) -> Option<DriveFolder> {
+        self.folders.read().ok()?.get(folder_id).cloned()
+    }
+
     /// Returns the number of distinct physical binary payloads stored in memory.
     #[must_use]
     pub fn physical_payload_count(&self) -> usize {
