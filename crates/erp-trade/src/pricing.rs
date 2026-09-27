@@ -1,10 +1,74 @@
-#[derive(Debug)] pub struct PriceRule { pub min_qty: i64, pub pct_off: f64, pub flat_cents_off: i64 }
-/// Best applicable rule by min_qty; returns unit price in cents.
-pub fn apply_rules(list_cents: i64, qty: i64, rules: &[PriceRule]) -> i64 {
-    let mut best: Option<&PriceRule> = None;
-    for r in rules { if qty >= r.min_qty && best.map(|b| r.min_qty > b.min_qty).unwrap_or(true) { best = Some(r); } }
-    match best { None => list_cents,
-        Some(r) => { let p = (list_cents as f64 * (1.0 - r.pct_off / 100.0)) as i64 - r.flat_cents_off; p.max(0) } }
+use rust_decimal::Decimal;
+use serde::{Deserialize, Serialize};
+
+/// Dynamic Pricing Rule definition with priority-weighted discount matrix (Milestone 2.9).
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+pub struct PricingRule {
+    /// Rule name / code.
+    pub name: String,
+    /// Target customer group (None = all).
+    pub customer_group: Option<String>,
+    /// Target item group (None = all).
+    pub item_group: Option<String>,
+    /// Minimum qualifying quantity.
+    pub min_qty: Decimal,
+    /// Maximum qualifying quantity.
+    pub max_qty: Option<Decimal>,
+    /// Priority weight (higher priority evaluated first).
+    pub priority: u32,
+    /// Percentage discount (e.g. 10.0 for 10%).
+    pub discount_percentage: Decimal,
+    /// Flat rate discount per unit.
+    pub discount_amount: Decimal,
 }
-#[cfg(test)] mod t { use super::*; #[test] fn rule(){ let r = vec![PriceRule{min_qty:10,pct_off:10.0,flat_cents_off:0}];
-    assert_eq!(apply_rules(1000, 10, &r), 900); assert_eq!(apply_rules(1000, 5, &r), 1000); } }
+
+/// Dynamic Pricing Solver Engine.
+pub struct PricingEngine;
+
+impl PricingEngine {
+    /// Resolves the applicable unit price by matching quantity and priority.
+    #[must_use]
+    pub fn resolve_price(
+        base_rate: Decimal,
+        qty: Decimal,
+        customer_group: Option<&str>,
+        item_group: Option<&str>,
+        rules: &[PricingRule],
+    ) -> Decimal {
+        let mut applicable_rules: Vec<&PricingRule> = rules
+            .iter()
+            .filter(|r| {
+                if qty < r.min_qty {
+                    return false;
+                }
+                if let Some(max) = r.max_qty {
+                    if qty > max {
+                        return false;
+                    }
+                }
+                if let Some(cg) = &r.customer_group {
+                    if customer_group != Some(cg.as_str()) {
+                        return false;
+                    }
+                }
+                if let Some(ig) = &r.item_group {
+                    if item_group != Some(ig.as_str()) {
+                        return false;
+                    }
+                }
+                true
+            })
+            .collect();
+
+        // Sort by priority descending
+        applicable_rules.sort_by(|a, b| b.priority.cmp(&a.priority));
+
+        if let Some(best_rule) = applicable_rules.first() {
+            let pct_factor = Decimal::ONE - (best_rule.discount_percentage / Decimal::from(100));
+            let discounted = (base_rate * pct_factor) - best_rule.discount_amount;
+            discounted.max(Decimal::ZERO)
+        } else {
+            base_rate
+        }
+    }
+}
