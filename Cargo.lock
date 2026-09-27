@@ -1638,16 +1638,31 @@ dependencies = [
 name = "erp-crm"
 version = "0.1.0"
 dependencies = [
+ "chrono",
+ "erp-trade",
  "frappe-framework",
  "frappe-meta",
+ "rust_decimal",
+ "rust_decimal_macros",
+ "serde",
+ "serde_json",
+ "thiserror",
 ]
 
 [[package]]
 name = "erp-hr"
 version = "0.1.0"
 dependencies = [
+ "chrono",
+ "erp-accounting",
  "frappe-framework",
  "frappe-meta",
+ "rust_decimal",
+ "rust_decimal_macros",
+ "serde",
+ "serde_json",
+ "thiserror",
+ "tokio",
 ]
 
 [[package]]
@@ -1669,16 +1684,27 @@ dependencies = [
 name = "erp-learning"
 version = "0.1.0"
 dependencies = [
+ "chrono",
  "frappe-framework",
  "frappe-meta",
+ "serde",
+ "serde_json",
+ "thiserror",
 ]
 
 [[package]]
 name = "erp-lending"
 version = "0.1.0"
 dependencies = [
+ "chrono",
+ "erp-accounting",
  "frappe-framework",
  "frappe-meta",
+ "rust_decimal",
+ "rust_decimal_macros",
+ "serde",
+ "serde_json",
+ "thiserror",
 ]
 
 [[package]]
@@ -1700,8 +1726,13 @@ dependencies = [
 name = "erp-support"
 version = "0.1.0"
 dependencies = [
+ "chrono",
  "frappe-framework",
  "frappe-meta",
+ "serde",
+ "serde_json",
+ "thiserror",
+ "tokio",
 ]
 
 [[package]]
