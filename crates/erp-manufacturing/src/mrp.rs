@@ -51,7 +51,8 @@ impl MrpEngine {
         is_manufactured: bool,
         lead_time_days: u32,
     ) -> Option<PlannedOrder> {
-        let net = Self::calculate_net_requirement(gross_demand, current_stock, open_po, safety_stock);
+        let net =
+            Self::calculate_net_requirement(gross_demand, current_stock, open_po, safety_stock);
         if net > Decimal::ZERO {
             Some(PlannedOrder {
                 item_code: item_code.to_string(),

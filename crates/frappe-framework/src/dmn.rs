@@ -83,48 +83,87 @@ impl DecisionTable {
                 }
             }
             HitPolicy::First => Ok(matched_rules.into_iter().next().unwrap_or_default()),
-            HitPolicy::Priority | HitPolicy::CollectCount | HitPolicy::CollectSum | HitPolicy::CollectMin | HitPolicy::CollectMax => {
-                Ok(matched_rules.into_iter().flatten().collect())
-            }
+            HitPolicy::Priority
+            | HitPolicy::CollectCount
+            | HitPolicy::CollectSum
+            | HitPolicy::CollectMin
+            | HitPolicy::CollectMax => Ok(matched_rules.into_iter().flatten().collect()),
         }
     }
 
     fn match_rule(&self, rule: &DecisionRule, inputs: &[serde_json::Value]) -> bool {
         for (idx, cond) in rule.input_conditions.iter().enumerate() {
-            let Some(val) = inputs.get(idx) else { return false };
+            let Some(val) = inputs.get(idx) else {
+                return false;
+            };
             match cond {
                 ConditionOp::Any => continue,
                 ConditionOp::Equals(expected) => {
-                    let s = val.as_str().map(ToString::to_string).unwrap_or_else(|| val.to_string());
-                    if &s != expected { return false; }
+                    let s = val
+                        .as_str()
+                        .map(ToString::to_string)
+                        .unwrap_or_else(|| val.to_string());
+                    if &s != expected {
+                        return false;
+                    }
                 }
                 ConditionOp::NotEquals(expected) => {
-                    let s = val.as_str().map(ToString::to_string).unwrap_or_else(|| val.to_string());
-                    if &s == expected { return false; }
+                    let s = val
+                        .as_str()
+                        .map(ToString::to_string)
+                        .unwrap_or_else(|| val.to_string());
+                    if &s == expected {
+                        return false;
+                    }
                 }
                 ConditionOp::LessThan(limit) => {
-                    let Ok(d) = val.to_string().trim_matches('"').parse::<Decimal>() else { return false };
-                    if d >= *limit { return false; }
+                    let Ok(d) = val.to_string().trim_matches('"').parse::<Decimal>() else {
+                        return false;
+                    };
+                    if d >= *limit {
+                        return false;
+                    }
                 }
                 ConditionOp::LessThanOrEqual(limit) => {
-                    let Ok(d) = val.to_string().trim_matches('"').parse::<Decimal>() else { return false };
-                    if d > *limit { return false; }
+                    let Ok(d) = val.to_string().trim_matches('"').parse::<Decimal>() else {
+                        return false;
+                    };
+                    if d > *limit {
+                        return false;
+                    }
                 }
                 ConditionOp::GreaterThan(limit) => {
-                    let Ok(d) = val.to_string().trim_matches('"').parse::<Decimal>() else { return false };
-                    if d <= *limit { return false; }
+                    let Ok(d) = val.to_string().trim_matches('"').parse::<Decimal>() else {
+                        return false;
+                    };
+                    if d <= *limit {
+                        return false;
+                    }
                 }
                 ConditionOp::GreaterThanOrEqual(limit) => {
-                    let Ok(d) = val.to_string().trim_matches('"').parse::<Decimal>() else { return false };
-                    if d < *limit { return false; }
+                    let Ok(d) = val.to_string().trim_matches('"').parse::<Decimal>() else {
+                        return false;
+                    };
+                    if d < *limit {
+                        return false;
+                    }
                 }
                 ConditionOp::Between(low, high) => {
-                    let Ok(d) = val.to_string().trim_matches('"').parse::<Decimal>() else { return false };
-                    if d < *low || d > *high { return false; }
+                    let Ok(d) = val.to_string().trim_matches('"').parse::<Decimal>() else {
+                        return false;
+                    };
+                    if d < *low || d > *high {
+                        return false;
+                    }
                 }
                 ConditionOp::In(list) => {
-                    let s = val.as_str().map(ToString::to_string).unwrap_or_else(|| val.to_string());
-                    if !list.iter().any(|item| item == &s) { return false; }
+                    let s = val
+                        .as_str()
+                        .map(ToString::to_string)
+                        .unwrap_or_else(|| val.to_string());
+                    if !list.iter().any(|item| item == &s) {
+                        return false;
+                    }
                 }
             }
         }
@@ -135,21 +174,33 @@ impl DecisionTable {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use rust_decimal_macros::dec;
+    use rust_decimal::Decimal;
 
     #[test]
     fn test_dmn_s_feel_evaluation() {
-        let mut table = DecisionTable::new("pricing_discount".into(), "Discount Policy".into(), HitPolicy::Unique);
+        let mut table = DecisionTable::new(
+            "pricing_discount".into(),
+            "Discount Policy".into(),
+            HitPolicy::Unique,
+        );
         table.add_rule(
-            vec![ConditionOp::In(vec!["VIP".into(), "Enterprise".into()]), ConditionOp::GreaterThanOrEqual(dec!(10000))],
-            vec![serde_json::json!(0.25), serde_json::json!("Tier 1 Approved")],
+            vec![
+                ConditionOp::In(vec!["VIP".into(), "Enterprise".into()]),
+                ConditionOp::GreaterThanOrEqual(Decimal::from(10000)),
+            ],
+            vec![
+                serde_json::json!(0.25),
+                serde_json::json!("Tier 1 Approved"),
+            ],
         );
         table.add_rule(
             vec![ConditionOp::Equals("Retail".into()), ConditionOp::Any],
             vec![serde_json::json!(0.05), serde_json::json!("Standard Rate")],
         );
 
-        let res = table.evaluate(&[serde_json::json!("VIP"), serde_json::json!(15000)]).unwrap();
+        let res = table
+            .evaluate(&[serde_json::json!("VIP"), serde_json::json!(15000)])
+            .unwrap();
         assert_eq!(res[0], serde_json::json!(0.25));
         assert_eq!(res[1], serde_json::json!("Tier 1 Approved"));
     }

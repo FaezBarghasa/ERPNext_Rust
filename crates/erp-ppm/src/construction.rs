@@ -17,7 +17,9 @@ pub struct ScheduleOfValuesItem {
 impl ScheduleOfValuesItem {
     #[must_use]
     pub fn total_completed_and_stored(&self) -> Decimal {
-        self.work_completed_previous + self.work_completed_this_period + self.materials_presently_stored
+        self.work_completed_previous
+            + self.work_completed_this_period
+            + self.materials_presently_stored
     }
 
     #[must_use]
@@ -25,7 +27,8 @@ impl ScheduleOfValuesItem {
         if self.scheduled_value.is_zero() {
             Decimal::ZERO
         } else {
-            ((self.total_completed_and_stored() / self.scheduled_value) * Decimal::from(100)).round_dp(2)
+            ((self.total_completed_and_stored() / self.scheduled_value) * Decimal::from(100))
+                .round_dp(2)
         }
     }
 
@@ -101,8 +104,14 @@ impl AiaG702Certificate {
             .sum();
 
         let contract_sum = original_contract + net_co;
-        let total_completed: Decimal = sov_items.iter().map(ScheduleOfValuesItem::total_completed_and_stored).sum();
-        let total_ret: Decimal = sov_items.iter().map(ScheduleOfValuesItem::retainage_amount).sum();
+        let total_completed: Decimal = sov_items
+            .iter()
+            .map(ScheduleOfValuesItem::total_completed_and_stored)
+            .sum();
+        let total_ret: Decimal = sov_items
+            .iter()
+            .map(ScheduleOfValuesItem::retainage_amount)
+            .sum();
         let earned_less_ret = total_completed - total_ret;
         let payment_due = earned_less_ret - previous_certificates_total;
         let balance_to_finish = contract_sum - earned_less_ret;
@@ -128,17 +137,15 @@ mod tests {
 
     #[test]
     fn test_aia_g702_g703_generation() {
-        let sov = vec![
-            ScheduleOfValuesItem {
-                item_no: "01-001".into(),
-                description: "Structural Steel Frame".into(),
-                scheduled_value: dec!(500000),
-                work_completed_previous: dec!(100000),
-                work_completed_this_period: dec!(150000),
-                materials_presently_stored: dec!(50000),
-                retainage_rate: dec!(0.10), // 10%
-            },
-        ];
+        let sov = vec![ScheduleOfValuesItem {
+            item_no: "01-001".into(),
+            description: "Structural Steel Frame".into(),
+            scheduled_value: dec!(500000),
+            work_completed_previous: dec!(100000),
+            work_completed_this_period: dec!(150000),
+            materials_presently_stored: dec!(50000),
+            retainage_rate: dec!(0.10), // 10%
+        }];
 
         let cos = vec![ChangeOrder {
             id: "OCO-01".into(),

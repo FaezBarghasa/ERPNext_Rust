@@ -20,7 +20,9 @@ pub enum StreamingError {
     #[error("Invalid or forged HMAC streaming token")]
     InvalidSignature,
     /// Token expired.
-    #[error("Streaming token has expired (expiry {expiry_timestamp}, current {current_timestamp})")]
+    #[error(
+        "Streaming token has expired (expiry {expiry_timestamp}, current {current_timestamp})"
+    )]
     TokenExpired {
         expiry_timestamp: u64,
         current_timestamp: u64,
@@ -100,8 +102,8 @@ impl HmacStreamingSigner {
 
     /// Generates a signed token string: `hex(hmac(media_id || expiry))`.
     pub fn generate_token(&self, media_id: &str, expiry_timestamp: u64) -> String {
-        let mut mac = HmacSha256::new_from_slice(&self.secret_key)
-            .expect("HMAC can take key of any size");
+        let mut mac =
+            HmacSha256::new_from_slice(&self.secret_key).expect("HMAC can take key of any size");
         let payload = format!("{media_id}:{expiry_timestamp}");
         mac.update(payload.as_bytes());
         let result = mac.finalize();
@@ -186,9 +188,6 @@ impl SvodPlaybackManager {
 
 mod hex {
     pub fn encode(data: impl AsRef<[u8]>) -> String {
-        data.as_ref()
-            .iter()
-            .map(|b| format!("{b:02x}"))
-            .collect()
+        data.as_ref().iter().map(|b| format!("{b:02x}")).collect()
     }
 }

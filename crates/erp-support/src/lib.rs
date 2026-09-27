@@ -48,8 +48,8 @@ mod tests {
         };
 
         // Assign ticket -> Should pick Agent B
-        let assigned_agent = TicketRouter::assign_ticket(&mut ticket, &mut agents)
-            .expect("Assignment failed");
+        let assigned_agent =
+            TicketRouter::assign_ticket(&mut ticket, &mut agents).expect("Assignment failed");
 
         assert_eq!(assigned_agent.agent_id, "agent_b");
         assert_eq!(assigned_agent.active_ticket_count, 2);

@@ -1,8 +1,6 @@
 pub mod lms;
 
-pub use lms::{
-    Certificate, Course, CourseModule, Lesson, LmsError, StudentProgressTracker,
-};
+pub use lms::{Certificate, Course, CourseModule, Lesson, LmsError, StudentProgressTracker};
 
 #[cfg(test)]
 mod tests {
@@ -80,7 +78,10 @@ mod tests {
         let cert_failed_score = tracker.evaluate_and_issue_certificate("STU-42", &course, 70, date);
         assert!(matches!(
             cert_failed_score,
-            Err(LmsError::AssessmentFailed { score: 70, passing_threshold: 80 })
+            Err(LmsError::AssessmentFailed {
+                score: 70,
+                passing_threshold: 80
+            })
         ));
 
         // Assessment score 90% -> Certificate issued successfully

@@ -106,7 +106,8 @@ mod tests {
             "Acme Global",
             &lines,
             "Customer Payment Receipt",
-        ).unwrap();
+        )
+        .unwrap();
 
         assert_eq!(txs.len(), 3);
         assert!(txs.iter().all(MultiBookTransaction::is_balanced));

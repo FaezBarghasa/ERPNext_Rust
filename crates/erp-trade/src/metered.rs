@@ -8,7 +8,10 @@ pub enum RatingModel {
     FlatRatePerUnit(Decimal),
     TieredGraduated(Vec<(Decimal, Decimal)>), // Vec<(MaxThreshold, RatePerUnit)>
     VolumeTiered(Vec<(Decimal, Decimal)>),
-    OverageIncludedAllowance { allowance: Decimal, overage_rate: Decimal },
+    OverageIncludedAllowance {
+        allowance: Decimal,
+        overage_rate: Decimal,
+    },
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
@@ -26,7 +29,10 @@ impl MeteredRatingEngine {
     pub fn calculate_charge(total_units: Decimal, model: &RatingModel) -> Decimal {
         match model {
             RatingModel::FlatRatePerUnit(rate) => (total_units * rate).round_dp(2),
-            RatingModel::OverageIncludedAllowance { allowance, overage_rate } => {
+            RatingModel::OverageIncludedAllowance {
+                allowance,
+                overage_rate,
+            } => {
                 let overage = (total_units - allowance).max(Decimal::ZERO);
                 (overage * overage_rate).round_dp(2)
             }
@@ -74,8 +80,8 @@ mod tests {
     #[test]
     fn test_tiered_graduated_metered_rating() {
         let tiers = RatingModel::TieredGraduated(vec![
-            (dec!(1000), dec!(0.10)), // First 1,000 units @ $0.10 = $100
-            (dec!(5000), dec!(0.08)), // Next 4,000 units @ $0.08 = $320
+            (dec!(1000), dec!(0.10)),  // First 1,000 units @ $0.10 = $100
+            (dec!(5000), dec!(0.08)),  // Next 4,000 units @ $0.08 = $320
             (dec!(10000), dec!(0.05)), // Above 5,000 units @ $0.05
         ]);
 

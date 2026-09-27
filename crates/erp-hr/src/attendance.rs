@@ -10,7 +10,9 @@ pub enum HrError {
     #[error("Biometric ingestion queue channel full")]
     IngestionQueueFull,
     /// Insufficient remaining leave balance.
-    #[error("Insufficient leave balance for {leave_type}: requested {requested}, available {available}")]
+    #[error(
+        "Insufficient leave balance for {leave_type}: requested {requested}, available {available}"
+    )]
     InsufficientLeaveBalance {
         leave_type: String,
         requested: rust_decimal::Decimal,
@@ -110,8 +112,10 @@ impl AttendanceReconciler {
             return AttendanceStatus::HalfDay;
         }
 
-        let is_late = (in_time - shift.start_time).num_minutes() > shift.late_entry_grace_mins as i64;
-        let is_early_exit = (shift.end_time - out_time).num_minutes() > shift.early_exit_grace_mins as i64;
+        let is_late =
+            (in_time - shift.start_time).num_minutes() > shift.late_entry_grace_mins as i64;
+        let is_early_exit =
+            (shift.end_time - out_time).num_minutes() > shift.early_exit_grace_mins as i64;
 
         if is_late && is_early_exit {
             AttendanceStatus::HalfDay

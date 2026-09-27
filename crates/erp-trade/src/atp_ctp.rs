@@ -25,9 +25,13 @@ pub struct AtpCtpEngine;
 
 impl AtpCtpEngine {
     #[must_use]
-    pub fn evaluate_availability(pos: &InventoryPosition, requested_qty: Decimal) -> PromiseAvailability {
+    pub fn evaluate_availability(
+        pos: &InventoryPosition,
+        requested_qty: Decimal,
+    ) -> PromiseAvailability {
         // ATP = Stock On Hand - Hard Allocations + Planned Factory Receipts - Safety Stock
-        let raw_atp = pos.stock_on_hand - pos.hard_allocations + pos.planned_factory_receipts - pos.safety_stock;
+        let raw_atp = pos.stock_on_hand - pos.hard_allocations + pos.planned_factory_receipts
+            - pos.safety_stock;
         let atp = raw_atp.max(Decimal::ZERO);
 
         // CTP = ATP + Uncommitted Work Center Capacity

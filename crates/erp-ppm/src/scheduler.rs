@@ -4,7 +4,7 @@ use serde::{Deserialize, Serialize};
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub enum DependencyType {
-    FinishToStart, // FS
+    FinishToStart,  // FS
     StartToStart,   // SS
     FinishToFinish, // FF
     StartToFinish,  // SF
@@ -85,14 +85,21 @@ impl CpmEngine {
             let mut es = 0;
             for dep in &self.tasks[i].dependencies {
                 if dep.predecessor_id >= n {
-                    return Err(format!("Invalid predecessor {} for task {}", dep.predecessor_id, i));
+                    return Err(format!(
+                        "Invalid predecessor {} for task {}",
+                        dep.predecessor_id, i
+                    ));
                 }
                 let pred = &self.tasks[dep.predecessor_id];
                 let candidate = match dep.dep_type {
                     DependencyType::FinishToStart => pred.early_finish + dep.lag,
                     DependencyType::StartToStart => pred.early_start + dep.lag,
-                    DependencyType::FinishToFinish => pred.early_finish + dep.lag - self.tasks[i].duration,
-                    DependencyType::StartToFinish => pred.early_start + dep.lag - self.tasks[i].duration,
+                    DependencyType::FinishToFinish => {
+                        pred.early_finish + dep.lag - self.tasks[i].duration
+                    }
+                    DependencyType::StartToFinish => {
+                        pred.early_start + dep.lag - self.tasks[i].duration
+                    }
                 };
                 es = es.max(candidate);
             }
@@ -111,9 +118,13 @@ impl CpmEngine {
                         let succ = &self.tasks[j];
                         let candidate = match dep.dep_type {
                             DependencyType::FinishToStart => succ.late_start - dep.lag,
-                            DependencyType::StartToStart => succ.late_start - dep.lag + self.tasks[i].duration,
+                            DependencyType::StartToStart => {
+                                succ.late_start - dep.lag + self.tasks[i].duration
+                            }
                             DependencyType::FinishToFinish => succ.late_finish - dep.lag,
-                            DependencyType::StartToFinish => succ.late_finish - dep.lag + self.tasks[i].duration,
+                            DependencyType::StartToFinish => {
+                                succ.late_finish - dep.lag + self.tasks[i].duration
+                            }
                         };
                         lf = lf.min(candidate);
                     }
@@ -145,7 +156,12 @@ impl CpmEngine {
         }
 
         // 4. Goldratt CCPM Project Buffer (50% of critical path sum or RSEM)
-        let critical_duration: i64 = self.tasks.iter().filter(|t| t.is_critical).map(|t| t.duration).sum();
+        let critical_duration: i64 = self
+            .tasks
+            .iter()
+            .filter(|t| t.is_critical)
+            .map(|t| t.duration)
+            .sum();
         let buffer_size = (critical_duration / 3).max(1);
         self.project_buffer = Some(ProjectBuffer {
             name: "Project Buffer".into(),

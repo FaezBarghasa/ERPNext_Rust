@@ -75,9 +75,12 @@ impl RhaiHookEngine {
         });
 
         // Register explicit throw function
-        engine.register_fn("throw_error", |code: &str, msg: &str| -> Result<(), Box<EvalAltResult>> {
-            Err(format!("{code}:{msg}").into())
-        });
+        engine.register_fn(
+            "throw_error",
+            |code: &str, msg: &str| -> Result<(), Box<EvalAltResult>> {
+                Err(format!("{code}:{msg}").into())
+            },
+        );
 
         Self { engine }
     }
@@ -106,7 +109,8 @@ impl RhaiHookEngine {
         scope.push("doc", doc_dynamic);
         scope.push("event", format!("{event:?}"));
 
-        let result: Result<Dynamic, Box<EvalAltResult>> = self.engine.eval_ast_with_scope(&mut scope, &ast);
+        let result: Result<Dynamic, Box<EvalAltResult>> =
+            self.engine.eval_ast_with_scope(&mut scope, &ast);
 
         match result {
             Ok(_) => {

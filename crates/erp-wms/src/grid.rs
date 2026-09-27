@@ -44,11 +44,20 @@ pub struct WarehouseBin {
 impl WarehouseBin {
     #[must_use]
     pub fn coordinate_code(&self) -> String {
-        format!("{}-{}-{:02}-{:02}-{:02}-{:02}", self.zone, self.aisle, self.bay, self.level, self.bin, 0)
+        format!(
+            "{}-{}-{:02}-{:02}-{:02}-{:02}",
+            self.zone, self.aisle, self.bay, self.level, self.bin, 0
+        )
     }
 
     #[must_use]
-    pub fn can_accommodate(&self, weight: f64, volume: f64, hazmat: &HazmatClass, temp: &ThermalZone) -> bool {
+    pub fn can_accommodate(
+        &self,
+        weight: f64,
+        volume: f64,
+        hazmat: &HazmatClass,
+        temp: &ThermalZone,
+    ) -> bool {
         if &self.thermal_zone != temp {
             return false;
         }
@@ -119,10 +128,28 @@ mod tests {
             allowed_hazmat: vec![HazmatClass::Class3FlammableLiquids],
         };
 
-        assert!(bin.can_accommodate(100.0, 0.2, &HazmatClass::Class3FlammableLiquids, &ThermalZone::Ambient));
-        assert!(!bin.can_accommodate(900.0, 0.2, &HazmatClass::Class3FlammableLiquids, &ThermalZone::Ambient)); // Exceeds weight
-        assert!(!bin.can_accommodate(100.0, 0.2, &HazmatClass::Class5Oxidizers, &ThermalZone::Ambient)); // Hazmat not allowed
+        assert!(bin.can_accommodate(
+            100.0,
+            0.2,
+            &HazmatClass::Class3FlammableLiquids,
+            &ThermalZone::Ambient
+        ));
+        assert!(!bin.can_accommodate(
+            900.0,
+            0.2,
+            &HazmatClass::Class3FlammableLiquids,
+            &ThermalZone::Ambient
+        )); // Exceeds weight
+        assert!(!bin.can_accommodate(
+            100.0,
+            0.2,
+            &HazmatClass::Class5Oxidizers,
+            &ThermalZone::Ambient
+        )); // Hazmat not allowed
 
-        assert!(!HazmatMatrix::are_compatible(&HazmatClass::Class3FlammableLiquids, &HazmatClass::Class5Oxidizers));
+        assert!(!HazmatMatrix::are_compatible(
+            &HazmatClass::Class3FlammableLiquids,
+            &HazmatClass::Class5Oxidizers
+        ));
     }
 }

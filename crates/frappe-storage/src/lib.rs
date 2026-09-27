@@ -106,7 +106,10 @@ pub struct LiveDiff {
 impl LiveDiff {
     #[must_use]
     pub fn to_frame(&self) -> String {
-        format!("{}:{}:{}:{}", self.table, self.id, self.op, self.payload_json)
+        format!(
+            "{}:{}:{}:{}",
+            self.table, self.id, self.op, self.payload_json
+        )
     }
 }
 

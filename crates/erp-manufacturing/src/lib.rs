@@ -146,12 +146,7 @@ mod tests {
     #[test]
     fn test_mrp_net_requirement_and_workstation_scheduling() {
         // MRP calculation: Gross = 20, Stock = 5, Open PO = 3, Safety = 2 -> Net = 14
-        let net = MrpEngine::calculate_net_requirement(
-            dec!(20.0),
-            dec!(5.0),
-            dec!(3.0),
-            dec!(2.0),
-        );
+        let net = MrpEngine::calculate_net_requirement(dec!(20.0), dec!(5.0), dec!(3.0), dec!(2.0));
         assert_eq!(net, dec!(14.0));
 
         // Workstation scheduling with collision forward sliding

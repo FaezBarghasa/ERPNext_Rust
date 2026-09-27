@@ -1,8 +1,6 @@
 pub mod amortization;
 
-pub use amortization::{
-    AmortizationEngine, AmortizationPeriod, LendingError, LoanGlEngine,
-};
+pub use amortization::{AmortizationEngine, AmortizationPeriod, LendingError, LoanGlEngine};
 
 #[cfg(test)]
 mod tests {
@@ -18,13 +16,9 @@ mod tests {
         let periods = 12;
         let start_date = NaiveDate::from_ymd_opt(2026, 1, 1).unwrap();
 
-        let schedule = AmortizationEngine::generate_schedule(
-            principal,
-            annual_rate,
-            periods,
-            start_date,
-        )
-        .expect("Schedule generation failed");
+        let schedule =
+            AmortizationEngine::generate_schedule(principal, annual_rate, periods, start_date)
+                .expect("Schedule generation failed");
 
         assert_eq!(schedule.len(), 12);
 
@@ -52,7 +46,12 @@ mod tests {
         );
 
         assert_eq!(entries.len(), 3);
-        let jv = LoanGlEngine::repayment_to_journal_entry(&entries, date, "Acme Corp", "Month 1 Loan Repayment");
+        let jv = LoanGlEngine::repayment_to_journal_entry(
+            &entries,
+            date,
+            "Acme Corp",
+            "Month 1 Loan Repayment",
+        );
         assert!(jv.validate_balance().is_ok());
     }
 }

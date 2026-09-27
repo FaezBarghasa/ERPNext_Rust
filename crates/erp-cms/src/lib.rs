@@ -4,9 +4,7 @@ pub mod subtitles;
 pub mod transcoder;
 
 pub use print::render_invoice_html;
-pub use security::{
-    parse_byte_range, HmacStreamingSigner, StreamingError, SvodPlaybackManager,
-};
+pub use security::{parse_byte_range, HmacStreamingSigner, StreamingError, SvodPlaybackManager};
 pub use subtitles::{SubtitleSearchEngine, SubtitleSegment};
 pub use transcoder::{HlsPlaylistGenerator, VideoVariant, STANDARD_VARIANTS};
 

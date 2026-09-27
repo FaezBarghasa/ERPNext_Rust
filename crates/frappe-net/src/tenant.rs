@@ -37,7 +37,9 @@ pub enum TenantError {
     #[error("Namespace initialization failed: {0}")]
     NamespaceInitializationFailed(String),
     /// Tenant identifier is invalid.
-    #[error("Invalid tenant identifier: must be alphanumeric (hyphens allowed) and <= 63 characters")]
+    #[error(
+        "Invalid tenant identifier: must be alphanumeric (hyphens allowed) and <= 63 characters"
+    )]
     InvalidTenantIdentifier,
 }
 
@@ -145,7 +147,10 @@ impl ConnectionPoolManager {
 }
 
 /// Resolves tenant identity from request headers or host string.
-pub fn parse_tenant_id(headers: &actix_web::http::header::HeaderMap, host: &str) -> Result<TenantId, TenantError> {
+pub fn parse_tenant_id(
+    headers: &actix_web::http::header::HeaderMap,
+    host: &str,
+) -> Result<TenantId, TenantError> {
     if let Some(tenant_hdr) = headers.get("X-Tenant-Id") {
         if let Ok(tenant_str) = tenant_hdr.to_str() {
             return validate_and_create_tenant_id(tenant_str);
@@ -169,7 +174,10 @@ fn validate_and_create_tenant_id(tenant_str: &str) -> Result<TenantId, TenantErr
     if sanitized.is_empty() || sanitized.len() > 63 {
         return Err(TenantError::InvalidTenantIdentifier);
     }
-    if !sanitized.chars().all(|c| c.is_ascii_alphanumeric() || c == '-') {
+    if !sanitized
+        .chars()
+        .all(|c| c.is_ascii_alphanumeric() || c == '-')
+    {
         return Err(TenantError::InvalidTenantIdentifier);
     }
     Ok(TenantId(sanitized))

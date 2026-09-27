@@ -206,9 +206,31 @@ pub struct DocTypeSchema {
 }
 
 const RESERVED_KEYWORDS: &[&str] = &[
-    "table", "select", "delete", "record", "type", "id", "from", "where", "insert",
-    "update", "remove", "alter", "create", "drop", "define", "begin", "commit",
-    "cancel", "transaction", "return", "let", "if", "else", "then", "end",
+    "table",
+    "select",
+    "delete",
+    "record",
+    "type",
+    "id",
+    "from",
+    "where",
+    "insert",
+    "update",
+    "remove",
+    "alter",
+    "create",
+    "drop",
+    "define",
+    "begin",
+    "commit",
+    "cancel",
+    "transaction",
+    "return",
+    "let",
+    "if",
+    "else",
+    "then",
+    "end",
 ];
 
 impl DocTypeSchema {

@@ -65,16 +65,15 @@ mod tests {
 
     #[test]
     fn test_zba_cash_sweeps_and_interest() {
-        let mut subs = vec![
-            BankAccount {
-                account_id: "SUB-DE-BANK".into(),
-                entity_id: "Sub_Germany".into(),
-                target_balance: dec!(10000), // Reserve target
-                current_balance: dec!(65000), // $55k excess
-            },
-        ];
+        let mut subs = vec![BankAccount {
+            account_id: "SUB-DE-BANK".into(),
+            entity_id: "Sub_Germany".into(),
+            target_balance: dec!(10000),  // Reserve target
+            current_balance: dec!(65000), // $55k excess
+        }];
 
-        let sweeps = TreasuryPoolingEngine::compute_eod_sweeps(&mut subs, "PARENT-TREASURY-01", dec!(0.05));
+        let sweeps =
+            TreasuryPoolingEngine::compute_eod_sweeps(&mut subs, "PARENT-TREASURY-01", dec!(0.05));
         assert_eq!(sweeps.len(), 1);
         assert_eq!(sweeps[0].sweep_amount, dec!(55000));
         assert_eq!(subs[0].current_balance, dec!(10000));

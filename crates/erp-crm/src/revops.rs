@@ -5,7 +5,7 @@ use serde::{Deserialize, Serialize};
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub enum SatisfactionMethod {
-    PointInTime, // Goods receipt / delivery
+    PointInTime,                    // Goods receipt / delivery
     OverTimePercentageOfCompletion, // Timesheet hours / milestone burn
 }
 
@@ -53,7 +53,10 @@ impl RevOpsEngine {
     }
 
     /// Progressively recognizes revenue based on actual milestone completion percentage.
-    pub fn recognize_progress(pob: &mut PerformanceObligation, completion_percent: Decimal) -> Decimal {
+    pub fn recognize_progress(
+        pob: &mut PerformanceObligation,
+        completion_percent: Decimal,
+    ) -> Decimal {
         let target_revenue = (pob.allocated_price * completion_percent).round_dp(2);
         let newly_recognized = target_revenue - pob.recognized_revenue;
         pob.recognized_revenue = target_revenue;

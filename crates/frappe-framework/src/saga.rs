@@ -56,7 +56,9 @@ impl SagaCoordinator {
         transactions: &[SagaTransaction],
     ) -> Result<Vec<serde_json::Value>, String> {
         if self.idempotent_inbox.contains(saga_id) {
-            return Err(format!("Saga '{saga_id}' has already been processed (Idempotency Guard)"));
+            return Err(format!(
+                "Saga '{saga_id}' has already been processed (Idempotency Guard)"
+            ));
         }
 
         let mut executed_indices = Vec::new();

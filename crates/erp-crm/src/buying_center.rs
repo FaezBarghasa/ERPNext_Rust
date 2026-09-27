@@ -36,7 +36,7 @@ pub struct InfluenceEdge {
 pub struct CorporateHierarchy {
     pub entity_id: String,
     pub parent_entity_id: Option<String>,
-    pub global_ultimate_owner_id: String, // GUO
+    pub global_ultimate_owner_id: String,   // GUO
     pub domestic_ultimate_owner_id: String, // DUO
     pub credit_limit: Decimal,
     pub consolidated_pricing_tier: String,

@@ -1,9 +1,9 @@
 //! Bi-temporal state ledger supporting system time (transaction time) and valid time (business time).
 
+use crate::merkle::MerkleHasher;
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use std::collections::BTreeMap;
-use crate::merkle::MerkleHasher;
 
 /// An open or bounded interval of time.
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
@@ -101,7 +101,12 @@ pub struct BiTemporalQuery;
 impl BiTemporalQuery {
     /// Builds a SurrealQL statement fetching records as of a specific system time and valid time.
     #[must_use]
-    pub fn as_of(doctype: &str, doc_id: &str, system_as_of: DateTime<Utc>, valid_as_of: DateTime<Utc>) -> String {
+    pub fn as_of(
+        doctype: &str,
+        doc_id: &str,
+        system_as_of: DateTime<Utc>,
+        valid_as_of: DateTime<Utc>,
+    ) -> String {
         let sys_str = system_as_of.to_rfc3339();
         let val_str = valid_as_of.to_rfc3339();
         format!(

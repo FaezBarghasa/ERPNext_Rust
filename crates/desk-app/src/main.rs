@@ -1,1 +1,3 @@
-fn main() { println!("desk-app: Dioxus Desk stub — grid + forms wired"); }
+fn main() {
+    println!("desk-app: Dioxus Desk stub — grid + forms wired");
+}

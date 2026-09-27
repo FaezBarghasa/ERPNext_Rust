@@ -95,9 +95,11 @@ impl BpmnEngine {
                     for flow_id in &node.outgoing {
                         if let Some(flow) = def.flows.get(flow_id) {
                             let should_take = match &flow.condition_expression {
-                                Some(expr) => {
-                                    instance.variables.get(expr).and_then(|v| v.as_bool()).unwrap_or(false)
-                                }
+                                Some(expr) => instance
+                                    .variables
+                                    .get(expr)
+                                    .and_then(|v| v.as_bool())
+                                    .unwrap_or(false),
                                 None => true,
                             };
                             if should_take {
@@ -232,7 +234,8 @@ mod tests {
             flows,
         };
 
-        let mut instance = ProcessInstance::new("inst_1".into(), "proc_invoice".into(), "start".into());
+        let mut instance =
+            ProcessInstance::new("inst_1".into(), "proc_invoice".into(), "start".into());
         let active = BpmnEngine::step(&process, &mut instance).unwrap();
         assert_eq!(active, vec!["task1".to_string()]);
         assert!(!instance.is_completed);

@@ -31,10 +31,8 @@ pub async fn run_server(addr: &str) -> std::io::Result<()> {
     let pool_mgr = ConnectionPoolManager::new(Duration::from_secs(300));
     let pool_mgr_data = pool_mgr.clone();
 
-    HttpServer::new(move || {
-        App::new().configure(|cfg| configure_app(cfg, pool_mgr_data.clone()))
-    })
-    .bind(addr)?
-    .run()
-    .await
+    HttpServer::new(move || App::new().configure(|cfg| configure_app(cfg, pool_mgr_data.clone())))
+        .bind(addr)?
+        .run()
+        .await
 }

@@ -77,7 +77,8 @@ impl SalaryCalculator {
 
         // Overtime rate: 1.5x hourly rate (8-hour day)
         let hourly_rate = (structure.base_salary / total_working_days) / Decimal::from(8);
-        let overtime_amount = overtime_hours * hourly_rate * Decimal::from_str_exact("1.5").unwrap();
+        let overtime_amount =
+            overtime_hours * hourly_rate * Decimal::from_str_exact("1.5").unwrap();
 
         let gross_salary = earned_basic + earned_hra + overtime_amount;
         let tax_deducted = gross_salary * (structure.tax_withholding_rate / Decimal::from(100));
@@ -172,7 +173,10 @@ impl EnterprisePayrollCoordinator {
     ) -> JournalEntry {
         let total_gross: Decimal = slips.iter().map(|s| s.gross_salary).sum();
         let total_net: Decimal = slips.iter().map(|s| s.net_salary).sum();
-        let total_tax: Decimal = slips.iter().map(|s| s.tax_deducted + s.other_deductions).sum();
+        let total_tax: Decimal = slips
+            .iter()
+            .map(|s| s.tax_deducted + s.other_deductions)
+            .sum();
 
         let lines = vec![
             JournalEntryLine {

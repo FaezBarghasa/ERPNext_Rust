@@ -77,20 +77,13 @@ pub struct BomEngine;
 
 impl BomEngine {
     /// Detects circular dependencies across BOM hierarchies using DFS cycle detection.
-    pub fn detect_cycles(
-        boms_by_item: &HashMap<String, Bom>,
-    ) -> Result<(), ManufacturingError> {
+    pub fn detect_cycles(boms_by_item: &HashMap<String, Bom>) -> Result<(), ManufacturingError> {
         let mut visited = HashSet::new();
         let mut recursion_stack = HashSet::new();
 
         for item_code in boms_by_item.keys() {
             if !visited.contains(item_code) {
-                Self::dfs_cycle_check(
-                    item_code,
-                    boms_by_item,
-                    &mut visited,
-                    &mut recursion_stack,
-                )?;
+                Self::dfs_cycle_check(item_code, boms_by_item, &mut visited, &mut recursion_stack)?;
             }
         }
         Ok(())

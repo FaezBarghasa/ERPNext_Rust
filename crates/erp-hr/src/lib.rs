@@ -67,9 +67,9 @@ mod tests {
     async fn test_salary_calculation_and_concurrent_payroll() {
         let structure = SalaryStructure {
             base_salary: dec!(4000.00),
-            hra_percentage: dec!(20.0),        // 20% of basic
+            hra_percentage: dec!(20.0), // 20% of basic
             standard_deduction: dec!(100.00),
-            tax_withholding_rate: dec!(10.0),  // 10% of gross
+            tax_withholding_rate: dec!(10.0), // 10% of gross
         };
 
         let date = NaiveDate::from_ymd_opt(2026, 9, 30).unwrap();
@@ -95,12 +95,31 @@ mod tests {
 
         // Concurrent payroll batch test across multiple employees
         let employees = vec![
-            ("EMP-001".into(), structure.clone(), dec!(20.0), dec!(20.0), dec!(0.0)),
-            ("EMP-002".into(), structure.clone(), dec!(18.0), dec!(20.0), dec!(5.0)),
-            ("EMP-003".into(), structure.clone(), dec!(20.0), dec!(20.0), dec!(0.0)),
+            (
+                "EMP-001".into(),
+                structure.clone(),
+                dec!(20.0),
+                dec!(20.0),
+                dec!(0.0),
+            ),
+            (
+                "EMP-002".into(),
+                structure.clone(),
+                dec!(18.0),
+                dec!(20.0),
+                dec!(5.0),
+            ),
+            (
+                "EMP-003".into(),
+                structure.clone(),
+                dec!(20.0),
+                dec!(20.0),
+                dec!(0.0),
+            ),
         ];
 
-        let (slips, failed) = EnterprisePayrollCoordinator::process_batch_payroll(employees, date).await;
+        let (slips, failed) =
+            EnterprisePayrollCoordinator::process_batch_payroll(employees, date).await;
         assert_eq!(failed.len(), 0);
         assert_eq!(slips.len(), 3);
 
@@ -112,7 +131,8 @@ mod tests {
             company: "Acme Corp".into(),
         };
 
-        let jv = EnterprisePayrollCoordinator::create_payroll_journal_entry(&slips, &gl_config, date);
+        let jv =
+            EnterprisePayrollCoordinator::create_payroll_journal_entry(&slips, &gl_config, date);
         assert!(jv.validate_balance().is_ok());
     }
 

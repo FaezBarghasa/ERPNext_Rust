@@ -40,7 +40,11 @@ impl AmortizationEngine {
     /// Computes the fixed monthly installment PMT using exact fixed-point decimal math.
     /// $$PMT = P \times \frac{r(1+r)^n}{(1+r)^n - 1}$$
     #[must_use]
-    pub fn calculate_pmt(principal: Decimal, annual_interest_rate: Decimal, total_periods: usize) -> Decimal {
+    pub fn calculate_pmt(
+        principal: Decimal,
+        annual_interest_rate: Decimal,
+        total_periods: usize,
+    ) -> Decimal {
         if total_periods == 0 || principal <= Decimal::ZERO {
             return Decimal::ZERO;
         }

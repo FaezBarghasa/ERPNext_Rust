@@ -43,7 +43,9 @@ impl LrsEngine {
         end_marker: &LinearMarker,
         target_chainage: f64,
     ) -> Option<(f64, f64)> {
-        if target_chainage < start_marker.chainage_meters || target_chainage > end_marker.chainage_meters {
+        if target_chainage < start_marker.chainage_meters
+            || target_chainage > end_marker.chainage_meters
+        {
             return None;
         }
         let total_dist = end_marker.chainage_meters - start_marker.chainage_meters;

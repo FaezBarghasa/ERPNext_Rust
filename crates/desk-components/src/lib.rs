@@ -1,11 +1,19 @@
+pub mod cpq_view;
 pub mod forms;
+pub mod gantt;
 pub mod grid;
 pub mod signals;
+pub mod spc_view;
 pub mod video_hud;
+pub mod wms_view;
 
+pub use cpq_view::{CpqConfiguratorModel, OptionCard};
 pub use forms::{eval_depends_on, DynamicFormModel, FormFieldWidget};
+pub use gantt::{GanttDependencyLink, GanttTaskRow, GanttViewModel};
 pub use grid::visible_slice;
+pub use spc_view::{SpcChartViewModel, SpcPointView};
 pub use video_hud::{ChapterMarker, VideoHudState};
+pub use wms_view::{AmrMarkerViewModel, BinViewModel, Warehouse3DViewModel};
 
 #[cfg(test)]
 mod tests {
@@ -68,9 +76,18 @@ mod tests {
         let model = DynamicFormModel::from_schema(&schema);
         assert_eq!(model.doctype_name, "Customer");
         assert_eq!(model.widgets.len(), 3);
-        assert!(matches!(model.widgets[0], FormFieldWidget::TextInput { .. }));
-        assert!(matches!(model.widgets[1], FormFieldWidget::CurrencyInput { .. }));
-        assert!(matches!(model.widgets[2], FormFieldWidget::LinkDropdown { .. }));
+        assert!(matches!(
+            model.widgets[0],
+            FormFieldWidget::TextInput { .. }
+        ));
+        assert!(matches!(
+            model.widgets[1],
+            FormFieldWidget::CurrencyInput { .. }
+        ));
+        assert!(matches!(
+            model.widgets[2],
+            FormFieldWidget::LinkDropdown { .. }
+        ));
     }
 
     #[test]
@@ -81,8 +98,14 @@ mod tests {
 
         assert!(eval_depends_on("status==Open", &values));
         assert!(!eval_depends_on("status==Closed", &values));
-        assert!(eval_depends_on("status==Open && workflow_state==Pending", &values));
-        assert!(!eval_depends_on("status==Open && workflow_state==Approved", &values));
+        assert!(eval_depends_on(
+            "status==Open && workflow_state==Pending",
+            &values
+        ));
+        assert!(!eval_depends_on(
+            "status==Open && workflow_state==Approved",
+            &values
+        ));
     }
 
     #[test]

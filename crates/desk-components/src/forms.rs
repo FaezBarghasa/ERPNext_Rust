@@ -65,13 +65,15 @@ impl DynamicFormModel {
             }
 
             let widget = match &field.fieldtype {
-                FieldType::Data | FieldType::Text | FieldType::LongText | FieldType::Code | FieldType::Password => {
-                    FormFieldWidget::TextInput {
-                        fieldname: field.fieldname.clone(),
-                        label: field.label.clone(),
-                        reqd: field.reqd,
-                    }
-                }
+                FieldType::Data
+                | FieldType::Text
+                | FieldType::LongText
+                | FieldType::Code
+                | FieldType::Password => FormFieldWidget::TextInput {
+                    fieldname: field.fieldname.clone(),
+                    label: field.label.clone(),
+                    reqd: field.reqd,
+                },
                 FieldType::Int | FieldType::Float | FieldType::Percent | FieldType::Rating => {
                     FormFieldWidget::NumberInput {
                         fieldname: field.fieldname.clone(),
@@ -97,7 +99,10 @@ impl DynamicFormModel {
                     fieldname: field.fieldname.clone(),
                     label: field.label.clone(),
                     target_doctype: target_doctype.clone(),
-                    endpoint: format!("/api/v1/resource/{}", target_doctype.to_lowercase().replace(' ', "_")),
+                    endpoint: format!(
+                        "/api/v1/resource/{}",
+                        target_doctype.to_lowercase().replace(' ', "_")
+                    ),
                     reqd: field.reqd,
                 },
                 FieldType::Select { options } => FormFieldWidget::SelectDropdown {

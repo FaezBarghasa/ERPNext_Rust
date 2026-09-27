@@ -100,10 +100,7 @@ impl DocumentController {
         seq: u64,
     ) -> Result<(), DocumentError> {
         if doc.name.is_empty() {
-            let template = schema
-                .naming_rule
-                .as_deref()
-                .unwrap_or("DOC-.YYYY.-.#####");
+            let template = schema.naming_rule.as_deref().unwrap_or("DOC-.YYYY.-.#####");
             doc.name = NamingSeriesParser::format(template, year, seq);
         }
 
@@ -197,7 +194,9 @@ impl DocumentController {
         script: Option<&str>,
     ) -> Result<(), DocumentError> {
         if doc.docstatus != 1 {
-            return Err(DocumentError::CannotCancelUnsubmittedDocument(doc.docstatus));
+            return Err(DocumentError::CannotCancelUnsubmittedDocument(
+                doc.docstatus,
+            ));
         }
 
         if let Some(s) = script {

@@ -6,7 +6,7 @@ use std::collections::HashMap;
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub enum BomType {
-    EngineeringBom,  // EBOM (Functional/CAD hierarchy)
+    EngineeringBom,   // EBOM (Functional/CAD hierarchy)
     ManufacturingBom, // MBOM (Routing, operations, consumable phantoms)
     ServiceBom,       // SBOM (Field-replaceable units, wear kits)
 }

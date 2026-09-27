@@ -62,9 +62,7 @@ impl TaxEngine {
 
         for row in tax_rows {
             let row_tax = match row.charge_type {
-                TaxType::OnNetTotal => {
-                    base_net_amount * (row.rate / Decimal::from(100))
-                }
+                TaxType::OnNetTotal => base_net_amount * (row.rate / Decimal::from(100)),
                 TaxType::CompoundedOnPrevious => {
                     (base_net_amount + running_tax_total) * (row.rate / Decimal::from(100))
                 }

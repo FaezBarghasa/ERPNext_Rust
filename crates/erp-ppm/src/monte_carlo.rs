@@ -3,9 +3,20 @@ use serde::{Deserialize, Serialize};
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub enum DistributionType {
-    Pert { optimistic: f64, most_likely: f64, pessimistic: f64 },
-    Triangular { min: f64, mode: f64, max: f64 },
-    Normal { mean: f64, std_dev: f64 },
+    Pert {
+        optimistic: f64,
+        most_likely: f64,
+        pessimistic: f64,
+    },
+    Triangular {
+        min: f64,
+        mode: f64,
+        max: f64,
+    },
+    Normal {
+        mean: f64,
+        std_dev: f64,
+    },
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
@@ -56,7 +67,11 @@ impl MonteCarloSimulator {
                             .map_err(|e| format!("Invalid normal params: {e}"))?;
                         dist.sample(&mut rng).max(0.0)
                     }
-                    DistributionType::Pert { optimistic, most_likely, pessimistic } => {
+                    DistributionType::Pert {
+                        optimistic,
+                        most_likely,
+                        pessimistic,
+                    } => {
                         // PERT distribution approximated by Beta(alpha, beta)
                         let mean = (optimistic + 4.0 * most_likely + pessimistic) / 6.0;
                         let alpha = if pessimistic == optimistic {

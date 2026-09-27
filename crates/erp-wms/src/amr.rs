@@ -35,7 +35,7 @@ pub struct AmrTelemetry {
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct HandlingUnit {
-    pub sscc_18: String, // Serial Shipping Container Code (18 digits)
+    pub sscc_18: String,      // Serial Shipping Container Code (18 digits)
     pub package_type: String, // Pallet, Euro-Pallet, Carton, Tote
     pub gross_weight_kg: f64,
     pub current_bin_id: Option<String>,
@@ -71,7 +71,9 @@ impl Vda5050FleetCoordinator {
         let mut best: Option<&'a mut AmrTelemetry> = None;
         for r in robots {
             if r.state == AmrState::Idle && r.battery_charge_percent >= 20.0 {
-                if best.is_none() || r.battery_charge_percent > best.as_ref().unwrap().battery_charge_percent {
+                if best.is_none()
+                    || r.battery_charge_percent > best.as_ref().unwrap().battery_charge_percent
+                {
                     best = Some(r);
                 }
             }
@@ -92,7 +94,7 @@ mod tests {
     fn test_sscc18_check_digit_and_vda5050_dispatch() {
         let base17 = "00614141123456789";
         let check_digit = HandlingUnit::compute_sscc18_check_digit(base17).unwrap();
-        assert_eq!(check_digit, 4);
+        assert_eq!(check_digit, 0);
 
         let mut robots = vec![
             AmrTelemetry {

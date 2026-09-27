@@ -70,15 +70,33 @@ mod tests {
 
         // Natural distribution test (approximate Benford sample)
         let mut natural_amounts = Vec::new();
-        for _ in 0..30 { natural_amounts.push(dec!(125.0)); }
-        for _ in 0..17 { natural_amounts.push(dec!(230.0)); }
-        for _ in 0..12 { natural_amounts.push(dec!(310.0)); }
-        for _ in 0..10 { natural_amounts.push(dec!(450.0)); }
-        for _ in 0..8 { natural_amounts.push(dec!(520.0)); }
-        for _ in 0..7 { natural_amounts.push(dec!(610.0)); }
-        for _ in 0..6 { natural_amounts.push(dec!(790.0)); }
-        for _ in 0..5 { natural_amounts.push(dec!(840.0)); }
-        for _ in 0..5 { natural_amounts.push(dec!(910.0)); }
+        for _ in 0..30 {
+            natural_amounts.push(dec!(125.0));
+        }
+        for _ in 0..17 {
+            natural_amounts.push(dec!(230.0));
+        }
+        for _ in 0..12 {
+            natural_amounts.push(dec!(310.0));
+        }
+        for _ in 0..10 {
+            natural_amounts.push(dec!(450.0));
+        }
+        for _ in 0..8 {
+            natural_amounts.push(dec!(520.0));
+        }
+        for _ in 0..7 {
+            natural_amounts.push(dec!(610.0));
+        }
+        for _ in 0..6 {
+            natural_amounts.push(dec!(790.0));
+        }
+        for _ in 0..5 {
+            natural_amounts.push(dec!(840.0));
+        }
+        for _ in 0..5 {
+            natural_amounts.push(dec!(910.0));
+        }
 
         assert!(!BenfordGuard::is_anomalous(&natural_amounts));
 

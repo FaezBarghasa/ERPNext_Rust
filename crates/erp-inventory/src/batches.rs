@@ -31,10 +31,7 @@ pub struct SerialNo {
 
 impl SerialNo {
     /// Validates serial number location prior to dispatch.
-    pub fn validate_dispatch_from(
-        &self,
-        from_warehouse: &str,
-    ) -> Result<(), InventoryError> {
+    pub fn validate_dispatch_from(&self, from_warehouse: &str) -> Result<(), InventoryError> {
         if self.warehouse != from_warehouse {
             return Err(InventoryError::SerialNotInWarehouse {
                 serial_no: self.serial_no.clone(),

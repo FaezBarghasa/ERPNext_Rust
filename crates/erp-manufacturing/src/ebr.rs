@@ -34,7 +34,12 @@ pub struct ElectronicBatchRecord {
 
 impl ElectronicBatchRecord {
     #[must_use]
-    pub fn new(batch_no: String, product: String, mfg_date: chrono::NaiveDate, exp_date: chrono::NaiveDate) -> Self {
+    pub fn new(
+        batch_no: String,
+        product: String,
+        mfg_date: chrono::NaiveDate,
+        exp_date: chrono::NaiveDate,
+    ) -> Self {
         Self {
             batch_number: batch_no,
             product_code: product,
@@ -55,7 +60,13 @@ impl ElectronicBatchRecord {
         operator_secret: &str,
         second_witness: Option<(&str, &str, &str)>, // (id, name, secret)
     ) {
-        let op_sig = Self::sign_record(operator_id, operator_name, "Performed Step", &params, operator_secret);
+        let op_sig = Self::sign_record(
+            operator_id,
+            operator_name,
+            "Performed Step",
+            &params,
+            operator_secret,
+        );
         let wit_sig = second_witness.map(|(w_id, w_name, w_sec)| {
             Self::sign_record(w_id, w_name, "Verified Dual Witness", &params, w_sec)
         });
@@ -71,7 +82,13 @@ impl ElectronicBatchRecord {
         });
     }
 
-    fn sign_record(user_id: &str, name: &str, meaning: &str, data: &serde_json::Value, secret: &str) -> WitnessSignature {
+    fn sign_record(
+        user_id: &str,
+        name: &str,
+        meaning: &str,
+        data: &serde_json::Value,
+        secret: &str,
+    ) -> WitnessSignature {
         let now = chrono::Utc::now();
         let mut hasher = Sha256::new();
         hasher.update(user_id.as_bytes());
@@ -79,7 +96,11 @@ impl ElectronicBatchRecord {
         hasher.update(data.to_string().as_bytes());
         hasher.update(now.to_rfc3339().as_bytes());
         hasher.update(secret.as_bytes());
-        let hash: String = hasher.finalize().iter().map(|b| format!("{b:02x}")).collect();
+        let hash: String = hasher
+            .finalize()
+            .iter()
+            .map(|b| format!("{b:02x}"))
+            .collect();
 
         WitnessSignature {
             witness_user_id: user_id.to_string(),

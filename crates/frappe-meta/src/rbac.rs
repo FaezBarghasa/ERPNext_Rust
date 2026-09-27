@@ -102,20 +102,25 @@ pub fn check_permission(
     target_permlevel: u8,
 ) -> bool {
     // System Manager bypass
-    if user_roles.iter().any(|r| r == "System Manager" || r == "Administrator") {
+    if user_roles
+        .iter()
+        .any(|r| r == "System Manager" || r == "Administrator")
+    {
         return true;
     }
 
     permission_edges.iter().any(|edge| {
-        user_roles.contains(&edge.role)
-            && edge.permlevel <= target_permlevel
-            && edge.allows(perm)
+        user_roles.contains(&edge.role) && edge.permlevel <= target_permlevel && edge.allows(perm)
     })
 }
 
 /// Generates SurrealDB Row-Level Security (RLS) predicate for a table.
 #[must_use]
-pub fn compile_rls_policy(doctype: &str, roles_with_read: &[String], roles_with_write: &[String]) -> String {
+pub fn compile_rls_policy(
+    doctype: &str,
+    roles_with_read: &[String],
+    roles_with_write: &[String],
+) -> String {
     let read_roles = roles_with_read
         .iter()
         .map(|r| format!("\"{r}\""))

@@ -76,7 +76,10 @@ mod tests {
     #[test]
     fn test_weibull_reliability_and_fmeca() {
         let pump = WeibullParameters::new(2.5, 10000.0, 0.0);
-        assert_eq!(pump.failure_regime(), "Wear-Out Degradation (Preventive Replacement Indicated)");
+        assert_eq!(
+            pump.failure_regime(),
+            "Wear-Out Degradation (Preventive Replacement Indicated)"
+        );
         let r_5000 = pump.reliability(5000.0);
         assert!(r_5000 > 0.80 && r_5000 < 0.90);
 

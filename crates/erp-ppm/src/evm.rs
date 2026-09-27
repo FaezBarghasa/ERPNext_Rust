@@ -5,7 +5,7 @@ use serde::{Deserialize, Serialize};
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct EvmInputs {
-    pub budget_at_completion: Decimal, // BAC
+    pub budget_at_completion: Decimal,     // BAC
     pub planned_percent_complete: Decimal, // % Planned
     pub actual_percent_complete: Decimal,  // % Actual physical complete
     pub actual_cost: Decimal,              // AC
@@ -13,14 +13,14 @@ pub struct EvmInputs {
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct EvmMetrics {
-    pub planned_value: Decimal, // PV = BAC * % Planned
-    pub earned_value: Decimal,  // EV = BAC * % Actual
-    pub actual_cost: Decimal,   // AC
-    pub cost_variance: Decimal, // CV = EV - AC
-    pub schedule_variance: Decimal, // SV = EV - PV
-    pub cost_performance_index: Decimal, // CPI = EV / AC
-    pub schedule_performance_index: Decimal, // SPI = EV / PV
-    pub estimate_at_completion: Decimal, // EAC = AC + (BAC - EV) / (CPI * SPI)
+    pub planned_value: Decimal,                 // PV = BAC * % Planned
+    pub earned_value: Decimal,                  // EV = BAC * % Actual
+    pub actual_cost: Decimal,                   // AC
+    pub cost_variance: Decimal,                 // CV = EV - AC
+    pub schedule_variance: Decimal,             // SV = EV - PV
+    pub cost_performance_index: Decimal,        // CPI = EV / AC
+    pub schedule_performance_index: Decimal,    // SPI = EV / PV
+    pub estimate_at_completion: Decimal,        // EAC = AC + (BAC - EV) / (CPI * SPI)
     pub to_complete_performance_index: Decimal, // TCPI = (BAC - EV) / (BAC - AC)
 }
 

@@ -26,7 +26,11 @@ impl MerkleHasher {
 
     #[must_use]
     pub fn finalize_hex(self) -> String {
-        self.hasher.finalize().iter().map(|b| format!("{b:02x}")).collect()
+        self.hasher
+            .finalize()
+            .iter()
+            .map(|b| format!("{b:02x}"))
+            .collect()
     }
 
     /// Computes root hash of a list of binary leaves.

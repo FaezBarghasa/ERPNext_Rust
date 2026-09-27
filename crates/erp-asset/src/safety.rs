@@ -36,7 +36,12 @@ pub struct PermitToWork {
 
 impl PermitToWork {
     #[must_use]
-    pub fn new(permit_id: String, asset_id: String, work_order_id: String, work_type: String) -> Self {
+    pub fn new(
+        permit_id: String,
+        asset_id: String,
+        work_order_id: String,
+        work_type: String,
+    ) -> Self {
         Self {
             permit_id,
             asset_id,
@@ -56,16 +61,23 @@ impl PermitToWork {
     /// Validates all cryptographic and physical isolation prerequisites before authorizing work commencement.
     pub fn authorize(&mut self, marshal_id: &str, secret_key: &str) -> Result<String, String> {
         if self.loto_tags.is_empty() {
-            return Err("Cannot authorize PTW: zero LOTO physical isolation points attached".into());
+            return Err(
+                "Cannot authorize PTW: zero LOTO physical isolation points attached".into(),
+            );
         }
 
         let all_locked = self.loto_tags.iter().all(|t| t.is_locked);
         if !all_locked {
-            return Err("Cannot authorize PTW: one or more LOTO isolation points are UNLOCKED".into());
+            return Err(
+                "Cannot authorize PTW: one or more LOTO isolation points are UNLOCKED".into(),
+            );
         }
 
         if self.work_type.contains("Confined") && !self.gas_test_passed {
-            return Err("Cannot authorize PTW: Confined space requires atmospheric gas sniff test pass".into());
+            return Err(
+                "Cannot authorize PTW: Confined space requires atmospheric gas sniff test pass"
+                    .into(),
+            );
         }
 
         // Generate tamper-evident cryptographic marshal signature
@@ -74,7 +86,11 @@ impl PermitToWork {
         hasher.update(self.work_order_id.as_bytes());
         hasher.update(marshal_id.as_bytes());
         hasher.update(secret_key.as_bytes());
-        let sig: String = hasher.finalize().iter().map(|b| format!("{b:02x}")).collect();
+        let sig: String = hasher
+            .finalize()
+            .iter()
+            .map(|b| format!("{b:02x}"))
+            .collect();
 
         self.safety_marshal_signature = Some(sig.clone());
         self.is_active = true;

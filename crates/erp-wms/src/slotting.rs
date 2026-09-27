@@ -1,11 +1,11 @@
 //! Algorithmic Putaway Scoring & 3D Dynamic Slotting Optimizer.
 
-use serde::{Deserialize, Serialize};
 use crate::grid::{HazmatClass, ThermalZone, WarehouseBin};
+use serde::{Deserialize, Serialize};
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub enum AbcVelocity {
-    ClassAHighVelocity,  // Top 20% SKUs (80% of picks) -> Golden zone (0.8m - 1.4m height)
+    ClassAHighVelocity, // Top 20% SKUs (80% of picks) -> Golden zone (0.8m - 1.4m height)
     ClassBMediumVelocity,
     ClassCLowVelocity,
 }
@@ -53,7 +53,10 @@ impl SlottingEngine {
     }
 
     /// Selects optimal candidate bin from a list.
-    pub fn select_best_bin<'a>(item: &PutawayItem, bins: &'a [WarehouseBin]) -> Option<(&'a WarehouseBin, f64)> {
+    pub fn select_best_bin<'a>(
+        item: &PutawayItem,
+        bins: &'a [WarehouseBin],
+    ) -> Option<(&'a WarehouseBin, f64)> {
         let mut best: Option<(&'a WarehouseBin, f64)> = None;
         for bin in bins {
             if let Some(score) = Self::score_bin(item, bin) {

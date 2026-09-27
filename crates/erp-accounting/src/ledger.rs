@@ -9,7 +9,9 @@ use thiserror::Error;
 #[derive(Debug, Error, PartialEq, Eq)]
 pub enum AccountingError {
     /// Transaction debits and credits do not balance to zero.
-    #[error("Unbalanced transaction: Total Debit ({total_debit}) != Total Credit ({total_credit})")]
+    #[error(
+        "Unbalanced transaction: Total Debit ({total_debit}) != Total Credit ({total_credit})"
+    )]
     UnbalancedTransaction {
         total_debit: Decimal,
         total_credit: Decimal,
@@ -21,7 +23,9 @@ pub enum AccountingError {
     #[error("Account not found: {0}")]
     AccountNotFound(String),
     /// Customer credit limit exceeded.
-    #[error("Credit limit exceeded: Outstanding ({current}) + New ({new_amount}) > Limit ({limit})")]
+    #[error(
+        "Credit limit exceeded: Outstanding ({current}) + New ({new_amount}) > Limit ({limit})"
+    )]
     CreditLimitExceeded {
         current: Decimal,
         new_amount: Decimal,

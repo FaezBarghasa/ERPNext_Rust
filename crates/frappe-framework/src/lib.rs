@@ -4,7 +4,9 @@ pub mod lifecycle;
 pub mod saga;
 pub mod scripting;
 
-pub use bpmn::{ActivityType, BpmnEngine, BpmnProcessDefinition, FlowNode, ProcessInstance, SequenceFlow};
+pub use bpmn::{
+    ActivityType, BpmnEngine, BpmnProcessDefinition, FlowNode, ProcessInstance, SequenceFlow,
+};
 pub use dmn::{ConditionOp, DecisionRule, DecisionTable, HitPolicy};
 pub use lifecycle::{Document, DocumentController, DocumentError};
 pub use saga::{SagaAction, SagaCoordinator, SagaTransaction};
@@ -71,11 +73,7 @@ mod tests {
         let infinite_loop_script = "let i = 0; while true { i += 1; }";
         let mut doc = serde_json::json!({ "value": 10 });
 
-        let res = engine.dispatch_hook(
-            LifecycleEvent::Validate,
-            &mut doc,
-            infinite_loop_script,
-        );
+        let res = engine.dispatch_hook(LifecycleEvent::Validate, &mut doc, infinite_loop_script);
 
         assert_eq!(res, Err(ScriptError::OperationLimitExceeded));
     }
@@ -115,10 +113,7 @@ mod tests {
             serde_json::json!({ "grand_total": 600.00 }),
             None,
         );
-        assert_eq!(
-            update_res,
-            Err(DocumentError::CannotEditSubmittedDocument)
-        );
+        assert_eq!(update_res, Err(DocumentError::CannotEditSubmittedDocument));
 
         // 4. Cancel -> Cancelled
         controller

@@ -38,10 +38,7 @@ impl HlsPlaylistGenerator {
     /// Generates valid master.m3u8 playlist indexing all variants.
     #[must_use]
     pub fn generate_master_playlist(variants: &[VideoVariant]) -> String {
-        let mut lines = vec![
-            "#EXTM3U".to_string(),
-            "#EXT-X-VERSION:3".to_string(),
-        ];
+        let mut lines = vec!["#EXTM3U".to_string(), "#EXT-X-VERSION:3".to_string()];
 
         for v in variants {
             lines.push(format!(
@@ -56,7 +53,11 @@ impl HlsPlaylistGenerator {
 
     /// Generates an individual variant segment index playlist.
     #[must_use]
-    pub fn generate_variant_playlist(variant_name: &str, segment_count: usize, segment_duration_secs: u32) -> String {
+    pub fn generate_variant_playlist(
+        variant_name: &str,
+        segment_count: usize,
+        segment_duration_secs: u32,
+    ) -> String {
         let mut lines = vec![
             "#EXTM3U".to_string(),
             "#EXT-X-VERSION:3".to_string(),

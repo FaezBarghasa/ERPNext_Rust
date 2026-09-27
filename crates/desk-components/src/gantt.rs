@@ -61,7 +61,11 @@ impl GanttViewModel {
             let y = idx as f64 * row_height;
             let x = task.start_day as f64 * day_width;
             let width = (task.duration_days as f64 * day_width).max(2.0);
-            let color = if task.is_critical { "#ef4444" } else { "#3b82f6" };
+            let color = if task.is_critical {
+                "#ef4444"
+            } else {
+                "#3b82f6"
+            };
 
             svg.push_str(&format!(
                 "  <rect x=\"{x}\" y=\"{y}\" width=\"{width}\" height=\"{}\" fill=\"{color}\" rx=\"4\" />\n",

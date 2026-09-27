@@ -44,8 +44,15 @@ impl SpcEngine {
         };
 
         let min = measurements.iter().copied().fold(f64::INFINITY, f64::min);
-        let max = measurements.iter().copied().fold(f64::NEG_INFINITY, f64::max);
-        let range = if measurements.is_empty() { 0.0 } else { max - min };
+        let max = measurements
+            .iter()
+            .copied()
+            .fold(f64::NEG_INFINITY, f64::max);
+        let range = if measurements.is_empty() {
+            0.0
+        } else {
+            max - min
+        };
 
         let variance = if measurements.len() > 1 {
             measurements.iter().map(|x| (x - mean).powi(2)).sum::<f64>() / (n - 1.0)
@@ -65,10 +72,17 @@ impl SpcEngine {
 
     pub fn compute_limits(subgroups: &[SpcSubgroup]) -> ControlLimits {
         if subgroups.is_empty() {
-            return ControlLimits { grand_mean: 0.0, ucl: 0.0, lcl: 0.0, sigma: 0.0 };
+            return ControlLimits {
+                grand_mean: 0.0,
+                ucl: 0.0,
+                lcl: 0.0,
+                sigma: 0.0,
+            };
         }
-        let grand_mean: f64 = subgroups.iter().map(|s| s.mean).sum::<f64>() / subgroups.len() as f64;
-        let pooled_std: f64 = subgroups.iter().map(|s| s.std_dev).sum::<f64>() / subgroups.len() as f64;
+        let grand_mean: f64 =
+            subgroups.iter().map(|s| s.mean).sum::<f64>() / subgroups.len() as f64;
+        let pooled_std: f64 =
+            subgroups.iter().map(|s| s.std_dev).sum::<f64>() / subgroups.len() as f64;
         let sigma = pooled_std;
 
         ControlLimits {

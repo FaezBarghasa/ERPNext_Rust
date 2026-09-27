@@ -30,8 +30,14 @@ impl ContractRedliner {
         let std_set: std::collections::HashSet<&str> = std_words.iter().copied().collect();
         let in_set: std::collections::HashSet<&str> = in_words.iter().copied().collect();
 
-        let added: Vec<String> = in_set.difference(&std_set).map(ToString::to_string).collect();
-        let removed: Vec<String> = std_set.difference(&in_set).map(ToString::to_string).collect();
+        let added: Vec<String> = in_set
+            .difference(&std_set)
+            .map(ToString::to_string)
+            .collect();
+        let removed: Vec<String> = std_set
+            .difference(&in_set)
+            .map(ToString::to_string)
+            .collect();
 
         (added, removed)
     }
@@ -86,7 +92,9 @@ mod tests {
             template_text: "Vendor shall indemnify Customer against third-party IP claims.".into(),
         });
 
-        let clause = lib.get_clause("Indemnification", ClauseVariant::Standard).unwrap();
+        let clause = lib
+            .get_clause("Indemnification", ClauseVariant::Standard)
+            .unwrap();
         assert_eq!(clause.clause_id, "INDEM-STD");
 
         let (added, removed) = ContractRedliner::diff_tokens(

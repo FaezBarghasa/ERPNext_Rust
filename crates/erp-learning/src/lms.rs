@@ -10,11 +10,10 @@ pub enum LmsError {
     #[error("Course not found: {0}")]
     CourseNotFound(String),
     /// Assessment failed.
-    #[error("Assessment score {score}% is below required passing threshold of {passing_threshold}%")]
-    AssessmentFailed {
-        score: u32,
-        passing_threshold: u32,
-    },
+    #[error(
+        "Assessment score {score}% is below required passing threshold of {passing_threshold}%"
+    )]
+    AssessmentFailed { score: u32, passing_threshold: u32 },
 }
 
 /// Educational lesson content node.
@@ -124,7 +123,12 @@ impl StudentProgressTracker {
         }
 
         Ok(Certificate {
-            certificate_no: format!("CERT-{}-{}-{}", course.id, student_id, issue_date.format("%Y%m%d")),
+            certificate_no: format!(
+                "CERT-{}-{}-{}",
+                course.id,
+                student_id,
+                issue_date.format("%Y%m%d")
+            ),
             student_id: student_id.to_string(),
             course_id: course.id.clone(),
             issue_date,

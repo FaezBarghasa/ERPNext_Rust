@@ -123,10 +123,10 @@ mod tests {
 
         let waterfall = solver.calculate_waterfall(
             dec!(100000),
-            dec!(0.10), // 10% volume discount -> Base 90,000
-            dec!(0.05), // 5% tier discount -> Net 85,500
-            dec!(5000), // Landed 90,500
-            dec!(0.02), // Early pay 2% -> Pocket 88,690
+            dec!(0.10),  // 10% volume discount -> Base 90,000
+            dec!(0.05),  // 5% tier discount -> Net 85,500
+            dec!(5000),  // Landed 90,500
+            dec!(0.02),  // Early pay 2% -> Pocket 88,690
             dec!(70000), // COG -> Margin ~21.07% < 25%
         );
 

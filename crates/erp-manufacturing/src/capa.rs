@@ -42,12 +42,30 @@ impl EightDReport {
             current_phase: EightDPhase::D1EstablishTeam,
             root_cause_5whys: Vec::new(),
             ishikawa_tree: vec![
-                IshikawaCategory { name: "Man".into(), causes: vec![] },
-                IshikawaCategory { name: "Machine".into(), causes: vec![] },
-                IshikawaCategory { name: "Method".into(), causes: vec![] },
-                IshikawaCategory { name: "Material".into(), causes: vec![] },
-                IshikawaCategory { name: "Measurement".into(), causes: vec![] },
-                IshikawaCategory { name: "Environment".into(), causes: vec![] },
+                IshikawaCategory {
+                    name: "Man".into(),
+                    causes: vec![],
+                },
+                IshikawaCategory {
+                    name: "Machine".into(),
+                    causes: vec![],
+                },
+                IshikawaCategory {
+                    name: "Method".into(),
+                    causes: vec![],
+                },
+                IshikawaCategory {
+                    name: "Material".into(),
+                    causes: vec![],
+                },
+                IshikawaCategory {
+                    name: "Measurement".into(),
+                    causes: vec![],
+                },
+                IshikawaCategory {
+                    name: "Environment".into(),
+                    causes: vec![],
+                },
             ],
             containment_actions: Vec::new(),
             permanent_corrective_actions: Vec::new(),
@@ -60,7 +78,11 @@ impl EightDReport {
     }
 
     pub fn add_cause(&mut self, category: &str, cause: String) {
-        if let Some(cat) = self.ishikawa_tree.iter_mut().find(|c| c.name.eq_ignore_ascii_case(category)) {
+        if let Some(cat) = self
+            .ishikawa_tree
+            .iter_mut()
+            .find(|c| c.name.eq_ignore_ascii_case(category))
+        {
             cat.causes.push(cause);
         }
     }
@@ -72,9 +94,15 @@ mod tests {
 
     #[test]
     fn test_8d_capa_workflow() {
-        let mut capa = EightDReport::new("NCR-2026-088".into(), "Tooling Spindle Thermal Drift".into());
+        let mut capa = EightDReport::new(
+            "NCR-2026-088".into(),
+            "Tooling Spindle Thermal Drift".into(),
+        );
         capa.add_cause("Machine", "Bearing heat dissipation degradation".into());
-        capa.add_cause("Environment", "Ambient summer temperature spike in shopfloor".into());
+        capa.add_cause(
+            "Environment",
+            "Ambient summer temperature spike in shopfloor".into(),
+        );
         capa.root_cause_5whys = vec![
             "Why 1: Spindle overheated".into(),
             "Why 2: Coolant flow dropped".into(),

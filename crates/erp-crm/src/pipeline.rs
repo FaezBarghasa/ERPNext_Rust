@@ -8,21 +8,13 @@ use thiserror::Error;
 pub enum CrmError {
     /// Invalid state machine transition.
     #[error("Invalid CRM stage transition from {from:?} to {to:?}")]
-    InvalidTransition {
-        from: LeadStatus,
-        to: LeadStatus,
-    },
+    InvalidTransition { from: LeadStatus, to: LeadStatus },
     /// Quotation has expired.
     #[error("Quotation '{name}' has expired on {valid_till}")]
-    QuotationExpired {
-        name: String,
-        valid_till: NaiveDate,
-    },
+    QuotationExpired { name: String, valid_till: NaiveDate },
     /// Quotation is not approved.
     #[error("Quotation '{name}' must be in Submitted state to convert to Sales Order")]
-    QuotationNotSubmitted {
-        name: String,
-    },
+    QuotationNotSubmitted { name: String },
 }
 
 /// Lead progression status.
@@ -39,7 +31,10 @@ impl LeadStatus {
     /// Validates state transition progression.
     pub fn can_transition_to(self, target: LeadStatus) -> bool {
         match (self, target) {
-            (LeadStatus::Open, LeadStatus::Replied | LeadStatus::Opportunity | LeadStatus::Lost) => true,
+            (
+                LeadStatus::Open,
+                LeadStatus::Replied | LeadStatus::Opportunity | LeadStatus::Lost,
+            ) => true,
             (LeadStatus::Replied, LeadStatus::Opportunity | LeadStatus::Lost) => true,
             (LeadStatus::Opportunity, LeadStatus::Converted | LeadStatus::Lost) => true,
             (LeadStatus::Lost, LeadStatus::Open) => true,

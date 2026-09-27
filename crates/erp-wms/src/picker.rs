@@ -26,7 +26,10 @@ pub struct PickPathOptimizer;
 
 impl PickPathOptimizer {
     /// Computes TSP route using Nearest Neighbor with 2-Opt local search refinement.
-    pub fn optimize_pick_route(depot: &PickLocation, picks: &[PickLocation]) -> (Vec<PickLocation>, f64) {
+    pub fn optimize_pick_route(
+        depot: &PickLocation,
+        picks: &[PickLocation],
+    ) -> (Vec<PickLocation>, f64) {
         if picks.is_empty() {
             return (vec![], 0.0);
         }
@@ -65,8 +68,10 @@ impl PickPathOptimizer {
             iterations += 1;
             for i in 1..(n - 2) {
                 for j in (i + 1)..(n - 1) {
-                    let d_before = route[i - 1].distance_to(&route[i]) + route[j].distance_to(&route[j + 1]);
-                    let d_after = route[i - 1].distance_to(&route[j]) + route[i].distance_to(&route[j + 1]);
+                    let d_before =
+                        route[i - 1].distance_to(&route[i]) + route[j].distance_to(&route[j + 1]);
+                    let d_after =
+                        route[i - 1].distance_to(&route[j]) + route[i].distance_to(&route[j + 1]);
                     if d_after < d_before - 1e-4 {
                         route[i..=j].reverse();
                         improved = true;
@@ -101,10 +106,38 @@ mod tests {
         };
 
         let picks = vec![
-            PickLocation { id: "P1".into(), sku: "SKU1".into(), x: 10.0, y: 50.0, z: 1.0, quantity: 2 },
-            PickLocation { id: "P2".into(), sku: "SKU2".into(), x: 10.0, y: 10.0, z: 1.0, quantity: 1 },
-            PickLocation { id: "P3".into(), sku: "SKU3".into(), x: 20.0, y: 15.0, z: 1.0, quantity: 5 },
-            PickLocation { id: "P4".into(), sku: "SKU4".into(), x: 20.0, y: 45.0, z: 1.0, quantity: 3 },
+            PickLocation {
+                id: "P1".into(),
+                sku: "SKU1".into(),
+                x: 10.0,
+                y: 50.0,
+                z: 1.0,
+                quantity: 2,
+            },
+            PickLocation {
+                id: "P2".into(),
+                sku: "SKU2".into(),
+                x: 10.0,
+                y: 10.0,
+                z: 1.0,
+                quantity: 1,
+            },
+            PickLocation {
+                id: "P3".into(),
+                sku: "SKU3".into(),
+                x: 20.0,
+                y: 15.0,
+                z: 1.0,
+                quantity: 5,
+            },
+            PickLocation {
+                id: "P4".into(),
+                sku: "SKU4".into(),
+                x: 20.0,
+                y: 45.0,
+                z: 1.0,
+                quantity: 3,
+            },
         ];
 
         let (route, total_dist) = PickPathOptimizer::optimize_pick_route(&depot, &picks);

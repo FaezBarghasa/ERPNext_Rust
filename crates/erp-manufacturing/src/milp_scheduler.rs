@@ -35,7 +35,11 @@ impl SequenceOptimizer {
     }
 
     /// Solves sequence optimization using greedy heuristic with changeover minimization.
-    pub fn optimize_schedule(center_id: &str, capacity: f64, jobs: &[ProductionJob]) -> WorkCenterSchedule {
+    pub fn optimize_schedule(
+        center_id: &str,
+        capacity: f64,
+        jobs: &[ProductionJob],
+    ) -> WorkCenterSchedule {
         if jobs.is_empty() {
             return WorkCenterSchedule {
                 center_id: center_id.to_string(),
@@ -61,7 +65,10 @@ impl SequenceOptimizer {
 
             for (idx, job) in unassigned.iter().enumerate() {
                 let s_cost = Self::setup_cost(&current_product, &job.product_code);
-                let urgency = (job.due_date_hours - (total_time + job.processing_time_hours + s_cost)).min(0.0).abs();
+                let urgency = (job.due_date_hours
+                    - (total_time + job.processing_time_hours + s_cost))
+                    .min(0.0)
+                    .abs();
                 let score = s_cost * 10.0 + urgency * job.tardiness_penalty_weight;
 
                 if score < min_cost {

@@ -37,9 +37,13 @@ impl DomRouter {
                 continue;
             }
 
-            if let Some(shipping) = shipping_estimates.iter().find(|s| s.node_id == node.node_id) {
+            if let Some(shipping) = shipping_estimates
+                .iter()
+                .find(|s| s.node_id == node.node_id)
+            {
                 let handling = node.picking_handling_cost * required_qty;
-                let tax = (item_unit_value * required_qty) * (node.tax_rate_percent / Decimal::from(100));
+                let tax =
+                    (item_unit_value * required_qty) * (node.tax_rate_percent / Decimal::from(100));
                 let total_cost = shipping.freight_cost + handling + tax;
 
                 if best.is_none() || total_cost < best.unwrap().1 {
@@ -91,7 +95,8 @@ mod tests {
             },
         ];
 
-        let (best_node, cost) = DomRouter::select_optimal_node(dec!(10), &nodes, &shipping, dec!(50.00)).unwrap();
+        let (best_node, cost) =
+            DomRouter::select_optimal_node(dec!(10), &nodes, &shipping, dec!(50.00)).unwrap();
         // East: Freight 25 + Handling 20 + Tax (500*0.08=40) = 85
         // West: Freight 30 + Handling 30 + Tax 0 = 60
         assert_eq!(best_node.node_id, "WH-WEST");
