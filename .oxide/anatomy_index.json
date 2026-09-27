@@ -2,6 +2,1155 @@
   "project_name": "ERPNext_workspace",
   "root_path": "/home/jrad/RustroverProjects/ERPNext_workspace",
   "files": {
+    "crates/frappe-meta/tests/schema_compiler_tests.rs": {
+      "relative_path": "crates/frappe-meta/tests/schema_compiler_tests.rs",
+      "language": "rust",
+      "size_bytes": 5442,
+      "line_count": 157,
+      "content_hash": "7698727bdc49e842a7b396b487494d82878c77cbe4a78a16545f46ff1a73b825",
+      "symbols": [
+        {
+          "name": "create_customer_schema",
+          "qualified_name": "create_customer_schema",
+          "kind": "function",
+          "start_line": 7,
+          "end_line": 81,
+          "signature": "fn create_customer_schema() -> DocTypeSchema {"
+        },
+        {
+          "name": "test_schema_deserialization_and_compilation",
+          "qualified_name": "test_schema_deserialization_and_compilation",
+          "kind": "function",
+          "start_line": 84,
+          "end_line": 93,
+          "signature": "fn test_schema_deserialization_and_compilation() {"
+        },
+        {
+          "name": "test_reserved_keyword_rejection",
+          "qualified_name": "test_reserved_keyword_rejection",
+          "kind": "function",
+          "start_line": 96,
+          "end_line": 123,
+          "signature": "fn test_reserved_keyword_rejection() {"
+        },
+        {
+          "name": "test_schema_migration_diff_and_rollback",
+          "qualified_name": "test_schema_migration_diff_and_rollback",
+          "kind": "function",
+          "start_line": 126,
+          "end_line": 157,
+          "signature": "fn test_schema_migration_diff_and_rollback() {"
+        }
+      ],
+      "last_scanned_at": "2026-09-27T20:05:37.423970639Z"
+    },
+    "crates/erp-accounting/Cargo.toml": {
+      "relative_path": "crates/erp-accounting/Cargo.toml",
+      "language": "toml",
+      "size_bytes": 432,
+      "line_count": 14,
+      "content_hash": "500edd5a27475ab1b7d1a04f09838cde3c47ce606d5be633b7c1be7d68afa980",
+      "symbols": [
+        {
+          "name": "package",
+          "qualified_name": "[package]",
+          "kind": "module",
+          "start_line": 1,
+          "end_line": 1,
+          "signature": "[package]"
+        },
+        {
+          "name": "dependencies",
+          "qualified_name": "[dependencies]",
+          "kind": "module",
+          "start_line": 6,
+          "end_line": 6,
+          "signature": "[dependencies]"
+        }
+      ],
+      "last_scanned_at": "2026-09-27T20:05:37.431428160Z"
+    },
+    "crates/erp-trade/src/pricing.rs": {
+      "relative_path": "crates/erp-trade/src/pricing.rs",
+      "language": "rust",
+      "size_bytes": 2449,
+      "line_count": 74,
+      "content_hash": "51fab16f40dbd7a42de3a87584c0b0a274d02c9eade33b7604c994396c8b2a24",
+      "symbols": [
+        {
+          "name": "PricingRule",
+          "qualified_name": "PricingRule",
+          "kind": "struct",
+          "start_line": 6,
+          "end_line": 23,
+          "signature": "pub struct PricingRule {"
+        },
+        {
+          "name": "PricingEngine",
+          "qualified_name": "PricingEngine",
+          "kind": "struct",
+          "start_line": 26,
+          "end_line": 26,
+          "signature": "pub struct PricingEngine;"
+        },
+        {
+          "name": "resolve_price",
+          "qualified_name": "impl PricingEngine::resolve_price",
+          "kind": "method",
+          "start_line": 31,
+          "end_line": 73,
+          "signature": "pub fn resolve_price("
+        }
+      ],
+      "last_scanned_at": "2026-09-27T20:05:37.433668622Z"
+    },
+    ".idea/vcs.xml": {
+      "relative_path": ".idea/vcs.xml",
+      "language": "xml",
+      "size_bytes": 167,
+      "line_count": 6,
+      "content_hash": "6323e12648862a0a96fc0d7877672817d6cd91e2c2a3c3d78f1090db23c6e88e",
+      "symbols": [],
+      "last_scanned_at": "2026-09-27T20:05:37.437688868Z"
+    },
+    "crates/erp-hr/Cargo.toml": {
+      "relative_path": "crates/erp-hr/Cargo.toml",
+      "language": "toml",
+      "size_bytes": 553,
+      "line_count": 16,
+      "content_hash": "f40e240141c5f5863709e4802c24d1e1127a938dfd14602919cd72c0eb3cd681",
+      "symbols": [
+        {
+          "name": "package",
+          "qualified_name": "[package]",
+          "kind": "module",
+          "start_line": 1,
+          "end_line": 1,
+          "signature": "[package]"
+        },
+        {
+          "name": "dependencies",
+          "qualified_name": "[dependencies]",
+          "kind": "module",
+          "start_line": 6,
+          "end_line": 6,
+          "signature": "[dependencies]"
+        }
+      ],
+      "last_scanned_at": "2026-09-27T20:05:37.418649097Z"
+    },
+    "crates/frappe-meta/src/schema_compiler.rs": {
+      "relative_path": "crates/frappe-meta/src/schema_compiler.rs",
+      "language": "rust",
+      "size_bytes": 3057,
+      "line_count": 90,
+      "content_hash": "e030d480e528ac832b4926fd189db2ce0833f3c549e5d1a264f498e97cbebfe4",
+      "symbols": [
+        {
+          "name": "compile_to_surrealql",
+          "qualified_name": "compile_to_surrealql",
+          "kind": "function",
+          "start_line": 4,
+          "end_line": 47,
+          "signature": "pub fn compile_to_surrealql(schema: &DocTypeSchema) -> Result<Vec<String>, SchemaError> {"
+        },
+        {
+          "name": "compile_field_ddl",
+          "qualified_name": "compile_field_ddl",
+          "kind": "function",
+          "start_line": 49,
+          "end_line": 90,
+          "signature": "fn compile_field_ddl(table: &str, field: &DocFieldSchema) -> Result<String, SchemaError> {"
+        }
+      ],
+      "last_scanned_at": "2026-09-27T20:05:37.425496338Z"
+    },
+    "crates/erp-manufacturing/Cargo.toml": {
+      "relative_path": "crates/erp-manufacturing/Cargo.toml",
+      "language": "toml",
+      "size_bytes": 481,
+      "line_count": 15,
+      "content_hash": "83539f36335b240ee389f87ffc3a6e856cbbe73b6d9b47967575a475d4b73a7c",
+      "symbols": [
+        {
+          "name": "package",
+          "qualified_name": "[package]",
+          "kind": "module",
+          "start_line": 1,
+          "end_line": 1,
+          "signature": "[package]"
+        },
+        {
+          "name": "dependencies",
+          "qualified_name": "[dependencies]",
+          "kind": "module",
+          "start_line": 6,
+          "end_line": 6,
+          "signature": "[dependencies]"
+        }
+      ],
+      "last_scanned_at": "2026-09-27T20:05:37.413320431Z"
+    },
+    "crates/desk-app/Cargo.toml": {
+      "relative_path": "crates/desk-app/Cargo.toml",
+      "language": "toml",
+      "size_bytes": 171,
+      "line_count": 8,
+      "content_hash": "82c7079f51381987043f7cf39d83863a92b8237e5fb8b33d422d2b6facce1c80",
+      "symbols": [
+        {
+          "name": "package",
+          "qualified_name": "[package]",
+          "kind": "module",
+          "start_line": 1,
+          "end_line": 1,
+          "signature": "[package]"
+        },
+        {
+          "name": "dependencies",
+          "qualified_name": "[dependencies]",
+          "kind": "module",
+          "start_line": 6,
+          "end_line": 6,
+          "signature": "[dependencies]"
+        }
+      ],
+      "last_scanned_at": "2026-09-27T20:05:37.433067841Z"
+    },
+    "crates/frappe-meta/src/naming.rs": {
+      "relative_path": "crates/frappe-meta/src/naming.rs",
+      "language": "rust",
+      "size_bytes": 1260,
+      "line_count": 25,
+      "content_hash": "eae287e0bab1b9ab70743f26503bd970566352f426519e270d3382bcdc4c0ea4",
+      "symbols": [
+        {
+          "name": "NamingSeriesParser",
+          "qualified_name": "NamingSeriesParser",
+          "kind": "struct",
+          "start_line": 2,
+          "end_line": 2,
+          "signature": "pub struct NamingSeriesParser;"
+        },
+        {
+          "name": "format",
+          "qualified_name": "impl NamingSeriesParser::format",
+          "kind": "method",
+          "start_line": 4,
+          "end_line": 17,
+          "signature": "pub fn format(pattern: &str, year: u32, seq: u64) -> String {"
+        },
+        {
+          "name": "counter_stmt",
+          "qualified_name": "impl NamingSeriesParser::counter_stmt",
+          "kind": "method",
+          "start_line": 19,
+          "end_line": 21,
+          "signature": "pub fn counter_stmt(table: &str) -> String {"
+        },
+        {
+          "name": "t",
+          "qualified_name": "t",
+          "kind": "module",
+          "start_line": 23,
+          "end_line": 25,
+          "signature": "mod t { use super::*;"
+        },
+        {
+          "name": "series_formats",
+          "qualified_name": "series_formats",
+          "kind": "function",
+          "start_line": 24,
+          "end_line": 24,
+          "signature": "fn series_formats() { assert_eq!(NamingSeriesParser::format(\"ACC-SINV-.YYYY.-.#####\", 2026, 1), \"ACC-SINV-2026-00001\"); }"
+        }
+      ],
+      "last_scanned_at": "2026-09-27T20:05:37.426188542Z"
+    },
+    "crates/erp-lending/src/amortization.rs": {
+      "relative_path": "crates/erp-lending/src/amortization.rs",
+      "language": "rust",
+      "size_bytes": 8802,
+      "line_count": 246,
+      "content_hash": "0481fae49575e0536a2404777a24e7d24ebda2b5ac8fa342bda7a64dab73d0f8",
+      "symbols": [
+        {
+          "name": "LendingError",
+          "qualified_name": "LendingError",
+          "kind": "enum",
+          "start_line": 10,
+          "end_line": 17,
+          "signature": "pub enum LendingError {"
+        },
+        {
+          "name": "AmortizationPeriod",
+          "qualified_name": "AmortizationPeriod",
+          "kind": "struct",
+          "start_line": 21,
+          "end_line": 34,
+          "signature": "pub struct AmortizationPeriod {"
+        },
+        {
+          "name": "AmortizationEngine",
+          "qualified_name": "AmortizationEngine",
+          "kind": "struct",
+          "start_line": 37,
+          "end_line": 37,
+          "signature": "pub struct AmortizationEngine;"
+        },
+        {
+          "name": "calculate_pmt",
+          "qualified_name": "impl AmortizationEngine::calculate_pmt",
+          "kind": "method",
+          "start_line": 43,
+          "end_line": 60,
+          "signature": "pub fn calculate_pmt(principal: Decimal, annual_interest_rate: Decimal, total_periods: usize) -> Decimal {"
+        },
+        {
+          "name": "generate_schedule",
+          "qualified_name": "impl AmortizationEngine::generate_schedule",
+          "kind": "method",
+          "start_line": 63,
+          "end_line": 114,
+          "signature": "pub fn generate_schedule("
+        },
+        {
+          "name": "LoanGlEngine",
+          "qualified_name": "LoanGlEngine",
+          "kind": "struct",
+          "start_line": 118,
+          "end_line": 118,
+          "signature": "pub struct LoanGlEngine;"
+        },
+        {
+          "name": "create_interest_accrual_gl_entries",
+          "qualified_name": "impl LoanGlEngine::create_interest_accrual_gl_entries",
+          "kind": "method",
+          "start_line": 125,
+          "end_line": 159,
+          "signature": "pub fn create_interest_accrual_gl_entries("
+        },
+        {
+          "name": "create_repayment_gl_entries",
+          "qualified_name": "impl LoanGlEngine::create_repayment_gl_entries",
+          "kind": "method",
+          "start_line": 166,
+          "end_line": 215,
+          "signature": "pub fn create_repayment_gl_entries("
+        },
+        {
+          "name": "repayment_to_journal_entry",
+          "qualified_name": "impl LoanGlEngine::repayment_to_journal_entry",
+          "kind": "method",
+          "start_line": 219,
+          "end_line": 245,
+          "signature": "pub fn repayment_to_journal_entry("
+        }
+      ],
+      "last_scanned_at": "2026-09-27T20:05:37.427219131Z"
+    },
+    "crates/erp-learning/src/lms.rs": {
+      "relative_path": "crates/erp-learning/src/lms.rs",
+      "language": "rust",
+      "size_bytes": 3969,
+      "line_count": 134,
+      "content_hash": "a1744ba9365b3454d426c8dd39f09b3e84936ac0cd9b55b016262f04fd19725a",
+      "symbols": [
+        {
+          "name": "LmsError",
+          "qualified_name": "LmsError",
+          "kind": "enum",
+          "start_line": 8,
+          "end_line": 18,
+          "signature": "pub enum LmsError {"
+        },
+        {
+          "name": "Lesson",
+          "qualified_name": "Lesson",
+          "kind": "struct",
+          "start_line": 22,
+          "end_line": 27,
+          "signature": "pub struct Lesson {"
+        },
+        {
+          "name": "CourseModule",
+          "qualified_name": "CourseModule",
+          "kind": "struct",
+          "start_line": 31,
+          "end_line": 35,
+          "signature": "pub struct CourseModule {"
+        },
+        {
+          "name": "Course",
+          "qualified_name": "Course",
+          "kind": "struct",
+          "start_line": 39,
+          "end_line": 45,
+          "signature": "pub struct Course {"
+        },
+        {
+          "name": "total_lesson_count",
+          "qualified_name": "impl Course::total_lesson_count",
+          "kind": "method",
+          "start_line": 50,
+          "end_line": 52,
+          "signature": "pub fn total_lesson_count(&self) -> usize {"
+        },
+        {
+          "name": "Certificate",
+          "qualified_name": "Certificate",
+          "kind": "struct",
+          "start_line": 57,
+          "end_line": 63,
+          "signature": "pub struct Certificate {"
+        },
+        {
+          "name": "StudentProgressTracker",
+          "qualified_name": "StudentProgressTracker",
+          "kind": "struct",
+          "start_line": 67,
+          "end_line": 69,
+          "signature": "pub struct StudentProgressTracker {"
+        },
+        {
+          "name": "new",
+          "qualified_name": "impl StudentProgressTracker::new",
+          "kind": "method",
+          "start_line": 74,
+          "end_line": 76,
+          "signature": "pub fn new() -> Self {"
+        },
+        {
+          "name": "complete_lesson",
+          "qualified_name": "impl StudentProgressTracker::complete_lesson",
+          "kind": "method",
+          "start_line": 79,
+          "end_line": 81,
+          "signature": "pub fn complete_lesson(&mut self, lesson_id: &str) {"
+        },
+        {
+          "name": "calculate_progress_percentage",
+          "qualified_name": "impl StudentProgressTracker::calculate_progress_percentage",
+          "kind": "method",
+          "start_line": 85,
+          "end_line": 101,
+          "signature": "pub fn calculate_progress_percentage(&self, course: &Course) -> u32 {"
+        },
+        {
+          "name": "evaluate_and_issue_certificate",
+          "qualified_name": "impl StudentProgressTracker::evaluate_and_issue_certificate",
+          "kind": "method",
+          "start_line": 104,
+          "end_line": 133,
+          "signature": "pub fn evaluate_and_issue_certificate("
+        }
+      ],
+      "last_scanned_at": "2026-09-27T20:05:37.436083619Z"
+    },
+    "crates/rbench/src/main.rs": {
+      "relative_path": "crates/rbench/src/main.rs",
+      "language": "rust",
+      "size_bytes": 658,
+      "line_count": 12,
+      "content_hash": "8ae5765bf67c182c7caa2b5d2bf3fa0f84497e4bb0a2958491f0bd111b4d9cec",
+      "symbols": [
+        {
+          "name": "main",
+          "qualified_name": "main",
+          "kind": "function",
+          "start_line": 1,
+          "end_line": 12,
+          "signature": "fn main() {"
+        }
+      ],
+      "last_scanned_at": "2026-09-27T20:05:37.435222816Z"
+    },
+    "crates/desk-components/src/grid.rs": {
+      "relative_path": "crates/desk-components/src/grid.rs",
+      "language": "rust",
+      "size_bytes": 483,
+      "line_count": 8,
+      "content_hash": "177b95a1da8fb9cc800718ab3149340fbc58196bd7ff358e112537ac5e07c6bf",
+      "symbols": [
+        {
+          "name": "visible_slice",
+          "qualified_name": "visible_slice",
+          "kind": "function",
+          "start_line": 2,
+          "end_line": 7,
+          "signature": "pub fn visible_slice(total: usize, row_h: usize, scroll: usize, viewport_h: usize) -> (usize, usize) {"
+        },
+        {
+          "name": "t",
+          "qualified_name": "t",
+          "kind": "module",
+          "start_line": 8,
+          "end_line": 8,
+          "signature": "mod t { use super::*; #[test] fn slice(){ assert_eq!(visible_slice(1_000_000, 32, 3200, 640), (100, 20)); } }"
+        },
+        {
+          "name": "slice",
+          "qualified_name": "slice",
+          "kind": "function",
+          "start_line": 8,
+          "end_line": 8,
+          "signature": "fn slice(){ assert_eq!(visible_slice(1_000_000, 32, 3200, 640), (100, 20)); }"
+        }
+      ],
+      "last_scanned_at": "2026-09-27T20:05:37.423239254Z"
+    },
+    "crates/erp-support/src/lib.rs": {
+      "relative_path": "crates/erp-support/src/lib.rs",
+      "language": "rust",
+      "size_bytes": 3402,
+      "line_count": 98,
+      "content_hash": "c920b9e48c2f4d26b4018c20c289cdc2f6ceeec4b28784556becf147ec650694",
+      "symbols": [
+        {
+          "name": "gameplan",
+          "qualified_name": "gameplan",
+          "kind": "module",
+          "start_line": 1,
+          "end_line": 1,
+          "signature": "pub mod gameplan;"
+        },
+        {
+          "name": "sla",
+          "qualified_name": "sla",
+          "kind": "module",
+          "start_line": 2,
+          "end_line": 2,
+          "signature": "pub mod sla;"
+        },
+        {
+          "name": "tests",
+          "qualified_name": "tests",
+          "kind": "module",
+          "start_line": 11,
+          "end_line": 98,
+          "signature": "mod tests {"
+        },
+        {
+          "name": "test_ticket_routing_workload_balancer",
+          "qualified_name": "test_ticket_routing_workload_balancer",
+          "kind": "function",
+          "start_line": 16,
+          "end_line": 58,
+          "signature": "fn test_ticket_routing_workload_balancer() {"
+        },
+        {
+          "name": "test_sla_watchdog_deadline_escalation",
+          "qualified_name": "test_sla_watchdog_deadline_escalation",
+          "kind": "function",
+          "start_line": 61,
+          "end_line": 97,
+          "signature": "fn test_sla_watchdog_deadline_escalation() {"
+        }
+      ],
+      "last_scanned_at": "2026-09-27T20:05:37.427705930Z"
+    },
+    "crates/erp-crm/src/lib.rs": {
+      "relative_path": "crates/erp-crm/src/lib.rs",
+      "language": "rust",
+      "size_bytes": 2816,
+      "line_count": 79,
+      "content_hash": "776c6b2f7c27613f936c2a712b7089edc8b8928a310e16277a15a63b98bc2499",
+      "symbols": [
+        {
+          "name": "pipeline",
+          "qualified_name": "pipeline",
+          "kind": "module",
+          "start_line": 1,
+          "end_line": 1,
+          "signature": "pub mod pipeline;"
+        },
+        {
+          "name": "scoring",
+          "qualified_name": "scoring",
+          "kind": "module",
+          "start_line": 2,
+          "end_line": 2,
+          "signature": "pub mod scoring;"
+        },
+        {
+          "name": "tests",
+          "qualified_name": "tests",
+          "kind": "module",
+          "start_line": 10,
+          "end_line": 79,
+          "signature": "mod tests {"
+        },
+        {
+          "name": "test_crm_lead_qualification_workflow",
+          "qualified_name": "test_crm_lead_qualification_workflow",
+          "kind": "function",
+          "start_line": 16,
+          "end_line": 39,
+          "signature": "fn test_crm_lead_qualification_workflow() {"
+        },
+        {
+          "name": "test_quotation_conversion_and_price_locking",
+          "qualified_name": "test_quotation_conversion_and_price_locking",
+          "kind": "function",
+          "start_line": 42,
+          "end_line": 78,
+          "signature": "fn test_quotation_conversion_and_price_locking() {"
+        }
+      ],
+      "last_scanned_at": "2026-09-27T20:05:37.434498555Z"
+    },
+    "crates/frappe-net/src/queue.rs": {
+      "relative_path": "crates/frappe-net/src/queue.rs",
+      "language": "rust",
+      "size_bytes": 191,
+      "line_count": 3,
+      "content_hash": "9edb7560258842d4f1ad41f1a8189a158350e497922a75d43a4e127ee72d9c06",
+      "symbols": [
+        {
+          "name": "QUEUES",
+          "qualified_name": "QUEUES",
+          "kind": "constant",
+          "start_line": 2,
+          "end_line": 2,
+          "signature": "pub const QUEUES: &[&str] = &[\"critical\",\"high\",\"default\",\"low\"];"
+        },
+        {
+          "name": "t",
+          "qualified_name": "t",
+          "kind": "module",
+          "start_line": 3,
+          "end_line": 3,
+          "signature": "mod t { #[test] fn qs(){ assert_eq!(super::QUEUES.len(),4); } }"
+        },
+        {
+          "name": "qs",
+          "qualified_name": "qs",
+          "kind": "function",
+          "start_line": 3,
+          "end_line": 3,
+          "signature": "fn qs(){ assert_eq!(super::QUEUES.len(),4); }"
+        }
+      ],
+      "last_scanned_at": "2026-09-27T20:05:37.415961018Z"
+    },
+    "crates/erp-inventory/src/lib.rs": {
+      "relative_path": "crates/erp-inventory/src/lib.rs",
+      "language": "rust",
+      "size_bytes": 3623,
+      "line_count": 101,
+      "content_hash": "7e4eea43a19e14cf45a48e2715a31545987dc78be4a29ce9c358abc9c7600b31",
+      "symbols": [
+        {
+          "name": "batches",
+          "qualified_name": "batches",
+          "kind": "module",
+          "start_line": 1,
+          "end_line": 1,
+          "signature": "pub mod batches;"
+        },
+        {
+          "name": "fifo",
+          "qualified_name": "fifo",
+          "kind": "module",
+          "start_line": 2,
+          "end_line": 2,
+          "signature": "pub mod fifo;"
+        },
+        {
+          "name": "warehouse",
+          "qualified_name": "warehouse",
+          "kind": "module",
+          "start_line": 3,
+          "end_line": 3,
+          "signature": "pub mod warehouse;"
+        },
+        {
+          "name": "tests",
+          "qualified_name": "tests",
+          "kind": "module",
+          "start_line": 13,
+          "end_line": 101,
+          "signature": "mod tests {"
+        },
+        {
+          "name": "test_fifo_multi_batch_consumption",
+          "qualified_name": "test_fifo_multi_batch_consumption",
+          "kind": "function",
+          "start_line": 20,
+          "end_line": 44,
+          "signature": "fn test_fifo_multi_batch_consumption() {"
+        },
+        {
+          "name": "test_warehouse_gl_sync_and_journal_balance",
+          "qualified_name": "test_warehouse_gl_sync_and_journal_balance",
+          "kind": "function",
+          "start_line": 47,
+          "end_line": 67,
+          "signature": "fn test_warehouse_gl_sync_and_journal_balance() {"
+        },
+        {
+          "name": "test_serial_and_batch_validation",
+          "qualified_name": "test_serial_and_batch_validation",
+          "kind": "function",
+          "start_line": 70,
+          "end_line": 100,
+          "signature": "fn test_serial_and_batch_validation() {"
+        }
+      ],
+      "last_scanned_at": "2026-09-27T20:05:37.436551421Z"
+    },
+    "crates/frappe-storage/src/drive.rs": {
+      "relative_path": "crates/frappe-storage/src/drive.rs",
+      "language": "rust",
+      "size_bytes": 4378,
+      "line_count": 146,
+      "content_hash": "2a31ab73ed001da39ef83cf08fc48389adac2e7c38aee2b43004c40cd29f1a7b",
+      "symbols": [
+        {
+          "name": "StorageError",
+          "qualified_name": "StorageError",
+          "kind": "enum",
+          "start_line": 9,
+          "end_line": 22,
+          "signature": "pub enum StorageError {"
+        },
+        {
+          "name": "DriveFolder",
+          "qualified_name": "DriveFolder",
+          "kind": "struct",
+          "start_line": 26,
+          "end_line": 37,
+          "signature": "pub struct DriveFolder {"
+        },
+        {
+          "name": "DriveFile",
+          "qualified_name": "DriveFile",
+          "kind": "struct",
+          "start_line": 41,
+          "end_line": 56,
+          "signature": "pub struct DriveFile {"
+        },
+        {
+          "name": "DeduplicatedStorage",
+          "qualified_name": "DeduplicatedStorage",
+          "kind": "struct",
+          "start_line": 60,
+          "end_line": 67,
+          "signature": "pub struct DeduplicatedStorage {"
+        },
+        {
+          "name": "new",
+          "qualified_name": "impl DeduplicatedStorage::new",
+          "kind": "method",
+          "start_line": 72,
+          "end_line": 74,
+          "signature": "pub fn new() -> Self {"
+        },
+        {
+          "name": "store_file",
+          "qualified_name": "impl DeduplicatedStorage::store_file",
+          "kind": "method",
+          "start_line": 78,
+          "end_line": 118,
+          "signature": "pub fn store_file("
+        },
+        {
+          "name": "read_file",
+          "qualified_name": "impl DeduplicatedStorage::read_file",
+          "kind": "method",
+          "start_line": 121,
+          "end_line": 139,
+          "signature": "pub fn read_file(&self, file_id: &str) -> Result<Vec<u8>, StorageError> {"
+        },
+        {
+          "name": "physical_payload_count",
+          "qualified_name": "impl DeduplicatedStorage::physical_payload_count",
+          "kind": "method",
+          "start_line": 143,
+          "end_line": 145,
+          "signature": "pub fn physical_payload_count(&self) -> usize {"
+        }
+      ],
+      "last_scanned_at": "2026-09-27T20:05:37.420193793Z"
+    },
+    "crates/erp-crm/src/scoring.rs": {
+      "relative_path": "crates/erp-crm/src/scoring.rs",
+      "language": "rust",
+      "size_bytes": 865,
+      "line_count": 28,
+      "content_hash": "c35d113e9f0280a7f148fcf3ac1834870d3cfcc79b75d65d954f1faad56fb5a5",
+      "symbols": [
+        {
+          "name": "calculate_lead_score",
+          "qualified_name": "calculate_lead_score",
+          "kind": "function",
+          "start_line": 5,
+          "end_line": 16,
+          "signature": "pub fn calculate_lead_score("
+        },
+        {
+          "name": "tests",
+          "qualified_name": "tests",
+          "kind": "module",
+          "start_line": 19,
+          "end_line": 28,
+          "signature": "mod tests {"
+        },
+        {
+          "name": "test_lead_score_bounds",
+          "qualified_name": "test_lead_score_bounds",
+          "kind": "function",
+          "start_line": 24,
+          "end_line": 27,
+          "signature": "fn test_lead_score_bounds() {"
+        }
+      ],
+      "last_scanned_at": "2026-09-27T20:05:37.434620848Z"
+    },
+    "crates/frappe-net/src/server.rs": {
+      "relative_path": "crates/frappe-net/src/server.rs",
+      "language": "rust",
+      "size_bytes": 1530,
+      "line_count": 40,
+      "content_hash": "abed69680f7ca46ac24a2937b071d9eceac445cee8393100de86de02f6461582",
+      "symbols": [
+        {
+          "name": "health_check",
+          "qualified_name": "health_check",
+          "kind": "function",
+          "start_line": 7,
+          "end_line": 12,
+          "signature": "async fn health_check() -> impl Responder {"
+        },
+        {
+          "name": "configure_app",
+          "qualified_name": "configure_app",
+          "kind": "function",
+          "start_line": 15,
+          "end_line": 27,
+          "signature": "pub fn configure_app(cfg: &mut web::ServiceConfig, pool_mgr: ConnectionPoolManager) {"
+        },
+        {
+          "name": "run_server",
+          "qualified_name": "run_server",
+          "kind": "function",
+          "start_line": 30,
+          "end_line": 40,
+          "signature": "pub async fn run_server(addr: &str) -> std::io::Result<()> {"
+        }
+      ],
+      "last_scanned_at": "2026-09-27T20:05:37.413960393Z"
+    },
+    "crates/erp-trade/Cargo.toml": {
+      "relative_path": "crates/erp-trade/Cargo.toml",
+      "language": "toml",
+      "size_bytes": 467,
+      "line_count": 15,
+      "content_hash": "41c1061129403818c458397830f077e4c662cfe23392d7dd397254c5e3b86f1f",
+      "symbols": [
+        {
+          "name": "package",
+          "qualified_name": "[package]",
+          "kind": "module",
+          "start_line": 1,
+          "end_line": 1,
+          "signature": "[package]"
+        },
+        {
+          "name": "dependencies",
+          "qualified_name": "[dependencies]",
+          "kind": "module",
+          "start_line": 6,
+          "end_line": 6,
+          "signature": "[dependencies]"
+        }
+      ],
+      "last_scanned_at": "2026-09-27T20:05:37.434137611Z"
+    },
+    "crates/erp-crm/src/pipeline.rs": {
+      "relative_path": "crates/erp-crm/src/pipeline.rs",
+      "language": "rust",
+      "size_bytes": 4257,
+      "line_count": 149,
+      "content_hash": "689c3eb48626cf0058c83167291dfd946a4521ef670882c6fdcf32d9ca00bc35",
+      "symbols": [
+        {
+          "name": "CrmError",
+          "qualified_name": "CrmError",
+          "kind": "enum",
+          "start_line": 8,
+          "end_line": 26,
+          "signature": "pub enum CrmError {"
+        },
+        {
+          "name": "LeadStatus",
+          "qualified_name": "LeadStatus",
+          "kind": "enum",
+          "start_line": 30,
+          "end_line": 36,
+          "signature": "pub enum LeadStatus {"
+        },
+        {
+          "name": "can_transition_to",
+          "qualified_name": "impl LeadStatus::can_transition_to",
+          "kind": "method",
+          "start_line": 40,
+          "end_line": 48,
+          "signature": "pub fn can_transition_to(self, target: LeadStatus) -> bool {"
+        },
+        {
+          "name": "Lead",
+          "qualified_name": "Lead",
+          "kind": "struct",
+          "start_line": 53,
+          "end_line": 58,
+          "signature": "pub struct Lead {"
+        },
+        {
+          "name": "transition_to",
+          "qualified_name": "impl Lead::transition_to",
+          "kind": "method",
+          "start_line": 62,
+          "end_line": 72,
+          "signature": "pub fn transition_to(&mut self, next_status: LeadStatus) -> Result<(), CrmError> {"
+        },
+        {
+          "name": "QuotationItem",
+          "qualified_name": "QuotationItem",
+          "kind": "struct",
+          "start_line": 77,
+          "end_line": 82,
+          "signature": "pub struct QuotationItem {"
+        },
+        {
+          "name": "QuotationStatus",
+          "qualified_name": "QuotationStatus",
+          "kind": "enum",
+          "start_line": 86,
+          "end_line": 91,
+          "signature": "pub enum QuotationStatus {"
+        },
+        {
+          "name": "Quotation",
+          "qualified_name": "Quotation",
+          "kind": "struct",
+          "start_line": 95,
+          "end_line": 102,
+          "signature": "pub struct Quotation {"
+        },
+        {
+          "name": "SalesOrder",
+          "qualified_name": "SalesOrder",
+          "kind": "struct",
+          "start_line": 106,
+          "end_line": 113,
+          "signature": "pub struct SalesOrder {"
+        },
+        {
+          "name": "CrmPipeline",
+          "qualified_name": "CrmPipeline",
+          "kind": "struct",
+          "start_line": 116,
+          "end_line": 116,
+          "signature": "pub struct CrmPipeline;"
+        },
+        {
+          "name": "convert_to_sales_order",
+          "qualified_name": "impl CrmPipeline::convert_to_sales_order",
+          "kind": "method",
+          "start_line": 120,
+          "end_line": 148,
+          "signature": "pub fn convert_to_sales_order("
+        }
+      ],
+      "last_scanned_at": "2026-09-27T20:05:37.435074402Z"
+    },
+    "crates/desk-components/src/video_hud.rs": {
+      "relative_path": "crates/desk-components/src/video_hud.rs",
+      "language": "rust",
+      "size_bytes": 1421,
+      "line_count": 49,
+      "content_hash": "ed5aaf1161df2b1b183b1735a2e3ea0a94930822f7af76cde4e54c7e499e66f4",
+      "symbols": [
+        {
+          "name": "ChapterMarker",
+          "qualified_name": "ChapterMarker",
+          "kind": "struct",
+          "start_line": 5,
+          "end_line": 8,
+          "signature": "pub struct ChapterMarker {"
+        },
+        {
+          "name": "VideoHudState",
+          "qualified_name": "VideoHudState",
+          "kind": "struct",
+          "start_line": 12,
+          "end_line": 19,
+          "signature": "pub struct VideoHudState {"
+        },
+        {
+          "name": "new",
+          "qualified_name": "impl VideoHudState::new",
+          "kind": "method",
+          "start_line": 24,
+          "end_line": 33,
+          "signature": "pub fn new(media_id: &str, duration_secs: f64, chapters: Vec<ChapterMarker>) -> Self {"
+        },
+        {
+          "name": "toggle_play",
+          "qualified_name": "impl VideoHudState::toggle_play",
+          "kind": "method",
+          "start_line": 36,
+          "end_line": 38,
+          "signature": "pub fn toggle_play(&mut self) {"
+        },
+        {
+          "name": "seek_to",
+          "qualified_name": "impl VideoHudState::seek_to",
+          "kind": "method",
+          "start_line": 41,
+          "end_line": 43,
+          "signature": "pub fn seek_to(&mut self, target_secs: f64) {"
+        },
+        {
+          "name": "push_comment",
+          "qualified_name": "impl VideoHudState::push_comment",
+          "kind": "method",
+          "start_line": 46,
+          "end_line": 48,
+          "signature": "pub fn push_comment(&mut self, comment: String) {"
+        }
+      ],
+      "last_scanned_at": "2026-09-27T20:05:37.422544675Z"
+    },
+    "crates/erp-cms/Cargo.toml": {
+      "relative_path": "crates/erp-cms/Cargo.toml",
+      "language": "toml",
+      "size_bytes": 531,
+      "line_count": 22,
+      "content_hash": "8714f47e6314a0c7f09d9136f3167ba6739cacf4aa64d43dad37451930fde41a",
+      "symbols": [
+        {
+          "name": "package",
+          "qualified_name": "[package]",
+          "kind": "module",
+          "start_line": 1,
+          "end_line": 1,
+          "signature": "[package]"
+        },
+        {
+          "name": "dependencies",
+          "qualified_name": "[dependencies]",
+          "kind": "module",
+          "start_line": 6,
+          "end_line": 6,
+          "signature": "[dependencies]"
+        }
+      ],
+      "last_scanned_at": "2026-09-27T20:05:37.433001352Z"
+    },
+    "docs/prd.md": {
+      "relative_path": "docs/prd.md",
+      "language": "markdown",
+      "size_bytes": 0,
+      "line_count": 0,
+      "content_hash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "symbols": [],
+      "last_scanned_at": "2026-09-27T20:05:37.441121394Z"
+    },
+    "crates/erp-cms/src/transcoder.rs": {
+      "relative_path": "crates/erp-cms/src/transcoder.rs",
+      "language": "rust",
+      "size_bytes": 2136,
+      "line_count": 75,
+      "content_hash": "83f91febc1b021bbbfeaa76344448c1aa3797f9ac347250303b19c789f7d42c5",
+      "symbols": [
+        {
+          "name": "VideoVariant",
+          "qualified_name": "VideoVariant",
+          "kind": "struct",
+          "start_line": 5,
+          "end_line": 10,
+          "signature": "pub struct VideoVariant {"
+        },
+        {
+          "name": "STANDARD_VARIANTS",
+          "qualified_name": "STANDARD_VARIANTS",
+          "kind": "constant",
+          "start_line": 13,
+          "end_line": 32,
+          "signature": "pub const STANDARD_VARIANTS: &[VideoVariant] = &["
+        },
+        {
+          "name": "HlsPlaylistGenerator",
+          "qualified_name": "HlsPlaylistGenerator",
+          "kind": "struct",
+          "start_line": 35,
+          "end_line": 35,
+          "signature": "pub struct HlsPlaylistGenerator;"
+        },
+        {
+          "name": "generate_master_playlist",
+          "qualified_name": "impl HlsPlaylistGenerator::generate_master_playlist",
+          "kind": "method",
+          "start_line": 40,
+          "end_line": 55,
+          "signature": "pub fn generate_master_playlist(variants: &[VideoVariant]) -> String {"
+        },
+        {
+          "name": "generate_variant_playlist",
+          "qualified_name": "impl HlsPlaylistGenerator::generate_variant_playlist",
+          "kind": "method",
+          "start_line": 59,
+          "end_line": 74,
+          "signature": "pub fn generate_variant_playlist(variant_name: &str, segment_count: usize, segment_duration_secs: u32) -> String {"
+        }
+      ],
+      "last_scanned_at": "2026-09-27T20:05:37.432287776Z"
+    },
+    "crates/erp-cms/src/print.rs": {
+      "relative_path": "crates/erp-cms/src/print.rs",
+      "language": "rust",
+      "size_bytes": 1138,
+      "line_count": 43,
+      "content_hash": "f3c1103cfa57fb9552fe3353c67fc4f7a1dd6d92e535b6792131e59d7ef277eb",
+      "symbols": [
+        {
+          "name": "render_invoice_html",
+          "qualified_name": "render_invoice_html",
+          "kind": "function",
+          "start_line": 3,
+          "end_line": 31,
+          "signature": "pub fn render_invoice_html(invoice_no: &str, total_amount: &str, currency: &str) -> String {"
+        },
+        {
+          "name": "tests",
+          "qualified_name": "tests",
+          "kind": "module",
+          "start_line": 34,
+          "end_line": 43,
+          "signature": "mod tests {"
+        },
+        {
+          "name": "test_render_invoice_html",
+          "qualified_name": "test_render_invoice_html",
+          "kind": "function",
+          "start_line": 38,
+          "end_line": 42,
+          "signature": "fn test_render_invoice_html() {"
+        }
+      ],
+      "last_scanned_at": "2026-09-27T20:05:37.432372075Z"
+    },
+    "Taskfile.yaml": {
+      "relative_path": "Taskfile.yaml",
+      "language": "yaml",
+      "size_bytes": 429,
+      "line_count": 20,
+      "content_hash": "b4cb51b31c48e2b58f84d1e4cf6d3cf35e264bace1c6bbdabd21f7ca3943a043",
+      "symbols": [],
+      "last_scanned_at": "2026-09-27T20:05:37.437548765Z"
+    },
     "Cargo.toml": {
       "relative_path": "Cargo.toml",
       "language": "toml",
@@ -26,196 +1175,418 @@
           "signature": "[profile.release]"
         }
       ],
-      "last_scanned_at": "2026-09-27T13:45:05.850089784Z"
+      "last_scanned_at": "2026-09-27T20:05:37.441079838Z"
     },
-    "crates/desk-components/Cargo.toml": {
-      "relative_path": "crates/desk-components/Cargo.toml",
-      "language": "toml",
-      "size_bytes": 400,
-      "line_count": 1,
-      "content_hash": "7a12e561363385e9dfeeab326368731c030ed4b374e7f5897ac819159d2884c5",
-      "symbols": [],
-      "last_scanned_at": "2026-09-27T13:45:05.810896557Z"
-    },
-    "crates/frappe-net/src/middleware/mod.rs": {
-      "relative_path": "crates/frappe-net/src/middleware/mod.rs",
+    "crates/erp-hr/src/lib.rs": {
+      "relative_path": "crates/erp-hr/src/lib.rs",
       "language": "rust",
-      "size_bytes": 16,
-      "line_count": 1,
-      "content_hash": "d08573b8891c8195fc6acd5d2390cd547111669c8fe088931e2128a8609b8c91",
-      "symbols": [],
-      "last_scanned_at": "2026-09-27T13:45:05.779419682Z"
+      "size_bytes": 6279,
+      "line_count": 156,
+      "content_hash": "1227db656ae47351c5e69d9efd76bc43e04f472df55b39c058b2ae1afc471714",
+      "symbols": [
+        {
+          "name": "attendance",
+          "qualified_name": "attendance",
+          "kind": "module",
+          "start_line": 1,
+          "end_line": 1,
+          "signature": "pub mod attendance;"
+        },
+        {
+          "name": "payroll",
+          "qualified_name": "payroll",
+          "kind": "module",
+          "start_line": 2,
+          "end_line": 2,
+          "signature": "pub mod payroll;"
+        },
+        {
+          "name": "tests",
+          "qualified_name": "tests",
+          "kind": "module",
+          "start_line": 14,
+          "end_line": 156,
+          "signature": "mod tests {"
+        },
+        {
+          "name": "test_shift_reconciliation",
+          "qualified_name": "test_shift_reconciliation",
+          "kind": "function",
+          "start_line": 20,
+          "end_line": 64,
+          "signature": "fn test_shift_reconciliation() {"
+        },
+        {
+          "name": "test_salary_calculation_and_concurrent_payroll",
+          "qualified_name": "test_salary_calculation_and_concurrent_payroll",
+          "kind": "function",
+          "start_line": 67,
+          "end_line": 117,
+          "signature": "async fn test_salary_calculation_and_concurrent_payroll() {"
+        },
+        {
+          "name": "test_leave_allocation_and_overlap_detection",
+          "qualified_name": "test_leave_allocation_and_overlap_detection",
+          "kind": "function",
+          "start_line": 120,
+          "end_line": 155,
+          "signature": "fn test_leave_allocation_and_overlap_detection() {"
+        }
+      ],
+      "last_scanned_at": "2026-09-27T20:05:37.416845567Z"
     },
-    "crates/erp-hr/Cargo.toml": {
-      "relative_path": "crates/erp-hr/Cargo.toml",
-      "language": "toml",
-      "size_bytes": 566,
-      "line_count": 1,
-      "content_hash": "026d8e9c3542dccac1bebcdf1a5a929cef570103f51a02ad4f55929e8b7a54ad",
-      "symbols": [],
-      "last_scanned_at": "2026-09-27T13:45:05.779527727Z"
-    },
-    "crates/desk-components/src/form_engine/worker_dashboard.rs": {
-      "relative_path": "crates/desk-components/src/form_engine/worker_dashboard.rs",
+    "crates/frappe-storage/src/lib.rs": {
+      "relative_path": "crates/frappe-storage/src/lib.rs",
       "language": "rust",
-      "size_bytes": 20537,
-      "line_count": 1,
-      "content_hash": "8cbb805adcd731c24264a22a6d52ae466309111001c2c0dc63edf8d193abda74",
-      "symbols": [],
-      "last_scanned_at": "2026-09-27T13:45:05.801238947Z"
+      "size_bytes": 4282,
+      "line_count": 159,
+      "content_hash": "414bb0250005a93123ef0290e35b800fa4023d831710dfaa7254c585fd3c92c4",
+      "symbols": [
+        {
+          "name": "drive",
+          "qualified_name": "drive",
+          "kind": "module",
+          "start_line": 2,
+          "end_line": 2,
+          "signature": "pub mod drive;"
+        },
+        {
+          "name": "surreal",
+          "qualified_name": "surreal",
+          "kind": "module",
+          "start_line": 3,
+          "end_line": 3,
+          "signature": "pub mod surreal;"
+        },
+        {
+          "name": "TenantContext",
+          "qualified_name": "TenantContext",
+          "kind": "struct",
+          "start_line": 13,
+          "end_line": 18,
+          "signature": "pub struct TenantContext {"
+        },
+        {
+          "name": "surreal_use",
+          "qualified_name": "impl TenantContext::surreal_use",
+          "kind": "method",
+          "start_line": 23,
+          "end_line": 25,
+          "signature": "pub fn surreal_use(&self) -> String {"
+        },
+        {
+          "name": "from_headers",
+          "qualified_name": "impl TenantContext::from_headers",
+          "kind": "method",
+          "start_line": 29,
+          "end_line": 41,
+          "signature": "pub fn from_headers(headers: &HashMap<String, String>, host: &str) -> Option<Self> {"
+        },
+        {
+          "name": "TenantRegistry",
+          "qualified_name": "TenantRegistry",
+          "kind": "struct",
+          "start_line": 46,
+          "end_line": 48,
+          "signature": "pub struct TenantRegistry {"
+        },
+        {
+          "name": "insert",
+          "qualified_name": "impl TenantRegistry::insert",
+          "kind": "method",
+          "start_line": 51,
+          "end_line": 55,
+          "signature": "pub fn insert(&self, ctx: TenantContext) {"
+        },
+        {
+          "name": "get",
+          "qualified_name": "impl TenantRegistry::get",
+          "kind": "method",
+          "start_line": 58,
+          "end_line": 60,
+          "signature": "pub fn get(&self, site: &str) -> Option<TenantContext> {"
+        },
+        {
+          "name": "TaskState",
+          "qualified_name": "TaskState",
+          "kind": "enum",
+          "start_line": 64,
+          "end_line": 69,
+          "signature": "pub enum TaskState {"
+        },
+        {
+          "name": "QueueTask",
+          "qualified_name": "QueueTask",
+          "kind": "struct",
+          "start_line": 72,
+          "end_line": 76,
+          "signature": "pub struct QueueTask {"
+        },
+        {
+          "name": "transition",
+          "qualified_name": "impl QueueTask::transition",
+          "kind": "method",
+          "start_line": 79,
+          "end_line": 91,
+          "signature": "pub fn transition(&mut self, to: TaskState) -> bool {"
+        },
+        {
+          "name": "LiveDiff",
+          "qualified_name": "LiveDiff",
+          "kind": "struct",
+          "start_line": 96,
+          "end_line": 101,
+          "signature": "pub struct LiveDiff {"
+        },
+        {
+          "name": "to_frame",
+          "qualified_name": "impl LiveDiff::to_frame",
+          "kind": "method",
+          "start_line": 105,
+          "end_line": 107,
+          "signature": "pub fn to_frame(&self) -> String {"
+        },
+        {
+          "name": "relate",
+          "qualified_name": "relate",
+          "kind": "function",
+          "start_line": 112,
+          "end_line": 118,
+          "signature": "pub fn relate(a: &str, verb: &str, b: &str, attrs: &str) -> String {"
+        },
+        {
+          "name": "tests",
+          "qualified_name": "tests",
+          "kind": "module",
+          "start_line": 121,
+          "end_line": 159,
+          "signature": "mod tests {"
+        },
+        {
+          "name": "test_deduplication_storage",
+          "qualified_name": "test_deduplication_storage",
+          "kind": "function",
+          "start_line": 125,
+          "end_line": 158,
+          "signature": "fn test_deduplication_storage() {"
+        }
+      ],
+      "last_scanned_at": "2026-09-27T20:05:37.419487341Z"
     },
-    "crates/erp-lending/Cargo.toml": {
-      "relative_path": "crates/erp-lending/Cargo.toml",
-      "language": "toml",
-      "size_bytes": 252,
-      "line_count": 1,
-      "content_hash": "e2de180918e7c49e13e7212e96aa328c75c1e671335d76574993400d6d724a5d",
-      "symbols": [],
-      "last_scanned_at": "2026-09-27T13:45:05.817408973Z"
-    },
-    "crates/erp-learning/src/lib.rs": {
-      "relative_path": "crates/erp-learning/src/lib.rs",
+    "crates/frappe-net/src/lib.rs": {
+      "relative_path": "crates/frappe-net/src/lib.rs",
       "language": "rust",
-      "size_bytes": 182,
-      "line_count": 1,
-      "content_hash": "240bc9d2cc203286e8162c6d5f3505bde4a398370935716b8a983383fa660c0d",
-      "symbols": [],
-      "last_scanned_at": "2026-09-27T13:45:05.818666338Z"
+      "size_bytes": 375,
+      "line_count": 13,
+      "content_hash": "0024476847c66130e1a097054ac4e200b30c2e14c2978c87ea1d4041948af131",
+      "symbols": [
+        {
+          "name": "live",
+          "qualified_name": "live",
+          "kind": "module",
+          "start_line": 1,
+          "end_line": 1,
+          "signature": "pub mod live;"
+        },
+        {
+          "name": "queue",
+          "qualified_name": "queue",
+          "kind": "module",
+          "start_line": 2,
+          "end_line": 2,
+          "signature": "pub mod queue;"
+        },
+        {
+          "name": "routes",
+          "qualified_name": "routes",
+          "kind": "module",
+          "start_line": 3,
+          "end_line": 3,
+          "signature": "pub mod routes;"
+        },
+        {
+          "name": "server",
+          "qualified_name": "server",
+          "kind": "module",
+          "start_line": 4,
+          "end_line": 4,
+          "signature": "pub mod server;"
+        },
+        {
+          "name": "tenant",
+          "qualified_name": "tenant",
+          "kind": "module",
+          "start_line": 5,
+          "end_line": 5,
+          "signature": "pub mod tenant;"
+        }
+      ],
+      "last_scanned_at": "2026-09-27T20:05:37.414042318Z"
     },
-    "crates/erp-learning/Cargo.toml": {
-      "relative_path": "crates/erp-learning/Cargo.toml",
-      "language": "toml",
-      "size_bytes": 304,
-      "line_count": 1,
-      "content_hash": "9ec7a0ee624b94de8feb720bb36deb4bdf1b65928879ded68048a8abeaf3fb4f",
-      "symbols": [],
-      "last_scanned_at": "2026-09-27T13:45:05.819070025Z"
-    },
-    "crates/desk-components/src/form_engine/live_feed.rs": {
-      "relative_path": "crates/desk-components/src/form_engine/live_feed.rs",
+    "crates/frappe-framework/src/lifecycle.rs": {
+      "relative_path": "crates/frappe-framework/src/lifecycle.rs",
       "language": "rust",
-      "size_bytes": 10403,
-      "line_count": 1,
-      "content_hash": "4d557e64aaed0b3f80b55962fab30880c777e4d4df7205671cc1782907ae09f5",
-      "symbols": [],
-      "last_scanned_at": "2026-09-27T13:45:05.810691152Z"
+      "size_bytes": 6261,
+      "line_count": 217,
+      "content_hash": "3a0a455eca4ae6b19f310b906301e06fa4c2c5f33da4fc338e905134f9ca628e",
+      "symbols": [
+        {
+          "name": "DocumentError",
+          "qualified_name": "DocumentError",
+          "kind": "enum",
+          "start_line": 8,
+          "end_line": 27,
+          "signature": "pub enum DocumentError {"
+        },
+        {
+          "name": "Document",
+          "qualified_name": "Document",
+          "kind": "struct",
+          "start_line": 31,
+          "end_line": 40,
+          "signature": "pub struct Document {"
+        },
+        {
+          "name": "new",
+          "qualified_name": "impl Document::new",
+          "kind": "method",
+          "start_line": 45,
+          "end_line": 52,
+          "signature": "pub fn new(doctype: &str, data: serde_json::Value) -> Self {"
+        },
+        {
+          "name": "is_draft",
+          "qualified_name": "impl Document::is_draft",
+          "kind": "method",
+          "start_line": 56,
+          "end_line": 58,
+          "signature": "pub fn is_draft(&self) -> bool {"
+        },
+        {
+          "name": "is_submitted",
+          "qualified_name": "impl Document::is_submitted",
+          "kind": "method",
+          "start_line": 62,
+          "end_line": 64,
+          "signature": "pub fn is_submitted(&self) -> bool {"
+        },
+        {
+          "name": "is_cancelled",
+          "qualified_name": "impl Document::is_cancelled",
+          "kind": "method",
+          "start_line": 68,
+          "end_line": 70,
+          "signature": "pub fn is_cancelled(&self) -> bool {"
+        },
+        {
+          "name": "DocumentController",
+          "qualified_name": "DocumentController",
+          "kind": "struct",
+          "start_line": 74,
+          "end_line": 76,
+          "signature": "pub struct DocumentController {"
+        },
+        {
+          "name": "default",
+          "qualified_name": "impl Default for DocumentController::default",
+          "kind": "method",
+          "start_line": 79,
+          "end_line": 81,
+          "signature": "fn default() -> Self {"
+        },
+        {
+          "name": "new",
+          "qualified_name": "impl DocumentController::new",
+          "kind": "method",
+          "start_line": 87,
+          "end_line": 91,
+          "signature": "pub fn new() -> Self {"
+        },
+        {
+          "name": "insert",
+          "qualified_name": "impl DocumentController::insert",
+          "kind": "method",
+          "start_line": 94,
+          "end_line": 134,
+          "signature": "pub fn insert("
+        },
+        {
+          "name": "update",
+          "qualified_name": "impl DocumentController::update",
+          "kind": "method",
+          "start_line": 137,
+          "end_line": 164,
+          "signature": "pub fn update("
+        },
+        {
+          "name": "submit",
+          "qualified_name": "impl DocumentController::submit",
+          "kind": "method",
+          "start_line": 167,
+          "end_line": 190,
+          "signature": "pub fn submit("
+        },
+        {
+          "name": "cancel",
+          "qualified_name": "impl DocumentController::cancel",
+          "kind": "method",
+          "start_line": 193,
+          "end_line": 216,
+          "signature": "pub fn cancel("
+        }
+      ],
+      "last_scanned_at": "2026-09-27T20:05:37.422145737Z"
     },
-    "crates/erp-learning/src/learning_progress.rs": {
-      "relative_path": "crates/erp-learning/src/learning_progress.rs",
+    "README.md": {
+      "relative_path": "README.md",
+      "language": "markdown",
+      "size_bytes": 0,
+      "line_count": 0,
+      "content_hash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "symbols": [],
+      "last_scanned_at": "2026-09-27T20:05:37.437584384Z"
+    },
+    "crates/erp-inventory/src/warehouse.rs": {
+      "relative_path": "crates/erp-inventory/src/warehouse.rs",
       "language": "rust",
-      "size_bytes": 759,
-      "line_count": 5,
-      "content_hash": "555f26a389c865ebb2299d7449963e8c4d58a3cd907c2b0e014f041761e8ae0e",
-      "symbols": [],
-      "last_scanned_at": "2026-09-27T13:45:05.819047466Z"
-    },
-    "crates/erp-support/src/lib.rs": {
-      "relative_path": "crates/erp-support/src/lib.rs",
-      "language": "rust",
-      "size_bytes": 66,
-      "line_count": 1,
-      "content_hash": "efbb03b7a7f6fd3c29391d4d0281e1830a85caadd831c3f04716faca4107a42e",
-      "symbols": [],
-      "last_scanned_at": "2026-09-27T13:45:05.817454091Z"
-    },
-    "Taskfile.yaml": {
-      "relative_path": "Taskfile.yaml",
-      "language": "yaml",
-      "size_bytes": 429,
-      "line_count": 20,
-      "content_hash": "b4cb51b31c48e2b58f84d1e4cf6d3cf35e264bace1c6bbdabd21f7ca3943a043",
-      "symbols": [],
-      "last_scanned_at": "2026-09-27T13:45:05.819175696Z"
-    },
-    "crates/frappe-meta/src/lib.rs": {
-      "relative_path": "crates/frappe-meta/src/lib.rs",
-      "language": "rust",
-      "size_bytes": 78,
-      "line_count": 1,
-      "content_hash": "3a13ec0b60492b3f4f92009691f043615ac7770b77d2cc047125c69b2918b82a",
-      "symbols": [],
-      "last_scanned_at": "2026-09-27T13:45:05.810995104Z"
-    },
-    "crates/desk-components/src/form_engine/interpreter.rs": {
-      "relative_path": "crates/desk-components/src/form_engine/interpreter.rs",
-      "language": "rust",
-      "size_bytes": 24025,
-      "line_count": 7,
-      "content_hash": "efe42aa55b213ab6a6a7023558a0a9bb011a8d19e4eb4eedec857744db34f5e5",
-      "symbols": [],
-      "last_scanned_at": "2026-09-27T13:45:05.802438134Z"
-    },
-    "crates/frappe-meta/Cargo.toml": {
-      "relative_path": "crates/frappe-meta/Cargo.toml",
-      "language": "toml",
-      "size_bytes": 319,
-      "line_count": 1,
-      "content_hash": "88007e1608ff85aea5bf995ee597b6b2b29d446446c0fc701353d597d25601cc",
-      "symbols": [],
-      "last_scanned_at": "2026-09-27T13:45:05.817240374Z"
-    },
-    "crates/desk-components/src/lib.rs": {
-      "relative_path": "crates/desk-components/src/lib.rs",
-      "language": "rust",
-      "size_bytes": 465,
-      "line_count": 1,
-      "content_hash": "f04d191db7aba8081a02ec3de8e4687c465d5bd3ba8f43bed11a694457f5adfe",
-      "symbols": [],
-      "last_scanned_at": "2026-09-27T13:45:05.781035616Z"
-    },
-    "crates/frappe-framework/Cargo.toml": {
-      "relative_path": "crates/frappe-framework/Cargo.toml",
-      "language": "toml",
-      "size_bytes": 239,
-      "line_count": 3,
-      "content_hash": "b5957f0811f53745884481911f230c3ab0065087398a530a19b075f927ae1221",
-      "symbols": [],
-      "last_scanned_at": "2026-09-27T13:45:05.779657144Z"
-    },
-    "crates/frappe-framework/src/lib.rs": {
-      "relative_path": "crates/frappe-framework/src/lib.rs",
-      "language": "rust",
-      "size_bytes": 44,
-      "line_count": 1,
-      "content_hash": "ee890683b5953e56fa1da4ac9a89f91b48cf8f88688b0a477f31b3e6998c7dbb",
-      "symbols": [],
-      "last_scanned_at": "2026-09-27T13:45:05.779625087Z"
-    },
-    "crates/desk-components/src/form_engine/mod.rs": {
-      "relative_path": "crates/desk-components/src/form_engine/mod.rs",
-      "language": "rust",
-      "size_bytes": 130,
-      "line_count": 1,
-      "content_hash": "b7ddeb7bc50186827fb535b9f72f317b6e61ec183229f140662f3313309ab2d5",
-      "symbols": [],
-      "last_scanned_at": "2026-09-27T13:45:05.810866874Z"
-    },
-    "crates/erp-support/src/gameplan.rs": {
-      "relative_path": "crates/erp-support/src/gameplan.rs",
-      "language": "rust",
-      "size_bytes": 14692,
-      "line_count": 1,
-      "content_hash": "9b87be3dd7076504333c55bb968c3f792a723313911c9994cb6bf341008fc5e2",
-      "symbols": [],
-      "last_scanned_at": "2026-09-27T13:45:05.817994319Z"
-    },
-    "crates/erp-support/Cargo.toml": {
-      "relative_path": "crates/erp-support/Cargo.toml",
-      "language": "toml",
-      "size_bytes": 586,
-      "line_count": 1,
-      "content_hash": "fcfe9ae45cd7a2562a82135eec5742b6025b7017f29f2566cfa106d6b687032e",
-      "symbols": [],
-      "last_scanned_at": "2026-09-27T13:45:05.818024001Z"
-    },
-    "crates/erp-inventory/src/lib.rs": {
-      "relative_path": "crates/erp-inventory/src/lib.rs",
-      "language": "rust",
-      "size_bytes": 24,
-      "line_count": 1,
-      "content_hash": "7cc488820c87847ba6bd519659e13a4fde295d535afc0b0c92f044abbb74940c",
-      "symbols": [],
-      "last_scanned_at": "2026-09-27T13:45:05.819134140Z"
+      "size_bytes": 4132,
+      "line_count": 125,
+      "content_hash": "6050374341fe85953470108dc1409cbe68d599e37977d8b9bae0e9006ad23757",
+      "symbols": [
+        {
+          "name": "Warehouse",
+          "qualified_name": "Warehouse",
+          "kind": "struct",
+          "start_line": 8,
+          "end_line": 19,
+          "signature": "pub struct Warehouse {"
+        },
+        {
+          "name": "create_purchase_receipt_gl_entries",
+          "qualified_name": "create_purchase_receipt_gl_entries",
+          "kind": "function",
+          "start_line": 25,
+          "end_line": 57,
+          "signature": "pub fn create_purchase_receipt_gl_entries("
+        },
+        {
+          "name": "create_delivery_note_gl_entries",
+          "qualified_name": "create_delivery_note_gl_entries",
+          "kind": "function",
+          "start_line": 63,
+          "end_line": 95,
+          "signature": "pub fn create_delivery_note_gl_entries("
+        },
+        {
+          "name": "gl_entries_to_journal_entry",
+          "qualified_name": "gl_entries_to_journal_entry",
+          "kind": "function",
+          "start_line": 99,
+          "end_line": 125,
+          "signature": "pub fn gl_entries_to_journal_entry("
+        }
+      ],
+      "last_scanned_at": "2026-09-27T20:05:37.437492961Z"
     },
     "docker-compose.yml": {
       "relative_path": "docker-compose.yml",
@@ -224,7 +1595,480 @@
       "line_count": 23,
       "content_hash": "ae76a3c1e1d3c883cbd0e1334281a17b006c019fec009ac0154e496c483920fc",
       "symbols": [],
-      "last_scanned_at": "2026-09-27T13:45:05.850114718Z"
+      "last_scanned_at": "2026-09-27T20:05:37.441158200Z"
+    },
+    "crates/erp-learning/src/lib.rs": {
+      "relative_path": "crates/erp-learning/src/lib.rs",
+      "language": "rust",
+      "size_bytes": 3504,
+      "line_count": 95,
+      "content_hash": "60c4cd12037c31b23913229a8a4130ab6462b6a2814032cd993947856ea6519f",
+      "symbols": [
+        {
+          "name": "lms",
+          "qualified_name": "lms",
+          "kind": "module",
+          "start_line": 1,
+          "end_line": 1,
+          "signature": "pub mod lms;"
+        },
+        {
+          "name": "tests",
+          "qualified_name": "tests",
+          "kind": "module",
+          "start_line": 8,
+          "end_line": 95,
+          "signature": "mod tests {"
+        },
+        {
+          "name": "test_lms_progress_and_certificate_issuance",
+          "qualified_name": "test_lms_progress_and_certificate_issuance",
+          "kind": "function",
+          "start_line": 13,
+          "end_line": 94,
+          "signature": "fn test_lms_progress_and_certificate_issuance() {"
+        }
+      ],
+      "last_scanned_at": "2026-09-27T20:05:37.435654999Z"
+    },
+    "crates/erp-accounting/src/assets.rs": {
+      "relative_path": "crates/erp-accounting/src/assets.rs",
+      "language": "rust",
+      "size_bytes": 1122,
+      "line_count": 41,
+      "content_hash": "cb1caaddc29169f9a58adedc690e17ab52dbd68d2d1a5f63d4db8d4f98b95da6",
+      "symbols": [
+        {
+          "name": "straight_line_depreciation",
+          "qualified_name": "straight_line_depreciation",
+          "kind": "function",
+          "start_line": 5,
+          "end_line": 27,
+          "signature": "pub fn straight_line_depreciation("
+        },
+        {
+          "name": "tests",
+          "qualified_name": "tests",
+          "kind": "module",
+          "start_line": 30,
+          "end_line": 41,
+          "signature": "mod tests {"
+        },
+        {
+          "name": "test_depreciation_zero_loss",
+          "qualified_name": "test_depreciation_zero_loss",
+          "kind": "function",
+          "start_line": 35,
+          "end_line": 40,
+          "signature": "fn test_depreciation_zero_loss() {"
+        }
+      ],
+      "last_scanned_at": "2026-09-27T20:05:37.430826192Z"
+    },
+    "crates/erp-accounting/src/decimal_ledger.rs": {
+      "relative_path": "crates/erp-accounting/src/decimal_ledger.rs",
+      "language": "rust",
+      "size_bytes": 1232,
+      "line_count": 26,
+      "content_hash": "5fff8c54d2075d44a1b932c2033c6d92d4116ab2edf0fcfe624d8df5fb898704",
+      "symbols": [
+        {
+          "name": "DecLine",
+          "qualified_name": "DecLine",
+          "kind": "struct",
+          "start_line": 2,
+          "end_line": 2,
+          "signature": "pub struct DecLine { pub account: String, pub debit: Decimal, pub credit: Decimal }"
+        },
+        {
+          "name": "verify_balanced_dec",
+          "qualified_name": "verify_balanced_dec",
+          "kind": "function",
+          "start_line": 4,
+          "end_line": 6,
+          "signature": "pub fn verify_balanced_dec(lines: &[DecLine]) -> bool {"
+        },
+        {
+          "name": "straight_line_dec",
+          "qualified_name": "straight_line_dec",
+          "kind": "function",
+          "start_line": 8,
+          "end_line": 14,
+          "signature": "pub fn straight_line_dec(cost: Decimal, salvage: Decimal, n: usize) -> Vec<Decimal> {"
+        },
+        {
+          "name": "t",
+          "qualified_name": "t",
+          "kind": "module",
+          "start_line": 15,
+          "end_line": 26,
+          "signature": "mod t { use super::*; use std::str::FromStr;"
+        },
+        {
+          "name": "dec_balanced",
+          "qualified_name": "dec_balanced",
+          "kind": "function",
+          "start_line": 16,
+          "end_line": 20,
+          "signature": "fn dec_balanced() {"
+        },
+        {
+          "name": "no_float_drift",
+          "qualified_name": "no_float_drift",
+          "kind": "function",
+          "start_line": 21,
+          "end_line": 25,
+          "signature": "fn no_float_drift() {"
+        }
+      ],
+      "last_scanned_at": "2026-09-27T20:05:37.431052969Z"
+    },
+    "crates/erp-learning/Cargo.toml": {
+      "relative_path": "crates/erp-learning/Cargo.toml",
+      "language": "toml",
+      "size_bytes": 330,
+      "line_count": 12,
+      "content_hash": "d8f1b13cd8e5b56906cf1551030293baa84c5b5c6ed355cb2d9a6681e0f5ebc5",
+      "symbols": [
+        {
+          "name": "package",
+          "qualified_name": "[package]",
+          "kind": "module",
+          "start_line": 1,
+          "end_line": 1,
+          "signature": "[package]"
+        },
+        {
+          "name": "dependencies",
+          "qualified_name": "[dependencies]",
+          "kind": "module",
+          "start_line": 6,
+          "end_line": 6,
+          "signature": "[dependencies]"
+        }
+      ],
+      "last_scanned_at": "2026-09-27T20:05:37.436112115Z"
+    },
+    "crates/erp-hr/src/attendance.rs": {
+      "relative_path": "crates/erp-hr/src/attendance.rs",
+      "language": "rust",
+      "size_bytes": 4140,
+      "line_count": 126,
+      "content_hash": "74763582c3629cb311c30cce645f5c107a68478aa9346005c0f5aaade8d77b2a",
+      "symbols": [
+        {
+          "name": "HrError",
+          "qualified_name": "HrError",
+          "kind": "enum",
+          "start_line": 8,
+          "end_line": 28,
+          "signature": "pub enum HrError {"
+        },
+        {
+          "name": "BiometricPunch",
+          "qualified_name": "BiometricPunch",
+          "kind": "struct",
+          "start_line": 32,
+          "end_line": 41,
+          "signature": "pub struct BiometricPunch {"
+        },
+        {
+          "name": "BiometricIngestionGateway",
+          "qualified_name": "BiometricIngestionGateway",
+          "kind": "struct",
+          "start_line": 44,
+          "end_line": 46,
+          "signature": "pub struct BiometricIngestionGateway {"
+        },
+        {
+          "name": "new",
+          "qualified_name": "impl BiometricIngestionGateway::new",
+          "kind": "method",
+          "start_line": 51,
+          "end_line": 54,
+          "signature": "pub fn new(capacity: usize) -> (Self, mpsc::Receiver<BiometricPunch>) {"
+        },
+        {
+          "name": "ingest_punch",
+          "qualified_name": "impl BiometricIngestionGateway::ingest_punch",
+          "kind": "method",
+          "start_line": 57,
+          "end_line": 61,
+          "signature": "pub fn ingest_punch(&self, punch: BiometricPunch) -> Result<(), HrError> {"
+        },
+        {
+          "name": "ShiftType",
+          "qualified_name": "ShiftType",
+          "kind": "struct",
+          "start_line": 66,
+          "end_line": 77,
+          "signature": "pub struct ShiftType {"
+        },
+        {
+          "name": "AttendanceStatus",
+          "qualified_name": "AttendanceStatus",
+          "kind": "enum",
+          "start_line": 81,
+          "end_line": 87,
+          "signature": "pub enum AttendanceStatus {"
+        },
+        {
+          "name": "AttendanceReconciler",
+          "qualified_name": "AttendanceReconciler",
+          "kind": "struct",
+          "start_line": 90,
+          "end_line": 90,
+          "signature": "pub struct AttendanceReconciler;"
+        },
+        {
+          "name": "reconcile_shift",
+          "qualified_name": "impl AttendanceReconciler::reconcile_shift",
+          "kind": "method",
+          "start_line": 95,
+          "end_line": 125,
+          "signature": "pub fn reconcile_shift("
+        }
+      ],
+      "last_scanned_at": "2026-09-27T20:05:37.418614665Z"
+    },
+    "crates/rbench/Cargo.toml": {
+      "relative_path": "crates/rbench/Cargo.toml",
+      "language": "toml",
+      "size_bytes": 167,
+      "line_count": 8,
+      "content_hash": "dd8bdcd3cfc2263fc77ea1ed85212e88a710e3b69f5e4e76c1384a9b296fe4ab",
+      "symbols": [
+        {
+          "name": "package",
+          "qualified_name": "[package]",
+          "kind": "module",
+          "start_line": 1,
+          "end_line": 1,
+          "signature": "[package]"
+        },
+        {
+          "name": "dependencies",
+          "qualified_name": "[dependencies]",
+          "kind": "module",
+          "start_line": 6,
+          "end_line": 6,
+          "signature": "[dependencies]"
+        }
+      ],
+      "last_scanned_at": "2026-09-27T20:05:37.435240626Z"
+    },
+    "crates/desk-components/Cargo.toml": {
+      "relative_path": "crates/desk-components/Cargo.toml",
+      "language": "toml",
+      "size_bytes": 227,
+      "line_count": 10,
+      "content_hash": "d29d316d442fd7cea90917b414163b79064585500c31b97f9b6a6d8e6b656369",
+      "symbols": [
+        {
+          "name": "package",
+          "qualified_name": "[package]",
+          "kind": "module",
+          "start_line": 1,
+          "end_line": 1,
+          "signature": "[package]"
+        },
+        {
+          "name": "dependencies",
+          "qualified_name": "[dependencies]",
+          "kind": "module",
+          "start_line": 6,
+          "end_line": 6,
+          "signature": "[dependencies]"
+        }
+      ],
+      "last_scanned_at": "2026-09-27T20:05:37.423276061Z"
+    },
+    "crates/frappe-framework/src/scripting.rs": {
+      "relative_path": "crates/frappe-framework/src/scripting.rs",
+      "language": "rust",
+      "size_bytes": 4645,
+      "line_count": 135,
+      "content_hash": "41c29da8ce346fcb9953db938c6b338cf11a0356e8a8fa01ef80dd7fe4235ed1",
+      "symbols": [
+        {
+          "name": "ScriptError",
+          "qualified_name": "ScriptError",
+          "kind": "enum",
+          "start_line": 7,
+          "end_line": 20,
+          "signature": "pub enum ScriptError {"
+        },
+        {
+          "name": "LifecycleEvent",
+          "qualified_name": "LifecycleEvent",
+          "kind": "enum",
+          "start_line": 24,
+          "end_line": 41,
+          "signature": "pub enum LifecycleEvent {"
+        },
+        {
+          "name": "RhaiHookEngine",
+          "qualified_name": "RhaiHookEngine",
+          "kind": "struct",
+          "start_line": 44,
+          "end_line": 46,
+          "signature": "pub struct RhaiHookEngine {"
+        },
+        {
+          "name": "default",
+          "qualified_name": "impl Default for RhaiHookEngine::default",
+          "kind": "method",
+          "start_line": 49,
+          "end_line": 51,
+          "signature": "fn default() -> Self {"
+        },
+        {
+          "name": "new",
+          "qualified_name": "impl RhaiHookEngine::new",
+          "kind": "method",
+          "start_line": 57,
+          "end_line": 83,
+          "signature": "pub fn new() -> Self {"
+        },
+        {
+          "name": "compile",
+          "qualified_name": "impl RhaiHookEngine::compile",
+          "kind": "method",
+          "start_line": 86,
+          "end_line": 90,
+          "signature": "pub fn compile(&self, script: &str) -> Result<AST, ScriptError> {"
+        },
+        {
+          "name": "dispatch_hook",
+          "qualified_name": "impl RhaiHookEngine::dispatch_hook",
+          "kind": "method",
+          "start_line": 93,
+          "end_line": 134,
+          "signature": "pub fn dispatch_hook("
+        }
+      ],
+      "last_scanned_at": "2026-09-27T20:05:37.421514086Z"
+    },
+    ".idea/inspectionProfiles/Project_Default.xml": {
+      "relative_path": ".idea/inspectionProfiles/Project_Default.xml",
+      "language": "xml",
+      "size_bytes": 251,
+      "line_count": 6,
+      "content_hash": "725960a07196ca7e40f4c7343c9b56132ec0a79956ab048cd6568c27dc68d50c",
+      "symbols": [],
+      "last_scanned_at": "2026-09-27T20:05:37.437654436Z"
+    },
+    "crates/erp-cms/src/subtitles.rs": {
+      "relative_path": "crates/erp-cms/src/subtitles.rs",
+      "language": "rust",
+      "size_bytes": 1918,
+      "line_count": 53,
+      "content_hash": "66d02cb2f07a07c4b1343a0de8cc79d95a2044f50bef4778658a5af86be4fd54",
+      "symbols": [
+        {
+          "name": "SubtitleSegment",
+          "qualified_name": "SubtitleSegment",
+          "kind": "struct",
+          "start_line": 5,
+          "end_line": 10,
+          "signature": "pub struct SubtitleSegment {"
+        },
+        {
+          "name": "SubtitleSearchEngine",
+          "qualified_name": "SubtitleSearchEngine",
+          "kind": "struct",
+          "start_line": 13,
+          "end_line": 13,
+          "signature": "pub struct SubtitleSearchEngine;"
+        },
+        {
+          "name": "compile_vector_index_ddl",
+          "qualified_name": "impl SubtitleSearchEngine::compile_vector_index_ddl",
+          "kind": "method",
+          "start_line": 18,
+          "end_line": 28,
+          "signature": "pub fn compile_vector_index_ddl() -> Vec<String> {"
+        },
+        {
+          "name": "cosine_similarity",
+          "qualified_name": "impl SubtitleSearchEngine::cosine_similarity",
+          "kind": "method",
+          "start_line": 32,
+          "end_line": 52,
+          "signature": "pub fn cosine_similarity(a: &[f32], b: &[f32]) -> f32 {"
+        }
+      ],
+      "last_scanned_at": "2026-09-27T20:05:37.432049126Z"
+    },
+    "crates/frappe-storage/Cargo.toml": {
+      "relative_path": "crates/frappe-storage/Cargo.toml",
+      "language": "toml",
+      "size_bytes": 436,
+      "line_count": 14,
+      "content_hash": "362264fd00d83b2f1dd1610e2ae9d145ca94c21bb1df76172389eb92e8a1b044",
+      "symbols": [
+        {
+          "name": "package",
+          "qualified_name": "[package]",
+          "kind": "module",
+          "start_line": 1,
+          "end_line": 1,
+          "signature": "[package]"
+        },
+        {
+          "name": "dependencies",
+          "qualified_name": "[dependencies]",
+          "kind": "module",
+          "start_line": 6,
+          "end_line": 6,
+          "signature": "[dependencies]"
+        }
+      ],
+      "last_scanned_at": "2026-09-27T20:05:37.420223476Z"
+    },
+    "crates/frappe-meta/Cargo.toml": {
+      "relative_path": "crates/frappe-meta/Cargo.toml",
+      "language": "toml",
+      "size_bytes": 198,
+      "line_count": 10,
+      "content_hash": "115b625f7419f42ee16ddb7b0be92914de17b0432fe98af49074bb50a58f0594",
+      "symbols": [
+        {
+          "name": "package",
+          "qualified_name": "[package]",
+          "kind": "module",
+          "start_line": 1,
+          "end_line": 1,
+          "signature": "[package]"
+        },
+        {
+          "name": "dependencies",
+          "qualified_name": "[dependencies]",
+          "kind": "module",
+          "start_line": 6,
+          "end_line": 6,
+          "signature": "[dependencies]"
+        }
+      ],
+      "last_scanned_at": "2026-09-27T20:05:37.426211101Z"
+    },
+    "CHANGELOG.md": {
+      "relative_path": "CHANGELOG.md",
+      "language": "markdown",
+      "size_bytes": 0,
+      "line_count": 0,
+      "content_hash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "symbols": [],
+      "last_scanned_at": "2026-09-27T20:05:37.441142765Z"
+    },
+    ".idea/modules.xml": {
+      "relative_path": ".idea/modules.xml",
+      "language": "xml",
+      "size_bytes": 286,
+      "line_count": 8,
+      "content_hash": "ddb4311c332516d229f70131fee2ab49d99786245caeeb1fe43c76fc9cc7e679",
+      "symbols": [],
+      "last_scanned_at": "2026-09-27T20:05:37.437629502Z"
     },
     ".gemini/instructions.md": {
       "relative_path": ".gemini/instructions.md",
@@ -266,61 +2110,484 @@
           "signature": "## Common lookups"
         }
       ],
-      "last_scanned_at": "2026-09-27T13:45:05.850146775Z"
+      "last_scanned_at": "2026-09-27T20:05:37.441190258Z"
     },
-    "crates/erp-cms/Cargo.toml": {
-      "relative_path": "crates/erp-cms/Cargo.toml",
-      "language": "toml",
-      "size_bytes": 614,
-      "line_count": 1,
-      "content_hash": "d76403b805f993beb60c6cf9f2b3b43eba1ee805993d301c4203b8ae98bb809c",
-      "symbols": [],
-      "last_scanned_at": "2026-09-27T13:45:05.818244842Z"
-    },
-    "crates/desk-app/Cargo.toml": {
-      "relative_path": "crates/desk-app/Cargo.toml",
-      "language": "toml",
-      "size_bytes": 200,
-      "line_count": 1,
-      "content_hash": "6d9c54dee5660c46886f32d80e57e9dd0ffa57ee0cd2a762b036d9c8e0c3a33a",
-      "symbols": [],
-      "last_scanned_at": "2026-09-27T13:45:05.818289960Z"
-    },
-    "crates/desk-components/src/form_engine/live_form.rs": {
-      "relative_path": "crates/desk-components/src/form_engine/live_form.rs",
+    "crates/desk-components/src/signals.rs": {
+      "relative_path": "crates/desk-components/src/signals.rs",
       "language": "rust",
-      "size_bytes": 20678,
-      "line_count": 1,
-      "content_hash": "6fa95b337bb42af9dd8d9b39e3462d856eec774cd1449285edbc1c8dcb77ff3c",
-      "symbols": [],
-      "last_scanned_at": "2026-09-27T13:45:05.792345967Z"
+      "size_bytes": 1233,
+      "line_count": 35,
+      "content_hash": "ec5a9b47a2fb3bfc817f61fa567cf319c99362b795bc5f760c42cd2717b74a83",
+      "symbols": [
+        {
+          "name": "filter_docs",
+          "qualified_name": "filter_docs",
+          "kind": "function",
+          "start_line": 7,
+          "end_line": 9,
+          "signature": "pub fn filter_docs<'a>(docs: &'a [String], query: &str) -> Vec<&'a String> {"
+        },
+        {
+          "name": "visible_from_signal",
+          "qualified_name": "visible_from_signal",
+          "kind": "function",
+          "start_line": 12,
+          "end_line": 14,
+          "signature": "pub fn visible_from_signal(sig: &Signal<Vec<String>>, query: &str) -> Vec<String> {"
+        },
+        {
+          "name": "push_doc",
+          "qualified_name": "push_doc",
+          "kind": "function",
+          "start_line": 17,
+          "end_line": 19,
+          "signature": "pub fn push_doc(sig: &mut Signal<Vec<String>>, name: String) {"
+        },
+        {
+          "name": "t",
+          "qualified_name": "t",
+          "kind": "module",
+          "start_line": 22,
+          "end_line": 35,
+          "signature": "mod t {"
+        },
+        {
+          "name": "filter_kernel",
+          "qualified_name": "filter_kernel",
+          "kind": "function",
+          "start_line": 25,
+          "end_line": 34,
+          "signature": "fn filter_kernel() {"
+        }
+      ],
+      "last_scanned_at": "2026-09-27T20:05:37.422384388Z"
     },
-    "crates/erp-trade/src/lib.rs": {
-      "relative_path": "crates/erp-trade/src/lib.rs",
+    "crates/frappe-net/src/tenant.rs": {
+      "relative_path": "crates/frappe-net/src/tenant.rs",
       "language": "rust",
-      "size_bytes": 46,
-      "line_count": 1,
-      "content_hash": "e62648165f220e41201100c840a535dec64bb0b77ff539d234726a7186fdf6cf",
-      "symbols": [],
-      "last_scanned_at": "2026-09-27T13:45:05.818389694Z"
+      "size_bytes": 9009,
+      "line_count": 261,
+      "content_hash": "96bd0db1822ef10550e0a237dcbde2e023becbe4599671c0f5651c80b9968c9c",
+      "symbols": [
+        {
+          "name": "TenantId",
+          "qualified_name": "TenantId",
+          "kind": "struct",
+          "start_line": 19,
+          "end_line": 19,
+          "signature": "pub struct TenantId(pub String);"
+        },
+        {
+          "name": "TenantError",
+          "qualified_name": "TenantError",
+          "kind": "enum",
+          "start_line": 23,
+          "end_line": 42,
+          "signature": "pub enum TenantError {"
+        },
+        {
+          "name": "status_code",
+          "qualified_name": "impl ResponseError for TenantError::status_code",
+          "kind": "method",
+          "start_line": 45,
+          "end_line": 54,
+          "signature": "fn status_code(&self) -> StatusCode {"
+        },
+        {
+          "name": "error_response",
+          "qualified_name": "impl ResponseError for TenantError::error_response",
+          "kind": "method",
+          "start_line": 56,
+          "end_line": 65,
+          "signature": "fn error_response(&self) -> HttpResponse<BoxBody> {"
+        },
+        {
+          "name": "ConnectionPoolManager",
+          "qualified_name": "ConnectionPoolManager",
+          "kind": "struct",
+          "start_line": 70,
+          "end_line": 73,
+          "signature": "pub struct ConnectionPoolManager {"
+        },
+        {
+          "name": "default",
+          "qualified_name": "impl Default for ConnectionPoolManager::default",
+          "kind": "method",
+          "start_line": 76,
+          "end_line": 78,
+          "signature": "fn default() -> Self {"
+        },
+        {
+          "name": "new",
+          "qualified_name": "impl ConnectionPoolManager::new",
+          "kind": "method",
+          "start_line": 84,
+          "end_line": 89,
+          "signature": "pub fn new(inactivity_threshold: Duration) -> Self {"
+        },
+        {
+          "name": "get_or_initialize_client",
+          "qualified_name": "impl ConnectionPoolManager::get_or_initialize_client",
+          "kind": "method",
+          "start_line": 92,
+          "end_line": 122,
+          "signature": "pub async fn get_or_initialize_client("
+        },
+        {
+          "name": "evict_idle_pools",
+          "qualified_name": "impl ConnectionPoolManager::evict_idle_pools",
+          "kind": "method",
+          "start_line": 125,
+          "end_line": 133,
+          "signature": "pub async fn evict_idle_pools(&self) -> usize {"
+        },
+        {
+          "name": "spawn_maintenance_worker",
+          "qualified_name": "impl ConnectionPoolManager::spawn_maintenance_worker",
+          "kind": "method",
+          "start_line": 136,
+          "end_line": 144,
+          "signature": "pub fn spawn_maintenance_worker(self: Arc<Self>, heartbeat: Duration) {"
+        },
+        {
+          "name": "parse_tenant_id",
+          "qualified_name": "parse_tenant_id",
+          "kind": "function",
+          "start_line": 148,
+          "end_line": 165,
+          "signature": "pub fn parse_tenant_id(headers: &actix_web::http::header::HeaderMap, host: &str) -> Result<TenantId, TenantError> {"
+        },
+        {
+          "name": "validate_and_create_tenant_id",
+          "qualified_name": "validate_and_create_tenant_id",
+          "kind": "function",
+          "start_line": 167,
+          "end_line": 176,
+          "signature": "fn validate_and_create_tenant_id(tenant_str: &str) -> Result<TenantId, TenantError> {"
+        },
+        {
+          "name": "TenantResolver",
+          "qualified_name": "TenantResolver",
+          "kind": "struct",
+          "start_line": 179,
+          "end_line": 179,
+          "signature": "pub struct TenantResolver;"
+        },
+        {
+          "name": "Response",
+          "qualified_name": "impl Transform<S, ServiceRequest> for TenantResolver::Response",
+          "kind": "type",
+          "start_line": 187,
+          "end_line": 187,
+          "signature": "type Response = ServiceResponse<B>;"
+        },
+        {
+          "name": "Error",
+          "qualified_name": "impl Transform<S, ServiceRequest> for TenantResolver::Error",
+          "kind": "type",
+          "start_line": 188,
+          "end_line": 188,
+          "signature": "type Error = ActixError;"
+        },
+        {
+          "name": "InitError",
+          "qualified_name": "impl Transform<S, ServiceRequest> for TenantResolver::InitError",
+          "kind": "type",
+          "start_line": 189,
+          "end_line": 189,
+          "signature": "type InitError = ();"
+        },
+        {
+          "name": "Transform",
+          "qualified_name": "impl Transform<S, ServiceRequest> for TenantResolver::Transform",
+          "kind": "type",
+          "start_line": 190,
+          "end_line": 190,
+          "signature": "type Transform = TenantResolverMiddleware<S>;"
+        },
+        {
+          "name": "Future",
+          "qualified_name": "impl Transform<S, ServiceRequest> for TenantResolver::Future",
+          "kind": "type",
+          "start_line": 191,
+          "end_line": 191,
+          "signature": "type Future = Ready<Result<Self::Transform, Self::InitError>>;"
+        },
+        {
+          "name": "new_transform",
+          "qualified_name": "impl Transform<S, ServiceRequest> for TenantResolver::new_transform",
+          "kind": "method",
+          "start_line": 193,
+          "end_line": 197,
+          "signature": "fn new_transform(&self, service: S) -> Self::Future {"
+        },
+        {
+          "name": "TenantResolverMiddleware",
+          "qualified_name": "TenantResolverMiddleware",
+          "kind": "struct",
+          "start_line": 200,
+          "end_line": 202,
+          "signature": "pub struct TenantResolverMiddleware<S> {"
+        },
+        {
+          "name": "Response",
+          "qualified_name": "impl Service<ServiceRequest> for TenantResolverMiddleware<S>::Response",
+          "kind": "type",
+          "start_line": 210,
+          "end_line": 210,
+          "signature": "type Response = ServiceResponse<B>;"
+        },
+        {
+          "name": "Error",
+          "qualified_name": "impl Service<ServiceRequest> for TenantResolverMiddleware<S>::Error",
+          "kind": "type",
+          "start_line": 211,
+          "end_line": 211,
+          "signature": "type Error = ActixError;"
+        },
+        {
+          "name": "Future",
+          "qualified_name": "impl Service<ServiceRequest> for TenantResolverMiddleware<S>::Future",
+          "kind": "type",
+          "start_line": 212,
+          "end_line": 212,
+          "signature": "type Future = LocalBoxFuture<'static, Result<Self::Response, Self::Error>>;"
+        },
+        {
+          "name": "poll_ready",
+          "qualified_name": "impl Service<ServiceRequest> for TenantResolverMiddleware<S>::poll_ready",
+          "kind": "method",
+          "start_line": 214,
+          "end_line": 219,
+          "signature": "fn poll_ready("
+        },
+        {
+          "name": "call",
+          "qualified_name": "impl Service<ServiceRequest> for TenantResolverMiddleware<S>::call",
+          "kind": "method",
+          "start_line": 221,
+          "end_line": 233,
+          "signature": "fn call(&self, req: ServiceRequest) -> Self::Future {"
+        },
+        {
+          "name": "provision_tenant",
+          "qualified_name": "provision_tenant",
+          "kind": "function",
+          "start_line": 237,
+          "end_line": 261,
+          "signature": "pub async fn provision_tenant("
+        }
+      ],
+      "last_scanned_at": "2026-09-27T20:05:37.415848223Z"
     },
-    "crates/erp-inventory/Cargo.toml": {
-      "relative_path": "crates/erp-inventory/Cargo.toml",
-      "language": "toml",
-      "size_bytes": 458,
-      "line_count": 3,
-      "content_hash": "eb00725bda5b5ea1037488ff400717ced29103d06e14edbea8f4dbae51c2e4dd",
-      "symbols": [],
-      "last_scanned_at": "2026-09-27T13:45:05.819154324Z"
-    },
-    "crates/desk-components/tests/desk_components_tests.rs": {
-      "relative_path": "crates/desk-components/tests/desk_components_tests.rs",
+    "crates/frappe-storage/src/surreal.rs": {
+      "relative_path": "crates/frappe-storage/src/surreal.rs",
       "language": "rust",
-      "size_bytes": 2095,
-      "line_count": 1,
-      "content_hash": "1bc53ea7643fa4c58c35b081743c7952cbd6937a1f44f6be96c8a2cf652362df",
+      "size_bytes": 840,
+      "line_count": 22,
+      "content_hash": "efb0c47582c2aa60759966ea273ea23a0cbf651741952cf9f31f92933c49a744",
+      "symbols": [
+        {
+          "name": "open_tenant",
+          "qualified_name": "open_tenant",
+          "kind": "function",
+          "start_line": 5,
+          "end_line": 9,
+          "signature": "pub async fn open_tenant(tenant_ns: &str, db: &str) -> surrealdb::Result<Surreal<surrealdb::engine::local::Db>> {"
+        },
+        {
+          "name": "t",
+          "qualified_name": "t",
+          "kind": "module",
+          "start_line": 12,
+          "end_line": 22,
+          "signature": "mod t {"
+        },
+        {
+          "name": "ns_db_roundtrip",
+          "qualified_name": "ns_db_roundtrip",
+          "kind": "function",
+          "start_line": 15,
+          "end_line": 21,
+          "signature": "async fn ns_db_roundtrip() {"
+        }
+      ],
+      "last_scanned_at": "2026-09-27T20:05:37.419689184Z"
+    },
+    "docs/tdd.md": {
+      "relative_path": "docs/tdd.md",
+      "language": "markdown",
+      "size_bytes": 0,
+      "line_count": 0,
+      "content_hash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
       "symbols": [],
-      "last_scanned_at": "2026-09-27T13:45:05.780926383Z"
+      "last_scanned_at": "2026-09-27T20:05:37.441113082Z"
+    },
+    "crates/erp-manufacturing/src/bom.rs": {
+      "relative_path": "crates/erp-manufacturing/src/bom.rs",
+      "language": "rust",
+      "size_bytes": 5945,
+      "line_count": 174,
+      "content_hash": "fcc4066692a37561951803c3b33eb9ddde7ac3c29f0b5f2bcccce83a981f682b",
+      "symbols": [
+        {
+          "name": "ManufacturingError",
+          "qualified_name": "ManufacturingError",
+          "kind": "enum",
+          "start_line": 8,
+          "end_line": 24,
+          "signature": "pub enum ManufacturingError {"
+        },
+        {
+          "name": "BomItem",
+          "qualified_name": "BomItem",
+          "kind": "struct",
+          "start_line": 28,
+          "end_line": 37,
+          "signature": "pub struct BomItem {"
+        },
+        {
+          "name": "BomOperation",
+          "qualified_name": "BomOperation",
+          "kind": "struct",
+          "start_line": 41,
+          "end_line": 50,
+          "signature": "pub struct BomOperation {"
+        },
+        {
+          "name": "calculate_cost",
+          "qualified_name": "impl BomOperation::calculate_cost",
+          "kind": "method",
+          "start_line": 55,
+          "end_line": 57,
+          "signature": "pub fn calculate_cost(&self) -> Decimal {"
+        },
+        {
+          "name": "Bom",
+          "qualified_name": "Bom",
+          "kind": "struct",
+          "start_line": 62,
+          "end_line": 73,
+          "signature": "pub struct Bom {"
+        },
+        {
+          "name": "BomEngine",
+          "qualified_name": "BomEngine",
+          "kind": "struct",
+          "start_line": 76,
+          "end_line": 76,
+          "signature": "pub struct BomEngine;"
+        },
+        {
+          "name": "detect_cycles",
+          "qualified_name": "impl BomEngine::detect_cycles",
+          "kind": "method",
+          "start_line": 80,
+          "end_line": 97,
+          "signature": "pub fn detect_cycles("
+        },
+        {
+          "name": "dfs_cycle_check",
+          "qualified_name": "impl BomEngine::dfs_cycle_check",
+          "kind": "method",
+          "start_line": 99,
+          "end_line": 128,
+          "signature": "fn dfs_cycle_check("
+        },
+        {
+          "name": "calculate_cost_rollup",
+          "qualified_name": "impl BomEngine::calculate_cost_rollup",
+          "kind": "method",
+          "start_line": 132,
+          "end_line": 173,
+          "signature": "pub fn calculate_cost_rollup("
+        }
+      ],
+      "last_scanned_at": "2026-09-27T20:05:37.412771892Z"
+    },
+    "crates/erp-accounting/src/coa.rs": {
+      "relative_path": "crates/erp-accounting/src/coa.rs",
+      "language": "rust",
+      "size_bytes": 1269,
+      "line_count": 33,
+      "content_hash": "f021ee221ac5903bd1c5ed5e48b8841da3970df3c9052c39c3e1009f08ee7b8b",
+      "symbols": [
+        {
+          "name": "RootType",
+          "qualified_name": "RootType",
+          "kind": "enum",
+          "start_line": 5,
+          "end_line": 16,
+          "signature": "pub enum RootType {"
+        },
+        {
+          "name": "Account",
+          "qualified_name": "Account",
+          "kind": "struct",
+          "start_line": 20,
+          "end_line": 33,
+          "signature": "pub struct Account {"
+        }
+      ],
+      "last_scanned_at": "2026-09-27T20:05:37.431409163Z"
+    },
+    "crates/frappe-framework/src/lib.rs": {
+      "relative_path": "crates/frappe-framework/src/lib.rs",
+      "language": "rust",
+      "size_bytes": 3897,
+      "line_count": 124,
+      "content_hash": "186a8f33cee89916974227adf25bf01c3d778a739eaf2df72fc7d7f105eb716f",
+      "symbols": [
+        {
+          "name": "lifecycle",
+          "qualified_name": "lifecycle",
+          "kind": "module",
+          "start_line": 1,
+          "end_line": 1,
+          "signature": "pub mod lifecycle;"
+        },
+        {
+          "name": "scripting",
+          "qualified_name": "scripting",
+          "kind": "module",
+          "start_line": 2,
+          "end_line": 2,
+          "signature": "pub mod scripting;"
+        },
+        {
+          "name": "tests",
+          "qualified_name": "tests",
+          "kind": "module",
+          "start_line": 8,
+          "end_line": 124,
+          "signature": "mod tests {"
+        },
+        {
+          "name": "make_test_schema",
+          "qualified_name": "make_test_schema",
+          "kind": "function",
+          "start_line": 12,
+          "end_line": 60,
+          "signature": "fn make_test_schema() -> DocTypeSchema {"
+        },
+        {
+          "name": "test_rhai_operation_limit_exceeded",
+          "qualified_name": "test_rhai_operation_limit_exceeded",
+          "kind": "function",
+          "start_line": 63,
+          "end_line": 75,
+          "signature": "fn test_rhai_operation_limit_exceeded() {"
+        },
+        {
+          "name": "test_document_lifecycle_state_machine",
+          "qualified_name": "test_document_lifecycle_state_machine",
+          "kind": "function",
+          "start_line": 78,
+          "end_line": 123,
+          "signature": "fn test_document_lifecycle_state_machine() {"
+        }
+      ],
+      "last_scanned_at": "2026-09-27T20:05:37.420698401Z"
     },
     "Dockerfile": {
       "relative_path": "Dockerfile",
@@ -346,36 +2613,1911 @@
           "signature": "FROM debian:bullseye-slim"
         }
       ],
-      "last_scanned_at": "2026-09-27T13:45:05.850165772Z"
+      "last_scanned_at": "2026-09-27T20:05:37.441216379Z"
     },
-    "crates/erp-lending/src/lib.rs": {
-      "relative_path": "crates/erp-lending/src/lib.rs",
+    "crates/erp-hr/src/payroll.rs": {
+      "relative_path": "crates/erp-hr/src/payroll.rs",
       "language": "rust",
-      "size_bytes": 22,
-      "line_count": 1,
-      "content_hash": "67956207eb4171561689e0510388d7f1fb209ea7f9a882943689745988ca87bc",
+      "size_bytes": 9449,
+      "line_count": 263,
+      "content_hash": "907739a00ee3221b77825f803dc6fe17d18cf8fccb3fe0040c647ae397fa6120",
+      "symbols": [
+        {
+          "name": "SalaryStructure",
+          "qualified_name": "SalaryStructure",
+          "kind": "struct",
+          "start_line": 11,
+          "end_line": 20,
+          "signature": "pub struct SalaryStructure {"
+        },
+        {
+          "name": "SalarySlip",
+          "qualified_name": "SalarySlip",
+          "kind": "struct",
+          "start_line": 24,
+          "end_line": 51,
+          "signature": "pub struct SalarySlip {"
+        },
+        {
+          "name": "SalaryCalculator",
+          "qualified_name": "SalaryCalculator",
+          "kind": "struct",
+          "start_line": 54,
+          "end_line": 54,
+          "signature": "pub struct SalaryCalculator;"
+        },
+        {
+          "name": "calculate_slip",
+          "qualified_name": "impl SalaryCalculator::calculate_slip",
+          "kind": "method",
+          "start_line": 58,
+          "end_line": 103,
+          "signature": "pub fn calculate_slip("
+        },
+        {
+          "name": "PayrollGlAccounts",
+          "qualified_name": "PayrollGlAccounts",
+          "kind": "struct",
+          "start_line": 108,
+          "end_line": 113,
+          "signature": "pub struct PayrollGlAccounts {"
+        },
+        {
+          "name": "EnterprisePayrollCoordinator",
+          "qualified_name": "EnterprisePayrollCoordinator",
+          "kind": "struct",
+          "start_line": 116,
+          "end_line": 116,
+          "signature": "pub struct EnterprisePayrollCoordinator;"
+        },
+        {
+          "name": "process_batch_payroll",
+          "qualified_name": "impl EnterprisePayrollCoordinator::process_batch_payroll",
+          "kind": "method",
+          "start_line": 120,
+          "end_line": 161,
+          "signature": "pub async fn process_batch_payroll("
+        },
+        {
+          "name": "create_payroll_journal_entry",
+          "qualified_name": "impl EnterprisePayrollCoordinator::create_payroll_journal_entry",
+          "kind": "method",
+          "start_line": 168,
+          "end_line": 216,
+          "signature": "pub fn create_payroll_journal_entry("
+        },
+        {
+          "name": "LeaveApplication",
+          "qualified_name": "LeaveApplication",
+          "kind": "struct",
+          "start_line": 221,
+          "end_line": 227,
+          "signature": "pub struct LeaveApplication {"
+        },
+        {
+          "name": "LeaveEngine",
+          "qualified_name": "LeaveEngine",
+          "kind": "struct",
+          "start_line": 230,
+          "end_line": 230,
+          "signature": "pub struct LeaveEngine;"
+        },
+        {
+          "name": "validate_and_deduct_leave",
+          "qualified_name": "impl LeaveEngine::validate_and_deduct_leave",
+          "kind": "method",
+          "start_line": 234,
+          "end_line": 262,
+          "signature": "pub fn validate_and_deduct_leave("
+        }
+      ],
+      "last_scanned_at": "2026-09-27T20:05:37.418049503Z"
+    },
+    "crates/frappe-meta/src/schema.rs": {
+      "relative_path": "crates/frappe-meta/src/schema.rs",
+      "language": "rust",
+      "size_bytes": 8689,
+      "line_count": 261,
+      "content_hash": "c33f1dc606a451a79ddea2c08cb94d01bf398be9bfb1fc73b49c0dd6f10bacb8",
+      "symbols": [
+        {
+          "name": "SchemaError",
+          "qualified_name": "SchemaError",
+          "kind": "enum",
+          "start_line": 7,
+          "end_line": 26,
+          "signature": "pub enum SchemaError {"
+        },
+        {
+          "name": "FieldType",
+          "qualified_name": "FieldType",
+          "kind": "enum",
+          "start_line": 31,
+          "end_line": 76,
+          "signature": "pub enum FieldType {"
+        },
+        {
+          "name": "surreal_type",
+          "qualified_name": "impl FieldType::surreal_type",
+          "kind": "method",
+          "start_line": 81,
+          "end_line": 110,
+          "signature": "pub fn surreal_type(&self) -> String {"
+        },
+        {
+          "name": "DocPermSchema",
+          "qualified_name": "DocPermSchema",
+          "kind": "struct",
+          "start_line": 115,
+          "end_line": 148,
+          "signature": "pub struct DocPermSchema {"
+        },
+        {
+          "name": "DocFieldSchema",
+          "qualified_name": "DocFieldSchema",
+          "kind": "struct",
+          "start_line": 152,
+          "end_line": 180,
+          "signature": "pub struct DocFieldSchema {"
+        },
+        {
+          "name": "DocTypeSchema",
+          "qualified_name": "DocTypeSchema",
+          "kind": "struct",
+          "start_line": 184,
+          "end_line": 206,
+          "signature": "pub struct DocTypeSchema {"
+        },
+        {
+          "name": "RESERVED_KEYWORDS",
+          "qualified_name": "RESERVED_KEYWORDS",
+          "kind": "constant",
+          "start_line": 208,
+          "end_line": 212,
+          "signature": "const RESERVED_KEYWORDS: &[&str] = &["
+        },
+        {
+          "name": "validate",
+          "qualified_name": "impl DocTypeSchema::validate",
+          "kind": "method",
+          "start_line": 216,
+          "end_line": 254,
+          "signature": "pub fn validate(&self) -> Result<(), SchemaError> {"
+        },
+        {
+          "name": "table_name",
+          "qualified_name": "impl DocTypeSchema::table_name",
+          "kind": "method",
+          "start_line": 258,
+          "end_line": 260,
+          "signature": "pub fn table_name(&self) -> String {"
+        }
+      ],
+      "last_scanned_at": "2026-09-27T20:05:37.425110461Z"
+    },
+    "crates/erp-manufacturing/src/lib.rs": {
+      "relative_path": "crates/erp-manufacturing/src/lib.rs",
+      "language": "rust",
+      "size_bytes": 5225,
+      "line_count": 158,
+      "content_hash": "53e207b1e34214d2c057cdc90eeac40378c006cf11b710fc7962a418f7397d77",
+      "symbols": [
+        {
+          "name": "bom",
+          "qualified_name": "bom",
+          "kind": "module",
+          "start_line": 1,
+          "end_line": 1,
+          "signature": "pub mod bom;"
+        },
+        {
+          "name": "mrp",
+          "qualified_name": "mrp",
+          "kind": "module",
+          "start_line": 2,
+          "end_line": 2,
+          "signature": "pub mod mrp;"
+        },
+        {
+          "name": "tests",
+          "qualified_name": "tests",
+          "kind": "module",
+          "start_line": 8,
+          "end_line": 158,
+          "signature": "mod tests {"
+        },
+        {
+          "name": "test_bom_cycle_detection",
+          "qualified_name": "test_bom_cycle_detection",
+          "kind": "function",
+          "start_line": 15,
+          "end_line": 74,
+          "signature": "fn test_bom_cycle_detection() {"
+        },
+        {
+          "name": "test_recursive_bom_cost_rollup",
+          "qualified_name": "test_recursive_bom_cost_rollup",
+          "kind": "function",
+          "start_line": 77,
+          "end_line": 132,
+          "signature": "fn test_recursive_bom_cost_rollup() {"
+        },
+        {
+          "name": "test_mrp_net_requirement_and_workstation_scheduling",
+          "qualified_name": "test_mrp_net_requirement_and_workstation_scheduling",
+          "kind": "function",
+          "start_line": 135,
+          "end_line": 157,
+          "signature": "fn test_mrp_net_requirement_and_workstation_scheduling() {"
+        }
+      ],
+      "last_scanned_at": "2026-09-27T20:05:37.411987077Z"
+    },
+    "crates/erp-manufacturing/src/mrp.rs": {
+      "relative_path": "crates/erp-manufacturing/src/mrp.rs",
+      "language": "rust",
+      "size_bytes": 4116,
+      "line_count": 130,
+      "content_hash": "95dc60ff11149b07915c04982c1d1d457eb9f3cb7aaae91d0933f3d727dc5929",
+      "symbols": [
+        {
+          "name": "OrderType",
+          "qualified_name": "OrderType",
+          "kind": "enum",
+          "start_line": 6,
+          "end_line": 11,
+          "signature": "pub enum OrderType {"
+        },
+        {
+          "name": "PlannedOrder",
+          "qualified_name": "PlannedOrder",
+          "kind": "struct",
+          "start_line": 15,
+          "end_line": 24,
+          "signature": "pub struct PlannedOrder {"
+        },
+        {
+          "name": "MrpEngine",
+          "qualified_name": "MrpEngine",
+          "kind": "struct",
+          "start_line": 27,
+          "end_line": 27,
+          "signature": "pub struct MrpEngine;"
+        },
+        {
+          "name": "calculate_net_requirement",
+          "qualified_name": "impl MrpEngine::calculate_net_requirement",
+          "kind": "method",
+          "start_line": 33,
+          "end_line": 41,
+          "signature": "pub fn calculate_net_requirement("
+        },
+        {
+          "name": "plan_order",
+          "qualified_name": "impl MrpEngine::plan_order",
+          "kind": "method",
+          "start_line": 45,
+          "end_line": 69,
+          "signature": "pub fn plan_order("
+        },
+        {
+          "name": "ScheduledSlot",
+          "qualified_name": "ScheduledSlot",
+          "kind": "struct",
+          "start_line": 74,
+          "end_line": 81,
+          "signature": "pub struct ScheduledSlot {"
+        },
+        {
+          "name": "WorkstationScheduler",
+          "qualified_name": "WorkstationScheduler",
+          "kind": "struct",
+          "start_line": 85,
+          "end_line": 88,
+          "signature": "pub struct WorkstationScheduler {"
+        },
+        {
+          "name": "new",
+          "qualified_name": "impl WorkstationScheduler::new",
+          "kind": "method",
+          "start_line": 93,
+          "end_line": 95,
+          "signature": "pub fn new() -> Self {"
+        },
+        {
+          "name": "schedule_operation",
+          "qualified_name": "impl WorkstationScheduler::schedule_operation",
+          "kind": "method",
+          "start_line": 99,
+          "end_line": 129,
+          "signature": "pub fn schedule_operation("
+        }
+      ],
+      "last_scanned_at": "2026-09-27T20:05:37.413284811Z"
+    },
+    "crates/erp-lending/Cargo.toml": {
+      "relative_path": "crates/erp-lending/Cargo.toml",
+      "language": "toml",
+      "size_bytes": 477,
+      "line_count": 15,
+      "content_hash": "780cafd6ec65fc4401795f9b1a72474f068f0d75c94437615465ec40877e2699",
+      "symbols": [
+        {
+          "name": "package",
+          "qualified_name": "[package]",
+          "kind": "module",
+          "start_line": 1,
+          "end_line": 1,
+          "signature": "[package]"
+        },
+        {
+          "name": "dependencies",
+          "qualified_name": "[dependencies]",
+          "kind": "module",
+          "start_line": 6,
+          "end_line": 6,
+          "signature": "[dependencies]"
+        }
+      ],
+      "last_scanned_at": "2026-09-27T20:05:37.427258313Z"
+    },
+    ".idea/ShadcnHelperSettings.xml": {
+      "relative_path": ".idea/ShadcnHelperSettings.xml",
+      "language": "xml",
+      "size_bytes": 1222,
+      "line_count": 27,
+      "content_hash": "9aac352a9f44778634f4b4ab1f6271b9759b849fc188d4959eb40dfcd62576a0",
       "symbols": [],
-      "last_scanned_at": "2026-09-27T13:45:05.817388789Z"
+      "last_scanned_at": "2026-09-27T20:05:37.437678182Z"
+    },
+    "crates/frappe-net/Cargo.toml": {
+      "relative_path": "crates/frappe-net/Cargo.toml",
+      "language": "toml",
+      "size_bytes": 612,
+      "line_count": 18,
+      "content_hash": "6c758e456f08d45d34ce32d5ef4a829cc266deff1116165206ec7de826accfb1",
+      "symbols": [
+        {
+          "name": "package",
+          "qualified_name": "[package]",
+          "kind": "module",
+          "start_line": 1,
+          "end_line": 1,
+          "signature": "[package]"
+        },
+        {
+          "name": "dependencies",
+          "qualified_name": "[dependencies]",
+          "kind": "module",
+          "start_line": 6,
+          "end_line": 6,
+          "signature": "[dependencies]"
+        }
+      ],
+      "last_scanned_at": "2026-09-27T20:05:37.416155737Z"
+    },
+    "crates/frappe-net/src/main.rs": {
+      "relative_path": "crates/frappe-net/src/main.rs",
+      "language": "rust",
+      "size_bytes": 105,
+      "line_count": 1,
+      "content_hash": "fc5ef9ff8e866890db2ef0f1d8b36095eed5d4d8fa23b246922dec06dd6c26dc",
+      "symbols": [
+        {
+          "name": "main",
+          "qualified_name": "main",
+          "kind": "function",
+          "start_line": 1,
+          "end_line": 1,
+          "signature": "fn main() { println!(\"frappe-net: Actix substrate stub — TenantContext + queue + live query ready\"); }"
+        }
+      ],
+      "last_scanned_at": "2026-09-27T20:05:37.415900465Z"
+    },
+    "crates/erp-cms/src/lib.rs": {
+      "relative_path": "crates/erp-cms/src/lib.rs",
+      "language": "rust",
+      "size_bytes": 3318,
+      "line_count": 100,
+      "content_hash": "0eaa1969c854249dbebfc01afab55d1e5ea5fcaea41a9901949e055620245716",
+      "symbols": [
+        {
+          "name": "print",
+          "qualified_name": "print",
+          "kind": "module",
+          "start_line": 1,
+          "end_line": 1,
+          "signature": "pub mod print;"
+        },
+        {
+          "name": "security",
+          "qualified_name": "security",
+          "kind": "module",
+          "start_line": 2,
+          "end_line": 2,
+          "signature": "pub mod security;"
+        },
+        {
+          "name": "subtitles",
+          "qualified_name": "subtitles",
+          "kind": "module",
+          "start_line": 3,
+          "end_line": 3,
+          "signature": "pub mod subtitles;"
+        },
+        {
+          "name": "transcoder",
+          "qualified_name": "transcoder",
+          "kind": "module",
+          "start_line": 4,
+          "end_line": 4,
+          "signature": "pub mod transcoder;"
+        },
+        {
+          "name": "tests",
+          "qualified_name": "tests",
+          "kind": "module",
+          "start_line": 14,
+          "end_line": 100,
+          "signature": "mod tests {"
+        },
+        {
+          "name": "test_byte_range_parser",
+          "qualified_name": "test_byte_range_parser",
+          "kind": "function",
+          "start_line": 18,
+          "end_line": 38,
+          "signature": "fn test_byte_range_parser() {"
+        },
+        {
+          "name": "test_hmac_signed_token_verification_and_expiry",
+          "qualified_name": "test_hmac_signed_token_verification_and_expiry",
+          "kind": "function",
+          "start_line": 41,
+          "end_line": 62,
+          "signature": "fn test_hmac_signed_token_verification_and_expiry() {"
+        },
+        {
+          "name": "test_svod_concurrency_limiter",
+          "qualified_name": "test_svod_concurrency_limiter",
+          "kind": "function",
+          "start_line": 65,
+          "end_line": 85,
+          "signature": "fn test_svod_concurrency_limiter() {"
+        },
+        {
+          "name": "test_hls_master_playlist_and_cosine_similarity",
+          "qualified_name": "test_hls_master_playlist_and_cosine_similarity",
+          "kind": "function",
+          "start_line": 88,
+          "end_line": 99,
+          "signature": "fn test_hls_master_playlist_and_cosine_similarity() {"
+        }
+      ],
+      "last_scanned_at": "2026-09-27T20:05:37.431840158Z"
+    },
+    "crates/frappe-meta/src/lib.rs": {
+      "relative_path": "crates/frappe-meta/src/lib.rs",
+      "language": "rust",
+      "size_bytes": 524,
+      "line_count": 16,
+      "content_hash": "042780d365be3cf314bf49a83f4271589c9b598baaa9561a341e19d34742ba90",
+      "symbols": [
+        {
+          "name": "migration",
+          "qualified_name": "migration",
+          "kind": "module",
+          "start_line": 1,
+          "end_line": 1,
+          "signature": "pub mod migration;"
+        },
+        {
+          "name": "naming",
+          "qualified_name": "naming",
+          "kind": "module",
+          "start_line": 2,
+          "end_line": 2,
+          "signature": "pub mod naming;"
+        },
+        {
+          "name": "rbac",
+          "qualified_name": "rbac",
+          "kind": "module",
+          "start_line": 3,
+          "end_line": 3,
+          "signature": "pub mod rbac;"
+        },
+        {
+          "name": "schema",
+          "qualified_name": "schema",
+          "kind": "module",
+          "start_line": 4,
+          "end_line": 4,
+          "signature": "pub mod schema;"
+        },
+        {
+          "name": "schema_compiler",
+          "qualified_name": "schema_compiler",
+          "kind": "module",
+          "start_line": 5,
+          "end_line": 5,
+          "signature": "pub mod schema_compiler;"
+        }
+      ],
+      "last_scanned_at": "2026-09-27T20:05:37.425192386Z"
+    },
+    "crates/frappe-meta/src/rbac.rs": {
+      "relative_path": "crates/frappe-meta/src/rbac.rs",
+      "language": "rust",
+      "size_bytes": 3986,
+      "line_count": 136,
+      "content_hash": "be7595e780a8419ee3093d446bdcd17f8d401d2a8ceb2b7dd327590c51c3a613",
+      "symbols": [
+        {
+          "name": "Role",
+          "qualified_name": "Role",
+          "kind": "struct",
+          "start_line": 5,
+          "end_line": 8,
+          "signature": "pub struct Role {"
+        },
+        {
+          "name": "User",
+          "qualified_name": "User",
+          "kind": "struct",
+          "start_line": 12,
+          "end_line": 19,
+          "signature": "pub struct User {"
+        },
+        {
+          "name": "Permission",
+          "qualified_name": "Permission",
+          "kind": "enum",
+          "start_line": 23,
+          "end_line": 42,
+          "signature": "pub enum Permission {"
+        },
+        {
+          "name": "HasRoleEdge",
+          "qualified_name": "HasRoleEdge",
+          "kind": "struct",
+          "start_line": 46,
+          "end_line": 51,
+          "signature": "pub struct HasRoleEdge {"
+        },
+        {
+          "name": "HasPermissionEdge",
+          "qualified_name": "HasPermissionEdge",
+          "kind": "struct",
+          "start_line": 55,
+          "end_line": 76,
+          "signature": "pub struct HasPermissionEdge {"
+        },
+        {
+          "name": "allows",
+          "qualified_name": "impl HasPermissionEdge::allows",
+          "kind": "method",
+          "start_line": 81,
+          "end_line": 93,
+          "signature": "pub fn allows(&self, perm: Permission) -> bool {"
+        },
+        {
+          "name": "check_permission",
+          "qualified_name": "check_permission",
+          "kind": "function",
+          "start_line": 98,
+          "end_line": 114,
+          "signature": "pub fn check_permission("
+        },
+        {
+          "name": "compile_rls_policy",
+          "qualified_name": "compile_rls_policy",
+          "kind": "function",
+          "start_line": 118,
+          "end_line": 136,
+          "signature": "pub fn compile_rls_policy(doctype: &str, roles_with_read: &[String], roles_with_write: &[String]) -> String {"
+        }
+      ],
+      "last_scanned_at": "2026-09-27T20:05:37.424373139Z"
+    },
+    "crates/erp-trade/src/lib.rs": {
+      "relative_path": "crates/erp-trade/src/lib.rs",
+      "language": "rust",
+      "size_bytes": 2575,
+      "line_count": 77,
+      "content_hash": "34d4ac753337a89c94d0641ee76832101286e59751cec5de3d5e2f3e4b271b7d",
+      "symbols": [
+        {
+          "name": "landed_cost",
+          "qualified_name": "landed_cost",
+          "kind": "module",
+          "start_line": 1,
+          "end_line": 1,
+          "signature": "pub mod landed_cost;"
+        },
+        {
+          "name": "pricing",
+          "qualified_name": "pricing",
+          "kind": "module",
+          "start_line": 2,
+          "end_line": 2,
+          "signature": "pub mod pricing;"
+        },
+        {
+          "name": "taxes",
+          "qualified_name": "taxes",
+          "kind": "module",
+          "start_line": 3,
+          "end_line": 3,
+          "signature": "pub mod taxes;"
+        },
+        {
+          "name": "tests",
+          "qualified_name": "tests",
+          "kind": "module",
+          "start_line": 10,
+          "end_line": 77,
+          "signature": "mod tests {"
+        },
+        {
+          "name": "test_pricing_rules_volume_breaks",
+          "qualified_name": "test_pricing_rules_volume_breaks",
+          "kind": "function",
+          "start_line": 15,
+          "end_line": 48,
+          "signature": "fn test_pricing_rules_volume_breaks() {"
+        },
+        {
+          "name": "test_compounding_multi_tier_taxes",
+          "qualified_name": "test_compounding_multi_tier_taxes",
+          "kind": "function",
+          "start_line": 51,
+          "end_line": 76,
+          "signature": "fn test_compounding_multi_tier_taxes() {"
+        }
+      ],
+      "last_scanned_at": "2026-09-27T20:05:37.433431159Z"
+    },
+    "crates/erp-trade/src/landed_cost.rs": {
+      "relative_path": "crates/erp-trade/src/landed_cost.rs",
+      "language": "rust",
+      "size_bytes": 1178,
+      "line_count": 40,
+      "content_hash": "8ac45e06e16fa521f2553601277962e191657b6dad9bec00dba397b923ebdc0f",
+      "symbols": [
+        {
+          "name": "distribute_landed_cost",
+          "qualified_name": "distribute_landed_cost",
+          "kind": "function",
+          "start_line": 5,
+          "end_line": 24,
+          "signature": "pub fn distribute_landed_cost(item_values: &[Decimal], total_charges: Decimal) -> Vec<Decimal> {"
+        },
+        {
+          "name": "tests",
+          "qualified_name": "tests",
+          "kind": "module",
+          "start_line": 27,
+          "end_line": 40,
+          "signature": "mod tests {"
+        },
+        {
+          "name": "test_landed_cost_distribution",
+          "qualified_name": "test_landed_cost_distribution",
+          "kind": "function",
+          "start_line": 32,
+          "end_line": 39,
+          "signature": "fn test_landed_cost_distribution() {"
+        }
+      ],
+      "last_scanned_at": "2026-09-27T20:05:37.433841970Z"
     },
     "crates/frappe-meta/src/migration.rs": {
       "relative_path": "crates/frappe-meta/src/migration.rs",
       "language": "rust",
-      "size_bytes": 13535,
-      "line_count": 342,
-      "content_hash": "cb8a30ba2ab27ee53f43600f0d0fc101e6a88543a6af679cf198250d12281ad2",
-      "symbols": [],
-      "last_scanned_at": "2026-09-27T13:45:05.817222565Z"
+      "size_bytes": 5404,
+      "line_count": 154,
+      "content_hash": "9a9948123085ceeddbdd3cc968509e9806da7f35397d844dfd6e98b9e148878e",
+      "symbols": [
+        {
+          "name": "ExistingFieldDef",
+          "qualified_name": "ExistingFieldDef",
+          "kind": "struct",
+          "start_line": 6,
+          "end_line": 13,
+          "signature": "pub struct ExistingFieldDef {"
+        },
+        {
+          "name": "ExistingTableDef",
+          "qualified_name": "ExistingTableDef",
+          "kind": "struct",
+          "start_line": 17,
+          "end_line": 22,
+          "signature": "pub struct ExistingTableDef {"
+        },
+        {
+          "name": "ExistingDatabaseSchema",
+          "qualified_name": "ExistingDatabaseSchema",
+          "kind": "struct",
+          "start_line": 26,
+          "end_line": 29,
+          "signature": "pub struct ExistingDatabaseSchema {"
+        },
+        {
+          "name": "MigrationDelta",
+          "qualified_name": "MigrationDelta",
+          "kind": "struct",
+          "start_line": 33,
+          "end_line": 44,
+          "signature": "pub struct MigrationDelta {"
+        },
+        {
+          "name": "diff_schema",
+          "qualified_name": "diff_schema",
+          "kind": "function",
+          "start_line": 47,
+          "end_line": 91,
+          "signature": "pub fn diff_schema("
+        },
+        {
+          "name": "generate_migration_ddl",
+          "qualified_name": "generate_migration_ddl",
+          "kind": "function",
+          "start_line": 94,
+          "end_line": 154,
+          "signature": "pub fn generate_migration_ddl("
+        }
+      ],
+      "last_scanned_at": "2026-09-27T20:05:37.425983137Z"
     },
-    "crates/erp-accounting/Cargo.toml": {
-      "relative_path": "crates/erp-accounting/Cargo.toml",
-      "language": "toml",
-      "size_bytes": 458,
+    "crates/erp-accounting/src/lib.rs": {
+      "relative_path": "crates/erp-accounting/src/lib.rs",
+      "language": "rust",
+      "size_bytes": 11534,
+      "line_count": 309,
+      "content_hash": "11fd7f124de61862f80094fe31e9be548a5a827cd9475b0e8dfd3e01b4221478",
+      "symbols": [
+        {
+          "name": "assets",
+          "qualified_name": "assets",
+          "kind": "module",
+          "start_line": 1,
+          "end_line": 1,
+          "signature": "pub mod assets;"
+        },
+        {
+          "name": "coa",
+          "qualified_name": "coa",
+          "kind": "module",
+          "start_line": 2,
+          "end_line": 2,
+          "signature": "pub mod coa;"
+        },
+        {
+          "name": "decimal_ledger",
+          "qualified_name": "decimal_ledger",
+          "kind": "module",
+          "start_line": 3,
+          "end_line": 3,
+          "signature": "pub mod decimal_ledger;"
+        },
+        {
+          "name": "ledger",
+          "qualified_name": "ledger",
+          "kind": "module",
+          "start_line": 4,
+          "end_line": 4,
+          "signature": "pub mod ledger;"
+        },
+        {
+          "name": "receivables",
+          "qualified_name": "receivables",
+          "kind": "module",
+          "start_line": 5,
+          "end_line": 5,
+          "signature": "pub mod receivables;"
+        },
+        {
+          "name": "tests",
+          "qualified_name": "tests",
+          "kind": "module",
+          "start_line": 17,
+          "end_line": 309,
+          "signature": "mod tests {"
+        },
+        {
+          "name": "sample_accounts",
+          "qualified_name": "sample_accounts",
+          "kind": "function",
+          "start_line": 23,
+          "end_line": 66,
+          "signature": "fn sample_accounts() -> Vec<Account> {"
+        },
+        {
+          "name": "test_unbalanced_journal_entry_rejected",
+          "qualified_name": "test_unbalanced_journal_entry_rejected",
+          "kind": "function",
+          "start_line": 69,
+          "end_line": 103,
+          "signature": "fn test_unbalanced_journal_entry_rejected() {"
+        },
+        {
+          "name": "test_exchange_variance_auto_balancing",
+          "qualified_name": "test_exchange_variance_auto_balancing",
+          "kind": "function",
+          "start_line": 106,
+          "end_line": 148,
+          "signature": "fn test_exchange_variance_auto_balancing() {"
+        },
+        {
+          "name": "test_period_closed_rejection",
+          "qualified_name": "test_period_closed_rejection",
+          "kind": "function",
+          "start_line": 151,
+          "end_line": 190,
+          "signature": "fn test_period_closed_rejection() {"
+        },
+        {
+          "name": "test_balance_sheet_equation",
+          "qualified_name": "test_balance_sheet_equation",
+          "kind": "function",
+          "start_line": 193,
+          "end_line": 259,
+          "signature": "fn test_balance_sheet_equation() {"
+        },
+        {
+          "name": "test_fifo_payment_allocation_and_credit_limit",
+          "qualified_name": "test_fifo_payment_allocation_and_credit_limit",
+          "kind": "function",
+          "start_line": 262,
+          "end_line": 308,
+          "signature": "fn test_fifo_payment_allocation_and_credit_limit() {"
+        }
+      ],
+      "last_scanned_at": "2026-09-27T20:05:37.429692307Z"
+    },
+    "crates/desk-app/src/main.rs": {
+      "relative_path": "crates/desk-app/src/main.rs",
+      "language": "rust",
+      "size_bytes": 77,
       "line_count": 1,
-      "content_hash": "f59e4c47079ee659ee74b8ee696f5a3733ad02b3abf19a2c50fd23d5b8003da1",
+      "content_hash": "65839d652d89706acb165f7a2c5f81bb9664785f0303aeffcc0bacd945f44153",
+      "symbols": [
+        {
+          "name": "main",
+          "qualified_name": "main",
+          "kind": "function",
+          "start_line": 1,
+          "end_line": 1,
+          "signature": "fn main() { println!(\"desk-app: Dioxus Desk stub — grid + forms wired\"); }"
+        }
+      ],
+      "last_scanned_at": "2026-09-27T20:05:37.433052406Z"
+    },
+    "crates/frappe-net/src/live.rs": {
+      "relative_path": "crates/frappe-net/src/live.rs",
+      "language": "rust",
+      "size_bytes": 1222,
+      "line_count": 42,
+      "content_hash": "5b591236c59685e59ae89737f37a4bce1c46e41fe3fc2961f95f0c7ef5c3d508",
+      "symbols": [
+        {
+          "name": "live_ws_handler",
+          "qualified_name": "live_ws_handler",
+          "kind": "function",
+          "start_line": 5,
+          "end_line": 22,
+          "signature": "pub async fn live_ws_handler("
+        },
+        {
+          "name": "live_query",
+          "qualified_name": "live_query",
+          "kind": "function",
+          "start_line": 26,
+          "end_line": 31,
+          "signature": "pub fn live_query(tenant_ns: &str, table: &str, id: &str) -> String {"
+        },
+        {
+          "name": "tests",
+          "qualified_name": "tests",
+          "kind": "module",
+          "start_line": 34,
+          "end_line": 42,
+          "signature": "mod tests {"
+        },
+        {
+          "name": "test_live_query_format",
+          "qualified_name": "test_live_query_format",
+          "kind": "function",
+          "start_line": 38,
+          "end_line": 41,
+          "signature": "fn test_live_query_format() {"
+        }
+      ],
+      "last_scanned_at": "2026-09-27T20:05:37.416134365Z"
+    },
+    "crates/erp-trade/src/taxes.rs": {
+      "relative_path": "crates/erp-trade/src/taxes.rs",
+      "language": "rust",
+      "size_bytes": 3281,
+      "line_count": 95,
+      "content_hash": "87ba6e258b9686a4a1e487dd3521b560921c73f7159da389adf2605445240605",
+      "symbols": [
+        {
+          "name": "TaxType",
+          "qualified_name": "TaxType",
+          "kind": "enum",
+          "start_line": 6,
+          "end_line": 14,
+          "signature": "pub enum TaxType {"
+        },
+        {
+          "name": "TaxRow",
+          "qualified_name": "TaxRow",
+          "kind": "struct",
+          "start_line": 18,
+          "end_line": 25,
+          "signature": "pub struct TaxRow {"
+        },
+        {
+          "name": "TaxLineResult",
+          "qualified_name": "TaxLineResult",
+          "kind": "struct",
+          "start_line": 29,
+          "end_line": 38,
+          "signature": "pub struct TaxLineResult {"
+        },
+        {
+          "name": "TaxScheduleResult",
+          "qualified_name": "TaxScheduleResult",
+          "kind": "struct",
+          "start_line": 42,
+          "end_line": 51,
+          "signature": "pub struct TaxScheduleResult {"
+        },
+        {
+          "name": "TaxEngine",
+          "qualified_name": "TaxEngine",
+          "kind": "struct",
+          "start_line": 54,
+          "end_line": 54,
+          "signature": "pub struct TaxEngine;"
+        },
+        {
+          "name": "calculate_taxes",
+          "qualified_name": "impl TaxEngine::calculate_taxes",
+          "kind": "method",
+          "start_line": 59,
+          "end_line": 94,
+          "signature": "pub fn calculate_taxes(base_net_amount: Decimal, tax_rows: &[TaxRow]) -> TaxScheduleResult {"
+        }
+      ],
+      "last_scanned_at": "2026-09-27T20:05:37.434113865Z"
+    },
+    "crates/frappe-framework/Cargo.toml": {
+      "relative_path": "crates/frappe-framework/Cargo.toml",
+      "language": "toml",
+      "size_bytes": 371,
+      "line_count": 14,
+      "content_hash": "851d4eb3696049c2dfa1076d7bee71aae154dc86c960b30da7e999d1f1977417",
+      "symbols": [
+        {
+          "name": "package",
+          "qualified_name": "[package]",
+          "kind": "module",
+          "start_line": 1,
+          "end_line": 1,
+          "signature": "[package]"
+        },
+        {
+          "name": "dependencies",
+          "qualified_name": "[dependencies]",
+          "kind": "module",
+          "start_line": 6,
+          "end_line": 6,
+          "signature": "[dependencies]"
+        }
+      ],
+      "last_scanned_at": "2026-09-27T20:05:37.422177795Z"
+    },
+    "crates/erp-accounting/src/receivables.rs": {
+      "relative_path": "crates/erp-accounting/src/receivables.rs",
+      "language": "rust",
+      "size_bytes": 3491,
+      "line_count": 94,
+      "content_hash": "fe5a3793a174801447611d5bac77acfcd89fa05f5b018ba9d4f8e2d29ce27dc0",
+      "symbols": [
+        {
+          "name": "OpenInvoice",
+          "qualified_name": "OpenInvoice",
+          "kind": "struct",
+          "start_line": 8,
+          "end_line": 17,
+          "signature": "pub struct OpenInvoice {"
+        },
+        {
+          "name": "PaymentAllocationResult",
+          "qualified_name": "PaymentAllocationResult",
+          "kind": "struct",
+          "start_line": 21,
+          "end_line": 28,
+          "signature": "pub struct PaymentAllocationResult {"
+        },
+        {
+          "name": "ArApEngine",
+          "qualified_name": "ArApEngine",
+          "kind": "struct",
+          "start_line": 31,
+          "end_line": 31,
+          "signature": "pub struct ArApEngine;"
+        },
+        {
+          "name": "allocate_fifo",
+          "qualified_name": "impl ArApEngine::allocate_fifo",
+          "kind": "method",
+          "start_line": 36,
+          "end_line": 74,
+          "signature": "pub fn allocate_fifo("
+        },
+        {
+          "name": "validate_credit_limit",
+          "qualified_name": "impl ArApEngine::validate_credit_limit",
+          "kind": "method",
+          "start_line": 78,
+          "end_line": 93,
+          "signature": "pub fn validate_credit_limit("
+        }
+      ],
+      "last_scanned_at": "2026-09-27T20:05:37.431317740Z"
+    },
+    "crates/erp-inventory/src/batches.rs": {
+      "relative_path": "crates/erp-inventory/src/batches.rs",
+      "language": "rust",
+      "size_bytes": 2301,
+      "line_count": 77,
+      "content_hash": "39233062962a4b016d61f854ef67cc813844c940a1cc777b33f7c227e92d5c79",
+      "symbols": [
+        {
+          "name": "SerialStatus",
+          "qualified_name": "SerialStatus",
+          "kind": "enum",
+          "start_line": 8,
+          "end_line": 17,
+          "signature": "pub enum SerialStatus {"
+        },
+        {
+          "name": "SerialNo",
+          "qualified_name": "SerialNo",
+          "kind": "struct",
+          "start_line": 21,
+          "end_line": 30,
+          "signature": "pub struct SerialNo {"
+        },
+        {
+          "name": "validate_dispatch_from",
+          "qualified_name": "impl SerialNo::validate_dispatch_from",
+          "kind": "method",
+          "start_line": 34,
+          "end_line": 46,
+          "signature": "pub fn validate_dispatch_from("
+        },
+        {
+          "name": "Batch",
+          "qualified_name": "Batch",
+          "kind": "struct",
+          "start_line": 51,
+          "end_line": 62,
+          "signature": "pub struct Batch {"
+        },
+        {
+          "name": "validate_usable",
+          "qualified_name": "impl Batch::validate_usable",
+          "kind": "method",
+          "start_line": 66,
+          "end_line": 76,
+          "signature": "pub fn validate_usable(&self, as_of: NaiveDate) -> Result<(), InventoryError> {"
+        }
+      ],
+      "last_scanned_at": "2026-09-27T20:05:37.436779385Z"
+    },
+    "crates/desk-components/src/lib.rs": {
+      "relative_path": "crates/desk-components/src/lib.rs",
+      "language": "rust",
+      "size_bytes": 46,
+      "line_count": 2,
+      "content_hash": "d1a15d82f124649274c034433f3865c97978019cdd1e7a55e5ca3b654e3c6be9",
+      "symbols": [
+        {
+          "name": "grid",
+          "qualified_name": "grid",
+          "kind": "module",
+          "start_line": 1,
+          "end_line": 1,
+          "signature": "pub mod grid;"
+        },
+        {
+          "name": "forms",
+          "qualified_name": "forms",
+          "kind": "module",
+          "start_line": 1,
+          "end_line": 1,
+          "signature": "pub mod forms;"
+        },
+        {
+          "name": "signals",
+          "qualified_name": "signals",
+          "kind": "module",
+          "start_line": 2,
+          "end_line": 2,
+          "signature": "pub mod signals;"
+        }
+      ],
+      "last_scanned_at": "2026-09-27T20:05:37.423146643Z"
+    },
+    "crates/erp-lending/src/lib.rs": {
+      "relative_path": "crates/erp-lending/src/lib.rs",
+      "language": "rust",
+      "size_bytes": 1877,
+      "line_count": 58,
+      "content_hash": "1e54d89eee74dbe4ecaa689083c32f0d6a210fddb0db850289a8e744b441ff98",
+      "symbols": [
+        {
+          "name": "amortization",
+          "qualified_name": "amortization",
+          "kind": "module",
+          "start_line": 1,
+          "end_line": 1,
+          "signature": "pub mod amortization;"
+        },
+        {
+          "name": "tests",
+          "qualified_name": "tests",
+          "kind": "module",
+          "start_line": 8,
+          "end_line": 58,
+          "signature": "mod tests {"
+        },
+        {
+          "name": "test_loan_amortization_schedule_zero_termination",
+          "qualified_name": "test_loan_amortization_schedule_zero_termination",
+          "kind": "function",
+          "start_line": 15,
+          "end_line": 38,
+          "signature": "fn test_loan_amortization_schedule_zero_termination() {"
+        },
+        {
+          "name": "test_loan_gl_repayment_journal_balance",
+          "qualified_name": "test_loan_gl_repayment_journal_balance",
+          "kind": "function",
+          "start_line": 41,
+          "end_line": 57,
+          "signature": "fn test_loan_gl_repayment_journal_balance() {"
+        }
+      ],
+      "last_scanned_at": "2026-09-27T20:05:37.426436691Z"
+    },
+    "crates/erp-cms/src/security.rs": {
+      "relative_path": "crates/erp-cms/src/security.rs",
+      "language": "rust",
+      "size_bytes": 6243,
+      "line_count": 193,
+      "content_hash": "0086cc2d06d9471bea0804e7ae236c25387461c3a532b1c598a510b11b9066d5",
+      "symbols": [
+        {
+          "name": "HmacSha256",
+          "qualified_name": "HmacSha256",
+          "kind": "type",
+          "start_line": 7,
+          "end_line": 7,
+          "signature": "type HmacSha256 = Hmac<Sha256>;"
+        },
+        {
+          "name": "StreamingError",
+          "qualified_name": "StreamingError",
+          "kind": "enum",
+          "start_line": 11,
+          "end_line": 33,
+          "signature": "pub enum StreamingError {"
+        },
+        {
+          "name": "parse_byte_range",
+          "qualified_name": "parse_byte_range",
+          "kind": "function",
+          "start_line": 36,
+          "end_line": 84,
+          "signature": "pub fn parse_byte_range(range_header: &str, total_size: u64) -> Result<(u64, u64), StreamingError> {"
+        },
+        {
+          "name": "HmacStreamingSigner",
+          "qualified_name": "HmacStreamingSigner",
+          "kind": "struct",
+          "start_line": 87,
+          "end_line": 89,
+          "signature": "pub struct HmacStreamingSigner {"
+        },
+        {
+          "name": "new",
+          "qualified_name": "impl HmacStreamingSigner::new",
+          "kind": "method",
+          "start_line": 94,
+          "end_line": 98,
+          "signature": "pub fn new(secret_key: &[u8]) -> Self {"
+        },
+        {
+          "name": "generate_token",
+          "qualified_name": "impl HmacStreamingSigner::generate_token",
+          "kind": "method",
+          "start_line": 101,
+          "end_line": 108,
+          "signature": "pub fn generate_token(&self, media_id: &str, expiry_timestamp: u64) -> String {"
+        },
+        {
+          "name": "verify_token",
+          "qualified_name": "impl HmacStreamingSigner::verify_token",
+          "kind": "method",
+          "start_line": 111,
+          "end_line": 131,
+          "signature": "pub fn verify_token("
+        },
+        {
+          "name": "SvodPlaybackManager",
+          "qualified_name": "SvodPlaybackManager",
+          "kind": "struct",
+          "start_line": 136,
+          "end_line": 139,
+          "signature": "pub struct SvodPlaybackManager {"
+        },
+        {
+          "name": "new",
+          "qualified_name": "impl SvodPlaybackManager::new",
+          "kind": "method",
+          "start_line": 144,
+          "end_line": 146,
+          "signature": "pub fn new() -> Self {"
+        },
+        {
+          "name": "start_playback",
+          "qualified_name": "impl SvodPlaybackManager::start_playback",
+          "kind": "method",
+          "start_line": 149,
+          "end_line": 174,
+          "signature": "pub fn start_playback("
+        },
+        {
+          "name": "end_playback",
+          "qualified_name": "impl SvodPlaybackManager::end_playback",
+          "kind": "method",
+          "start_line": 177,
+          "end_line": 183,
+          "signature": "pub fn end_playback(&self, user_id: &str, session_id: &str) {"
+        },
+        {
+          "name": "hex",
+          "qualified_name": "hex",
+          "kind": "module",
+          "start_line": 186,
+          "end_line": 193,
+          "signature": "mod hex {"
+        },
+        {
+          "name": "encode",
+          "qualified_name": "encode",
+          "kind": "function",
+          "start_line": 187,
+          "end_line": 192,
+          "signature": "pub fn encode(data: impl AsRef<[u8]>) -> String {"
+        }
+      ],
+      "last_scanned_at": "2026-09-27T20:05:37.432969294Z"
+    },
+    "crates/erp-support/Cargo.toml": {
+      "relative_path": "crates/erp-support/Cargo.toml",
+      "language": "toml",
+      "size_bytes": 418,
+      "line_count": 13,
+      "content_hash": "9975b39b8f4054235955b4bbaac5dba5ebefbdb953fb0740f17c0e07fa9639f2",
+      "symbols": [
+        {
+          "name": "package",
+          "qualified_name": "[package]",
+          "kind": "module",
+          "start_line": 1,
+          "end_line": 1,
+          "signature": "[package]"
+        },
+        {
+          "name": "dependencies",
+          "qualified_name": "[dependencies]",
+          "kind": "module",
+          "start_line": 6,
+          "end_line": 6,
+          "signature": "[dependencies]"
+        }
+      ],
+      "last_scanned_at": "2026-09-27T20:05:37.428284152Z"
+    },
+    "crates/erp-inventory/Cargo.toml": {
+      "relative_path": "crates/erp-inventory/Cargo.toml",
+      "language": "toml",
+      "size_bytes": 479,
+      "line_count": 15,
+      "content_hash": "14e3469ea398c8d3960d16c0aafa23b65ffd6a55c50901f3ff91fc0cb27c7a7c",
+      "symbols": [
+        {
+          "name": "package",
+          "qualified_name": "[package]",
+          "kind": "module",
+          "start_line": 1,
+          "end_line": 1,
+          "signature": "[package]"
+        },
+        {
+          "name": "dependencies",
+          "qualified_name": "[dependencies]",
+          "kind": "module",
+          "start_line": 6,
+          "end_line": 6,
+          "signature": "[dependencies]"
+        }
+      ],
+      "last_scanned_at": "2026-09-27T20:05:37.437523831Z"
+    },
+    "docs/architecture.md": {
+      "relative_path": "docs/architecture.md",
+      "language": "markdown",
+      "size_bytes": 0,
+      "line_count": 0,
+      "content_hash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
       "symbols": [],
-      "last_scanned_at": "2026-09-27T13:45:05.818149857Z"
+      "last_scanned_at": "2026-09-27T20:05:37.441130892Z"
+    },
+    "crates/erp-support/src/sla.rs": {
+      "relative_path": "crates/erp-support/src/sla.rs",
+      "language": "rust",
+      "size_bytes": 3667,
+      "line_count": 121,
+      "content_hash": "d11f5ece537681e84a2ec39a8c8dcefd08112af6ab1b4ff66304d3d409075162",
+      "symbols": [
+        {
+          "name": "SupportError",
+          "qualified_name": "SupportError",
+          "kind": "enum",
+          "start_line": 7,
+          "end_line": 14,
+          "signature": "pub enum SupportError {"
+        },
+        {
+          "name": "TicketPriority",
+          "qualified_name": "TicketPriority",
+          "kind": "enum",
+          "start_line": 18,
+          "end_line": 23,
+          "signature": "pub enum TicketPriority {"
+        },
+        {
+          "name": "TicketStatus",
+          "qualified_name": "TicketStatus",
+          "kind": "enum",
+          "start_line": 27,
+          "end_line": 32,
+          "signature": "pub enum TicketStatus {"
+        },
+        {
+          "name": "SupportTicket",
+          "qualified_name": "SupportTicket",
+          "kind": "struct",
+          "start_line": 36,
+          "end_line": 45,
+          "signature": "pub struct SupportTicket {"
+        },
+        {
+          "name": "SupportAgent",
+          "qualified_name": "SupportAgent",
+          "kind": "struct",
+          "start_line": 49,
+          "end_line": 54,
+          "signature": "pub struct SupportAgent {"
+        },
+        {
+          "name": "TicketRouter",
+          "qualified_name": "TicketRouter",
+          "kind": "struct",
+          "start_line": 57,
+          "end_line": 57,
+          "signature": "pub struct TicketRouter;"
+        },
+        {
+          "name": "assign_ticket",
+          "qualified_name": "impl TicketRouter::assign_ticket",
+          "kind": "method",
+          "start_line": 61,
+          "end_line": 79,
+          "signature": "pub fn assign_ticket<'a>("
+        },
+        {
+          "name": "SlaEscalationEvent",
+          "qualified_name": "SlaEscalationEvent",
+          "kind": "struct",
+          "start_line": 84,
+          "end_line": 89,
+          "signature": "pub struct SlaEscalationEvent {"
+        },
+        {
+          "name": "SlaWatchdog",
+          "qualified_name": "SlaWatchdog",
+          "kind": "struct",
+          "start_line": 92,
+          "end_line": 92,
+          "signature": "pub struct SlaWatchdog;"
+        },
+        {
+          "name": "evaluate_tickets",
+          "qualified_name": "impl SlaWatchdog::evaluate_tickets",
+          "kind": "method",
+          "start_line": 97,
+          "end_line": 120,
+          "signature": "pub fn evaluate_tickets("
+        }
+      ],
+      "last_scanned_at": "2026-09-27T20:05:37.428258031Z"
+    },
+    "crates/erp-inventory/src/fifo.rs": {
+      "relative_path": "crates/erp-inventory/src/fifo.rs",
+      "language": "rust",
+      "size_bytes": 3651,
+      "line_count": 114,
+      "content_hash": "1c9e034f264f1430526d7c7591151ef5b75babd4f8723c2f9f1bbe7d2050b3bd",
+      "symbols": [
+        {
+          "name": "InventoryError",
+          "qualified_name": "InventoryError",
+          "kind": "enum",
+          "start_line": 8,
+          "end_line": 34,
+          "signature": "pub enum InventoryError {"
+        },
+        {
+          "name": "FifoBatchItem",
+          "qualified_name": "FifoBatchItem",
+          "kind": "struct",
+          "start_line": 38,
+          "end_line": 43,
+          "signature": "pub struct FifoBatchItem {"
+        },
+        {
+          "name": "StockLedgerEntry",
+          "qualified_name": "StockLedgerEntry",
+          "kind": "struct",
+          "start_line": 47,
+          "end_line": 68,
+          "signature": "pub struct StockLedgerEntry {"
+        },
+        {
+          "name": "consume_fifo",
+          "qualified_name": "consume_fifo",
+          "kind": "function",
+          "start_line": 71,
+          "end_line": 107,
+          "signature": "pub fn consume_fifo("
+        },
+        {
+          "name": "add_fifo_layer",
+          "qualified_name": "add_fifo_layer",
+          "kind": "function",
+          "start_line": 110,
+          "end_line": 114,
+          "signature": "pub fn add_fifo_layer(queue: &mut Vec<FifoBatchItem>, qty: Decimal, rate: Decimal) {"
+        }
+      ],
+      "last_scanned_at": "2026-09-27T20:05:37.437083338Z"
+    },
+    "crates/frappe-net/src/routes.rs": {
+      "relative_path": "crates/frappe-net/src/routes.rs",
+      "language": "rust",
+      "size_bytes": 5311,
+      "line_count": 147,
+      "content_hash": "541b96489465f07938f955546d55fea60ee4717ed401f14acf987672de30b2d8",
+      "symbols": [
+        {
+          "name": "ListQuery",
+          "qualified_name": "ListQuery",
+          "kind": "struct",
+          "start_line": 8,
+          "end_line": 12,
+          "signature": "pub struct ListQuery {"
+        },
+        {
+          "name": "list_resource",
+          "qualified_name": "list_resource",
+          "kind": "function",
+          "start_line": 15,
+          "end_line": 44,
+          "signature": "pub async fn list_resource("
+        },
+        {
+          "name": "get_resource",
+          "qualified_name": "get_resource",
+          "kind": "function",
+          "start_line": 47,
+          "end_line": 75,
+          "signature": "pub async fn get_resource("
+        },
+        {
+          "name": "create_resource",
+          "qualified_name": "create_resource",
+          "kind": "function",
+          "start_line": 78,
+          "end_line": 122,
+          "signature": "pub async fn create_resource("
+        },
+        {
+          "name": "delete_resource",
+          "qualified_name": "delete_resource",
+          "kind": "function",
+          "start_line": 125,
+          "end_line": 147,
+          "signature": "pub async fn delete_resource("
+        }
+      ],
+      "last_scanned_at": "2026-09-27T20:05:37.414858003Z"
+    },
+    "crates/desk-components/src/forms.rs": {
+      "relative_path": "crates/desk-components/src/forms.rs",
+      "language": "rust",
+      "size_bytes": 5222,
+      "line_count": 153,
+      "content_hash": "5d5fcaf8febe4191591a53c7db6c5d718ef2bc3bd86f9904d960e8fac63d8aa3",
+      "symbols": [
+        {
+          "name": "FormFieldWidget",
+          "qualified_name": "FormFieldWidget",
+          "kind": "enum",
+          "start_line": 7,
+          "end_line": 46,
+          "signature": "pub enum FormFieldWidget {"
+        },
+        {
+          "name": "DynamicFormModel",
+          "qualified_name": "DynamicFormModel",
+          "kind": "struct",
+          "start_line": 50,
+          "end_line": 54,
+          "signature": "pub struct DynamicFormModel {"
+        },
+        {
+          "name": "from_schema",
+          "qualified_name": "impl DynamicFormModel::from_schema",
+          "kind": "method",
+          "start_line": 59,
+          "end_line": 129,
+          "signature": "pub fn from_schema(schema: &DocTypeSchema) -> Self {"
+        },
+        {
+          "name": "eval_depends_on",
+          "qualified_name": "eval_depends_on",
+          "kind": "function",
+          "start_line": 134,
+          "end_line": 153,
+          "signature": "pub fn eval_depends_on(expr: &str, form_values: &HashMap<String, String>) -> bool {"
+        }
+      ],
+      "last_scanned_at": "2026-09-27T20:05:37.423106275Z"
+    },
+    "crates/erp-crm/Cargo.toml": {
+      "relative_path": "crates/erp-crm/Cargo.toml",
+      "language": "toml",
+      "size_bytes": 463,
+      "line_count": 15,
+      "content_hash": "d460eeff1e6f6189b2308fc20e7631e8e7994d6610b60a2782f0d87b03040693",
+      "symbols": [
+        {
+          "name": "package",
+          "qualified_name": "[package]",
+          "kind": "module",
+          "start_line": 1,
+          "end_line": 1,
+          "signature": "[package]"
+        },
+        {
+          "name": "dependencies",
+          "qualified_name": "[dependencies]",
+          "kind": "module",
+          "start_line": 6,
+          "end_line": 6,
+          "signature": "[dependencies]"
+        }
+      ],
+      "last_scanned_at": "2026-09-27T20:05:37.435102898Z"
+    },
+    "crates/erp-support/src/gameplan.rs": {
+      "relative_path": "crates/erp-support/src/gameplan.rs",
+      "language": "rust",
+      "size_bytes": 1306,
+      "line_count": 54,
+      "content_hash": "686f0f8fb6255fc3028ffec6b23bd9f5c120315117aca1722ea66b37ca275ff2",
+      "symbols": [
+        {
+          "name": "TaskStatus",
+          "qualified_name": "TaskStatus",
+          "kind": "enum",
+          "start_line": 5,
+          "end_line": 11,
+          "signature": "pub enum TaskStatus {"
+        },
+        {
+          "name": "WorkspaceTask",
+          "qualified_name": "WorkspaceTask",
+          "kind": "struct",
+          "start_line": 15,
+          "end_line": 21,
+          "signature": "pub struct WorkspaceTask {"
+        },
+        {
+          "name": "WorkspaceManager",
+          "qualified_name": "WorkspaceManager",
+          "kind": "struct",
+          "start_line": 25,
+          "end_line": 27,
+          "signature": "pub struct WorkspaceManager {"
+        },
+        {
+          "name": "new",
+          "qualified_name": "impl WorkspaceManager::new",
+          "kind": "method",
+          "start_line": 32,
+          "end_line": 34,
+          "signature": "pub fn new() -> Self {"
+        },
+        {
+          "name": "update_task_status",
+          "qualified_name": "impl WorkspaceManager::update_task_status",
+          "kind": "method",
+          "start_line": 37,
+          "end_line": 48,
+          "signature": "pub fn update_task_status("
+        },
+        {
+          "name": "add_task",
+          "qualified_name": "impl WorkspaceManager::add_task",
+          "kind": "method",
+          "start_line": 51,
+          "end_line": 53,
+          "signature": "pub fn add_task(&mut self, task: WorkspaceTask) {"
+        }
+      ],
+      "last_scanned_at": "2026-09-27T20:05:37.427892338Z"
+    },
+    "crates/frappe-net/tests/tenant_isolation_tests.rs": {
+      "relative_path": "crates/frappe-net/tests/tenant_isolation_tests.rs",
+      "language": "rust",
+      "size_bytes": 1905,
+      "line_count": 57,
+      "content_hash": "500b66e69b0c0ab9baf8f7d27c6e2403fa77476fbd364899c9ad65b5a645431e",
+      "symbols": [
+        {
+          "name": "test_tenant_database_isolation",
+          "qualified_name": "test_tenant_database_isolation",
+          "kind": "function",
+          "start_line": 5,
+          "end_line": 57,
+          "signature": "async fn test_tenant_database_isolation() {"
+        }
+      ],
+      "last_scanned_at": "2026-09-27T20:05:37.413649317Z"
+    },
+    "crates/frappe-framework/src/wasmtime_sandbox.rs": {
+      "relative_path": "crates/frappe-framework/src/wasmtime_sandbox.rs",
+      "language": "rust",
+      "size_bytes": 2499,
+      "line_count": 80,
+      "content_hash": "ea4aca6cbc79d17b53b7eed7ba1216260c5e45110e9898faeba046c436b8d43c",
+      "symbols": [
+        {
+          "name": "RealSandbox",
+          "qualified_name": "RealSandbox",
+          "kind": "struct",
+          "start_line": 5,
+          "end_line": 9,
+          "signature": "pub struct RealSandbox {"
+        },
+        {
+          "name": "Limits",
+          "qualified_name": "Limits",
+          "kind": "struct",
+          "start_line": 11,
+          "end_line": 14,
+          "signature": "struct Limits {"
+        },
+        {
+          "name": "memory_growing",
+          "qualified_name": "impl wasmtime::ResourceLimiter for Limits::memory_growing",
+          "kind": "method",
+          "start_line": 17,
+          "end_line": 25,
+          "signature": "fn memory_growing("
+        },
+        {
+          "name": "table_growing",
+          "qualified_name": "impl wasmtime::ResourceLimiter for Limits::table_growing",
+          "kind": "method",
+          "start_line": 26,
+          "end_line": 33,
+          "signature": "fn table_growing("
+        },
+        {
+          "name": "new",
+          "qualified_name": "impl RealSandbox::new",
+          "kind": "method",
+          "start_line": 37,
+          "end_line": 45,
+          "signature": "pub fn new(fuel: u64, max_mem_bytes: usize) -> Result<Self> {"
+        },
+        {
+          "name": "run_wat",
+          "qualified_name": "impl RealSandbox::run_wat",
+          "kind": "method",
+          "start_line": 48,
+          "end_line": 62,
+          "signature": "pub fn run_wat(&self, wat: &str) -> Result<i32> {"
+        },
+        {
+          "name": "t",
+          "qualified_name": "t",
+          "kind": "module",
+          "start_line": 66,
+          "end_line": 80,
+          "signature": "mod t {"
+        },
+        {
+          "name": "wat_runs",
+          "qualified_name": "wat_runs",
+          "kind": "function",
+          "start_line": 69,
+          "end_line": 73,
+          "signature": "fn wat_runs() {"
+        },
+        {
+          "name": "fuel_trips_on_loop",
+          "qualified_name": "fuel_trips_on_loop",
+          "kind": "function",
+          "start_line": 75,
+          "end_line": 79,
+          "signature": "fn fuel_trips_on_loop() {"
+        }
+      ],
+      "last_scanned_at": "2026-09-27T20:05:37.421036786Z"
+    },
+    "crates/erp-accounting/src/ledger.rs": {
+      "relative_path": "crates/erp-accounting/src/ledger.rs",
+      "language": "rust",
+      "size_bytes": 11052,
+      "line_count": 322,
+      "content_hash": "c565208bebbb117de600f89f2805a1f77d79f7df5a9bee2bed19ea4066d55057",
+      "symbols": [
+        {
+          "name": "AccountingError",
+          "qualified_name": "AccountingError",
+          "kind": "enum",
+          "start_line": 10,
+          "end_line": 33,
+          "signature": "pub enum AccountingError {"
+        },
+        {
+          "name": "JournalEntryLine",
+          "qualified_name": "JournalEntryLine",
+          "kind": "struct",
+          "start_line": 37,
+          "end_line": 54,
+          "signature": "pub struct JournalEntryLine {"
+        },
+        {
+          "name": "JournalEntry",
+          "qualified_name": "JournalEntry",
+          "kind": "struct",
+          "start_line": 58,
+          "end_line": 67,
+          "signature": "pub struct JournalEntry {"
+        },
+        {
+          "name": "validate_balance",
+          "qualified_name": "impl JournalEntry::validate_balance",
+          "kind": "method",
+          "start_line": 71,
+          "end_line": 89,
+          "signature": "pub fn validate_balance(&self) -> Result<(), AccountingError> {"
+        },
+        {
+          "name": "balance_exchange_variance",
+          "qualified_name": "impl JournalEntry::balance_exchange_variance",
+          "kind": "method",
+          "start_line": 92,
+          "end_line": 130,
+          "signature": "pub fn balance_exchange_variance("
+        },
+        {
+          "name": "GlEntry",
+          "qualified_name": "GlEntry",
+          "kind": "struct",
+          "start_line": 135,
+          "end_line": 156,
+          "signature": "pub struct GlEntry {"
+        },
+        {
+          "name": "PeriodClosingLog",
+          "qualified_name": "PeriodClosingLog",
+          "kind": "struct",
+          "start_line": 160,
+          "end_line": 165,
+          "signature": "pub struct PeriodClosingLog {"
+        },
+        {
+          "name": "LedgerPostingEngine",
+          "qualified_name": "LedgerPostingEngine",
+          "kind": "struct",
+          "start_line": 168,
+          "end_line": 171,
+          "signature": "pub struct LedgerPostingEngine {"
+        },
+        {
+          "name": "new",
+          "qualified_name": "impl LedgerPostingEngine::new",
+          "kind": "method",
+          "start_line": 176,
+          "end_line": 185,
+          "signature": "pub fn new(accounts: Vec<Account>, closing_logs: Vec<PeriodClosingLog>) -> Self {"
+        },
+        {
+          "name": "post_journal_entry",
+          "qualified_name": "impl LedgerPostingEngine::post_journal_entry",
+          "kind": "method",
+          "start_line": 188,
+          "end_line": 225,
+          "signature": "pub fn post_journal_entry("
+        },
+        {
+          "name": "TrialBalanceRow",
+          "qualified_name": "TrialBalanceRow",
+          "kind": "struct",
+          "start_line": 230,
+          "end_line": 235,
+          "signature": "pub struct TrialBalanceRow {"
+        },
+        {
+          "name": "StatementGenerator",
+          "qualified_name": "StatementGenerator",
+          "kind": "struct",
+          "start_line": 238,
+          "end_line": 238,
+          "signature": "pub struct StatementGenerator;"
+        },
+        {
+          "name": "generate_trial_balance",
+          "qualified_name": "impl StatementGenerator::generate_trial_balance",
+          "kind": "method",
+          "start_line": 243,
+          "end_line": 268,
+          "signature": "pub fn generate_trial_balance(entries: &[GlEntry], as_of: NaiveDate) -> Vec<TrialBalanceRow> {"
+        },
+        {
+          "name": "calculate_net_profit",
+          "qualified_name": "impl StatementGenerator::calculate_net_profit",
+          "kind": "method",
+          "start_line": 272,
+          "end_line": 293,
+          "signature": "pub fn calculate_net_profit("
+        },
+        {
+          "name": "verify_balance_sheet",
+          "qualified_name": "impl StatementGenerator::verify_balance_sheet",
+          "kind": "method",
+          "start_line": 297,
+          "end_line": 321,
+          "signature": "pub fn verify_balance_sheet("
+        }
+      ],
+      "last_scanned_at": "2026-09-27T20:05:37.430662342Z"
     }
   },
-  "total_symbols": 8,
-  "last_updated": "2026-09-27T13:45:05.850183582Z"
+  "total_symbols": 447,
+  "last_updated": "2026-09-27T20:05:37.441247249Z"
 }
