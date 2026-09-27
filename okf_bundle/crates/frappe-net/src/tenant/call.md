@@ -1,0 +1,39 @@
+---
+okf_version: "0.2"
+type: Function
+title: call
+resource: crates/frappe-net/src/tenant.rs
+tags:
+  - "lang:rust"
+  - "type:Function"
+  - "module:crates"
+  - "domain:frappe-net"
+  - "git:branch:main"
+  - "git:repo:ERPNext_Rust"
+timestamp: "2026-09-27T18:59:03Z"
+concept_id: crates/frappe-net/src/tenant/call
+language: rust
+---
+
+# call
+
+## Signature
+
+```rust
+impl TenantResolverMiddleware<S> { fn call(&self, req: ServiceRequest) -> Self::Future }
+```
+
+## Type Parameters
+
+- `S`
+- `B`
+
+## Source
+Lines 221–233 in `crates/frappe-net/src/tenant.rs`
+
+## Relationships
+
+| Type | Target |
+|------|--------|
+| related | [tenant](/crates/frappe-net/src/tenant.md) |
+| calls | [parse_tenant_id](/crates/frappe-net/src/tenant/parse_tenant_id.md) |

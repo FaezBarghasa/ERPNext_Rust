@@ -1,0 +1,45 @@
+---
+okf_version: "0.2"
+type: Function
+title: new
+description: Creates a new scheduler instance.
+resource: crates/erp-manufacturing/src/mrp.rs
+tags:
+  - "lang:rust"
+  - "type:Function"
+  - "module:crates"
+  - "domain:erp-manufacturing"
+  - "git:branch:main"
+  - "git:repo:ERPNext_Rust"
+timestamp: "2026-09-27T19:27:43Z"
+concept_id: crates/erp-manufacturing/src/mrp/new
+language: rust
+---
+
+# new
+
+Creates a new scheduler instance.
+
+## Signature
+
+```rust
+impl WorkstationScheduler { pub fn new() -> Self }
+```
+
+## Visibility
+
+- `pub`
+
+## Docstring
+
+Creates a new scheduler instance.
+[must_use]
+
+## Source
+Lines 93–95 in `crates/erp-manufacturing/src/mrp.rs`
+
+## Relationships
+
+| Type | Target |
+|------|--------|
+| related | [mrp](/crates/erp-manufacturing/src/mrp.md) |

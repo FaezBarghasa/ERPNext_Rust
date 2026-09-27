@@ -1,0 +1,31 @@
+---
+okf_version: "0.2"
+type: Dependency
+title: idna_adapter
+description: Dependency from Cargo.lock
+resource: Cargo.lock
+tags:
+  - "lang:manifest"
+  - "type:Dependency"
+  - "module:Cargo.lock"
+  - "git:branch:main"
+  - "git:repo:ERPNext_Rust"
+  - "version:1.2.2"
+  - "manifest:Cargo.lock"
+  - "ecosystem:cargo"
+timestamp: "2026-09-27T20:02:31Z"
+concept_id: _dependencies/cargo/idna_adapter
+language: manifest
+---
+
+# idna_adapter
+
+Dependency from Cargo.lock
+
+| Field | Value |
+|-------|-------|
+| Ecosystem | `cargo` |
+| Version constraint | `1.2.2` |
+| Source manifest | `Cargo.lock` |
+| Dev dependency | `no` |
+| Used by | 0 module(s) |
