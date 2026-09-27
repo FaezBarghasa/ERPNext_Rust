@@ -1,22 +1,43 @@
-//! Pure-Rust Typst PDF/A rendering (Stage 6.2): replaces headless Chrome.
-//! Stub using typst's compile + pdf pipeline (actual API in 0.15+).
-use typst::typst::{Library, World};
-
-/// Minimal invoice template -> PDF bytes.
-pub fn render_invoice_pdf(invoice_no: &str, total_cents: i64) -> Vec<u8> {
-    let src = format!("#set page(width: 210mm, height: 297mm, margin: 20mm)\n#set text(font: \"DejaVu Sans\")\n#align(center)[= INVOICE {}]\n#grid(columns: 2, gutter: 10pt)[\n  Invoice #: {}\n  Total: {} \n]", invoice_no, invoice_no, total_cents as f64 / 100.0);
-    // Real implementation: typst::compile + typst::pdf
-    // For now return minimal PDF to validate integration compiles
-    format!("%PDF-1.4\n%Typed\n%%EOF\n").into_bytes()
+/// Lightweight HTML invoice template renderer.
+#[must_use]
+pub fn render_invoice_html(invoice_no: &str, total_amount: &str, currency: &str) -> String {
+    format!(
+        r#"<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>Invoice {invoice_no}</title>
+<style>
+body {{ font-family: sans-serif; margin: 40px; color: #333; }}
+.header {{ text-align: center; border-bottom: 2px solid #ddd; padding-bottom: 20px; }}
+.details {{ margin-top: 30px; font-size: 16px; }}
+.total {{ margin-top: 30px; font-size: 20px; font-weight: bold; color: #111; }}
+</style>
+</head>
+<body>
+<div class="header">
+  <h1>COMMERCIAL INVOICE</h1>
+  <p>Invoice #: <strong>{invoice_no}</strong></p>
+</div>
+<div class="details">
+  <p>Thank you for your business.</p>
+</div>
+<div class="total">
+  <p>Grand Total: {currency} {total_amount}</p>
+</div>
+</body>
+</html>"#
+    )
 }
 
 #[cfg(test)]
-mod t {
+mod tests {
     use super::*;
+
     #[test]
-    fn pdf_nonempty() {
-        let pdf = render_invoice_pdf("INV-001", 12345);
-        assert!(!pdf.is_empty());
-        assert!(pdf.starts_with(b"%PDF"));
+    fn test_render_invoice_html() {
+        let html = render_invoice_html("ACC-INV-2026-00001", "1,250.00", "USD");
+        assert!(html.contains("ACC-INV-2026-00001"));
+        assert!(html.contains("USD 1,250.00"));
     }
 }
