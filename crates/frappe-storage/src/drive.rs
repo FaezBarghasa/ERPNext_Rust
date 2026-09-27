@@ -86,7 +86,7 @@ impl DeduplicatedStorage {
     ) -> Result<(DriveFile, bool), StorageError> {
         let mut hasher = Sha256::new();
         hasher.update(data);
-        let content_hash = format!("{:x}", hasher.finalize());
+        let content_hash: String = hasher.finalize().iter().map(|b| format!("{b:02x}")).collect();
 
         let mut payloads = self
             .payloads

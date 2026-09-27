@@ -1643,9 +1643,11 @@ name = "frappe-framework"
 version = "0.1.0"
 dependencies = [
  "anyhow",
+ "chrono",
  "frappe-meta",
  "frappe-storage",
  "rhai",
+ "rust_decimal",
  "serde",
  "serde_json",
  "thiserror",
@@ -1689,7 +1691,7 @@ dependencies = [
  "frappe-meta",
  "serde",
  "serde_json",
- "sha2 0.10.9",
+ "sha2 0.11.0",
  "surrealdb",
  "thiserror",
  "tokio",

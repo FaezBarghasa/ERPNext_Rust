@@ -1,7 +1,13 @@
+pub mod bpmn;
+pub mod dmn;
 pub mod lifecycle;
+pub mod saga;
 pub mod scripting;
 
+pub use bpmn::{ActivityType, BpmnEngine, BpmnProcessDefinition, FlowNode, ProcessInstance, SequenceFlow};
+pub use dmn::{ConditionOp, DecisionRule, DecisionTable, HitPolicy};
 pub use lifecycle::{Document, DocumentController, DocumentError};
+pub use saga::{SagaAction, SagaCoordinator, SagaTransaction};
 pub use scripting::{LifecycleEvent, RhaiHookEngine, ScriptError};
 
 #[cfg(test)]

@@ -26,7 +26,7 @@ impl MerkleHasher {
 
     #[must_use]
     pub fn finalize_hex(self) -> String {
-        format!("{:x}", self.hasher.finalize())
+        self.hasher.finalize().iter().map(|b| format!("{b:02x}")).collect()
     }
 
     /// Computes root hash of a list of binary leaves.
@@ -43,7 +43,8 @@ impl MerkleHasher {
                     let mut h = Sha256::new();
                     h.update(chunk[0].as_bytes());
                     h.update(chunk[1].as_bytes());
-                    next_level.push(format!("{:x}", h.finalize()));
+                    let hex_out: String = h.finalize().iter().map(|b| format!("{b:02x}")).collect();
+                    next_level.push(hex_out);
                 } else {
                     next_level.push(chunk[0].clone());
                 }
