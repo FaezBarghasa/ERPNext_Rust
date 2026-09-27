@@ -11,7 +11,7 @@ tags:
   - "domain:erp-cms"
   - "git:branch:main"
   - "git:repo:ERPNext_Rust"
-timestamp: "2026-09-27T20:00:25Z"
+timestamp: "2026-09-27T20:25:54Z"
 concept_id: crates/erp-cms/src/security/HmacStreamingSigner
 language: rust
 ---
@@ -39,7 +39,7 @@ Signed HMAC-SHA256 Token Generator & Validator (Milestone 5.4).
 - `secret_key`
 
 ## Source
-Lines 87–89 in `crates/erp-cms/src/security.rs`
+Lines 88–90 in `crates/erp-cms/src/security.rs`
 
 ## Relationships
 

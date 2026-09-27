@@ -10,8 +10,8 @@ tags:
   - "module:Cargo.lock"
   - "git:branch:main"
   - "git:repo:ERPNext_Rust"
-  - "version:0.4.1"
   - "manifest:Cargo.lock"
+  - "version:0.4.1"
   - "ecosystem:cargo"
 timestamp: "2026-09-27T20:02:31Z"
 concept_id: _dependencies/cargo/no-std-compat

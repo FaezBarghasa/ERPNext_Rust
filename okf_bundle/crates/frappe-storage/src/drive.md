@@ -10,7 +10,7 @@ tags:
   - "domain:frappe-storage"
   - "git:branch:main"
   - "git:repo:ERPNext_Rust"
-timestamp: "2026-09-27T18:51:07Z"
+timestamp: "2026-09-27T20:28:39Z"
 concept_id: crates/frappe-storage/src/drive
 language: rust
 ---
@@ -28,10 +28,14 @@ language: rust
 | related | [new](/crates/frappe-storage/src/drive/new.md) |
 | related | [store_file](/crates/frappe-storage/src/drive/store_file.md) |
 | related | [read_file](/crates/frappe-storage/src/drive/read_file.md) |
+| related | [create_folder](/crates/frappe-storage/src/drive/create_folder.md) |
+| related | [get_folder](/crates/frappe-storage/src/drive/get_folder.md) |
 | related | [physical_payload_count](/crates/frappe-storage/src/drive/physical_payload_count.md) |
 | related | [new](/crates/frappe-storage/src/drive/new.md) |
 | related | [store_file](/crates/frappe-storage/src/drive/store_file.md) |
 | related | [read_file](/crates/frappe-storage/src/drive/read_file.md) |
+| related | [create_folder](/crates/frappe-storage/src/drive/create_folder.md) |
+| related | [get_folder](/crates/frappe-storage/src/drive/get_folder.md) |
 | related | [physical_payload_count](/crates/frappe-storage/src/drive/physical_payload_count.md) |
 | related | [serde](/_dependencies/cargo/serde.md) |
 | related | [sha2](/_dependencies/cargo/sha2.md) |

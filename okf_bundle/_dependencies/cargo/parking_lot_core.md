@@ -10,9 +10,9 @@ tags:
   - "module:Cargo.lock"
   - "git:branch:main"
   - "git:repo:ERPNext_Rust"
+  - "version:0.9.12"
   - "manifest:Cargo.lock"
   - "ecosystem:cargo"
-  - "version:0.9.12"
 timestamp: "2026-09-27T20:02:31Z"
 concept_id: _dependencies/cargo/parking_lot_core
 language: manifest

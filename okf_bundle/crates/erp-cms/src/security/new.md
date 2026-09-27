@@ -11,7 +11,7 @@ tags:
   - "domain:erp-cms"
   - "git:branch:main"
   - "git:repo:ERPNext_Rust"
-timestamp: "2026-09-27T20:00:25Z"
+timestamp: "2026-09-27T20:25:54Z"
 concept_id: crates/erp-cms/src/security/new
 language: rust
 ---
@@ -36,7 +36,7 @@ Creates a new signer with the specified secret key.
 [must_use]
 
 ## Source
-Lines 94–98 in `crates/erp-cms/src/security.rs`
+Lines 95–99 in `crates/erp-cms/src/security.rs`
 
 ## Relationships
 

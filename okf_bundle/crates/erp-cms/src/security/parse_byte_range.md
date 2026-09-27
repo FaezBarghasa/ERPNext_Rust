@@ -11,7 +11,7 @@ tags:
   - "domain:erp-cms"
   - "git:branch:main"
   - "git:repo:ERPNext_Rust"
-timestamp: "2026-09-27T20:00:25Z"
+timestamp: "2026-09-27T20:25:54Z"
 concept_id: crates/erp-cms/src/security/parse_byte_range
 language: rust
 ---
@@ -35,7 +35,7 @@ pub fn parse_byte_range(range_header: &str, total_size: u64) -> Result<(u64, u64
 HTTP 206 Byte Range Parser (Milestone 5.4).
 
 ## Source
-Lines 36–84 in `crates/erp-cms/src/security.rs`
+Lines 37–85 in `crates/erp-cms/src/security.rs`
 
 ## Relationships
 

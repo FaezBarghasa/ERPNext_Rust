@@ -11,7 +11,7 @@ tags:
   - "domain:erp-hr"
   - "git:branch:main"
   - "git:repo:ERPNext_Rust"
-timestamp: "2026-09-27T19:31:25Z"
+timestamp: "2026-09-27T20:27:26Z"
 concept_id: crates/erp-hr/src/payroll/SalaryCalculator
 language: rust
 ---

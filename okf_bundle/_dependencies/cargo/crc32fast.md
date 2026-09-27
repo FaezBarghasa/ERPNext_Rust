@@ -10,9 +10,9 @@ tags:
   - "module:Cargo.lock"
   - "git:branch:main"
   - "git:repo:ERPNext_Rust"
+  - "version:1.5.2"
   - "manifest:Cargo.lock"
   - "ecosystem:cargo"
-  - "version:1.5.2"
 timestamp: "2026-09-27T20:02:31Z"
 concept_id: _dependencies/cargo/crc32fast
 language: manifest

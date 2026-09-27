@@ -11,8 +11,8 @@ tags:
   - "domain:frappe-meta"
   - "git:branch:main"
   - "git:repo:ERPNext_Rust"
-  - "manifest:Cargo.toml"
   - "version:1.13.1"
+  - "manifest:Cargo.toml"
   - "ecosystem:cargo"
 timestamp: "2026-09-27T18:48:33Z"
 concept_id: _dependencies/cargo/regex_2

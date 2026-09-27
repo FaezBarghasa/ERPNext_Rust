@@ -11,7 +11,7 @@ tags:
   - "domain:frappe-storage"
   - "git:branch:main"
   - "git:repo:ERPNext_Rust"
-timestamp: "2026-09-27T18:51:07Z"
+timestamp: "2026-09-27T20:28:39Z"
 concept_id: crates/frappe-storage/src/drive/physical_payload_count_1
 language: rust
 ---
@@ -40,7 +40,7 @@ Returns the number of distinct physical binary payloads stored in memory.
 [must_use]
 
 ## Source
-Lines 143–145 in `crates/frappe-storage/src/drive.rs`
+Lines 158–160 in `crates/frappe-storage/src/drive.rs`
 
 ## Relationships
 

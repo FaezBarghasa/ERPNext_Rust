@@ -10,6 +10,7 @@ tags:
   - "domain:rbench"
   - "git:branch:main"
   - "git:repo:ERPNext_Rust"
+timestamp: "2026-09-27T14:03:17Z"
 concept_id: crates/rbench/src/main/main
 language: rust
 ---
@@ -24,3 +25,9 @@ fn main()
 
 ## Source
 Lines 1–12 in `crates/rbench/src/main.rs`
+
+## Relationships
+
+| Type | Target |
+|------|--------|
+| related | [src](/crates/rbench/src/main.md) |

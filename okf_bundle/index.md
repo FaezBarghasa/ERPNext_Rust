@@ -2,14 +2,14 @@
 description: OKF v0.2 bundle generated from the ERPNext_workspace codebase
 okf_version: '0.2'
 source_root: /home/jrad/RustroverProjects/ERPNext_workspace
-timestamp: '2026-09-27T20:15:55Z'
+timestamp: '2026-09-27T20:33:57Z'
 title: ERPNext_workspace
 type: Index
 ---
 
 # ERPNext_workspace
 
-OKF v0.2 knowledge bundle — 1215 concepts across 6 top-level directories.
+OKF v0.2 knowledge bundle — 1231 concepts across 6 top-level directories.
 
 ## Top-level Directories
 

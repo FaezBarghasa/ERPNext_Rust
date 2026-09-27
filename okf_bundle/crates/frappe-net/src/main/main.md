@@ -10,6 +10,7 @@ tags:
   - "domain:frappe-net"
   - "git:branch:main"
   - "git:repo:ERPNext_Rust"
+timestamp: "2026-09-27T14:03:17Z"
 concept_id: crates/frappe-net/src/main/main
 language: rust
 ---
@@ -24,3 +25,9 @@ fn main()
 
 ## Source
 Lines 1–1 in `crates/frappe-net/src/main.rs`
+
+## Relationships
+
+| Type | Target |
+|------|--------|
+| related | [src](/crates/frappe-net/src/main.md) |

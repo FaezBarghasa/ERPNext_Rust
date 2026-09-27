@@ -10,8 +10,8 @@ tags:
   - "module:Cargo.lock"
   - "git:branch:main"
   - "git:repo:ERPNext_Rust"
-  - "manifest:Cargo.lock"
   - "version:0.16.0"
+  - "manifest:Cargo.lock"
   - "ecosystem:cargo"
 timestamp: "2026-09-27T20:02:31Z"
 concept_id: _dependencies/cargo/i_tree

@@ -9,6 +9,10 @@
 
 ## Functions
 
+- [create_folder](create_folder.md) — Creates a virtual drive folder.
+- [create_folder](create_folder_1.md) — Creates a virtual drive folder.
+- [get_folder](get_folder.md) — Retrieves a virtual drive folder by ID.
+- [get_folder](get_folder_1.md) — Retrieves a virtual drive folder by ID.
 - [new](new.md) — Creates a new storage instance.
 - [new](new_1.md) — Creates a new storage instance.
 - [physical_payload_count](physical_payload_count.md) — Returns the number of distinct physical binary payloads stored in memory.

@@ -1,31 +1,31 @@
 ---
-description: 'Top-level OKF summary: 1215 concepts across 3 domains and 66 modules'
+description: 'Top-level OKF summary: 1231 concepts across 3 domains and 66 modules'
 git_branch: main
 git_repo: ERPNext_Rust
 okf_version: '0.2'
-timestamp: '2026-09-27T20:15:55Z'
+timestamp: '2026-09-27T20:33:58Z'
 title: ERPNext_workspace — Knowledge Summary
 type: Index
 ---
 
 # ERPNext_workspace — Knowledge Summary
 
-> OKF v0.2 bundle | 1,215 concepts | 3 domains | 66 modules
+> OKF v0.2 bundle | 1,231 concepts | 3 domains | 66 modules
 
 ## Stats
 
 | Type | Count |
 |------|-------|
 | Dependency | 717 |
-| Function | 302 |
-| Class | 129 |
+| Function | 317 |
+| Class | 130 |
 | Module | 66 |
 | Resource | 1 |
 
 | Language | Concepts |
 |----------|----------|
 | manifest | 717 |
-| rust | 496 |
+| rust | 512 |
 | yaml | 2 |
 
 ## Domain Map
@@ -40,16 +40,16 @@ Use these links to navigate the bundle or prime an AI agent with focused context
 
 - [benches/tenant_bench](benches/tenant_bench/index.md) (1 concepts)
 
-### [crates](crates/index.md) — 495 concepts
+### [crates](crates/index.md) — 511 concepts
 
 - [crates/frappe-net/src/tenant](crates/frappe-net/src/tenant/index.md) (29 concepts)
 - [crates/frappe-framework/src/lifecycle](crates/frappe-framework/src/lifecycle/index.md) (24 concepts)
 - [crates/erp-accounting/src/ledger](crates/erp-accounting/src/ledger/index.md) (23 concepts)
 - [crates/frappe-storage/src/lib](crates/frappe-storage/src/lib/index.md) (20 concepts) — Tenant context, queue states, CAS deduplication, and SurrealDB storage backend.
 - [crates/erp-cms/src/security](crates/erp-cms/src/security/index.md) (18 concepts)
+- [crates/frappe-storage/src/drive](crates/frappe-storage/src/drive/index.md) (17 concepts)
 - [crates/erp-learning/src/lms](crates/erp-learning/src/lms/index.md) (17 concepts)
 - [crates/erp-hr/src/payroll](crates/erp-hr/src/payroll/index.md) (16 concepts)
-- [crates/erp-lending/src/amortization](crates/erp-lending/src/amortization/index.md) (15 concepts)
 - *…and 56 more modules*
 
 ## Dependencies
@@ -87,7 +87,7 @@ Highest-value concepts across all domains (Classes and Functions with rich descr
 | [allocate_fifo](/crates/erp-accounting/src/receivables/allocate_fifo.md) | Function | `crates/erp-accounting/src` | FIFO Payment Allocation: matches incoming payment against ol… |
 | [allocate_fifo](/crates/erp-accounting/src/receivables/allocate_fifo_1.md) | Function | `crates/erp-accounting/src` | FIFO Payment Allocation: matches incoming payment against ol… |
 | [DeduplicatedStorage](/crates/frappe-storage/src/drive/DeduplicatedStorage.md) | Class | `crates/frappe-storage/src` | Content-Addressable Storage (CAS) with SHA-256 deduplication… |
-| [cosine_similarity](/crates/erp-cms/src/subtitles/cosine_similarity.md) | Function | `crates/erp-cms/src` | Computes cosine similarity between two vector embeddings: $\… |
+| [start_playback](/crates/erp-cms/src/security/start_playback.md) | Function | `crates/erp-cms/src` | Starts a playback session if subscription is active and conc… |
 
 ## Usage with OpenCode
 

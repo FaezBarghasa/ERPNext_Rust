@@ -11,8 +11,8 @@ tags:
   - "git:branch:main"
   - "git:repo:ERPNext_Rust"
   - "manifest:Cargo.lock"
-  - "ecosystem:cargo"
   - "version:3.3.0"
+  - "ecosystem:cargo"
 timestamp: "2026-09-27T20:02:31Z"
 concept_id: _dependencies/cargo/surrealdb-engine-local
 language: manifest

@@ -11,7 +11,7 @@ tags:
   - "domain:erp-cms"
   - "git:branch:main"
   - "git:repo:ERPNext_Rust"
-timestamp: "2026-09-27T20:00:25Z"
+timestamp: "2026-09-27T20:25:54Z"
 concept_id: crates/erp-cms/src/security/end_playback_1
 language: rust
 ---
@@ -35,7 +35,7 @@ pub fn end_playback(&self, user_id: &str, session_id: &str)
 Ends an active playback session.
 
 ## Source
-Lines 177–183 in `crates/erp-cms/src/security.rs`
+Lines 178–184 in `crates/erp-cms/src/security.rs`
 
 ## Relationships
 

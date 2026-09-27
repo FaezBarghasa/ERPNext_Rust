@@ -10,6 +10,7 @@ tags:
   - "domain:frappe-net"
   - "git:branch:main"
   - "git:repo:ERPNext_Rust"
+timestamp: "2026-09-27T18:59:03Z"
 concept_id: crates/frappe-net/src/tenant/validate_and_create_tenant_id
 language: rust
 ---
@@ -24,3 +25,12 @@ fn validate_and_create_tenant_id(tenant_str: &str) -> Result<TenantId, TenantErr
 
 ## Source
 Lines 167–176 in `crates/frappe-net/src/tenant.rs`
+
+## Relationships
+
+| Type | Target |
+|------|--------|
+| related | [tenant](/crates/frappe-net/src/tenant.md) |
+| calls | [TenantId](/crates/frappe-net/src/tenant/TenantId.md) |
+| called_by | [parse_tenant_id](/crates/frappe-net/src/tenant/parse_tenant_id.md) |
+| called_by | [provision_tenant](/crates/frappe-net/src/tenant/provision_tenant.md) |

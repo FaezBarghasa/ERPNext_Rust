@@ -10,8 +10,8 @@ tags:
   - "module:Cargo.lock"
   - "git:branch:main"
   - "git:repo:ERPNext_Rust"
-  - "version:0.1.11"
   - "manifest:Cargo.lock"
+  - "version:0.1.11"
   - "ecosystem:cargo"
 timestamp: "2026-09-27T20:02:31Z"
 concept_id: _dependencies/cargo/winapi-util

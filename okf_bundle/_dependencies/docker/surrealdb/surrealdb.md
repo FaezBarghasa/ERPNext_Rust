@@ -10,8 +10,8 @@ tags:
   - "module:docker-compose.yml"
   - "git:branch:main"
   - "git:repo:ERPNext_Rust"
-  - "manifest:docker-compose.yml"
   - "version:latest"
+  - "manifest:docker-compose.yml"
   - "ecosystem:docker"
 timestamp: "2026-07-25T14:29:56Z"
 concept_id: _dependencies/docker/surrealdb/surrealdb

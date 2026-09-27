@@ -11,7 +11,7 @@ tags:
   - "domain:desk-components"
   - "git:branch:main"
   - "git:repo:ERPNext_Rust"
-timestamp: "2026-09-27T15:44:12Z"
+timestamp: "2026-09-27T20:23:38Z"
 concept_id: crates/desk-components/src/signals/filter_docs
 language: rust
 ---
@@ -30,6 +30,10 @@ pub fn filter_docs(docs: &'a [String], query: &str) -> Vec<&'a String>
 
 - `'a`
 
+## Decorators
+
+- `must_use`
+
 ## Visibility
 
 - `pub`
@@ -37,9 +41,10 @@ pub fn filter_docs(docs: &'a [String], query: &str) -> Vec<&'a String>
 ## Docstring
 
 Pure kernel: case-sensitive substring filter over doc names.
+[must_use]
 
 ## Source
-Lines 7–9 in `crates/desk-components/src/signals.rs`
+Lines 39–41 in `crates/desk-components/src/signals.rs`
 
 ## Relationships
 

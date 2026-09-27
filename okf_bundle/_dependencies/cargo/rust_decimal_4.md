@@ -12,8 +12,8 @@ tags:
   - "git:branch:main"
   - "git:repo:ERPNext_Rust"
   - "manifest:Cargo.toml"
-  - "ecosystem:cargo"
   - "version:1.43.0"
+  - "ecosystem:cargo"
 timestamp: "2026-09-27T19:40:36Z"
 concept_id: _dependencies/cargo/rust_decimal_4
 language: manifest

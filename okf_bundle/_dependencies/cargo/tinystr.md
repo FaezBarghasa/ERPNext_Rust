@@ -11,8 +11,8 @@ tags:
   - "git:branch:main"
   - "git:repo:ERPNext_Rust"
   - "manifest:Cargo.lock"
-  - "ecosystem:cargo"
   - "version:0.8.4"
+  - "ecosystem:cargo"
 timestamp: "2026-09-27T20:02:31Z"
 concept_id: _dependencies/cargo/tinystr
 language: manifest
