@@ -112,7 +112,7 @@ pub async fn create_resource(
 
     let table = doctype.to_lowercase().replace(' ', "_");
     let sql = format!("CREATE {table} CONTENT $doc;");
-    match client.query(&sql).bind(("doc", &doc.data)).await {
+    match client.query(&sql).bind(("doc", doc.data)).await {
         Ok(mut res) => {
             let created: Option<serde_json::Value> = res.take(0).unwrap_or(None);
             HttpResponse::Created().json(created)
