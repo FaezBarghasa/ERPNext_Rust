@@ -1,6 +1,3 @@
-//! Stochastic Risk Simulation & Latin Hypercube Monte Carlo Engine (100,000 iterations).
-
-use rand::Rng;
 use rand_distr::{Beta, Distribution, Normal, Triangular};
 use serde::{Deserialize, Serialize};
 
@@ -42,7 +39,7 @@ impl MonteCarloSimulator {
             return Err("Tasks list and iterations must be greater than zero".into());
         }
 
-        let mut rng = rand::thread_rng();
+        let mut rng = rand::rng();
         let mut total_durations = Vec::with_capacity(iterations);
 
         for _ in 0..iterations {

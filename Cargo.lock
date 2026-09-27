@@ -1199,7 +1199,7 @@ dependencies = [
  "diskann-wide",
  "half",
  "rand 0.9.5",
- "rand_distr",
+ "rand_distr 0.5.1",
  "rayon",
  "thiserror",
 ]
@@ -1376,6 +1376,21 @@ dependencies = [
 ]
 
 [[package]]
+name = "erp-asset"
+version = "0.1.0"
+dependencies = [
+ "chrono",
+ "frappe-framework",
+ "frappe-meta",
+ "rust_decimal",
+ "rust_decimal_macros",
+ "serde",
+ "serde_json",
+ "sha2 0.11.0",
+ "thiserror",
+]
+
+[[package]]
 name = "erp-cms"
 version = "0.1.0"
 dependencies = [
@@ -1480,6 +1495,22 @@ dependencies = [
 ]
 
 [[package]]
+name = "erp-ppm"
+version = "0.1.0"
+dependencies = [
+ "chrono",
+ "frappe-framework",
+ "frappe-meta",
+ "rand 0.10.3",
+ "rand_distr 0.6.0",
+ "rust_decimal",
+ "rust_decimal_macros",
+ "serde",
+ "serde_json",
+ "thiserror",
+]
+
+[[package]]
 name = "erp-support"
 version = "0.1.0"
 dependencies = [
@@ -1498,6 +1529,20 @@ version = "0.1.0"
 dependencies = [
  "erp-accounting",
  "erp-inventory",
+ "frappe-framework",
+ "frappe-meta",
+ "rust_decimal",
+ "rust_decimal_macros",
+ "serde",
+ "serde_json",
+ "thiserror",
+]
+
+[[package]]
+name = "erp-wms"
+version = "0.1.0"
+dependencies = [
+ "chrono",
  "frappe-framework",
  "frappe-meta",
  "rust_decimal",
@@ -1988,7 +2033,7 @@ dependencies = [
  "crunchy",
  "num-traits",
  "rand 0.9.5",
- "rand_distr",
+ "rand_distr 0.5.1",
  "zerocopy",
 ]
 
@@ -3609,6 +3654,16 @@ checksum = "6a8615d50dcf34fa31f7ab52692afec947c4dd0ab803cc87cb3b0b4570ff7463"
 dependencies = [
  "num-traits",
  "rand 0.9.5",
+]
+
+[[package]]
+name = "rand_distr"
+version = "0.6.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "4d431c2703ccf129de4d45253c03f49ebb22b97d6ad79ee3ecfc7e3f4862c1d8"
+dependencies = [
+ "num-traits",
+ "rand 0.10.3",
 ]
 
 [[package]]
