@@ -1685,9 +1685,15 @@ dependencies = [
 name = "erp-manufacturing"
 version = "0.1.0"
 dependencies = [
+ "chrono",
  "erp-inventory",
  "frappe-framework",
  "frappe-meta",
+ "rust_decimal",
+ "rust_decimal_macros",
+ "serde",
+ "serde_json",
+ "thiserror",
 ]
 
 [[package]]
