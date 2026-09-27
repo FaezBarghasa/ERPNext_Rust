@@ -1,8 +1,11 @@
-//! Tenant context, queue states, CAS deduplication, and SurrealDB storage backend.
+pub mod bitemporal;
 pub mod drive;
+pub mod merkle;
 pub mod surreal;
 
+pub use bitemporal::{BiTemporalQuery, BiTemporalRecord, TimeInterval};
 pub use drive::{DeduplicatedStorage, DriveFile, DriveFolder, StorageError};
+pub use merkle::MerkleHasher;
 pub use surreal::open_tenant;
 
 use std::collections::HashMap;
