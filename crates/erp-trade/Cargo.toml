@@ -1,0 +1,10 @@
+[package]
+name = "erp-trade"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+frappe-meta = { path = "../frappe-meta" }
+frappe-framework = { path = "../frappe-framework" }
+erp-accounting = { path = "../erp-accounting" }
+erp-inventory = { path = "../erp-inventory" }

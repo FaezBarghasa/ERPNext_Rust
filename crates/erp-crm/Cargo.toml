@@ -1,0 +1,8 @@
+[package]
+name = "erp-crm"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+frappe-meta = { path = "../frappe-meta" }
+frappe-framework = { path = "../frappe-framework" }

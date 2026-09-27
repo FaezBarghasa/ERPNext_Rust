@@ -1,0 +1,9 @@
+[package]
+name = "erp-accounting"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+frappe-meta = { path = "../frappe-meta" }
+frappe-framework = { path = "../frappe-framework" }
+rust_decimal = { version = "1.43.0", features = ["serde"] }

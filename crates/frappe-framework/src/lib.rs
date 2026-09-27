@@ -1,0 +1,124 @@
+pub mod lifecycle;
+pub mod scripting;
+
+pub use lifecycle::{Document, DocumentController, DocumentError};
+pub use scripting::{LifecycleEvent, RhaiHookEngine, ScriptError};
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use frappe_meta::{DocFieldSchema, DocPermSchema, DocTypeSchema, FieldType};
+
+    fn make_test_schema() -> DocTypeSchema {
+        DocTypeSchema {
+            name: "Sales Invoice".to_string(),
+            module: "Accounts".to_string(),
+            is_single: false,
+            is_submittable: true,
+            track_changes: true,
+            naming_rule: Some("ACC-INV-.YYYY.-.#####".to_string()),
+            fields: vec![
+                DocFieldSchema {
+                    fieldname: "customer".to_string(),
+                    fieldtype: FieldType::Data,
+                    label: "Customer".to_string(),
+                    reqd: true,
+                    unique: false,
+                    read_only: false,
+                    hidden: false,
+                    in_list_view: true,
+                    options: None,
+                    default_value: None,
+                },
+                DocFieldSchema {
+                    fieldname: "grand_total".to_string(),
+                    fieldtype: FieldType::Currency,
+                    label: "Grand Total".to_string(),
+                    reqd: true,
+                    unique: false,
+                    read_only: false,
+                    hidden: false,
+                    in_list_view: true,
+                    options: None,
+                    default_value: Some(serde_json::json!(0.0)),
+                },
+            ],
+            permissions: vec![DocPermSchema {
+                role: "Accounts User".to_string(),
+                read: true,
+                write: true,
+                create: true,
+                delete: false,
+                submit: true,
+                cancel: true,
+                amend: true,
+                report: true,
+                export: true,
+                permlevel: 0,
+            }],
+        }
+    }
+
+    #[test]
+    fn test_rhai_operation_limit_exceeded() {
+        let engine = RhaiHookEngine::new();
+        let infinite_loop_script = "let i = 0; while true { i += 1; }";
+        let mut doc = serde_json::json!({ "value": 10 });
+
+        let res = engine.dispatch_hook(
+            LifecycleEvent::Validate,
+            &mut doc,
+            infinite_loop_script,
+        );
+
+        assert_eq!(res, Err(ScriptError::OperationLimitExceeded));
+    }
+
+    #[test]
+    fn test_document_lifecycle_state_machine() {
+        let controller = DocumentController::new();
+        let schema = make_test_schema();
+
+        let mut doc = Document::new(
+            "Sales Invoice",
+            serde_json::json!({
+                "customer": "Acme Corp",
+                "grand_total": 500.00
+            }),
+        );
+
+        // 1. Insert -> Draft
+        controller
+            .insert(&mut doc, &schema, None, 2026, 42)
+            .expect("Insert failed");
+        assert_eq!(doc.name, "ACC-INV-2026-00042");
+        assert_eq!(doc.docstatus, 0);
+        assert!(doc.is_draft());
+
+        // 2. Submit -> Submitted
+        controller
+            .submit(&mut doc, &schema, None)
+            .expect("Submit failed");
+        assert_eq!(doc.docstatus, 1);
+        assert!(doc.is_submitted());
+
+        // 3. Edit submitted document -> Rejected
+        let update_res = controller.update(
+            &mut doc,
+            &schema,
+            serde_json::json!({ "grand_total": 600.00 }),
+            None,
+        );
+        assert_eq!(
+            update_res,
+            Err(DocumentError::CannotEditSubmittedDocument)
+        );
+
+        // 4. Cancel -> Cancelled
+        controller
+            .cancel(&mut doc, &schema, None)
+            .expect("Cancel failed");
+        assert_eq!(doc.docstatus, 2);
+        assert!(doc.is_cancelled());
+    }
+}

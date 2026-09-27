@@ -1,0 +1,381 @@
+{
+  "project_name": "ERPNext_workspace",
+  "root_path": "/home/jrad/RustroverProjects/ERPNext_workspace",
+  "files": {
+    "Cargo.toml": {
+      "relative_path": "Cargo.toml",
+      "language": "toml",
+      "size_bytes": 563,
+      "line_count": 28,
+      "content_hash": "636c71a3be9f9d387c20407ab0f7e120c72a339936e8446135425d1a13bc9ddc",
+      "symbols": [
+        {
+          "name": "workspace",
+          "qualified_name": "[workspace]",
+          "kind": "module",
+          "start_line": 1,
+          "end_line": 1,
+          "signature": "[workspace]"
+        },
+        {
+          "name": "profile.release",
+          "qualified_name": "[profile.release]",
+          "kind": "module",
+          "start_line": 23,
+          "end_line": 23,
+          "signature": "[profile.release]"
+        }
+      ],
+      "last_scanned_at": "2026-09-27T13:45:05.850089784Z"
+    },
+    "crates/desk-components/Cargo.toml": {
+      "relative_path": "crates/desk-components/Cargo.toml",
+      "language": "toml",
+      "size_bytes": 400,
+      "line_count": 1,
+      "content_hash": "7a12e561363385e9dfeeab326368731c030ed4b374e7f5897ac819159d2884c5",
+      "symbols": [],
+      "last_scanned_at": "2026-09-27T13:45:05.810896557Z"
+    },
+    "crates/frappe-net/src/middleware/mod.rs": {
+      "relative_path": "crates/frappe-net/src/middleware/mod.rs",
+      "language": "rust",
+      "size_bytes": 16,
+      "line_count": 1,
+      "content_hash": "d08573b8891c8195fc6acd5d2390cd547111669c8fe088931e2128a8609b8c91",
+      "symbols": [],
+      "last_scanned_at": "2026-09-27T13:45:05.779419682Z"
+    },
+    "crates/erp-hr/Cargo.toml": {
+      "relative_path": "crates/erp-hr/Cargo.toml",
+      "language": "toml",
+      "size_bytes": 566,
+      "line_count": 1,
+      "content_hash": "026d8e9c3542dccac1bebcdf1a5a929cef570103f51a02ad4f55929e8b7a54ad",
+      "symbols": [],
+      "last_scanned_at": "2026-09-27T13:45:05.779527727Z"
+    },
+    "crates/desk-components/src/form_engine/worker_dashboard.rs": {
+      "relative_path": "crates/desk-components/src/form_engine/worker_dashboard.rs",
+      "language": "rust",
+      "size_bytes": 20537,
+      "line_count": 1,
+      "content_hash": "8cbb805adcd731c24264a22a6d52ae466309111001c2c0dc63edf8d193abda74",
+      "symbols": [],
+      "last_scanned_at": "2026-09-27T13:45:05.801238947Z"
+    },
+    "crates/erp-lending/Cargo.toml": {
+      "relative_path": "crates/erp-lending/Cargo.toml",
+      "language": "toml",
+      "size_bytes": 252,
+      "line_count": 1,
+      "content_hash": "e2de180918e7c49e13e7212e96aa328c75c1e671335d76574993400d6d724a5d",
+      "symbols": [],
+      "last_scanned_at": "2026-09-27T13:45:05.817408973Z"
+    },
+    "crates/erp-learning/src/lib.rs": {
+      "relative_path": "crates/erp-learning/src/lib.rs",
+      "language": "rust",
+      "size_bytes": 182,
+      "line_count": 1,
+      "content_hash": "240bc9d2cc203286e8162c6d5f3505bde4a398370935716b8a983383fa660c0d",
+      "symbols": [],
+      "last_scanned_at": "2026-09-27T13:45:05.818666338Z"
+    },
+    "crates/erp-learning/Cargo.toml": {
+      "relative_path": "crates/erp-learning/Cargo.toml",
+      "language": "toml",
+      "size_bytes": 304,
+      "line_count": 1,
+      "content_hash": "9ec7a0ee624b94de8feb720bb36deb4bdf1b65928879ded68048a8abeaf3fb4f",
+      "symbols": [],
+      "last_scanned_at": "2026-09-27T13:45:05.819070025Z"
+    },
+    "crates/desk-components/src/form_engine/live_feed.rs": {
+      "relative_path": "crates/desk-components/src/form_engine/live_feed.rs",
+      "language": "rust",
+      "size_bytes": 10403,
+      "line_count": 1,
+      "content_hash": "4d557e64aaed0b3f80b55962fab30880c777e4d4df7205671cc1782907ae09f5",
+      "symbols": [],
+      "last_scanned_at": "2026-09-27T13:45:05.810691152Z"
+    },
+    "crates/erp-learning/src/learning_progress.rs": {
+      "relative_path": "crates/erp-learning/src/learning_progress.rs",
+      "language": "rust",
+      "size_bytes": 759,
+      "line_count": 5,
+      "content_hash": "555f26a389c865ebb2299d7449963e8c4d58a3cd907c2b0e014f041761e8ae0e",
+      "symbols": [],
+      "last_scanned_at": "2026-09-27T13:45:05.819047466Z"
+    },
+    "crates/erp-support/src/lib.rs": {
+      "relative_path": "crates/erp-support/src/lib.rs",
+      "language": "rust",
+      "size_bytes": 66,
+      "line_count": 1,
+      "content_hash": "efbb03b7a7f6fd3c29391d4d0281e1830a85caadd831c3f04716faca4107a42e",
+      "symbols": [],
+      "last_scanned_at": "2026-09-27T13:45:05.817454091Z"
+    },
+    "Taskfile.yaml": {
+      "relative_path": "Taskfile.yaml",
+      "language": "yaml",
+      "size_bytes": 429,
+      "line_count": 20,
+      "content_hash": "b4cb51b31c48e2b58f84d1e4cf6d3cf35e264bace1c6bbdabd21f7ca3943a043",
+      "symbols": [],
+      "last_scanned_at": "2026-09-27T13:45:05.819175696Z"
+    },
+    "crates/frappe-meta/src/lib.rs": {
+      "relative_path": "crates/frappe-meta/src/lib.rs",
+      "language": "rust",
+      "size_bytes": 78,
+      "line_count": 1,
+      "content_hash": "3a13ec0b60492b3f4f92009691f043615ac7770b77d2cc047125c69b2918b82a",
+      "symbols": [],
+      "last_scanned_at": "2026-09-27T13:45:05.810995104Z"
+    },
+    "crates/desk-components/src/form_engine/interpreter.rs": {
+      "relative_path": "crates/desk-components/src/form_engine/interpreter.rs",
+      "language": "rust",
+      "size_bytes": 24025,
+      "line_count": 7,
+      "content_hash": "efe42aa55b213ab6a6a7023558a0a9bb011a8d19e4eb4eedec857744db34f5e5",
+      "symbols": [],
+      "last_scanned_at": "2026-09-27T13:45:05.802438134Z"
+    },
+    "crates/frappe-meta/Cargo.toml": {
+      "relative_path": "crates/frappe-meta/Cargo.toml",
+      "language": "toml",
+      "size_bytes": 319,
+      "line_count": 1,
+      "content_hash": "88007e1608ff85aea5bf995ee597b6b2b29d446446c0fc701353d597d25601cc",
+      "symbols": [],
+      "last_scanned_at": "2026-09-27T13:45:05.817240374Z"
+    },
+    "crates/desk-components/src/lib.rs": {
+      "relative_path": "crates/desk-components/src/lib.rs",
+      "language": "rust",
+      "size_bytes": 465,
+      "line_count": 1,
+      "content_hash": "f04d191db7aba8081a02ec3de8e4687c465d5bd3ba8f43bed11a694457f5adfe",
+      "symbols": [],
+      "last_scanned_at": "2026-09-27T13:45:05.781035616Z"
+    },
+    "crates/frappe-framework/Cargo.toml": {
+      "relative_path": "crates/frappe-framework/Cargo.toml",
+      "language": "toml",
+      "size_bytes": 239,
+      "line_count": 3,
+      "content_hash": "b5957f0811f53745884481911f230c3ab0065087398a530a19b075f927ae1221",
+      "symbols": [],
+      "last_scanned_at": "2026-09-27T13:45:05.779657144Z"
+    },
+    "crates/frappe-framework/src/lib.rs": {
+      "relative_path": "crates/frappe-framework/src/lib.rs",
+      "language": "rust",
+      "size_bytes": 44,
+      "line_count": 1,
+      "content_hash": "ee890683b5953e56fa1da4ac9a89f91b48cf8f88688b0a477f31b3e6998c7dbb",
+      "symbols": [],
+      "last_scanned_at": "2026-09-27T13:45:05.779625087Z"
+    },
+    "crates/desk-components/src/form_engine/mod.rs": {
+      "relative_path": "crates/desk-components/src/form_engine/mod.rs",
+      "language": "rust",
+      "size_bytes": 130,
+      "line_count": 1,
+      "content_hash": "b7ddeb7bc50186827fb535b9f72f317b6e61ec183229f140662f3313309ab2d5",
+      "symbols": [],
+      "last_scanned_at": "2026-09-27T13:45:05.810866874Z"
+    },
+    "crates/erp-support/src/gameplan.rs": {
+      "relative_path": "crates/erp-support/src/gameplan.rs",
+      "language": "rust",
+      "size_bytes": 14692,
+      "line_count": 1,
+      "content_hash": "9b87be3dd7076504333c55bb968c3f792a723313911c9994cb6bf341008fc5e2",
+      "symbols": [],
+      "last_scanned_at": "2026-09-27T13:45:05.817994319Z"
+    },
+    "crates/erp-support/Cargo.toml": {
+      "relative_path": "crates/erp-support/Cargo.toml",
+      "language": "toml",
+      "size_bytes": 586,
+      "line_count": 1,
+      "content_hash": "fcfe9ae45cd7a2562a82135eec5742b6025b7017f29f2566cfa106d6b687032e",
+      "symbols": [],
+      "last_scanned_at": "2026-09-27T13:45:05.818024001Z"
+    },
+    "crates/erp-inventory/src/lib.rs": {
+      "relative_path": "crates/erp-inventory/src/lib.rs",
+      "language": "rust",
+      "size_bytes": 24,
+      "line_count": 1,
+      "content_hash": "7cc488820c87847ba6bd519659e13a4fde295d535afc0b0c92f044abbb74940c",
+      "symbols": [],
+      "last_scanned_at": "2026-09-27T13:45:05.819134140Z"
+    },
+    "docker-compose.yml": {
+      "relative_path": "docker-compose.yml",
+      "language": "yaml",
+      "size_bytes": 504,
+      "line_count": 23,
+      "content_hash": "ae76a3c1e1d3c883cbd0e1334281a17b006c019fec009ac0154e496c483920fc",
+      "symbols": [],
+      "last_scanned_at": "2026-09-27T13:45:05.850114718Z"
+    },
+    ".gemini/instructions.md": {
+      "relative_path": ".gemini/instructions.md",
+      "language": "markdown",
+      "size_bytes": 1192,
+      "line_count": 31,
+      "content_hash": "eb2b50c17f65de84199bb50948909c5827d978a048007d37ab096701a68413df",
+      "symbols": [
+        {
+          "name": "Gemini CLI Rules — OKF Knowledge Bundle",
+          "qualified_name": "H1: Gemini CLI Rules — OKF Knowledge Bundle",
+          "kind": "module",
+          "start_line": 1,
+          "end_line": 1,
+          "signature": "# Gemini CLI Rules — OKF Knowledge Bundle"
+        },
+        {
+          "name": "MCP Tools (preferred)",
+          "qualified_name": "H2: MCP Tools (preferred)",
+          "kind": "module",
+          "start_line": 6,
+          "end_line": 6,
+          "signature": "## MCP Tools (preferred)"
+        },
+        {
+          "name": "CRITICAL RULE: Never grep source files first",
+          "qualified_name": "H2: CRITICAL RULE: Never grep source files first",
+          "kind": "module",
+          "start_line": 15,
+          "end_line": 15,
+          "signature": "## CRITICAL RULE: Never grep source files first"
+        },
+        {
+          "name": "Common lookups",
+          "qualified_name": "H2: Common lookups",
+          "kind": "module",
+          "start_line": 23,
+          "end_line": 23,
+          "signature": "## Common lookups"
+        }
+      ],
+      "last_scanned_at": "2026-09-27T13:45:05.850146775Z"
+    },
+    "crates/erp-cms/Cargo.toml": {
+      "relative_path": "crates/erp-cms/Cargo.toml",
+      "language": "toml",
+      "size_bytes": 614,
+      "line_count": 1,
+      "content_hash": "d76403b805f993beb60c6cf9f2b3b43eba1ee805993d301c4203b8ae98bb809c",
+      "symbols": [],
+      "last_scanned_at": "2026-09-27T13:45:05.818244842Z"
+    },
+    "crates/desk-app/Cargo.toml": {
+      "relative_path": "crates/desk-app/Cargo.toml",
+      "language": "toml",
+      "size_bytes": 200,
+      "line_count": 1,
+      "content_hash": "6d9c54dee5660c46886f32d80e57e9dd0ffa57ee0cd2a762b036d9c8e0c3a33a",
+      "symbols": [],
+      "last_scanned_at": "2026-09-27T13:45:05.818289960Z"
+    },
+    "crates/desk-components/src/form_engine/live_form.rs": {
+      "relative_path": "crates/desk-components/src/form_engine/live_form.rs",
+      "language": "rust",
+      "size_bytes": 20678,
+      "line_count": 1,
+      "content_hash": "6fa95b337bb42af9dd8d9b39e3462d856eec774cd1449285edbc1c8dcb77ff3c",
+      "symbols": [],
+      "last_scanned_at": "2026-09-27T13:45:05.792345967Z"
+    },
+    "crates/erp-trade/src/lib.rs": {
+      "relative_path": "crates/erp-trade/src/lib.rs",
+      "language": "rust",
+      "size_bytes": 46,
+      "line_count": 1,
+      "content_hash": "e62648165f220e41201100c840a535dec64bb0b77ff539d234726a7186fdf6cf",
+      "symbols": [],
+      "last_scanned_at": "2026-09-27T13:45:05.818389694Z"
+    },
+    "crates/erp-inventory/Cargo.toml": {
+      "relative_path": "crates/erp-inventory/Cargo.toml",
+      "language": "toml",
+      "size_bytes": 458,
+      "line_count": 3,
+      "content_hash": "eb00725bda5b5ea1037488ff400717ced29103d06e14edbea8f4dbae51c2e4dd",
+      "symbols": [],
+      "last_scanned_at": "2026-09-27T13:45:05.819154324Z"
+    },
+    "crates/desk-components/tests/desk_components_tests.rs": {
+      "relative_path": "crates/desk-components/tests/desk_components_tests.rs",
+      "language": "rust",
+      "size_bytes": 2095,
+      "line_count": 1,
+      "content_hash": "1bc53ea7643fa4c58c35b081743c7952cbd6937a1f44f6be96c8a2cf652362df",
+      "symbols": [],
+      "last_scanned_at": "2026-09-27T13:45:05.780926383Z"
+    },
+    "Dockerfile": {
+      "relative_path": "Dockerfile",
+      "language": "docker",
+      "size_bytes": 847,
+      "line_count": 34,
+      "content_hash": "d2d66762bbfa7a3a95a8ace7a94cf415b71c091811bdc6977663802d3fde0b8c",
+      "symbols": [
+        {
+          "name": "FROM rust:1.80-bullseye as builder",
+          "qualified_name": "FROM rust:1.80-bullseye as builder",
+          "kind": "module",
+          "start_line": 2,
+          "end_line": 2,
+          "signature": "FROM rust:1.80-bullseye as builder"
+        },
+        {
+          "name": "FROM debian:bullseye-slim",
+          "qualified_name": "FROM debian:bullseye-slim",
+          "kind": "module",
+          "start_line": 24,
+          "end_line": 24,
+          "signature": "FROM debian:bullseye-slim"
+        }
+      ],
+      "last_scanned_at": "2026-09-27T13:45:05.850165772Z"
+    },
+    "crates/erp-lending/src/lib.rs": {
+      "relative_path": "crates/erp-lending/src/lib.rs",
+      "language": "rust",
+      "size_bytes": 22,
+      "line_count": 1,
+      "content_hash": "67956207eb4171561689e0510388d7f1fb209ea7f9a882943689745988ca87bc",
+      "symbols": [],
+      "last_scanned_at": "2026-09-27T13:45:05.817388789Z"
+    },
+    "crates/frappe-meta/src/migration.rs": {
+      "relative_path": "crates/frappe-meta/src/migration.rs",
+      "language": "rust",
+      "size_bytes": 13535,
+      "line_count": 342,
+      "content_hash": "cb8a30ba2ab27ee53f43600f0d0fc101e6a88543a6af679cf198250d12281ad2",
+      "symbols": [],
+      "last_scanned_at": "2026-09-27T13:45:05.817222565Z"
+    },
+    "crates/erp-accounting/Cargo.toml": {
+      "relative_path": "crates/erp-accounting/Cargo.toml",
+      "language": "toml",
+      "size_bytes": 458,
+      "line_count": 1,
+      "content_hash": "f59e4c47079ee659ee74b8ee696f5a3733ad02b3abf19a2c50fd23d5b8003da1",
+      "symbols": [],
+      "last_scanned_at": "2026-09-27T13:45:05.818149857Z"
+    }
+  },
+  "total_symbols": 8,
+  "last_updated": "2026-09-27T13:45:05.850183582Z"
+}

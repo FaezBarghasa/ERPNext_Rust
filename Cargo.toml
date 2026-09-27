@@ -1,0 +1,28 @@
+[workspace]
+members = [
+    "crates/frappe-net",
+    "crates/frappe-meta",
+    "crates/frappe-framework",
+    "crates/erp-accounting",
+    "crates/erp-inventory",
+    "crates/erp-manufacturing",
+    "crates/erp-trade",
+    "crates/erp-lending",
+    "crates/erp-support",
+    "crates/erp-learning",
+    "crates/erp-crm",
+    "crates/erp-hr",
+    "crates/erp-cms",
+    "crates/frappe-storage",
+    "crates/desk-app",
+    "crates/desk-components",
+    "crates/rbench"
+]
+resolver = "2"
+
+[profile.release]
+opt-level = "z"
+lto = true
+codegen-units = 1
+panic = "abort"
+
