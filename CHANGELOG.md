@@ -60,6 +60,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Direct streaming WooCommerce migration ingestion engine (`WooMigrationEngine`).
   - Pre-configured vertical profile registry (`ProfileRegistry` for Clinic, Restaurant, E-Commerce, and Agency).
   - Comprehensive 10-Epoch master verification integration suite (`tests/charter_all_epochs_test.rs`).
+  - Unified workspace dependencies (`[workspace.dependencies]`) and upgraded workspace resolver to `resolver = "3"` (Rust 2024 Edition standard).
 
 ---
 

@@ -20,13 +20,72 @@ members = [
     "crates/desk-app",
     "crates/desk-components",
     "crates/erp-software",
-    "crates/rbench"
+    "crates/rbench",
 ]
-resolver = "2"
+resolver = "3"
+
+[workspace.package]
+version = "0.2.0"
+edition = "2024"
+authors = ["Faez Barghasa <faez.barghasa.org@gmail.com>"]
+license = "MIT OR Apache-2.0"
+repository = "https://github.com/FaezBarghasa/ERPNext_Rust"
+
+[workspace.dependencies]
+# Internal workspace crates
+desk-components = { path = "crates/desk-components" }
+erp-accounting = { path = "crates/erp-accounting" }
+erp-asset = { path = "crates/erp-asset" }
+erp-cms = { path = "crates/erp-cms" }
+erp-crm = { path = "crates/erp-crm" }
+erp-hr = { path = "crates/erp-hr" }
+erp-inventory = { path = "crates/erp-inventory" }
+erp-learning = { path = "crates/erp-learning" }
+erp-lending = { path = "crates/erp-lending" }
+erp-manufacturing = { path = "crates/erp-manufacturing" }
+erp-ppm = { path = "crates/erp-ppm" }
+erp-software = { path = "crates/erp-software" }
+erp-support = { path = "crates/erp-support" }
+erp-trade = { path = "crates/erp-trade" }
+erp-wms = { path = "crates/erp-wms" }
+frappe-framework = { path = "crates/frappe-framework" }
+frappe-meta = { path = "crates/frappe-meta" }
+frappe-net = { path = "crates/frappe-net" }
+frappe-storage = { path = "crates/frappe-storage" }
+
+# External shared dependencies
+actix-web = { version = "4.15.0", features = ["macros"] }
+actix-ws = "0.4.0"
+anyhow = "1.0.104"
+chrono = { version = "0.4.45", features = ["serde"] }
+clap = { version = "4.6.7", features = ["derive"] }
+compact_str = { version = "0.10.0", features = ["serde"] }
+futures-util = "0.3.34"
+hex = "0.4.3"
+hmac = "0.13.0"
+rand = "0.10.3"
+rand_distr = "0.6.0"
+regex = "1.13.1"
+rhai = { version = "1.26.1", features = ["sync", "serde"] }
+rust_decimal = { version = "1.43.0", features = ["serde", "maths"] }
+rust_decimal_macros = "1.40.0"
+serde = { version = "1.0.229", features = ["derive"] }
+serde_json = "1.0.151"
+sha2 = "0.11.0"
+smallvec = { version = "1.16.2", features = ["serde"] }
+surrealdb = { version = "3.3.0", default-features = false, features = ["kv-mem"] }
+thiserror = "2.0.21"
+tokio = { version = "1.53.1", features = [
+    "macros",
+    "rt-multi-thread",
+    "sync",
+    "time",
+    "io-util",
+] }
+tracing = "0.1"
 
 [profile.release]
 opt-level = "z"
 lto = true
 codegen-units = 1
 panic = "abort"
-

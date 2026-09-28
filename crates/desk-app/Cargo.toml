@@ -1,11 +1,13 @@
 [package]
 name = "desk-app"
-version = "0.1.0"
-edition = "2024"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+license.workspace = true
 
 [dependencies]
-frappe-meta = { path = "../frappe-meta" }
-desk-components = { path = "../desk-components" }
-chrono = { version = "0.4", default-features = false }
-rust_decimal = "1.36"
-rust_decimal_macros = "1.36"
+frappe-meta = { workspace = true }
+desk-components = { workspace = true }
+chrono = { workspace = true }
+rust_decimal = { workspace = true }
+rust_decimal_macros = { workspace = true }

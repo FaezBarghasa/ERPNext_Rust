@@ -1,43 +1,38 @@
 [package]
 name = "frappe-net"
-version = "0.1.0"
-edition = "2024"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+license.workspace = true
 
 [dependencies]
-frappe-meta = { path = "../frappe-meta" }
-frappe-storage = { path = "../frappe-storage" }
-frappe-framework = { path = "../frappe-framework" }
-serde = { version = "1.0.229", features = ["derive"] }
-serde_json = "1.0.151"
-thiserror = "2.0.18"
-regex = "1.12.3"
-actix-web = { version = "4.15.0", features = ["macros"] }
-actix-ws = "0.4.0"
-futures-util = "0.3.34"
-tokio = { version = "1.53.1", features = [
-    "macros",
-    "rt-multi-thread",
-    "sync",
-    "time",
-] }
-chrono = { version = "0.4.44", features = ["serde"] }
-surrealdb = { version = "3.3.0", default-features = false, features = [
-    "kv-mem",
-] }
-clap = { version = "4.6.7", features = ["derive"] }
+frappe-meta = { workspace = true }
+frappe-storage = { workspace = true }
+frappe-framework = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
+thiserror = { workspace = true }
+regex = { workspace = true }
+actix-web = { workspace = true }
+actix-ws = { workspace = true }
+futures-util = { workspace = true }
+tokio = { workspace = true }
+chrono = { workspace = true }
+surrealdb = { workspace = true }
+clap = { workspace = true }
 
 [dev-dependencies]
-frappe-meta = { path = "../frappe-meta" }
-frappe-storage = { path = "../frappe-storage" }
-frappe-framework = { path = "../frappe-framework" }
-erp-accounting = { path = "../erp-accounting" }
-erp-inventory = { path = "../erp-inventory" }
-erp-manufacturing = { path = "../erp-manufacturing" }
-erp-trade = { path = "../erp-trade" }
-erp-ppm = { path = "../erp-ppm" }
-erp-asset = { path = "../erp-asset" }
-erp-wms = { path = "../erp-wms" }
-erp-cms = { path = "../erp-cms" }
-rust_decimal = { version = "1.43.0", features = ["serde", "maths"] }
-rust_decimal_macros = "1.40.0"
-compact_str = { version = "0.10.0", features = ["serde"] }
+frappe-meta = { workspace = true }
+frappe-storage = { workspace = true }
+frappe-framework = { workspace = true }
+erp-accounting = { workspace = true }
+erp-inventory = { workspace = true }
+erp-manufacturing = { workspace = true }
+erp-trade = { workspace = true }
+erp-ppm = { workspace = true }
+erp-asset = { workspace = true }
+erp-wms = { workspace = true }
+erp-cms = { workspace = true }
+rust_decimal = { workspace = true }
+rust_decimal_macros = { workspace = true }
+compact_str = { workspace = true }

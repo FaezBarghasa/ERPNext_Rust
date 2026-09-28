@@ -126,7 +126,9 @@ cargo clippy --workspace --all-targets -- -D warnings
 
 ## 📚 Technical Documentation
 
-- [System Architecture Charter](file:///home/jrad/RustroverProjects/ERPNext_workspace/docs/architecture.md)
+- [Master Architectural Evolution & Transcendence Plan](file:///home/jrad/RustroverProjects/ERPNext_workspace/docs/master_charter.md)
+- [System Architecture Specification](file:///home/jrad/RustroverProjects/ERPNext_workspace/docs/architecture.md)
 - [Product Requirements Document (PRD)](file:///home/jrad/RustroverProjects/ERPNext_workspace/docs/prd.md)
 - [Test-Driven Development (TDD) Guide](file:///home/jrad/RustroverProjects/ERPNext_workspace/docs/tdd.md)
 - [Project Changelog](file:///home/jrad/RustroverProjects/ERPNext_workspace/CHANGELOG.md)
+
