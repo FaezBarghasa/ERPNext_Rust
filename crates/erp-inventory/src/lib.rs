@@ -3,10 +3,10 @@ pub mod fifo;
 pub mod warehouse;
 
 pub use batches::{Batch, SerialNo, SerialStatus};
-pub use fifo::{add_fifo_layer, consume_fifo, FifoBatchItem, InventoryError, StockLedgerEntry};
+pub use fifo::{FifoBatchItem, InventoryError, StockLedgerEntry, add_fifo_layer, consume_fifo};
 pub use warehouse::{
-    create_delivery_note_gl_entries, create_purchase_receipt_gl_entries,
-    gl_entries_to_journal_entry, Warehouse,
+    Warehouse, create_delivery_note_gl_entries, create_purchase_receipt_gl_entries,
+    gl_entries_to_journal_entry,
 };
 
 #[cfg(test)]

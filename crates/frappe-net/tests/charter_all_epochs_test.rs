@@ -149,8 +149,8 @@ fn test_epoch_2_dynamic_document_bus_and_naming() {
 #[test]
 fn test_epoch_3_general_ledger_simd_fifo_and_benford() {
     // 3.1 Multi-Book Arbitrary Precision Ledger
-    let debits = vec![dec!(5000.00), dec!(1250.50)];
-    let credits = vec![dec!(6250.50)];
+    let debits = [dec!(5000.00), dec!(1250.50)];
+    let credits = [dec!(6250.50)];
     assert_eq!(
         debits.iter().sum::<Decimal>(),
         credits.iter().sum::<Decimal>()

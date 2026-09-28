@@ -4,7 +4,7 @@
 //! multi-tier tax computation, and balanced General Ledger journal entries in a single ACID step.
 
 use compact_str::CompactString;
-use erp_accounting::decimal_ledger::{verify_balanced_dec, DecLine};
+use erp_accounting::decimal_ledger::{DecLine, verify_balanced_dec};
 use rust_decimal::Decimal;
 use rust_decimal_macros::dec;
 use serde::{Deserialize, Serialize};

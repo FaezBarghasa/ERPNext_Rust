@@ -115,7 +115,6 @@ impl BpmnEngine {
                     {
                         next_tokens.insert(flow.target_ref.clone());
                     }
-
                 }
                 ActivityType::ParallelGateway => {
                     for flow_id in &node.outgoing {

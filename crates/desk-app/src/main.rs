@@ -1,9 +1,9 @@
 //! `desk-app` — The Pure-Rust Reactive Enterprise Desk Application.
 
 use desk_components::{
-    visible_slice, AmrMarkerViewModel, BinViewModel, CpqConfiguratorModel, DynamicFormModel,
-    GanttDependencyLink, GanttTaskRow, GanttViewModel, OptionCard, SpcChartViewModel, SpcPointView,
-    Warehouse3DViewModel,
+    AmrMarkerViewModel, BinViewModel, CpqConfiguratorModel, DynamicFormModel, GanttDependencyLink,
+    GanttTaskRow, GanttViewModel, OptionCard, SpcChartViewModel, SpcPointView,
+    Warehouse3DViewModel, visible_slice,
 };
 use frappe_meta::{DocFieldSchema, DocPermSchema, DocTypeSchema, FieldType};
 

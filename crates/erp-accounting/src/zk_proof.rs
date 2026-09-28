@@ -148,9 +148,11 @@ mod tests {
         let verification = ZkProofEngine::verify_proof(&proof);
         assert!(verification.is_valid);
         assert!(verification.verification_time_micros < 15_000); // <15ms requirement
-        assert!(verification
-            .audit_attestation
-            .contains("balances with 0.00dec drift"));
+        assert!(
+            verification
+                .audit_attestation
+                .contains("balances with 0.00dec drift")
+        );
 
         // Reject imbalanced ledger proof generation
         let bad_credits = vec![dec!(1999.00)];

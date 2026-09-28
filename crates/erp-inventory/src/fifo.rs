@@ -13,7 +13,9 @@ pub enum InventoryError {
         available: Decimal,
     },
     /// Serial number location mismatch.
-    #[error("Serial number '{serial_no}' not found in warehouse '{expected_warehouse}', located in '{actual_warehouse}'")]
+    #[error(
+        "Serial number '{serial_no}' not found in warehouse '{expected_warehouse}', located in '{actual_warehouse}'"
+    )]
     SerialNotInWarehouse {
         serial_no: String,
         expected_warehouse: String,

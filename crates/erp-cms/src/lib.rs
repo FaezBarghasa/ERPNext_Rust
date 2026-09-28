@@ -7,12 +7,12 @@ pub mod transcoder;
 
 pub use block_canvas::{CmsPage, FeatureItem, PageBlock, SsrEngine};
 pub use print::render_invoice_html;
-pub use security::{parse_byte_range, HmacStreamingSigner, StreamingError, SvodPlaybackManager};
+pub use security::{HmacStreamingSigner, StreamingError, SvodPlaybackManager, parse_byte_range};
 pub use storefront::{
     AtomicCheckoutEngine, CheckoutError, CheckoutItem, CheckoutResult, CustomerCheckoutRequest,
 };
 pub use subtitles::{SubtitleSearchEngine, SubtitleSegment};
-pub use transcoder::{HlsPlaylistGenerator, VideoVariant, STANDARD_VARIANTS};
+pub use transcoder::{HlsPlaylistGenerator, STANDARD_VARIANTS, VideoVariant};
 
 #[cfg(test)]
 mod tests {
@@ -51,14 +51,18 @@ mod tests {
         let token = signer.generate_token(media_id, expiry);
 
         // Valid token
-        assert!(signer
-            .verify_token(media_id, expiry, 1_900_000_000, &token)
-            .is_ok());
+        assert!(
+            signer
+                .verify_token(media_id, expiry, 1_900_000_000, &token)
+                .is_ok()
+        );
 
         // Forged token
-        assert!(signer
-            .verify_token(media_id, expiry, 1_900_000_000, "forged_hex_token")
-            .is_err());
+        assert!(
+            signer
+                .verify_token(media_id, expiry, 1_900_000_000, "forged_hex_token")
+                .is_err()
+        );
 
         // Expired token (current > expiry)
         let exp_err = signer.verify_token(media_id, expiry, 2_000_000_001, &token);
@@ -70,9 +74,11 @@ mod tests {
         let manager = SvodPlaybackManager::new();
 
         // 1-stream allowance
-        assert!(manager
-            .start_playback("user_1", "session_1".into(), true, 1)
-            .is_ok());
+        assert!(
+            manager
+                .start_playback("user_1", "session_1".into(), true, 1)
+                .is_ok()
+        );
 
         // Attempt second concurrent stream -> Breaches limit
         let second_stream = manager.start_playback("user_1", "session_2".into(), true, 1);
@@ -83,9 +89,11 @@ mod tests {
 
         // End first stream -> Second stream now succeeds
         manager.end_playback("user_1", "session_1");
-        assert!(manager
-            .start_playback("user_1", "session_2".into(), true, 1)
-            .is_ok());
+        assert!(
+            manager
+                .start_playback("user_1", "session_2".into(), true, 1)
+                .is_ok()
+        );
     }
 
     #[test]

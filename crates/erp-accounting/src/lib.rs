@@ -12,7 +12,7 @@ pub mod zk_proof;
 pub use assets::straight_line_depreciation;
 pub use benford::BenfordGuard;
 pub use coa::{Account, RootType};
-pub use decimal_ledger::{straight_line_dec, verify_balanced_dec, DecLine};
+pub use decimal_ledger::{DecLine, straight_line_dec, verify_balanced_dec};
 pub use intercompany::{
     EliminationJournalEntry, IntercompanyEliminationEngine, IntercompanyTransaction,
 };

@@ -9,9 +9,7 @@ use thiserror::Error;
 #[derive(Debug, Error, PartialEq, Eq)]
 pub enum AccountingError {
     /// Transaction debits and credits do not balance to zero.
-    #[error(
-        "Unbalanced transaction: Total Debit ({total_debit}) != Total Credit ({total_credit})"
-    )]
+    #[error("Unbalanced transaction: Total Debit ({total_debit}) != Total Credit ({total_credit})")]
     UnbalancedTransaction {
         total_debit: Decimal,
         total_credit: Decimal,

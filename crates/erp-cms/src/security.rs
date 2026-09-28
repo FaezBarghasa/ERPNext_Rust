@@ -20,9 +20,7 @@ pub enum StreamingError {
     #[error("Invalid or forged HMAC streaming token")]
     InvalidSignature,
     /// Token expired.
-    #[error(
-        "Streaming token has expired (expiry {expiry_timestamp}, current {current_timestamp})"
-    )]
+    #[error("Streaming token has expired (expiry {expiry_timestamp}, current {current_timestamp})")]
     TokenExpired {
         expiry_timestamp: u64,
         current_timestamp: u64,
@@ -178,10 +176,10 @@ impl SvodPlaybackManager {
 
     /// Ends an active playback session.
     pub fn end_playback(&self, user_id: &str, session_id: &str) {
-        if let Ok(mut lock) = self.active_sessions.write() {
-            if let Some(sessions) = lock.get_mut(user_id) {
-                sessions.retain(|s| s != session_id);
-            }
+        if let Ok(mut lock) = self.active_sessions.write()
+            && let Some(sessions) = lock.get_mut(user_id)
+        {
+            sessions.retain(|s| s != session_id);
         }
     }
 }

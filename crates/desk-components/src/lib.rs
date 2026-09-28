@@ -8,7 +8,7 @@ pub mod video_hud;
 pub mod wms_view;
 
 pub use cpq_view::{CpqConfiguratorModel, OptionCard};
-pub use forms::{eval_depends_on, DynamicFormModel, FormFieldWidget};
+pub use forms::{DynamicFormModel, FormFieldWidget, eval_depends_on};
 pub use gantt::{GanttDependencyLink, GanttTaskRow, GanttViewModel};
 pub use grid::visible_slice;
 pub use spc_view::{SpcChartViewModel, SpcPointView};
