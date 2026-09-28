@@ -184,7 +184,13 @@ impl Bom {
     ) -> Result<Vec<ExplodedRequirement>, ManufacturingError> {
         let mut visited = HashSet::new();
         let mut requirements = Vec::new();
-        self.explode_internal(target_qty, bom_registry, &mut visited, &mut requirements, false)?;
+        self.explode_internal(
+            target_qty,
+            bom_registry,
+            &mut visited,
+            &mut requirements,
+            false,
+        )?;
         Ok(requirements)
     }
 
@@ -206,14 +212,13 @@ impl Bom {
             let scrap_multiplier = Decimal::ONE + (item.scrap_percentage / Decimal::from(100));
             let required_qty = item.qty * multiplier * scrap_multiplier;
 
-            if let Some(ref child_bom_no) = item.bom_no {
-                if let Some(child_bom) = registry.get(child_bom_no) {
-                    if child_bom.is_phantom {
-                        // Phantom BOM: explode directly into raw components
-                        child_bom.explode_internal(required_qty, registry, visited, acc, true)?;
-                        continue;
-                    }
-                }
+            if let Some(ref child_bom_no) = item.bom_no
+                && let Some(child_bom) = registry.get(child_bom_no)
+                && child_bom.is_phantom
+            {
+                // Phantom BOM: explode directly into raw components
+                child_bom.explode_internal(required_qty, registry, visited, acc, true)?;
+                continue;
             }
 
             acc.push(ExplodedRequirement {
@@ -327,11 +332,17 @@ mod tests {
         let exploded = drone_bom.explode(dec!(2), &registry).unwrap();
         assert_eq!(exploded.len(), 4);
 
-        let carbon_tubes = exploded.iter().find(|e| e.item_code == "CARBON-TUBE").unwrap();
+        let carbon_tubes = exploded
+            .iter()
+            .find(|e| e.item_code == "CARBON-TUBE")
+            .unwrap();
         assert_eq!(carbon_tubes.total_qty, dec!(8)); // 2 drones * 4 tubes
         assert!(carbon_tubes.is_phantom_child);
 
-        let secondary = exploded.iter().find(|e| e.item_code == "PACKING-SCRAP").unwrap();
+        let secondary = exploded
+            .iter()
+            .find(|e| e.item_code == "PACKING-SCRAP")
+            .unwrap();
         assert!(secondary.is_secondary);
 
         // Where used
@@ -345,7 +356,11 @@ mod tests {
         let total_planned_qty = dec!(100);
         let produced_entry = dec!(25);
 
-        let cost = Bom::calculate_partial_job_card_cost(total_planned_cost, total_planned_qty, produced_entry);
+        let cost = Bom::calculate_partial_job_card_cost(
+            total_planned_cost,
+            total_planned_qty,
+            produced_entry,
+        );
         assert_eq!(cost, dec!(250.0));
     }
 }

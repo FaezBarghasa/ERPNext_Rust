@@ -32,7 +32,10 @@ pub fn split_material_requests_by_supplier(
     let mut groups: HashMap<Option<String>, Vec<RequisitionItem>> = HashMap::new();
 
     for item in requisition_items {
-        groups.entry(item.default_supplier.clone()).or_default().push(item);
+        groups
+            .entry(item.default_supplier.clone())
+            .or_default()
+            .push(item);
     }
 
     groups

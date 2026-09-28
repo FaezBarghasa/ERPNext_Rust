@@ -69,7 +69,11 @@ impl PartnerReferenceResolver {
         partner_item_code: &str,
     ) -> Option<&str> {
         self.partner_to_internal
-            .get(&(partner_type, partner_id.to_string(), partner_item_code.to_string()))
+            .get(&(
+                partner_type,
+                partner_id.to_string(),
+                partner_item_code.to_string(),
+            ))
             .map(|s| s.as_str())
     }
 

@@ -11,9 +11,7 @@ pub use ecommerce_connector::{
     ECommerceSyncEngine,
 };
 pub use errors::SoftwareBillingError;
-pub use product_pack::{
-    PackComponent, PreOrderConfig, ProductPack, StockBadge,
-};
+pub use product_pack::{PackComponent, PreOrderConfig, ProductPack, StockBadge};
 pub use psa::{
     EmployeeUtilizationScorecard, MilestoneInvoiceRequest, ProjectPsaSummary, PsaEngine,
     PsaInvoice, PsaInvoiceType, TimeLog,

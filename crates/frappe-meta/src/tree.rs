@@ -31,7 +31,11 @@ pub struct TreeNode {
 
 impl TreeNode {
     #[must_use]
-    pub fn new(name: impl Into<CompactString>, parent: Option<CompactString>, is_group: bool) -> Self {
+    pub fn new(
+        name: impl Into<CompactString>,
+        parent: Option<CompactString>,
+        is_group: bool,
+    ) -> Self {
         Self {
             name: name.into(),
             parent_node: parent,
@@ -67,10 +71,7 @@ impl NestedSetTree {
         let parent = node.parent_node.clone();
 
         self.nodes.insert(name.clone(), node);
-        self.children_map
-            .entry(parent)
-            .or_default()
-            .push(name);
+        self.children_map.entry(parent).or_default().push(name);
     }
 
     /// Re-indexes all `lft` and `rgt` boundaries using depth-first pre-order traversal.
@@ -85,11 +86,19 @@ impl NestedSetTree {
         Ok(())
     }
 
-    fn rebuild_subtree(&mut self, node_name: &CompactString, counter: &mut u64) -> Result<(), TreeError> {
+    fn rebuild_subtree(
+        &mut self,
+        node_name: &CompactString,
+        counter: &mut u64,
+    ) -> Result<(), TreeError> {
         let lft = *counter;
         *counter += 1;
 
-        let children = self.children_map.get(&Some(node_name.clone())).cloned().unwrap_or_default();
+        let children = self
+            .children_map
+            .get(&Some(node_name.clone()))
+            .cloned()
+            .unwrap_or_default();
         for child in children {
             self.rebuild_subtree(&child, counter)?;
         }
@@ -110,7 +119,10 @@ impl NestedSetTree {
     /// Returns true if `candidate_descendant` is a descendant of `ancestor`.
     #[must_use]
     pub fn is_descendant(&self, ancestor: &str, candidate_descendant: &str) -> bool {
-        if let (Some(a), Some(d)) = (self.nodes.get(ancestor), self.nodes.get(candidate_descendant)) {
+        if let (Some(a), Some(d)) = (
+            self.nodes.get(ancestor),
+            self.nodes.get(candidate_descendant),
+        ) {
             d.lft > a.lft && d.rgt < a.rgt
         } else {
             false
@@ -123,9 +135,7 @@ impl NestedSetTree {
         if let Some(a) = self.nodes.get(ancestor) {
             self.nodes
                 .values()
-                .filter(|n| {
-                    n.lft > a.lft && n.rgt < a.rgt && (!suppress_disabled || !n.disabled)
-                })
+                .filter(|n| n.lft > a.lft && n.rgt < a.rgt && (!suppress_disabled || !n.disabled))
                 .collect()
         } else {
             Vec::new()
@@ -164,10 +174,26 @@ mod tests {
         let mut tree = NestedSetTree::new("Account");
 
         tree.add_node(TreeNode::new("Application of Funds (Assets)", None, true));
-        tree.add_node(TreeNode::new("Current Assets", Some("Application of Funds (Assets)".into()), true));
-        tree.add_node(TreeNode::new("Bank Accounts", Some("Current Assets".into()), true));
-        tree.add_node(TreeNode::new("HDFC Bank", Some("Bank Accounts".into()), false));
-        tree.add_node(TreeNode::new("Cash in Hand", Some("Current Assets".into()), false));
+        tree.add_node(TreeNode::new(
+            "Current Assets",
+            Some("Application of Funds (Assets)".into()),
+            true,
+        ));
+        tree.add_node(TreeNode::new(
+            "Bank Accounts",
+            Some("Current Assets".into()),
+            true,
+        ));
+        tree.add_node(TreeNode::new(
+            "HDFC Bank",
+            Some("Bank Accounts".into()),
+            false,
+        ));
+        tree.add_node(TreeNode::new(
+            "Cash in Hand",
+            Some("Current Assets".into()),
+            false,
+        ));
 
         tree.rebuild_tree().unwrap();
 

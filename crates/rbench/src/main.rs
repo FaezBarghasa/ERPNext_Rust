@@ -219,13 +219,17 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             println!("  - Cryptographically shredding encryption keys");
             println!("  - Revoking active session tokens");
             let db = open_tenant(&tenant_ns, "site_production").await?;
-            db.query("REMOVE DATABASE site_production;").await?.check()?;
+            db.query("REMOVE DATABASE site_production;")
+                .await?
+                .check()?;
             println!("✅ Tenant site `{site_name}` successfully dropped.");
         }
 
         "migrate" => {
             let skip_fixtures = args.iter().any(|a| a == "--skip-fixtures");
-            println!("Running lock-free SurrealQL schema migrations (skip-fixtures: {skip_fixtures})...");
+            println!(
+                "Running lock-free SurrealQL schema migrations (skip-fixtures: {skip_fixtures})..."
+            );
             let sample_invoice = DocTypeSchema {
                 name: "Sales Invoice".into(),
                 module: "Accounts".into(),
@@ -285,7 +289,10 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
         "backup" => {
             let site_name = args.get(2).map(|s| s.as_str()).unwrap_or("default");
-            let target_file = format!("backups/{site_name}_snapshot_{}.zst", chrono::Utc::now().format("%Y%m%d_%H%M%S"));
+            let target_file = format!(
+                "backups/{site_name}_snapshot_{}.zst",
+                chrono::Utc::now().format("%Y%m%d_%H%M%S")
+            );
             println!("📦 Creating streaming zstd compressed backup for site `{site_name}`...");
             println!("  - Target: {target_file}");
             println!("  - Calculating bitemporal Merkle proof roots: OK");
@@ -293,7 +300,10 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         }
 
         "restore" => {
-            let backup_path = args.get(2).map(|s| s.as_str()).unwrap_or("backups/latest.zst");
+            let backup_path = args
+                .get(2)
+                .map(|s| s.as_str())
+                .unwrap_or("backups/latest.zst");
             let partial = args.iter().any(|a| a == "--partial-restore");
             println!("🔄 Restoring database snapshot from `{backup_path}` (partial: {partial})...");
             println!("  - Verifying zstd decompression stream: VALID");
@@ -310,12 +320,22 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         "i18n" => {
             let sub = args.get(2).map(|s| s.as_str()).unwrap_or("help");
             match sub {
-                "generate-pot-file" => println!("Generating template POT file from all DocType descriptors and strings... OK"),
-                "migrate-csv-to-po" => println!("Migrating legacy Frappe CSV translations to standard GNU gettext PO... OK"),
-                "update-po-files" => println!("Updating language PO catalogs from latest POT template... OK"),
-                "compile-po-to-mo" => println!("Compiling gettext PO files to high-performance binary MO catalogs... OK"),
+                "generate-pot-file" => println!(
+                    "Generating template POT file from all DocType descriptors and strings... OK"
+                ),
+                "migrate-csv-to-po" => println!(
+                    "Migrating legacy Frappe CSV translations to standard GNU gettext PO... OK"
+                ),
+                "update-po-files" => {
+                    println!("Updating language PO catalogs from latest POT template... OK")
+                }
+                "compile-po-to-mo" => println!(
+                    "Compiling gettext PO files to high-performance binary MO catalogs... OK"
+                ),
                 _ => {
-                    println!("Usage: rbench i18n <generate-pot-file | migrate-csv-to-po | update-po-files | compile-po-to-mo>");
+                    println!(
+                        "Usage: rbench i18n <generate-pot-file | migrate-csv-to-po | update-po-files | compile-po-to-mo>"
+                    );
                 }
             }
         }
@@ -461,15 +481,9 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             println!(
                 "  backup <site_name>             Create streaming zstd backup snapshot with Merkle proofs"
             );
-            println!(
-                "  restore <file> [--partial]     Restore point-in-time snapshot"
-            );
-            println!(
-                "  console                        Start interactive SurrealQL / Rust REPL"
-            );
-            println!(
-                "  i18n <subcommand>              Run gettext POT/PO/MO translation tools"
-            );
+            println!("  restore <file> [--partial]     Restore point-in-time snapshot");
+            println!("  console                        Start interactive SurrealQL / Rust REPL");
+            println!("  i18n <subcommand>              Run gettext POT/PO/MO translation tools");
             println!(
                 "  install-app <package>          Ingest and verify a signed `.frappe-pkg` archive"
             );

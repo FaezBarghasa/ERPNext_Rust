@@ -102,7 +102,9 @@ pub async fn v2_list_document(
     let limit = query.limit_page_length.unwrap_or(20);
     let start = query.limit_start.unwrap_or(0);
 
-    let sql = format!("SELECT {fields_clause} FROM {table} {where_clause} {order_clause} LIMIT {limit} START {start};");
+    let sql = format!(
+        "SELECT {fields_clause} FROM {table} {where_clause} {order_clause} LIMIT {limit} START {start};"
+    );
     match client.query(&sql).await {
         Ok(mut res) => {
             let records: Vec<serde_json::Value> = res.take(0).unwrap_or_default();
@@ -156,9 +158,7 @@ pub async fn ping_handler() -> impl Responder {
 }
 
 /// Handler for user login: `POST /api/v2/method/login`
-pub async fn login_handler(
-    body: web::Json<LoginPayload>,
-) -> impl Responder {
+pub async fn login_handler(body: web::Json<LoginPayload>) -> impl Responder {
     if body.usr.is_empty() || body.pwd.is_empty() {
         return HttpResponse::BadRequest().json(serde_json::json!({
             "message": "Username and password required"

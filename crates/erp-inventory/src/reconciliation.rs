@@ -41,7 +41,9 @@ impl BatchRecalculator {
         for batch in batches {
             let actual_ledger_qty: Decimal = stock_entries
                 .iter()
-                .filter(|sle| sle.item_code == batch.item_code && sle.voucher_no.contains(&batch.batch_id))
+                .filter(|sle| {
+                    sle.item_code == batch.item_code && sle.voucher_no.contains(&batch.batch_id)
+                })
                 .map(|sle| sle.actual_qty)
                 .sum();
 
@@ -113,7 +115,7 @@ mod tests {
             },
         ];
 
-        let report = BatchRecalculator::audit_batches(&[batch.clone()], &entries);
+        let report = BatchRecalculator::audit_batches(std::slice::from_ref(&batch), &entries);
         assert_eq!(report.discrepancies.len(), 1);
         assert_eq!(report.discrepancies[0].recorded_batch_qty, dec!(100.0));
         assert_eq!(report.discrepancies[0].ledger_qty, dec!(80.0));

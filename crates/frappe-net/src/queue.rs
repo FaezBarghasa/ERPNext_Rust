@@ -130,7 +130,9 @@ impl StaggeredMaintenanceScheduler {
     /// Computes staggered execution offset in minutes based on tenant hash.
     #[must_use]
     pub fn compute_staggered_minute_offset(tenant_id: &str, window_span_minutes: u32) -> u32 {
-        let hash: u32 = tenant_id.bytes().fold(0u32, |acc, b| acc.wrapping_add(b as u32));
+        let hash: u32 = tenant_id
+            .bytes()
+            .fold(0u32, |acc, b| acc.wrapping_add(b as u32));
         hash % window_span_minutes
     }
 }
@@ -188,10 +190,10 @@ impl PriorityTaskDispatcher {
         let priority = job.priority;
         let job_key = format!("{}:{}:{}", job.tenant_id, job.job_type, job.id);
 
-        if let Ok(mut lock) = self.enqueued_job_keys.write() {
-            if !lock.insert(job_key) {
-                return Err(QueueError::JobAlreadyEnqueued(job.id));
-            }
+        if let Ok(mut lock) = self.enqueued_job_keys.write()
+            && !lock.insert(job_key)
+        {
+            return Err(QueueError::JobAlreadyEnqueued(job.id));
         }
 
         let res = match priority {
@@ -224,16 +226,17 @@ mod tests {
 
     #[test]
     fn test_staggered_scheduler() {
-        let offset1 = StaggeredMaintenanceScheduler::compute_staggered_minute_offset("tenant_acme", 60);
-        let offset2 = StaggeredMaintenanceScheduler::compute_staggered_minute_offset("tenant_apex", 60);
+        let offset1 =
+            StaggeredMaintenanceScheduler::compute_staggered_minute_offset("tenant_acme", 60);
+        let offset2 =
+            StaggeredMaintenanceScheduler::compute_staggered_minute_offset("tenant_apex", 60);
         assert!(offset1 < 60);
         assert!(offset2 < 60);
     }
 
     #[tokio::test]
     async fn test_job_deduplication() {
-        let (dispatcher, mut crit_rx, _high_rx, _def_rx, _low_rx) =
-            PriorityTaskDispatcher::new(16);
+        let (dispatcher, mut crit_rx, _high_rx, _def_rx, _low_rx) = PriorityTaskDispatcher::new(16);
 
         let job1 = BackgroundJob::new(
             "report-001".into(),

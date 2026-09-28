@@ -70,7 +70,12 @@ impl ListResourceState {
     }
 
     /// Appends a filter tuple to the list query.
-    pub fn add_filter(&mut self, field: impl Into<CompactString>, op: impl Into<CompactString>, val: impl Into<CompactString>) {
+    pub fn add_filter(
+        &mut self,
+        field: impl Into<CompactString>,
+        op: impl Into<CompactString>,
+        val: impl Into<CompactString>,
+    ) {
         self.filters.push((field.into(), op.into(), val.into()));
     }
 
@@ -94,7 +99,11 @@ pub struct DocumentResourceState {
 
 impl DocumentResourceState {
     #[must_use]
-    pub fn new(doctype: impl Into<CompactString>, name: impl Into<CompactString>, doc: serde_json::Value) -> Self {
+    pub fn new(
+        doctype: impl Into<CompactString>,
+        name: impl Into<CompactString>,
+        doc: serde_json::Value,
+    ) -> Self {
         Self {
             doctype: doctype.into(),
             name: name.into(),
@@ -170,7 +179,11 @@ mod tests {
 
     #[test]
     fn test_document_resource_dirty_tracking() {
-        let mut doc = DocumentResourceState::new("Customer", "CUST-001", serde_json::json!({"customer_name": "ACME"}));
+        let mut doc = DocumentResourceState::new(
+            "Customer",
+            "CUST-001",
+            serde_json::json!({"customer_name": "ACME"}),
+        );
         assert!(!doc.is_dirty);
 
         doc.set_value("customer_name", serde_json::json!("ACME Corp"));

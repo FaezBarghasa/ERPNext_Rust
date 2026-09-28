@@ -128,10 +128,7 @@ impl StockAgeingEngine {
         let total_qty: Decimal = active_layers.iter().map(|l| l.qty).sum();
         let total_value: Decimal = active_layers.iter().map(|l| l.qty * l.rate).sum();
 
-        let earliest_expiry = active_layers
-            .iter()
-            .filter_map(|l| l.expiry_date)
-            .min();
+        let earliest_expiry = active_layers.iter().filter_map(|l| l.expiry_date).min();
 
         // Calculate bucket breakdowns and weighted average age
         let mut bucket_acc: Vec<(String, Decimal, Decimal)> = buckets

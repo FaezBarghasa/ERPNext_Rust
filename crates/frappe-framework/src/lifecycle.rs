@@ -20,7 +20,9 @@ pub enum DocumentError {
     #[error("Cannot amend document: current status is {0}, expected 2 (Cancelled)")]
     CannotAmendUncancelledDocument(i32),
     /// Cannot discard submitted or cancelled document.
-    #[error("Cannot discard document: status is {0}, only draft documents (docstatus = 0) can be discarded")]
+    #[error(
+        "Cannot discard document: status is {0}, only draft documents (docstatus = 0) can be discarded"
+    )]
     CannotDiscardNonDraft(i32),
     /// Schema validation failed.
     #[error("Schema validation failed: {0}")]
@@ -129,8 +131,13 @@ impl DocumentController {
     }
 
     /// Registers workflow transitions for a specific DocType.
-    pub fn register_workflow(&mut self, doctype: impl Into<String>, transitions: Vec<WorkflowTransition>) {
-        self.workflow_transitions.insert(doctype.into(), transitions);
+    pub fn register_workflow(
+        &mut self,
+        doctype: impl Into<String>,
+        transitions: Vec<WorkflowTransition>,
+    ) {
+        self.workflow_transitions
+            .insert(doctype.into(), transitions);
     }
 
     /// Handles document insertion: runs naming series, validation hooks, and commits to draft state.
@@ -269,7 +276,13 @@ impl DocumentController {
 
         // In Frappe, first amendment appends -1. Subsequent amendments increment -2, -3.
         let amended_name = if let Some((base, suffix)) = doc.name.rsplit_once('-') {
-            if suffix.chars().all(|c| c.is_numeric()) && suffix.len() <= 3 && !doc.name.ends_with("00001") && base.contains('-') && suffix.parse::<u32>().is_ok() && doc.amended_from.is_some() {
+            if suffix.chars().all(|c| c.is_numeric())
+                && suffix.len() <= 3
+                && !doc.name.ends_with("00001")
+                && base.contains('-')
+                && suffix.parse::<u32>().is_ok()
+                && doc.amended_from.is_some()
+            {
                 let num: u32 = suffix.parse().unwrap_or(0);
                 format!("{}-{}", base, num + 1)
             } else {
@@ -281,7 +294,10 @@ impl DocumentController {
 
         let mut amended_data = doc.data.clone();
         if let serde_json::Value::Object(ref mut map) = amended_data {
-            map.insert("amended_from".to_string(), serde_json::Value::String(doc.name.clone()));
+            map.insert(
+                "amended_from".to_string(),
+                serde_json::Value::String(doc.name.clone()),
+            );
             map.remove("docstatus");
         }
 
@@ -303,10 +319,13 @@ impl DocumentController {
 
         doc.docstatus = 3; // Discarded status
         doc.workflow_state = Some("Discarded".to_string());
-        
+
         // Clear uncommitted child tables from JSON payload
         if let serde_json::Value::Object(ref mut map) = doc.data {
-            map.insert("status".to_string(), serde_json::Value::String("Discarded".to_string()));
+            map.insert(
+                "status".to_string(),
+                serde_json::Value::String("Discarded".to_string()),
+            );
         }
 
         Ok(())
@@ -320,7 +339,7 @@ impl DocumentController {
         user_role: &str,
     ) -> Result<(), DocumentError> {
         let current_state = doc.workflow_state.as_deref().unwrap_or("Draft");
-        
+
         if let Some(transitions) = self.workflow_transitions.get(&doc.doctype) {
             for t in transitions {
                 if t.state == current_state && t.action == action {
@@ -407,7 +426,9 @@ mod tests {
 
         // Discard draft
         let mut draft_doc = Document::new("Sales Invoice", serde_json::json!({"customer": "Test"}));
-        controller.insert(&mut draft_doc, &schema, None, 2026, 2).unwrap();
+        controller
+            .insert(&mut draft_doc, &schema, None, 2026, 2)
+            .unwrap();
         controller.discard(&mut draft_doc).unwrap();
         assert!(draft_doc.is_discarded());
     }
@@ -438,14 +459,26 @@ mod tests {
         let mut doc = Document::new("Sales Invoice", serde_json::json!({}));
         doc.workflow_state = Some("Draft".into());
 
-        assert!(controller.apply_workflow_action(&mut doc, "Submit for Approval", "Sales User").is_ok());
+        assert!(
+            controller
+                .apply_workflow_action(&mut doc, "Submit for Approval", "Sales User")
+                .is_ok()
+        );
         assert_eq!(doc.workflow_state.as_deref(), Some("Pending Approval"));
 
         // Sales User cannot approve
-        assert!(controller.apply_workflow_action(&mut doc, "Approve", "Sales User").is_err());
+        assert!(
+            controller
+                .apply_workflow_action(&mut doc, "Approve", "Sales User")
+                .is_err()
+        );
 
         // Sales Manager can approve
-        assert!(controller.apply_workflow_action(&mut doc, "Approve", "Sales Manager").is_ok());
+        assert!(
+            controller
+                .apply_workflow_action(&mut doc, "Approve", "Sales Manager")
+                .is_ok()
+        );
         assert_eq!(doc.workflow_state.as_deref(), Some("Approved"));
     }
 }

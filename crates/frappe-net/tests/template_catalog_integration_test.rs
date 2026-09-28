@@ -106,7 +106,13 @@ async fn test_template_catalog_http_endpoints() {
     );
 
     // 7. Verify ?variant= query parameter triggers custom archetype CSS and JSON-LD
-    let variants = ["cyberpunk", "vaporwave", "retrowave", "neonwave", "tasteful"];
+    let variants = [
+        "cyberpunk",
+        "vaporwave",
+        "retrowave",
+        "neonwave",
+        "tasteful",
+    ];
     for v in variants {
         let req_variant = test::TestRequest::get()
             .uri(&format!("/templates/svod-streaming?variant={v}"))
@@ -138,4 +144,3 @@ async fn test_template_catalog_http_endpoints() {
     assert!(robots_str.contains("User-agent: *"));
     assert!(robots_str.contains("Sitemap: https://rustnext.enterprise.io/sitemap.xml"));
 }
-

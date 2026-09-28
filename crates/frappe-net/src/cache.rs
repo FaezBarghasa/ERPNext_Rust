@@ -104,7 +104,11 @@ impl TenantMemoryCache {
     }
 
     /// Caches child warehouse associations.
-    pub fn set_child_warehouses(&self, parent: impl Into<CompactString>, children: Vec<CompactString>) {
+    pub fn set_child_warehouses(
+        &self,
+        parent: impl Into<CompactString>,
+        children: Vec<CompactString>,
+    ) {
         if let Ok(mut lock) = self.child_warehouses.write() {
             lock.insert(parent.into(), children);
         }
@@ -122,7 +126,7 @@ impl TenantMemoryCache {
 
     /// Caches pricing rules sorted by priority descending.
     pub fn set_pricing_rules(&self, mut rules: Vec<CachedPricingRule>) {
-        rules.sort_by(|a, b| b.priority.cmp(&a.priority));
+        rules.sort_by_key(|a| std::cmp::Reverse(a.priority));
         if let Ok(mut lock) = self.pricing_rules.write() {
             *lock = rules;
         }
@@ -138,15 +142,15 @@ impl TenantMemoryCache {
     ) -> Option<CachedPricingRule> {
         if let Ok(lock) = self.pricing_rules.read() {
             for rule in lock.iter() {
-                if let Some(ref ic) = rule.item_code {
-                    if ic.as_str() != item_code {
-                        continue;
-                    }
+                if let Some(ref ic) = rule.item_code
+                    && ic.as_str() != item_code
+                {
+                    continue;
                 }
-                if let (Some(rule_cust), Some(cust)) = (&rule.customer, customer) {
-                    if rule_cust.as_str() != cust {
-                        continue;
-                    }
+                if let (Some(rule_cust), Some(cust)) = (&rule.customer, customer)
+                    && rule_cust.as_str() != cust
+                {
+                    continue;
                 }
                 if qty >= rule.min_qty {
                     return Some(rule.clone());

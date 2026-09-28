@@ -19,7 +19,9 @@ pub use forecast::{
     DealSlaConfig, DealStage, OpportunityDeal, PipelineForecastEngine, PipelineForecastSummary,
     SlaBreachReason,
 };
-pub use lead_ads::{IngestedLead, MetaFieldData, MetaLeadAdPayload, MetaLeadIngestor, UtmAttribution};
+pub use lead_ads::{
+    IngestedLead, MetaFieldData, MetaLeadAdPayload, MetaLeadIngestor, UtmAttribution,
+};
 pub use pipeline::{
     CrmError, CrmPipeline, Lead, LeadStatus, Quotation, QuotationItem, QuotationStatus, SalesOrder,
 };

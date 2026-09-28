@@ -157,7 +157,9 @@ impl FieldType {
                 format!("array<record<{sanitized}>>")
             }
             Self::Select { .. } => "string".into(),
-            Self::SectionBreak { .. } | Self::ColumnBreak | Self::TabBreak | Self::Button => "none".into(),
+            Self::SectionBreak { .. } | Self::ColumnBreak | Self::TabBreak | Self::Button => {
+                "none".into()
+            }
         }
     }
 
@@ -168,7 +170,9 @@ impl FieldType {
             Self::Int | Self::Check | Self::Rating => "INTEGER",
             Self::Float | Self::Percent => "REAL",
             Self::Currency => "TEXT", // Fixed-point decimal string representation
-            Self::Date | Self::Datetime | Self::Time | Self::Duration | Self::SmartDuration => "TEXT",
+            Self::Date | Self::Datetime | Self::Time | Self::Duration | Self::SmartDuration => {
+                "TEXT"
+            }
             Self::SectionBreak { .. } | Self::ColumnBreak | Self::TabBreak | Self::Button => "NONE",
             _ => "TEXT",
         }
@@ -326,9 +330,31 @@ fn default_true() -> bool {
 }
 
 const RESERVED_KEYWORDS: &[&str] = &[
-    "table", "select", "delete", "record", "type", "id", "from", "where", "insert", "update",
-    "remove", "alter", "create", "drop", "define", "begin", "commit", "cancel", "transaction",
-    "return", "let", "if", "else", "then", "end",
+    "table",
+    "select",
+    "delete",
+    "record",
+    "type",
+    "id",
+    "from",
+    "where",
+    "insert",
+    "update",
+    "remove",
+    "alter",
+    "create",
+    "drop",
+    "define",
+    "begin",
+    "commit",
+    "cancel",
+    "transaction",
+    "return",
+    "let",
+    "if",
+    "else",
+    "then",
+    "end",
 ];
 
 impl DocTypeSchema {

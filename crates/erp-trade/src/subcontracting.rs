@@ -149,8 +149,8 @@ mod tests {
             supplier: "SUPP-PLATING-CO".into(),
             fg_item_code: "GOLD-PLATED-CONNECTOR".into(),
             fg_qty: dec!(100),
-            service_rate: dec!(5.0),            // $500 service
-            raw_material_cost: dec!(2000.0),    // $2000 raw material consumed
+            service_rate: dec!(5.0),             // $500 service
+            raw_material_cost: dec!(2000.0),     // $2000 raw material consumed
             additional_landed_cost: dec!(200.0), // $200 courier/customs
             posting_date: NaiveDate::from_ymd_opt(2026, 9, 28).unwrap(),
         };

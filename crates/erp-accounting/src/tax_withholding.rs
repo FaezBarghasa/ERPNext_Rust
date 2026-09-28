@@ -44,7 +44,8 @@ impl TaxPricingEngine {
         inclusive_amount: Decimal,
         tax_rates_pct: &[Decimal],
     ) -> (Decimal, Vec<Decimal>) {
-        let sum_rates: Decimal = tax_rates_pct.iter().copied().sum::<Decimal>() / Decimal::from(100);
+        let sum_rates: Decimal =
+            tax_rates_pct.iter().copied().sum::<Decimal>() / Decimal::from(100);
         let divisor = Decimal::ONE + sum_rates;
 
         let base_amount = if divisor.is_zero() {

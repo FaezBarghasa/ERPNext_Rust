@@ -132,22 +132,22 @@ impl LedgerPreviewEngine {
             }
 
             // Offset to Expense Account if Material Issue or Receipt
-            if purpose == StockEntryPurpose::MaterialIssue {
-                if let Some(exp_acc) = &item.expense_account {
-                    gls.push(SimulatedGl {
-                        account: exp_acc.clone(),
-                        debit: line_value,
-                        credit: Decimal::ZERO,
-                    });
-                }
-            } else if purpose == StockEntryPurpose::MaterialReceipt {
-                if let Some(exp_acc) = &item.expense_account {
-                    gls.push(SimulatedGl {
-                        account: exp_acc.clone(),
-                        debit: Decimal::ZERO,
-                        credit: line_value,
-                    });
-                }
+            if purpose == StockEntryPurpose::MaterialIssue
+                && let Some(exp_acc) = &item.expense_account
+            {
+                gls.push(SimulatedGl {
+                    account: exp_acc.clone(),
+                    debit: line_value,
+                    credit: Decimal::ZERO,
+                });
+            } else if purpose == StockEntryPurpose::MaterialReceipt
+                && let Some(exp_acc) = &item.expense_account
+            {
+                gls.push(SimulatedGl {
+                    account: exp_acc.clone(),
+                    debit: Decimal::ZERO,
+                    credit: line_value,
+                });
             }
         }
 

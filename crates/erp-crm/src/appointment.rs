@@ -89,7 +89,12 @@ impl AppointmentBookingEngine {
                 s.attendee_email = Some(attendee_email.to_string());
                 s.subject = Some(subject.to_string());
 
-                let uid = format!("{}-{}-{}", host_user, start_time.and_utc().timestamp(), attendee_email);
+                let uid = format!(
+                    "{}-{}-{}",
+                    host_user,
+                    start_time.and_utc().timestamp(),
+                    attendee_email
+                );
                 Ok(CalendarInvitePayload {
                     uid,
                     summary: subject.to_string(),

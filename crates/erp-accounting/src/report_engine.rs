@@ -81,9 +81,10 @@ impl FinancialReportEngine {
                         Decimal::ZERO
                     }
                 }
-                ReportRowType::CustomApiMetric => {
-                    custom_metrics.get(&row.label).copied().unwrap_or(Decimal::ZERO)
-                }
+                ReportRowType::CustomApiMetric => custom_metrics
+                    .get(&row.label)
+                    .copied()
+                    .unwrap_or(Decimal::ZERO),
                 ReportRowType::CalculatedAmount => {
                     if let Some(ref formula) = row.formula {
                         Self::eval_simple_formula(formula, &computed_values)?
@@ -143,7 +144,11 @@ impl FinancialReportEngine {
                 "+" => total += next_val,
                 "-" => total -= next_val,
                 "*" => total *= next_val,
-                _ => return Err(ReportError::EvaluationFailed(format!("Unsupported operator: {op}"))),
+                _ => {
+                    return Err(ReportError::EvaluationFailed(format!(
+                        "Unsupported operator: {op}"
+                    )));
+                }
             }
             i += 2;
         }
@@ -194,7 +199,9 @@ mod tests {
         balances.insert("Revenue".into(), dec!(500000.00));
         balances.insert("Cost of Goods Sold".into(), dec!(300000.00));
 
-        let statement = engine.generate_statement(&balances, &HashMap::new()).unwrap();
+        let statement = engine
+            .generate_statement(&balances, &HashMap::new())
+            .unwrap();
         assert_eq!(statement.len(), 3);
         assert_eq!(statement[2].label.as_str(), "Gross_Margin");
         assert_eq!(statement[2].amount, dec!(200000.00));

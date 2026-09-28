@@ -111,7 +111,8 @@ mod tests {
 
     #[test]
     fn test_repair_capitalization_fully_depreciated() {
-        let (new_val, monthly) = AssetOverhaulEngine::capitalize_repair(dec!(0.0), dec!(12000.0), 24);
+        let (new_val, monthly) =
+            AssetOverhaulEngine::capitalize_repair(dec!(0.0), dec!(12000.0), 24);
         assert_eq!(new_val, dec!(12000.0));
         assert_eq!(monthly, dec!(500.0));
     }

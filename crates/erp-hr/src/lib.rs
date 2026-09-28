@@ -5,9 +5,7 @@ pub mod benefits;
 pub mod overtime;
 pub mod payroll;
 
-pub use advances::{
-    EmployeeAdvance, ExpenseClaimDetail, ExpenseClaimEngine, SettledExpenseClaim,
-};
+pub use advances::{EmployeeAdvance, ExpenseClaimDetail, ExpenseClaimEngine, SettledExpenseClaim};
 pub use arrears::{ArrearsEngine, RetroactiveArrearsSummary, RetroactiveMonthDifference};
 pub use attendance::{
     AttendanceReconciler, AttendanceStatus, BiometricIngestionGateway, BiometricPunch, HrError,

@@ -129,7 +129,8 @@ mod tests {
         row1.set_field("rate", DocValue::Currency(dec!(100.00)));
 
         let mut row2 = VirtualChildRow::new("row-2", "SINV-2026-0010", "SalesInvoice", "items", 2);
-        row2.fields.insert("item_code".into(), DocValue::Text("ITEM-B".into()));
+        row2.fields
+            .insert("item_code".into(), DocValue::Text("ITEM-B".into()));
         row2.is_dirty = false; // unmodified view
 
         lazy.mount_virtual_table("items", vec![row1, row2]);

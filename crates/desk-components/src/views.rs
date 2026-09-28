@@ -72,7 +72,11 @@ pub struct FormViewModel {
 
 impl FormViewModel {
     #[must_use]
-    pub fn new(doctype: impl Into<CompactString>, docname: impl Into<CompactString>, docstatus: i32) -> Self {
+    pub fn new(
+        doctype: impl Into<CompactString>,
+        docname: impl Into<CompactString>,
+        docstatus: i32,
+    ) -> Self {
         Self {
             doctype: doctype.into(),
             docname: docname.into(),

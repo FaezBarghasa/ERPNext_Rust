@@ -95,13 +95,7 @@ impl ProductPack {
 
         self.components
             .iter()
-            .map(|c| {
-                if c.qty_per_pack == 0 {
-                    0
-                } else {
-                    c.on_hand_stock / c.qty_per_pack
-                }
-            })
+            .map(|c| c.on_hand_stock.checked_div(c.qty_per_pack).unwrap_or(0))
             .min()
             .unwrap_or(0)
     }

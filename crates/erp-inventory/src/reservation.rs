@@ -63,7 +63,9 @@ pub struct StockReservationEntry {
 impl StockReservationEntry {
     /// Remaining unfulfilled reserved quantity.
     pub fn remaining_reserved_qty(&self) -> Decimal {
-        if self.status == ReservationStatus::Cancelled || self.status == ReservationStatus::Delivered {
+        if self.status == ReservationStatus::Cancelled
+            || self.status == ReservationStatus::Delivered
+        {
             Decimal::ZERO
         } else {
             (self.reserved_qty - self.delivered_qty).max(Decimal::ZERO)
@@ -235,7 +237,9 @@ mod tests {
         };
 
         // Available on hand is 15 -> Reserving 10 succeeds
-        let id = engine.reserve_stock(sre, dec!(15.0)).expect("Reserve failed");
+        let id = engine
+            .reserve_stock(sre, dec!(15.0))
+            .expect("Reserve failed");
         assert_eq!(id, "SRE-0001");
 
         // Now reserved is 10, available is 5

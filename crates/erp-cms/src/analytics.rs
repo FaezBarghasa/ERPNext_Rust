@@ -54,13 +54,15 @@ impl EdgeAnalyticsEngine {
     pub fn compute_summary(&self) -> AnalyticsSummary {
         let events = match self.events.read() {
             Ok(e) => e.clone(),
-            Err(_) => return AnalyticsSummary {
-                total_page_views: 0,
-                unique_visitors: 0,
-                bounce_rate_pct: 0.0,
-                top_referrers: Vec::new(),
-                device_breakdown: HashMap::new(),
-            },
+            Err(_) => {
+                return AnalyticsSummary {
+                    total_page_views: 0,
+                    unique_visitors: 0,
+                    bounce_rate_pct: 0.0,
+                    top_referrers: Vec::new(),
+                    device_breakdown: HashMap::new(),
+                };
+            }
         };
 
         let total_page_views = events.len();
@@ -76,7 +78,9 @@ impl EdgeAnalyticsEngine {
                 *referrers_count.entry(r.clone()).or_insert(0) += 1;
             }
 
-            *device_count.entry(event.user_agent_device.clone()).or_insert(0) += 1;
+            *device_count
+                .entry(event.user_agent_device.clone())
+                .or_insert(0) += 1;
 
             if event.duration_seconds < 10 {
                 bounces += 1;
@@ -84,7 +88,7 @@ impl EdgeAnalyticsEngine {
         }
 
         let mut top_referrers: Vec<(CompactString, usize)> = referrers_count.into_iter().collect();
-        top_referrers.sort_by(|a, b| b.1.cmp(&a.1));
+        top_referrers.sort_by_key(|a| std::cmp::Reverse(a.1));
 
         let bounce_rate_pct = if total_page_views > 0 {
             (bounces as f64 / total_page_views as f64) * 100.0

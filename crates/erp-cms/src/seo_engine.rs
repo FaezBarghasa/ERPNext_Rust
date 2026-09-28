@@ -65,7 +65,8 @@ impl SeoMetadata {
     pub fn for_svod(slug: &str, variant: &str) -> Self {
         let title = format!("Cinema 4K Ultra SVoD Streaming — {variant} Edition | rustnext").into();
         let description = "Stream award-winning cinema in Ultra-HD 4K with HLS low-latency delivery, real-time subtitle vector search, and synchronized watch parties.".into();
-        let canonical_url = format!("https://rustnext.enterprise.io/templates/{slug}?variant={variant}").into();
+        let canonical_url =
+            format!("https://rustnext.enterprise.io/templates/{slug}?variant={variant}").into();
 
         let json_ld = serde_json::json!({
             "@context": "https://schema.org",
@@ -95,7 +96,8 @@ impl SeoMetadata {
                 "name": "rustnext Studios",
                 "url": "https://rustnext.enterprise.io"
             }
-        }).to_string();
+        })
+        .to_string();
 
         Self {
             title,
@@ -111,9 +113,13 @@ impl SeoMetadata {
     /// Constructs SEO metadata for the Digital Learning & LMS Academy (`Course`, `EducationalOccupationalCredential`).
     #[must_use]
     pub fn for_lms(slug: &str, variant: &str) -> Self {
-        let title = format!("Advanced Systems Engineering & Distributed Kernels — {variant} LMS | rustnext Academy").into();
+        let title = format!(
+            "Advanced Systems Engineering & Distributed Kernels — {variant} LMS | rustnext Academy"
+        )
+        .into();
         let description = "Master pure-Rust distributed systems, micro-topologies, and cryptographic verification with Merkle-anchored graduation diplomas.".into();
-        let canonical_url = format!("https://rustnext.enterprise.io/templates/{slug}?variant={variant}").into();
+        let canonical_url =
+            format!("https://rustnext.enterprise.io/templates/{slug}?variant={variant}").into();
 
         let json_ld = serde_json::json!({
             "@context": "https://schema.org",
@@ -151,7 +157,8 @@ impl SeoMetadata {
                 "priceCurrency": "USD",
                 "availability": "https://schema.org/InStock"
             }
-        }).to_string();
+        })
+        .to_string();
 
         Self {
             title,
@@ -167,9 +174,11 @@ impl SeoMetadata {
     /// Constructs SEO metadata for the Digital Products & Creator Hub (`SoftwareApplication`, `Product`, `Offer`).
     #[must_use]
     pub fn for_digital_goods(slug: &str, variant: &str) -> Self {
-        let title = format!("Creator Studio & Developer Assets — {variant} Vault | rustnext").into();
+        let title =
+            format!("Creator Studio & Developer Assets — {variant} Vault | rustnext").into();
         let description = "Instant software licenses, single-use encrypted download links, automated creator payouts, and verified developer SDKs.".into();
-        let canonical_url = format!("https://rustnext.enterprise.io/templates/{slug}?variant={variant}").into();
+        let canonical_url =
+            format!("https://rustnext.enterprise.io/templates/{slug}?variant={variant}").into();
 
         let json_ld = serde_json::json!({
             "@context": "https://schema.org",
@@ -193,7 +202,8 @@ impl SeoMetadata {
                 "@type": "Organization",
                 "name": "Digital Artisans Guild"
             }
-        }).to_string();
+        })
+        .to_string();
 
         Self {
             title,
@@ -209,9 +219,11 @@ impl SeoMetadata {
     /// Constructs SEO metadata for the Industrial B2B & Wholesale Matrix (`Product`, `UnitPriceSpecification`).
     #[must_use]
     pub fn for_b2b(slug: &str, variant: &str) -> Self {
-        let title = format!("Industrial Procurement & 3D CAD Matrix — {variant} B2B | rustnext").into();
+        let title =
+            format!("Industrial Procurement & 3D CAD Matrix — {variant} B2B | rustnext").into();
         let description = "Enterprise wholesale procurement, interactive 3D WebGL CAD exploded assemblies, Siemens Net 60 corporate terms, and ZUGFeRD 2.2 e-invoices.".into();
-        let canonical_url = format!("https://rustnext.enterprise.io/templates/{slug}?variant={variant}").into();
+        let canonical_url =
+            format!("https://rustnext.enterprise.io/templates/{slug}?variant={variant}").into();
 
         let json_ld = serde_json::json!({
             "@context": "https://schema.org",
@@ -243,7 +255,8 @@ impl SeoMetadata {
                     "name": "rustnext Industrial Wholesale"
                 }
             }
-        }).to_string();
+        })
+        .to_string();
 
         Self {
             title,
@@ -259,9 +272,11 @@ impl SeoMetadata {
     /// Constructs SEO metadata for the Consumer B2C Omnichannel Flagship (`Product`, `AggregateOffer`, `Brand`).
     #[must_use]
     pub fn for_b2c(slug: &str, variant: &str) -> Self {
-        let title = format!("Haute Horlogerie & Luxury Retail — {variant} Flagship | rustnext").into();
+        let title =
+            format!("Haute Horlogerie & Luxury Retail — {variant} Flagship | rustnext").into();
         let description = "High-velocity consumer retail flagship featuring 60+ FPS virtualized SKU grid, SurrealDB live stock feeds, and atomic ACID checkout.".into();
-        let canonical_url = format!("https://rustnext.enterprise.io/templates/{slug}?variant={variant}").into();
+        let canonical_url =
+            format!("https://rustnext.enterprise.io/templates/{slug}?variant={variant}").into();
 
         let json_ld = serde_json::json!({
             "@context": "https://schema.org",
@@ -286,7 +301,8 @@ impl SeoMetadata {
                 "ratingValue": "5.0",
                 "reviewCount": "48"
             }
-        }).to_string();
+        })
+        .to_string();
 
         Self {
             title,
@@ -302,9 +318,11 @@ impl SeoMetadata {
     /// Constructs SEO metadata for the Financial Trading & Brokerage Hub (`FinancialProduct`).
     #[must_use]
     pub fn for_trading(slug: &str, variant: &str) -> Self {
-        let title = format!("Institutional Prime Brokerage & Terminal — {variant} Desk | rustnext").into();
+        let title =
+            format!("Institutional Prime Brokerage & Terminal — {variant} Desk | rustnext").into();
         let description = "High-frequency financial trading terminal with real-time Level-2 order book depth ladder, microsecond trade tape, and Zero-Knowledge solvent balance proofs.".into();
-        let canonical_url = format!("https://rustnext.enterprise.io/templates/{slug}?variant={variant}").into();
+        let canonical_url =
+            format!("https://rustnext.enterprise.io/templates/{slug}?variant={variant}").into();
 
         let json_ld = serde_json::json!({
             "@context": "https://schema.org",

@@ -27,8 +27,8 @@ pub use resources::{
 pub use spc_view::{SpcChartViewModel, SpcPointView};
 pub use video_hud::{ChapterMarker, VideoHudState};
 pub use views::{
-    FormTimelineEntry, FormViewModel, KanbanColumn, KanbanViewModel, ListViewModel,
-    ListViewColumn, ReportType, ReportViewModel,
+    FormTimelineEntry, FormViewModel, KanbanColumn, KanbanViewModel, ListViewColumn, ListViewModel,
+    ReportType, ReportViewModel,
 };
 pub use wms_view::{AmrMarkerViewModel, BinViewModel, Warehouse3DViewModel};
 

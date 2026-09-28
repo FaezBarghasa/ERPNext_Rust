@@ -123,15 +123,13 @@ mod tests {
             fulfillment_status: "unfulfilled".into(),
             currency: "USD".into(),
             total_amount: dec!(2400.00),
-            line_items: vec![
-                ChannelOrderLineItem {
-                    sku: "SKU-LAP-01".into(),
-                    title: "Laptop".into(),
-                    quantity: 2,
-                    unit_price: dec!(1200.00),
-                    total_amount: dec!(2400.00),
-                },
-            ],
+            line_items: vec![ChannelOrderLineItem {
+                sku: "SKU-LAP-01".into(),
+                title: "Laptop".into(),
+                quantity: 2,
+                unit_price: dec!(1200.00),
+                total_amount: dec!(2400.00),
+            }],
         };
 
         assert_eq!(

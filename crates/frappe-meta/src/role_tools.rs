@@ -31,7 +31,11 @@ impl RoleReplicationBundle {
         self.roles.push(role);
     }
 
-    pub fn add_doctype_permission(&mut self, doctype: impl Into<String>, perms: Vec<DocPermSchema>) {
+    pub fn add_doctype_permission(
+        &mut self,
+        doctype: impl Into<String>,
+        perms: Vec<DocPermSchema>,
+    ) {
         self.doctype_permissions.push((doctype.into(), perms));
     }
 }
@@ -104,11 +108,19 @@ mod tests {
         user_roles.insert(CompactString::new("Accounts User"));
 
         // Regular accounts user should see masked field
-        assert!(RoleEvaluator::should_mask_field(&field, &user_roles, &["Accounts Manager", "System Manager"]));
+        assert!(RoleEvaluator::should_mask_field(
+            &field,
+            &user_roles,
+            &["Accounts Manager", "System Manager"]
+        ));
 
         // Manager should see unmasked field
         user_roles.insert(CompactString::new("Accounts Manager"));
-        assert!(!RoleEvaluator::should_mask_field(&field, &user_roles, &["Accounts Manager", "System Manager"]));
+        assert!(!RoleEvaluator::should_mask_field(
+            &field,
+            &user_roles,
+            &["Accounts Manager", "System Manager"]
+        ));
 
         let perms = vec![DocPermSchema {
             role: "Accounts Manager".into(),
@@ -126,6 +138,9 @@ mod tests {
             accounting_period_exempt: true,
         }];
 
-        assert!(RoleEvaluator::is_accounting_period_exempt(&user_roles, &perms));
+        assert!(RoleEvaluator::is_accounting_period_exempt(
+            &user_roles,
+            &perms
+        ));
     }
 }

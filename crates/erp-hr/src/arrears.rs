@@ -96,8 +96,18 @@ mod tests {
     #[test]
     fn test_retroactive_arrears_calculation() {
         let past_months = vec![
-            ("2026-07".to_string(), dec!(4000.0), dec!(4500.0), dec!(10.0)),
-            ("2026-08".to_string(), dec!(4000.0), dec!(4500.0), dec!(10.0)),
+            (
+                "2026-07".to_string(),
+                dec!(4000.0),
+                dec!(4500.0),
+                dec!(10.0),
+            ),
+            (
+                "2026-08".to_string(),
+                dec!(4000.0),
+                dec!(4500.0),
+                dec!(10.0),
+            ),
         ];
 
         let summary = ArrearsEngine::calculate_arrears("EMP-001", &past_months);
@@ -110,7 +120,8 @@ mod tests {
     #[test]
     fn test_lwp_reversal() {
         // Daily rate $150, 2 days LWP reversed, 10% tax
-        let (gross, tax, net) = ArrearsEngine::compute_lwp_reversal(dec!(150.0), dec!(2.0), dec!(10.0));
+        let (gross, tax, net) =
+            ArrearsEngine::compute_lwp_reversal(dec!(150.0), dec!(2.0), dec!(10.0));
         assert_eq!(gross, dec!(300.0));
         assert_eq!(tax, dec!(30.0));
         assert_eq!(net, dec!(270.0));

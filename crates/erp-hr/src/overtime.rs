@@ -48,42 +48,46 @@ pub struct OvertimeSlip {
     pub overtime_amount: Decimal,
 }
 
+/// Parameters for generating an overtime slip from biometric punch logs.
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+pub struct OvertimeCalculationRequest<'a> {
+    pub slip_id: &'a str,
+    pub employee_id: &'a str,
+    pub attendance_date: NaiveDate,
+    pub shift_end_time: NaiveTime,
+    pub actual_out_time: NaiveTime,
+    pub base_hourly_rate: Decimal,
+    pub multiplier: OvertimeMultiplier,
+    pub min_overtime_mins_threshold: i64,
+}
+
 /// Overtime calculation and slip generator.
 pub struct OvertimeEngine;
 
 impl OvertimeEngine {
     /// Evaluates actual checkout vs shift end time and generates an overtime slip if threshold exceeded.
-    pub fn generate_overtime_slip(
-        slip_id: &str,
-        employee_id: &str,
-        attendance_date: NaiveDate,
-        shift_end_time: NaiveTime,
-        actual_out_time: NaiveTime,
-        base_hourly_rate: Decimal,
-        multiplier: OvertimeMultiplier,
-        min_overtime_mins_threshold: i64,
-    ) -> Option<OvertimeSlip> {
-        if actual_out_time <= shift_end_time {
+    pub fn generate_overtime_slip(req: &OvertimeCalculationRequest) -> Option<OvertimeSlip> {
+        if req.actual_out_time <= req.shift_end_time {
             return None;
         }
 
-        let diff_mins = (actual_out_time - shift_end_time).num_minutes();
-        if diff_mins < min_overtime_mins_threshold {
+        let diff_mins = (req.actual_out_time - req.shift_end_time).num_minutes();
+        if diff_mins < req.min_overtime_mins_threshold {
             return None;
         }
 
         let hours = Decimal::from(diff_mins) / dec!(60.0);
-        let amount = hours * base_hourly_rate * multiplier.factor();
+        let amount = hours * req.base_hourly_rate * req.multiplier.factor();
 
         Some(OvertimeSlip {
-            slip_id: slip_id.to_string(),
-            employee_id: employee_id.to_string(),
-            attendance_date,
-            shift_end_time,
-            actual_out_time,
+            slip_id: req.slip_id.to_string(),
+            employee_id: req.employee_id.to_string(),
+            attendance_date: req.attendance_date,
+            shift_end_time: req.shift_end_time,
+            actual_out_time: req.actual_out_time,
             overtime_hours: hours,
-            base_hourly_rate,
-            multiplier,
+            base_hourly_rate: req.base_hourly_rate,
+            multiplier: req.multiplier,
             overtime_amount: amount,
         })
     }
@@ -99,17 +103,19 @@ mod tests {
         let shift_end = NaiveTime::from_hms_opt(17, 0, 0).unwrap();
         let actual_out = NaiveTime::from_hms_opt(19, 0, 0).unwrap(); // 2 hours (120 mins) OT
 
-        let slip = OvertimeEngine::generate_overtime_slip(
-            "OT-001",
-            "EMP-001",
-            date,
-            shift_end,
-            actual_out,
-            dec!(20.0), // $20/hr
-            OvertimeMultiplier::Standard1Point5, // 1.5x -> $30/hr
-            30, // threshold 30 mins
-        )
-        .expect("Overtime slip generation expected");
+        let req = OvertimeCalculationRequest {
+            slip_id: "OT-001",
+            employee_id: "EMP-001",
+            attendance_date: date,
+            shift_end_time: shift_end,
+            actual_out_time: actual_out,
+            base_hourly_rate: dec!(20.0),                    // $20/hr
+            multiplier: OvertimeMultiplier::Standard1Point5, // 1.5x -> $30/hr
+            min_overtime_mins_threshold: 30,                 // threshold 30 mins
+        };
+
+        let slip = OvertimeEngine::generate_overtime_slip(&req)
+            .expect("Overtime slip generation expected");
 
         assert_eq!(slip.overtime_hours, dec!(2.0));
         assert_eq!(slip.overtime_amount, dec!(60.0)); // 2 hrs * $20 * 1.5 = $60

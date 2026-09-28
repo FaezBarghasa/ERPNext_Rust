@@ -137,11 +137,12 @@ impl BlockValueResolver {
             return None;
         }
 
-        let (scope, remaining) = if parts.len() > 1 && matches!(parts[0], "pageData" | "componentData" | "props") {
-            (parts[0], &parts[1..])
-        } else {
-            ("pageData", parts.as_slice())
-        };
+        let (scope, remaining) =
+            if parts.len() > 1 && matches!(parts[0], "pageData" | "componentData" | "props") {
+                (parts[0], &parts[1..])
+            } else {
+                ("pageData", parts.as_slice())
+            };
 
         let root_map = match scope {
             "props" => &self.props,

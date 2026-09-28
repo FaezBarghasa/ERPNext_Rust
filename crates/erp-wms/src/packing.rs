@@ -82,7 +82,9 @@ impl BinPacking3DSolver {
         boxes.sort_by(|a, b| {
             let vol_a = a.width * a.height * a.depth;
             let vol_b = b.width * b.height * b.depth;
-            vol_b.partial_cmp(&vol_a).unwrap_or(std::cmp::Ordering::Equal)
+            vol_b
+                .partial_cmp(&vol_a)
+                .unwrap_or(std::cmp::Ordering::Equal)
         });
 
         let mut unplaced = Vec::new();

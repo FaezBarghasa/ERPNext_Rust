@@ -189,7 +189,8 @@ impl CommandPaletteModel {
         self.items
             .iter()
             .filter(|item| {
-                item.title.to_lowercase().contains(q_str) || item.group.to_lowercase().contains(q_str)
+                item.title.to_lowercase().contains(q_str)
+                    || item.group.to_lowercase().contains(q_str)
             })
             .collect()
     }

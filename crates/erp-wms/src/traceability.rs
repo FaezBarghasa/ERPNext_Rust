@@ -58,7 +58,10 @@ impl TraceabilityEngine {
 
     /// Registers a movement node.
     pub fn add_node(&mut self, node: LineageNode) {
-        self.nodes.entry(node.identifier.clone()).or_default().push(node);
+        self.nodes
+            .entry(node.identifier.clone())
+            .or_default()
+            .push(node);
     }
 
     /// Registers a manufacturing genealogy link.
@@ -80,11 +83,11 @@ impl TraceabilityEngine {
         let mut queue = vec![root_batch_or_serial.to_string()];
 
         while let Some(current) = queue.pop() {
-            if visited.insert(current.clone()) {
-                if let Some(links) = self.forward_links.get(&current) {
-                    for link in links {
-                        queue.push(link.child_id.clone());
-                    }
+            if visited.insert(current.clone())
+                && let Some(links) = self.forward_links.get(&current)
+            {
+                for link in links {
+                    queue.push(link.child_id.clone());
                 }
             }
         }
@@ -98,11 +101,11 @@ impl TraceabilityEngine {
         let mut queue = vec![customer_batch_or_serial.to_string()];
 
         while let Some(current) = queue.pop() {
-            if visited.insert(current.clone()) {
-                if let Some(links) = self.backward_links.get(&current) {
-                    for link in links {
-                        queue.push(link.parent_id.clone());
-                    }
+            if visited.insert(current.clone())
+                && let Some(links) = self.backward_links.get(&current)
+            {
+                for link in links {
+                    queue.push(link.parent_id.clone());
                 }
             }
         }

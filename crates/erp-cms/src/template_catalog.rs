@@ -304,12 +304,36 @@ pub fn render_template_html(slug: &str) -> Option<String> {
 #[must_use]
 pub fn render_theme_switcher_dock(current_slug: &str, active_variant: &str) -> String {
     let variants = [
-        ("awwwards", "🏆 Awwwards Editorial", "Editorial typography, kinetic motion, film grain, gold accent"),
-        ("cyberpunk", "🤖 Cyberpunk HUD", "Samurai Yellow, Arasaka Crimson, angled clips, glitch shaders"),
-        ("vaporwave", "🌸 Vaporwave Glass", "Neon pastels, frosted glass blur, dreamland sunset"),
-        ("retrowave", "📼 80s Retro Wave", "Outrun chrome text, LED VU meter, cassette buttons"),
-        ("neonwave", "⚡ Neon Wave Horizon", "Electric cyan laser, 3D perspective grid, audio sine waves"),
-        ("tasteful", "✨ Tasteful Minimal", "Restrained obsidian, Emil Kowalski springs, clean typography"),
+        (
+            "awwwards",
+            "🏆 Awwwards Editorial",
+            "Editorial typography, kinetic motion, film grain, gold accent",
+        ),
+        (
+            "cyberpunk",
+            "🤖 Cyberpunk HUD",
+            "Samurai Yellow, Arasaka Crimson, angled clips, glitch shaders",
+        ),
+        (
+            "vaporwave",
+            "🌸 Vaporwave Glass",
+            "Neon pastels, frosted glass blur, dreamland sunset",
+        ),
+        (
+            "retrowave",
+            "📼 80s Retro Wave",
+            "Outrun chrome text, LED VU meter, cassette buttons",
+        ),
+        (
+            "neonwave",
+            "⚡ Neon Wave Horizon",
+            "Electric cyan laser, 3D perspective grid, audio sine waves",
+        ),
+        (
+            "tasteful",
+            "✨ Tasteful Minimal",
+            "Restrained obsidian, Emil Kowalski springs, clean typography",
+        ),
     ];
 
     let mut buttons_html = String::new();
@@ -455,7 +479,14 @@ pub fn render_template_index_html() -> String {
             ("tasteful", "Minimal"),
         ]
         .iter()
-        .map(|(v, lbl)| format!(r##"<a href="/templates/{slug}?variant={v}" class="variant-pill">{lbl}</a>"##, slug = s.slug, v = v, lbl = lbl))
+        .map(|(v, lbl)| {
+            format!(
+                r##"<a href="/templates/{slug}?variant={v}" class="variant-pill">{lbl}</a>"##,
+                slug = s.slug,
+                v = v,
+                lbl = lbl
+            )
+        })
         .collect::<Vec<_>>()
         .join(" ");
 
@@ -1931,7 +1962,14 @@ mod tests {
     #[test]
     fn test_render_30_aesthetic_permutations() {
         let suites = list_template_suites();
-        let variants = ["awwwards", "cyberpunk", "vaporwave", "retrowave", "neonwave", "tasteful"];
+        let variants = [
+            "awwwards",
+            "cyberpunk",
+            "vaporwave",
+            "retrowave",
+            "neonwave",
+            "tasteful",
+        ];
         for s in suites {
             for v in variants {
                 let html = render_template_html_with_variant(&s.slug, Some(v))
@@ -1952,4 +1990,3 @@ mod tests {
         assert!(portal_html.contains("Vaporwave"));
     }
 }
-
