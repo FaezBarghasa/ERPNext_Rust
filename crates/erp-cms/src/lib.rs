@@ -1,4 +1,5 @@
 pub mod block_canvas;
+pub mod luxury_storefront;
 pub mod print;
 pub mod security;
 pub mod storefront;
@@ -6,6 +7,10 @@ pub mod subtitles;
 pub mod transcoder;
 
 pub use block_canvas::{CmsPage, FeatureItem, PageBlock, SsrEngine};
+pub use luxury_storefront::{
+    LUXURY_STOREFRONT_CSS, LUXURY_STOREFRONT_HTML, LUXURY_STOREFRONT_JS, LuxuryProduct,
+    get_luxury_catalog, render_luxury_storefront_html,
+};
 pub use print::render_invoice_html;
 pub use security::{HmacStreamingSigner, StreamingError, SvodPlaybackManager, parse_byte_range};
 pub use storefront::{
