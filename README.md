@@ -120,6 +120,9 @@ cargo test --package frappe-net --test charter_all_epochs_test
 # Validate code formatting and lint cleanlines
 cargo fmt --check
 cargo clippy --workspace --all-targets -- -D warnings
+
+# Run synthetic multi-tenant load generator & latency benchmarks
+cargo run -p rbench -- benchmark 20 10000
 ```
 
 ---

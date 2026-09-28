@@ -72,10 +72,14 @@ graph TD
 - **Field-Level Envelope Encryption (`EnvelopeEncryption`)**: AES-256-GCM / ChaCha20-Poly1305 AEAD envelope encryption pairing Master Key Encryption Keys (KEK) with dynamic per-tenant Data Encryption Keys (DEK).
 
 ### 3.4 `frappe-net`
-- **Sub-64MB Micro-Topology (`MicroTopologyConfig`)**: Optimized runtime profile configured for low-memory appliances (8MB write buffer, 16MB read cache, bounded 1024-item task queues).
+- **Sub-64MB Micro-Topology (`MicroTopologyConfig`)**: Optimized runtime profile configured for low-memory appliances (8MB write buffer, 16MB read cache, bounded 1024-item task queues, 2MB payload cap).
 - **In-Process Automated ACME Gateway (`AcmeGateway`)**: Manages Let's Encrypt automated certificate negotiation, caching, and host-to-tenant SNI routing.
 - **Tenant Context Scoping (`TenantContext`, `resolve_scoped_session`)**: Strictly isolates tenant database handles extracted from headers (`X-Tenant-Id`) or subdomain routing.
 - **LiveSync Actor & Background Worker**: WebSocket actor broadcasting live document mutation events and managing prioritized asynchronous background jobs.
+
+### 3.5 `rbench`
+- **Site Orchestration CLI**: Automates tenant namespace provisioning (`new-site`), schema migration (`migrate`), and app archive verification (`install-app`).
+- **Synthetic Load Generator (`benchmark`)**: Multi-threaded async benchmark engine tracking latency percentiles (p50, p90, p95, p99) and QPS throughput across in-memory and cluster deployments.
 
 ---
 

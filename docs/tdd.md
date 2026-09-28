@@ -69,8 +69,8 @@ cargo test --package frappe-net --test charter_all_epochs_test
 # Run tests with full backtrace for deep diagnostics
 RUST_BACKTRACE=1 cargo test --workspace
 
-# Run synthetic throughput and latency benchmarks
-cargo bench -p rbench
+# Run synthetic throughput and latency benchmark load generator
+cargo run -p rbench -- benchmark 20 10000
 ```
 
 ---
