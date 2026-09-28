@@ -21,6 +21,9 @@ chrono = { workspace = true }
 surrealdb = { workspace = true }
 clap = { workspace = true }
 erp-cms = { workspace = true }
+compact_str = { workspace = true }
+rust_decimal = { workspace = true }
+rust_decimal_macros = { workspace = true }
 
 [dev-dependencies]
 frappe-meta = { workspace = true }

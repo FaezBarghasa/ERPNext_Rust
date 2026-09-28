@@ -29,8 +29,18 @@ mod tests {
             module: "Accounts".to_string(),
             is_single: false,
             is_submittable: true,
+            is_child_table: false,
+            is_tree: false,
             track_changes: true,
+            quick_entry: false,
+            allow_rename: false,
+            allow_import: true,
+            allow_auto_repeat: false,
             naming_rule: Some("ACC-INV-.YYYY.-.#####".to_string()),
+            naming_rule_spec: None,
+            virtual_child_tables: false,
+            lazy_materialization: false,
+            extends_class: None,
             fields: vec![
                 DocFieldSchema {
                     fieldname: "customer".to_string(),
@@ -41,8 +51,10 @@ mod tests {
                     read_only: false,
                     hidden: false,
                     in_list_view: true,
+                    mask: false,
                     options: None,
                     default_value: None,
+                    permlevel: 0,
                 },
                 DocFieldSchema {
                     fieldname: "grand_total".to_string(),
@@ -53,8 +65,10 @@ mod tests {
                     read_only: false,
                     hidden: false,
                     in_list_view: true,
+                    mask: false,
                     options: None,
                     default_value: Some(serde_json::json!(0.0)),
+                    permlevel: 0,
                 },
             ],
             permissions: vec![DocPermSchema {
@@ -68,7 +82,9 @@ mod tests {
                 amend: true,
                 report: true,
                 export: true,
+                import: false,
                 permlevel: 0,
+                accounting_period_exempt: false,
             }],
         }
     }

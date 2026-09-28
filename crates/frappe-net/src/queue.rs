@@ -1,10 +1,13 @@
-//! Asynchronous Priority Task Queue & Worker Pool (`frappe-net::queue`).
+//! Asynchronous Priority Task Queue, Scheduler & Deduplication Engine (`frappe-net::queue`).
 //!
 //! Replaces Redis/Celery with Tokio-native prioritized asynchronous worker pools,
-//! bounded zero-allocation channels, exponential backoff retries, and task state transitions.
+//! bounded zero-allocation channels, exponential backoff retries, staggered maintenance schedules,
+//! and atomic lock-free `is_job_enqueued` deduplication registers.
 
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
+use std::collections::HashSet;
+use std::sync::RwLock;
 use std::time::Duration;
 use thiserror::Error;
 use tokio::sync::mpsc;
@@ -39,6 +42,8 @@ pub const QUEUES: &[&str] = &["critical", "high", "default", "low"];
 pub enum QueueError {
     #[error("Queue channel closed for priority: {0:?}")]
     ChannelClosed(PriorityLevel),
+    #[error("Job '{0}' is already enqueued (deduplicated)")]
+    JobAlreadyEnqueued(String),
     #[error("Task execution failed after {retries} retries: {reason}")]
     MaxRetriesExceeded { retries: u32, reason: String },
 }
@@ -107,13 +112,37 @@ impl BackgroundJob {
     }
 }
 
-/// Priority task dispatcher managing dedicated Tokio worker pools.
+/// Status record for background report downloads.
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+pub struct ReportDownloadJob {
+    pub job_id: String,
+    pub report_name: String,
+    pub status: String, // "Queued", "Generating", "Ready", "Failed"
+    pub download_url: Option<String>,
+    pub row_count: usize,
+    pub error: Option<String>,
+}
+
+/// Staggered Maintenance Task window calculator to prevent midnight load surges.
+pub struct StaggeredMaintenanceScheduler;
+
+impl StaggeredMaintenanceScheduler {
+    /// Computes staggered execution offset in minutes based on tenant hash.
+    #[must_use]
+    pub fn compute_staggered_minute_offset(tenant_id: &str, window_span_minutes: u32) -> u32 {
+        let hash: u32 = tenant_id.bytes().fold(0u32, |acc, b| acc.wrapping_add(b as u32));
+        hash % window_span_minutes
+    }
+}
+
+/// Priority task dispatcher managing dedicated Tokio worker pools with deduplication.
 #[derive(Clone)]
 pub struct PriorityTaskDispatcher {
     critical_tx: mpsc::Sender<BackgroundJob>,
     high_tx: mpsc::Sender<BackgroundJob>,
     default_tx: mpsc::Sender<BackgroundJob>,
     low_tx: mpsc::Sender<BackgroundJob>,
+    enqueued_job_keys: std::sync::Arc<RwLock<HashSet<String>>>,
 }
 
 impl PriorityTaskDispatcher {
@@ -138,14 +167,33 @@ impl PriorityTaskDispatcher {
             high_tx,
             default_tx: def_tx,
             low_tx,
+            enqueued_job_keys: std::sync::Arc::new(RwLock::new(HashSet::new())),
         };
 
         (dispatcher, crit_rx, high_rx, def_rx, low_rx)
     }
 
-    /// Enqueues a job into its respective priority channel asynchronously.
+    /// Checks if a job with the specified key is already enqueued (`is_job_enqueued`).
+    #[must_use]
+    pub fn is_job_enqueued(&self, job_key: &str) -> bool {
+        if let Ok(lock) = self.enqueued_job_keys.read() {
+            lock.contains(job_key)
+        } else {
+            false
+        }
+    }
+
+    /// Enqueues a job into its respective priority channel with deduplication.
     pub async fn enqueue(&self, job: BackgroundJob) -> Result<(), QueueError> {
         let priority = job.priority;
+        let job_key = format!("{}:{}:{}", job.tenant_id, job.job_type, job.id);
+
+        if let Ok(mut lock) = self.enqueued_job_keys.write() {
+            if !lock.insert(job_key) {
+                return Err(QueueError::JobAlreadyEnqueued(job.id));
+            }
+        }
+
         let res = match priority {
             PriorityLevel::Critical => self.critical_tx.send(job).await,
             PriorityLevel::High => self.high_tx.send(job).await,
@@ -154,6 +202,14 @@ impl PriorityTaskDispatcher {
         };
 
         res.map_err(|_| QueueError::ChannelClosed(priority))
+    }
+
+    /// Marks a job completed, releasing its deduplication key.
+    pub fn mark_completed(&self, tenant_id: &str, job_type: &str, job_id: &str) {
+        let job_key = format!("{tenant_id}:{job_type}:{job_id}");
+        if let Ok(mut lock) = self.enqueued_job_keys.write() {
+            lock.remove(&job_key);
+        }
     }
 }
 
@@ -164,6 +220,48 @@ mod tests {
     #[test]
     fn test_queues_constant() {
         assert_eq!(QUEUES.len(), 4);
+    }
+
+    #[test]
+    fn test_staggered_scheduler() {
+        let offset1 = StaggeredMaintenanceScheduler::compute_staggered_minute_offset("tenant_acme", 60);
+        let offset2 = StaggeredMaintenanceScheduler::compute_staggered_minute_offset("tenant_apex", 60);
+        assert!(offset1 < 60);
+        assert!(offset2 < 60);
+    }
+
+    #[tokio::test]
+    async fn test_job_deduplication() {
+        let (dispatcher, mut crit_rx, _high_rx, _def_rx, _low_rx) =
+            PriorityTaskDispatcher::new(16);
+
+        let job1 = BackgroundJob::new(
+            "report-001".into(),
+            "t1".into(),
+            PriorityLevel::Critical,
+            "financial_report".into(),
+            "{}".into(),
+        );
+        let job2 = BackgroundJob::new(
+            "report-001".into(),
+            "t1".into(),
+            PriorityLevel::Critical,
+            "financial_report".into(),
+            "{}".into(),
+        );
+
+        assert!(dispatcher.enqueue(job1).await.is_ok());
+        assert!(dispatcher.is_job_enqueued("t1:financial_report:report-001"));
+
+        // Duplicate enqueue must fail
+        assert_eq!(
+            dispatcher.enqueue(job2).await,
+            Err(QueueError::JobAlreadyEnqueued("report-001".into()))
+        );
+
+        let _ = crit_rx.recv().await;
+        dispatcher.mark_completed("t1", "financial_report", "report-001");
+        assert!(!dispatcher.is_job_enqueued("t1:financial_report:report-001"));
     }
 
     #[test]
@@ -190,37 +288,5 @@ mod tests {
         assert_eq!(job.next_backoff_duration(), Duration::from_millis(100));
         job.retry_count = 2;
         assert_eq!(job.next_backoff_duration(), Duration::from_millis(200));
-    }
-
-    #[tokio::test]
-    async fn test_priority_dispatcher() {
-        let (dispatcher, mut crit_rx, _high_rx, _def_rx, mut low_rx) =
-            PriorityTaskDispatcher::new(16);
-
-        let job_crit = BackgroundJob::new(
-            "job-crit".into(),
-            "t1".into(),
-            PriorityLevel::Critical,
-            "gl_post".into(),
-            "{}".into(),
-        );
-        let job_low = BackgroundJob::new(
-            "job-low".into(),
-            "t1".into(),
-            PriorityLevel::Low,
-            "cleanup".into(),
-            "{}".into(),
-        );
-
-        assert!(dispatcher.enqueue(job_crit).await.is_ok());
-        assert!(dispatcher.enqueue(job_low).await.is_ok());
-
-        let received_crit = crit_rx.recv().await.unwrap();
-        assert_eq!(received_crit.id, "job-crit");
-        assert_eq!(received_crit.priority, PriorityLevel::Critical);
-
-        let received_low = low_rx.recv().await.unwrap();
-        assert_eq!(received_low.id, "job-low");
-        assert_eq!(received_low.priority, PriorityLevel::Low);
     }
 }

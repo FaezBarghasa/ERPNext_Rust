@@ -9,7 +9,7 @@ pub use bitemporal::{BiTemporalQuery, BiTemporalRecord, TimeInterval};
 pub use crdt::{LwwDocumentState, OfflineOutboxManager, PnCounter, SyncQueueEntry, VectorClock};
 pub use drive::{DeduplicatedStorage, DriveFile, DriveFolder, StorageError};
 pub use encryption::{EncryptionError, EnvelopeEncryption};
-pub use merkle::MerkleHasher;
+pub use merkle::{MerkleHasher, MerkleProof, MerkleProofStep};
 pub use surreal::open_tenant;
 
 use std::collections::HashMap;
