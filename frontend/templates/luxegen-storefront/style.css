@@ -1298,6 +1298,10 @@ body {
   .navbar .nav-links {
     display: none;
   }
+
+  .nav-status-pill {
+    display: none;
+  }
   
   .configurator-modal {
     grid-template-columns: 1fr;
@@ -1316,6 +1320,21 @@ body {
 }
 
 @media (max-width: 600px) {
+  .navbar {
+    width: calc(100% - 24px);
+    padding: 10px 16px;
+    top: 12px;
+  }
+
+  .nav-actions {
+    gap: 8px;
+  }
+
+  .currency-select {
+    padding: 6px 10px;
+    font-size: 11px;
+  }
+
   .product-grid {
     grid-template-columns: 1fr;
   }

@@ -49,14 +49,14 @@
       </ul>
 
       <div class="nav-actions">
-        <select id="currency-select" class="currency-select">
+        <select id="currency-select" class="currency-select" aria-label="Select Currency">
           <option value="USD">USD ($)</option>
           <option value="EUR">EUR (€)</option>
           <option value="GBP">GBP (£)</option>
           <option value="JPY">JPY (¥)</option>
         </select>
 
-        <button class="cart-btn" onclick="openCartDrawer()">
+        <button class="cart-btn" onclick="openCartDrawer()" aria-label="Open Vault Cart Drawer">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="9" cy="21" r="1"></circle><circle cx="20" cy="21" r="1"></circle><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path></svg>
           <span>Vault</span>
           <span class="cart-badge">1</span>
@@ -135,7 +135,7 @@
 
       <div class="search-box">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
-        <input type="text" id="search-input" class="search-input" placeholder="Search catalog...">
+        <input type="text" id="search-input" class="search-input" placeholder="Search catalog..." aria-label="Search catalog">
       </div>
     </div>
 
@@ -246,7 +246,7 @@
   <!-- 3D Interactive Product Configurator Modal -->
   <div id="configurator-modal-overlay" class="modal-overlay">
     <div class="configurator-modal">
-      <button class="modal-close-btn" onclick="closeConfigurator()">✕</button>
+      <button class="modal-close-btn" onclick="closeConfigurator()" aria-label="Close Configurator">✕</button>
 
       <!-- 3D Viewport on Left -->
       <div class="modal-viewport">
@@ -327,7 +327,7 @@
     <div class="cart-drawer" onclick="event.stopPropagation()">
       <div class="drawer-header">
         <h3 class="drawer-title">Vault Manifest</h3>
-        <button class="drawer-close" onclick="closeCartDrawer()">✕</button>
+        <button class="drawer-close" onclick="closeCartDrawer()" aria-label="Close Cart Drawer">✕</button>
       </div>
 
       <div id="drawer-items" class="drawer-items">
@@ -363,7 +363,7 @@
   <!-- Atomic Checkout Wizard Modal -->
   <div id="checkout-modal-overlay" class="modal-overlay">
     <div class="checkout-modal">
-      <button class="modal-close-btn" onclick="closeCheckoutModal()">✕</button>
+      <button class="modal-close-btn" onclick="closeCheckoutModal()" aria-label="Close Checkout Modal">✕</button>
 
       <span class="section-tag">ATOMIC E-COMMERCE TRANSACTION</span>
       <h3 style="font-family: var(--font-display); font-size: 24px; font-weight: 800; margin-bottom: 20px;">
@@ -393,8 +393,8 @@
               <input type="text" class="form-input" required placeholder="Rue du Rhône 42, 1204 Genève, Switzerland" value="Rue du Rhône 42, 1204 Genève, Switzerland">
             </div>
             <div class="form-group">
-              <label class="form-label">Payment Rail</label>
-              <select class="form-input" style="background: rgba(255,255,255,0.05); color: #fff;">
+              <label class="form-label" for="checkout-payment-rail">Payment Rail</label>
+              <select id="checkout-payment-rail" class="form-input" style="background: rgba(255,255,255,0.05); color: #fff;" aria-label="Payment Rail">
                 <option>High-Value Wire (SWIFT / Fedwire)</option>
                 <option>USDC / Web3 Settlement</option>
                 <option>Encrypted Card (AEAD Sealed)</option>

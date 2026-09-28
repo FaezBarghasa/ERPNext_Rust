@@ -391,6 +391,16 @@ function createConfigMaterial(finish) {
 
 function updateConfiguratorMaterials(finish) {
   state.activeMaterial = finish;
+  const finishNames = {
+    titanium: 'Liquid Titanium',
+    carbon: 'Forged Carbon',
+    chrome: 'Mirror Chrome',
+    gold: 'Celestial Aurum',
+  };
+  const finishEl = document.getElementById('selected-finish-name');
+  if (finishEl && finishNames[finish]) {
+    finishEl.textContent = finishNames[finish];
+  }
   if (!cfgRings.length) return;
 
   for (let i = 0; i < 3; i++) {
