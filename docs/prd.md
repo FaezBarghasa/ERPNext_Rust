@@ -2,72 +2,78 @@
 
 ## 1. Executive Summary
 
-ERPNext Rust is an enterprise-grade ERP platform re-engineered from the ground up in Rust. It aims to deliver microsecond-level transaction speeds, strict memory safety, seamless multi-tenancy, and modular business domains capable of scaling from local single-node edge devices to distributed cloud clusters.
+`rustnext` is an uncompromised, pure-Rust enterprise operating system and ERP substrate designed to replace legacy interpreted monolithic stacks. It delivers sub-millisecond transaction speeds, provable memory safety, local-first offline autonomy, and native multi-tenancy supporting thousands of isolated organizations per binary instance.
 
 ---
 
-## 2. Key Objectives & Goals
+## 2. Quantitative System Goals & SLAs
 
-- **Performance**: Sub-10ms p99 latency on core transaction APIs (Sales Invoices, Journal Entries, Stock Movements).
-- **Safety & Precision**: Absolute elimination of data inconsistency in financial and inventory records using immutable ledgers and exact-precision numerical arithmetic.
-- **Modularity**: Domain crates remain cleanly decoupled and independently testable without circular dependencies.
-- **Extensibility**: Sandboxed plugin architecture allowing custom user scripting without compromising system stability.
-- **Multi-Tenant Native**: Native support for thousands of tenants per single binary instance with isolated databases and storage.
-
----
-
-## 3. Core Functional Requirements
-
-### 3.1 Metadata & Schema System (`frappe-meta`)
-- **FR-META-01**: Must dynamically compile JSON/declarative DocType schemas into memory structures.
-- **FR-META-02**: Must enforce RBAC matrix permissions for roles, document states, and individual field permissions.
-- **FR-META-03**: Must support custom sequential and formatted naming series.
-- **FR-META-04**: Must provide automated migration validation between schema versions.
-
-### 3.2 Framework & Runtime (`frappe-framework`)
-- **FR-FRAME-01**: Must enforce rigid document lifecycle state machines (`Draft` → `Submitted` → `Cancelled`).
-- **FR-FRAME-02**: Must execute safe, sandboxed custom scripts via Rhai and WASI Wasmtime plugins.
-- **FR-FRAME-03**: Must maintain comprehensive audit trails and change diffs on every record mutation.
-
-### 3.3 Financial Accounting (`erp-accounting`)
-- **FR-ACC-01**: Must guarantee zero-sum debit/credit balance across all General Ledger entries.
-- **FR-ACC-02**: Must support multi-currency accounting with historical exchange rate lookup.
-- **FR-ACC-03**: Must provide automated straight-line and reducing-balance asset depreciation schedules.
-- **FR-ACC-04**: Must track Accounts Receivable / Accounts Payable aging schedules accurately.
-
-### 3.4 Inventory & Stock (`erp-inventory`)
-- **FR-INV-01**: Must track real-time bin quantities across multi-level hierarchical warehouses.
-- **FR-INV-02**: Must support exact FIFO queue valuation and moving-average valuation methods.
-- **FR-INV-03**: Must enforce batch and serial number tracking with expiration validation.
-
-### 3.5 Manufacturing & Production (`erp-manufacturing`)
-- **FR-MFG-01**: Must support multi-level Bill of Materials (BOM) explosion with scrap calculations.
-- **FR-MFG-02**: Must generate and track Work Orders and operational workstation routing.
-- **FR-MFG-03**: Must calculate Material Requirement Planning (MRP) demand forecasts.
-
-### 3.6 Trade & Logistics (`erp-trade`)
-- **FR-TRD-01**: Must support multi-tier discount rules, pricing rules, and item price matrices.
-- **FR-TRD-02**: Must allocate landed costs (shipping, customs) proportionally across received items.
-- **FR-TRD-03**: Must calculate cascading and inclusive tax templates.
-
-### 3.7 Human Resources & Payroll (`erp-hr`)
-- **FR-HR-01**: Must maintain employee records, departmental hierarchies, and attendance logs.
-- **FR-HR-02**: Must compute salary structures, taxable earnings, statutory deductions, and generate payroll batches.
-
-### 3.8 Customer Relationship Management (`erp-crm`)
-- **FR-CRM-01**: Must provide lead intake pipelines, stages, and weighted conversion scoring.
-- **FR-CRM-02**: Must track opportunities, customer communications, and deal value metrics.
-
-### 3.9 Specialized Industry Modules
-- **Lending (`erp-lending`)**: Fixed and floating loan disbursements, interest compounding, and amortization table generation.
-- **Support (`erp-support`)**: Ticket SLA timers, resolution targets, priority matrices, and support gameplans.
-- **Education (`erp-learning`)**: Course curriculums, lesson tracking, enrollment, and automated quiz scoring.
-- **CMS & Media (`erp-cms`)**: Secure media transcode queues, WebVTT/SRT subtitle processing, and HMAC-signed media delivery URLs.
+| Requirement Category | Metric / Constraint | Target Objective |
+| :--- | :--- | :--- |
+| **Server-Side Rendering (SSR)** | Time to First Byte (TTFB) | $< 10\,\text{ms}$ on multi-block CMS pages |
+| **Micro-Mode Topology** | Memory Footprint (RSS) | $\le 64\,\text{MB}$ in `--micro` profile |
+| **WASI 0.2 Sandbox Trap** | Execution Time & Resource Ceiling | Traps loops in $\le 1.2\,\text{ms}$ with $32\,\text{MB}$ memory cap |
+| **Accounting Balance Drift** | Double-Entry Invariant | Exactly $0.00\,\text{dec}$ ($\sum \text{Debit} = \sum \text{Credit}$) |
+| **ZK Balance Sheet Proof** | Verification Time | $< 15\,\text{ms}$ non-interactive verification |
+| **3-Way Invoice Matching** | Price & Quantity Variance | Automated approval within $\pm 0.5\%$ variance |
+| **Local-First CRDT** | Convergence Guarantee | Strongly eventual consistency with zero loss |
 
 ---
 
-## 4. Non-Functional Requirements
+## 3. Comprehensive Functional Requirements
 
-- **Reliability**: 99.99% uptime with zero data loss guarantee.
-- **Security**: Strict token-based authentication (PASETO/JWT), HMAC URL signing for media, constant-time token verification, and strict input validation.
-- **Observability**: Structured metrics and logging via `tracing` with OpenTelemetry tracing capability.
+### 3.1 Metadata & Schema Compilation (`frappe-meta`)
+- **FR-META-01**: Must dynamically compile declarative `DocTypeSchema` structs into `SCHEMAFULL` SurrealQL DDL statements with index and relationship definitions.
+- **FR-META-02**: Must provide zero-allocation `DynamicDocument` containers backed by `SmallVec<[_; 16]>` on the CPU stack.
+- **FR-META-03**: Must support lock-free sequential naming series generators (e.g. `DRN-.YYYY.-.#####`).
+- **FR-META-04**: Must provide an autonomous `AiSchemaSynthesizer` generating normalized DocTypes and Chart of Accounts from natural language prompts.
+- **FR-META-05**: Must supply pre-built vertical profiles for Clinics, Restaurants, E-Commerce brands, and Service Agencies.
+
+### 3.2 Framework & Sandboxed Runtime (`frappe-framework`)
+- **FR-FRAME-01**: Must enforce document state machine transitions (`Draft` $\to$ `Submitted` $\to$ `Cancelled`).
+- **FR-FRAME-02**: Must isolate user-defined plugins in a WASI 0.2 Wasmtime sandbox with deterministic fuel metering ($1,000,000$ operations limit).
+- **FR-FRAME-03**: Must provide an RBAC-gated `ErpToolDispatcher` enabling AI agents to execute strongly typed ERP functions securely.
+
+### 3.3 Persistence, CRDTs & Cryptography (`frappe-storage`)
+- **FR-STOR-01**: Must embed SurrealDB in-memory or on disk with zero-leak connection pooling and isolated namespaces (`tenant_{id}`).
+- **FR-STOR-02**: Must provide state-based PN-Counters, Vector Clocks, and Last-Write-Wins Document join-semilattices.
+- **FR-STOR-03**: Must maintain a durable `OfflineOutboxManager` queuing edge mutations during network partitions.
+- **FR-STOR-04**: Must build tamper-evident SHA-256 Merkle trees across transaction audit logs.
+- **FR-STOR-05**: Must enforce field-level AEAD envelope encryption pairing Master KEKs with per-tenant DEKs.
+
+### 3.4 Networking, Multi-Tenancy & ACME (`frappe-net`)
+- **FR-NET-01**: Must resolve tenant identity from headers (`X-Tenant-Id`) or subdomain routing into a strongly typed `TenantContext`.
+- **FR-NET-02**: Must provide an in-process automated ACME gateway negotiating and caching Let's Encrypt TLS certificates.
+- **FR-NET-03**: Must support `--micro` runtime flags bounding memory caches and background worker queues.
+- **FR-NET-04**: Must stream real-time document mutation events over WebSocket connections.
+
+### 3.5 Financial & Accounting Systems (`erp-accounting`)
+- **FR-ACC-01**: Must enforce balanced multi-currency double-entry journal postings with zero floating-point drift.
+- **FR-ACC-02**: Must detect statistical transaction anomalies using Benford's Law Chi-Square goodness-of-fit (`BenfordGuard`).
+- **FR-ACC-03**: Must generate non-interactive Zero-Knowledge Balance Sheet Proofs (`ZkProofEngine`) attesting to solvent books in zero knowledge.
+
+### 3.6 Inventory, Logistics & Manufacturing
+- **`erp-inventory`**: Real-time Stock Ledger Entries (SLE), SIMD-aligned FIFO cost valuation queues (`consume_fifo`), and batch/serial expiration validation.
+- **`erp-manufacturing`**: Multi-level recursive BOM explosion, Mixed-Integer Linear Programming (MILP) job shop scheduling, and Statistical Process Control (SPC) with Nelson rules.
+- **`erp-wms`**: 3D volumetric slotting, TSP pick path optimization, GS1 SSCC-18 handling units, and VDA 5050 AMR robot dispatch.
+- **`erp-trade`**: Cascading pricing rule matrices, metered billing models, landed cost distribution, automated 3-way invoice matching, and WooCommerce streaming ingestion.
+
+### 3.7 Projects, Assets & Specialized Industry Modules
+- **`erp-ppm`**: Dual-engine CPM/CCPM project scheduling, ANSI/EIA-748 EVMS metrics (CPI, SPI, EAC, TCPI), and 100k-run Monte Carlo risk simulator.
+- **`erp-asset`**: Linear Referencing Systems (LRS), Weibull $(\beta, \eta)$ Remaining Useful Life (RUL) predictive degradation, and tamper-evident PTW / LOTO safety interlocks.
+- **`erp-software`**: ASC 606 5-step revenue recognition, graduated SaaS subscription tiers, and SLA penalty credit ledgers.
+- **`erp-cms`**: Declarative `PageBlock` AST, pre-allocated SSR HTML renderer ($<10\,\text{ms}$ TTFB), atomic e-commerce checkout, and HMAC-signed SVOD token streaming.
+- **`erp-hr`**: Attendance logs, biometric tracking, multi-component salary structures, and automated payroll batches.
+- **`erp-crm`**: Multi-stage lead acquisition funnels, deal conversion pipelines, and weighted opportunity scoring.
+- **`erp-support`**: Ticket SLA countdown timers and priority escalation matrices.
+- **`erp-lending`**: Reducing-balance and compound interest accrual with exact-decimal amortization schedules.
+- **`erp-learning`**: Course curriculums, lesson tracking, student enrollment, and automated quiz scoring.
+
+---
+
+## 4. Quality & Compliance Standards
+
+- **Rust 2024 / 2021 Edition Compliance**: Pure memory-safe Rust with zero `.unwrap()` in production paths.
+- **Zero-Warning Policy**: All code must compile cleanly under `cargo clippy --workspace --all-targets -- -D warnings`.
+- **Formatting Standard**: 100% compliance with `cargo fmt --check`.
+- **Test Coverage**: 100% test pass rate across unit tests and the 10-Epoch verification suite.
