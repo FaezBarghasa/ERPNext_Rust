@@ -214,7 +214,9 @@ impl MobileHardwareAbstractionLayer for WebApisHalAdapter {
 
     async fn start_barcode_scanner(&self) -> Result<ScanResult, CompactString> {
         // In browser runtime, binds window.BarcodeDetector with navigator.mediaDevices.getUserMedia()
-        Ok(ScanResult::QrCode("https://enterprise.local/item/BATCH-9942".into()))
+        Ok(ScanResult::QrCode(
+            "https://enterprise.local/item/BATCH-9942".into(),
+        ))
     }
 
     async fn print_thermal_receipt(&self, esc_pos_payload: &[u8]) -> Result<(), CompactString> {

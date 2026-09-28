@@ -103,7 +103,11 @@ impl LocalMutationBuffer {
     }
 
     /// Records an offline transaction locally on the device.
-    pub fn record_mutation(&mut self, mutation: EdgeMutationKind, now_micros: i64) -> EdgeMutationEnvelope {
+    pub fn record_mutation(
+        &mut self,
+        mutation: EdgeMutationKind,
+        now_micros: i64,
+    ) -> EdgeMutationEnvelope {
         self.sequence_counter += 1;
         self.current_clock.increment(&self.device_id);
 
@@ -127,7 +131,8 @@ impl LocalMutationBuffer {
 
     /// Clears synced mutations after successful cloud acknowledgement.
     pub fn acknowledge_sync(&mut self, acked_sequence_id: u64) {
-        self.pending_mutations.retain(|m| m.sequence_id > acked_sequence_id);
+        self.pending_mutations
+            .retain(|m| m.sequence_id > acked_sequence_id);
     }
 }
 
@@ -137,7 +142,7 @@ pub struct CloudSyncArbiter {
     pub server_vector_clock: VectorClock,
     pub stock_levels: HashMap<CompactString, i64>,
     pub document_store: HashMap<CompactString, (CompactString, i64)>, // key -> (payload, timestamp)
-    pub tombstones: HashMap<CompactString, i64>,                     // key -> timestamp
+    pub tombstones: HashMap<CompactString, i64>,                      // key -> timestamp
 }
 
 impl CloudSyncArbiter {
@@ -177,7 +182,8 @@ impl CloudSyncArbiter {
                             None => true,
                         };
                         if should_update {
-                            self.document_store.insert(doc_key, (payload_json, timestamp_micros));
+                            self.document_store
+                                .insert(doc_key, (payload_json, timestamp_micros));
                         }
                     }
                 }

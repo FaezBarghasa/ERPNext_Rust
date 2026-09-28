@@ -15,10 +15,8 @@ pub use edge_sync::{
     CloudSyncArbiter, EdgeMutationEnvelope, EdgeMutationKind, LocalMutationBuffer, VectorClock,
 };
 pub use hal::{
-    AndroidJniHalAdapter, GeoCoordinate, MobileHardwareAbstractionLayer, MockHalAdapter, ScanResult,
-    WebApisHalAdapter,
+    AndroidJniHalAdapter, GeoCoordinate, MobileHardwareAbstractionLayer, MockHalAdapter,
+    ScanResult, WebApisHalAdapter,
 };
-pub use mobile_pwa::{
-    AndroidNdkBuildConfig, ManifestIcon, PwaWebManifest, ServiceWorkerGenerator,
-};
+pub use mobile_pwa::{AndroidNdkBuildConfig, ManifestIcon, PwaWebManifest, ServiceWorkerGenerator};
 pub use persona_shell::{PersonaRole, PersonaSessionState, PersonaShellConfig};

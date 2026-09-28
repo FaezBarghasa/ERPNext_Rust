@@ -1,9 +1,9 @@
 //! `desk-app` — The Pure-Rust Reactive Enterprise Desk Application.
 
 use desk_app::{
-    CloudSyncArbiter, EdgeMutationKind, LocalMutationBuffer,
-    MobileHardwareAbstractionLayer, MockHalAdapter, PersonaRole, PersonaSessionState,
-    PersonaShellConfig, PwaWebManifest, ServiceWorkerGenerator,
+    CloudSyncArbiter, EdgeMutationKind, LocalMutationBuffer, MobileHardwareAbstractionLayer,
+    MockHalAdapter, PersonaRole, PersonaSessionState, PersonaShellConfig, PwaWebManifest,
+    ServiceWorkerGenerator,
 };
 use desk_components::{
     AmrMarkerViewModel, BinViewModel, CpqConfiguratorModel, DynamicFormModel, GanttDependencyLink,
@@ -192,7 +192,10 @@ async fn main() {
 
     // 7. Universal Hardware Abstraction Layer (HAL)
     let hal = MockHalAdapter::new();
-    let bio_ok = hal.authenticate_biometric("Authorize POS Cash Drawer").await.unwrap_or(false);
+    let bio_ok = hal
+        .authenticate_biometric("Authorize POS Cash Drawer")
+        .await
+        .unwrap_or(false);
     let scan_res = hal.start_barcode_scanner().await.unwrap();
     println!(
         "[7/10] Mobile Hardware Abstraction Layer (HAL): Biometric Authenticated: {}, Scanner: {}.",
@@ -235,7 +238,11 @@ async fn main() {
     edge_buf.acknowledge_sync(ack_seq);
     println!(
         "[9/10] Local-First Edge Sync: Offline mutation reconciled into Cloud Arbiter (Stock: {}).",
-        arbiter.stock_levels.get("SKU-BEARING-608").copied().unwrap_or(0)
+        arbiter
+            .stock_levels
+            .get("SKU-BEARING-608")
+            .copied()
+            .unwrap_or(0)
     );
 
     // 10. Dual Mobile Delivery Engine (PWA & Android NDK)

@@ -177,12 +177,11 @@ pub struct PersonaSessionState {
 
 impl PersonaSessionState {
     #[must_use]
-    pub fn new(
-        user_id: CompactString,
-        tenant_id: CompactString,
-        roles: Vec<PersonaRole>,
-    ) -> Self {
-        let initial_role = roles.first().copied().unwrap_or(PersonaRole::ClientCustomer);
+    pub fn new(user_id: CompactString, tenant_id: CompactString, roles: Vec<PersonaRole>) -> Self {
+        let initial_role = roles
+            .first()
+            .copied()
+            .unwrap_or(PersonaRole::ClientCustomer);
         let config = PersonaShellConfig::for_role(initial_role);
         Self {
             user_id,
@@ -200,7 +199,11 @@ impl PersonaSessionState {
             self.active_config = PersonaShellConfig::for_role(new_role);
             Ok(())
         } else {
-            Err(format!("Role {:?} is not authorized for user {}", new_role, self.user_id).into())
+            Err(format!(
+                "Role {:?} is not authorized for user {}",
+                new_role, self.user_id
+            )
+            .into())
         }
     }
 }
@@ -230,10 +233,7 @@ mod tests {
         let mut session = PersonaSessionState::new(
             "USR-LEAD-001".into(),
             "tenant_mfg".into(),
-            vec![
-                PersonaRole::ManagerApprover,
-                PersonaRole::WarehouseWorker,
-            ],
+            vec![PersonaRole::ManagerApprover, PersonaRole::WarehouseWorker],
         );
         assert_eq!(session.active_role, PersonaRole::ManagerApprover);
 

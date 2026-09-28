@@ -197,7 +197,13 @@ mod tests {
     fn test_android_ndk_build_config_defaults() {
         let cfg = AndroidNdkBuildConfig::default();
         assert_eq!(cfg.min_sdk_version, 26);
-        assert!(cfg.target_architectures.contains(&"aarch64-linux-android".into()));
-        assert!(cfg.required_permissions.contains(&"android.permission.CAMERA".into()));
+        assert!(
+            cfg.target_architectures
+                .contains(&"aarch64-linux-android".into())
+        );
+        assert!(
+            cfg.required_permissions
+                .contains(&"android.permission.CAMERA".into())
+        );
     }
 }
