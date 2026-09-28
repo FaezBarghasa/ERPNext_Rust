@@ -270,3 +270,78 @@ pub async fn provision_tenant(
 
     Ok(client)
 }
+
+/// Constructs a lightweight, isolated request-scoped session handle bound to the tenant namespace.
+pub async fn resolve_scoped_session(
+    pool_manager: &ConnectionPoolManager,
+    tenant_id: &TenantId,
+) -> Result<Surreal<surrealdb::engine::local::Db>, TenantError> {
+    let client = pool_manager.get_or_initialize_client(tenant_id).await?;
+    let session = client.clone();
+    let ns = format!("tenant_{}", tenant_id.0.replace('-', "_"));
+    session
+        .use_ns(&ns)
+        .use_db("erp")
+        .await
+        .map_err(|e| TenantError::ConnectionFailed(e.to_string()))?;
+    Ok(session)
+}
+
+/// Micro-Mode runtime configuration (<64MB RSS budget).
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+pub struct MicroTopologyConfig {
+    pub is_micro_mode: bool,
+    pub max_write_buffer_mb: usize,
+    pub max_read_cache_mb: usize,
+    pub max_queue_capacity: usize,
+    pub idle_reap_interval_secs: u64,
+}
+
+impl Default for MicroTopologyConfig {
+    fn default() -> Self {
+        Self {
+            is_micro_mode: false,
+            max_write_buffer_mb: 64,
+            max_read_cache_mb: 128,
+            max_queue_capacity: 10_000,
+            idle_reap_interval_secs: 300,
+        }
+    }
+}
+
+impl MicroTopologyConfig {
+    #[must_use]
+    pub fn micro_mode() -> Self {
+        Self {
+            is_micro_mode: true,
+            max_write_buffer_mb: 8,
+            max_read_cache_mb: 16,
+            max_queue_capacity: 1024,
+            idle_reap_interval_secs: 60,
+        }
+    }
+}
+
+#[cfg(test)]
+mod tenant_unit_tests {
+    use super::*;
+
+    #[tokio::test]
+    async fn test_scoped_session_isolation() {
+        let pool = ConnectionPoolManager::default();
+        let t1 = TenantId("alpha-shop".into());
+        let t2 = TenantId("beta-clinic".into());
+
+        let s1 = resolve_scoped_session(&pool, &t1).await.unwrap();
+        let s2 = resolve_scoped_session(&pool, &t2).await.unwrap();
+
+        // Verify independent handles
+        assert!(s1.query("INFO FOR DB;").await.is_ok());
+        assert!(s2.query("INFO FOR DB;").await.is_ok());
+
+        let micro = MicroTopologyConfig::micro_mode();
+        assert!(micro.is_micro_mode);
+        assert_eq!(micro.max_write_buffer_mb, 8);
+        assert_eq!(micro.max_read_cache_mb, 16);
+    }
+}

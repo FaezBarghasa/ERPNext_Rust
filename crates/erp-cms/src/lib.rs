@@ -1,10 +1,16 @@
+pub mod block_canvas;
 pub mod print;
 pub mod security;
+pub mod storefront;
 pub mod subtitles;
 pub mod transcoder;
 
+pub use block_canvas::{CmsPage, FeatureItem, PageBlock, SsrEngine};
 pub use print::render_invoice_html;
 pub use security::{parse_byte_range, HmacStreamingSigner, StreamingError, SvodPlaybackManager};
+pub use storefront::{
+    AtomicCheckoutEngine, CheckoutError, CheckoutItem, CheckoutResult, CustomerCheckoutRequest,
+};
 pub use subtitles::{SubtitleSearchEngine, SubtitleSegment};
 pub use transcoder::{HlsPlaylistGenerator, VideoVariant, STANDARD_VARIANTS};
 

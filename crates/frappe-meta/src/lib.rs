@@ -1,9 +1,11 @@
+pub mod dynamic_doc;
 pub mod migration;
 pub mod naming;
 pub mod rbac;
 pub mod schema;
 pub mod schema_compiler;
 
+pub use dynamic_doc::{DocValue, DynamicDocument, SurrealDdlGenerator};
 pub use migration::{
     diff_schema, generate_migration_ddl, ExistingDatabaseSchema, ExistingFieldDef,
     ExistingTableDef, MigrationDelta,
