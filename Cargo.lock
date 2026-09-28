@@ -1251,6 +1251,7 @@ dependencies = [
 name = "desk-components"
 version = "0.2.0"
 dependencies = [
+ "compact_str",
  "frappe-meta",
  "serde",
  "serde_json",

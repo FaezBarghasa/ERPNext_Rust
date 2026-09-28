@@ -66,9 +66,15 @@ impl DynamicFormModel {
 
             let widget = match &field.fieldtype {
                 FieldType::Data
+                | FieldType::DataWithPreset { .. }
                 | FieldType::Text
                 | FieldType::LongText
-                | FieldType::Code
+                | FieldType::SmallText
+                | FieldType::ReadOnly
+                | FieldType::Code { .. }
+                | FieldType::TextEditor
+                | FieldType::HtmlEditor
+                | FieldType::MarkdownEditor
                 | FieldType::Password => FormFieldWidget::TextInput {
                     fieldname: field.fieldname.clone(),
                     label: field.label.clone(),

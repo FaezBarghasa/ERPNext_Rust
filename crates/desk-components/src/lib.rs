@@ -2,17 +2,34 @@ pub mod cpq_view;
 pub mod forms;
 pub mod gantt;
 pub mod grid;
+pub mod primitives;
+pub mod resources;
 pub mod signals;
 pub mod spc_view;
 pub mod video_hud;
+pub mod views;
 pub mod wms_view;
 
 pub use cpq_view::{CpqConfiguratorModel, OptionCard};
 pub use forms::{DynamicFormModel, FormFieldWidget, eval_depends_on};
 pub use gantt::{GanttDependencyLink, GanttTaskRow, GanttViewModel};
 pub use grid::visible_slice;
+pub use primitives::{
+    AlertModel, AlertVariant, AutocompleteModel, AutocompleteOption, AvatarModel, AvatarSize,
+    BadgeModel, ButtonModel, ButtonVariant, CardModel, CommandPaletteItem, CommandPaletteModel,
+    DialogModel, FileUploaderModel, MultiSelectModel, RatingModel, SliderModel, ToastModel,
+    TooltipModel,
+};
+pub use resources::{
+    ColorScheme, DocumentResourceState, KeyboardShortcutConfig, ListResourceState,
+    PageMetaComposable, ResourceState,
+};
 pub use spc_view::{SpcChartViewModel, SpcPointView};
 pub use video_hud::{ChapterMarker, VideoHudState};
+pub use views::{
+    FormTimelineEntry, FormViewModel, KanbanColumn, KanbanViewModel, ListViewModel,
+    ListViewColumn, ReportType, ReportViewModel,
+};
 pub use wms_view::{AmrMarkerViewModel, BinViewModel, Warehouse3DViewModel};
 
 #[cfg(test)]
@@ -28,8 +45,18 @@ mod tests {
             module: "Selling".into(),
             is_single: false,
             is_submittable: false,
+            is_child_table: false,
+            is_tree: false,
             track_changes: true,
+            quick_entry: false,
+            allow_rename: false,
+            allow_import: true,
+            allow_auto_repeat: false,
             naming_rule: None,
+            naming_rule_spec: None,
+            virtual_child_tables: false,
+            lazy_materialization: false,
+            extends_class: None,
             fields: vec![
                 DocFieldSchema {
                     fieldname: "customer_name".into(),
@@ -40,8 +67,10 @@ mod tests {
                     read_only: false,
                     hidden: false,
                     in_list_view: true,
+                    mask: false,
                     options: None,
                     default_value: None,
+                    permlevel: 0,
                 },
                 DocFieldSchema {
                     fieldname: "credit_limit".into(),
@@ -52,8 +81,10 @@ mod tests {
                     read_only: false,
                     hidden: false,
                     in_list_view: false,
+                    mask: false,
                     options: None,
                     default_value: Some(serde_json::json!(0.0)),
+                    permlevel: 0,
                 },
                 DocFieldSchema {
                     fieldname: "default_currency".into(),
@@ -66,8 +97,10 @@ mod tests {
                     read_only: false,
                     hidden: false,
                     in_list_view: false,
+                    mask: false,
                     options: None,
                     default_value: None,
+                    permlevel: 0,
                 },
             ],
             permissions: vec![DocPermSchema::default()],

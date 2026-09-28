@@ -23,6 +23,8 @@ pub enum PersonaRole {
     ManagerApprover,
     /// Systems Engineer / DevOps: cluster telemetry, SurrealDB multiplexer, Wasm fuel monitor
     SystemAdmin,
+    /// Modernized Unified Enterprise Desk (/desk)
+    Desk,
 }
 
 impl PersonaRole {
@@ -30,6 +32,7 @@ impl PersonaRole {
     #[must_use]
     pub fn from_route(route: &str) -> Self {
         match route {
+            "/desk" | "/app" => Self::Desk,
             "/worker" | "/wms" | "/warehouse" => Self::WarehouseWorker,
             "/factory" | "/mes" | "/shopfloor" => Self::ShopfloorMes,
             "/approvals" | "/manager" | "/triage" => Self::ManagerApprover,
@@ -42,6 +45,7 @@ impl PersonaRole {
     #[must_use]
     pub fn default_route(&self) -> &'static str {
         match self {
+            Self::Desk => "/desk",
             Self::ClientCustomer => "/portal",
             Self::WarehouseWorker => "/worker",
             Self::ShopfloorMes => "/factory",
@@ -50,6 +54,21 @@ impl PersonaRole {
         }
     }
 }
+
+/// The 11 standard enterprise workspace categories on the Desk shell.
+pub const DESK_CATEGORIES: &[&str] = &[
+    "Home",
+    "Sales",
+    "Purchasing",
+    "Outsourcing",
+    "Manufacturing",
+    "Quality",
+    "Inventory",
+    "Logistics",
+    "Assets",
+    "Accounting",
+    "Master Settings",
+];
 
 /// UI & Hardware layout configuration tailored to each persona.
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
@@ -71,6 +90,24 @@ impl PersonaShellConfig {
     #[must_use]
     pub fn for_role(role: PersonaRole) -> Self {
         match role {
+            PersonaRole::Desk => Self {
+                role,
+                title: "ERPNext Enterprise Desk".into(),
+                default_route: "/desk".into(),
+                touch_target_min_px: 40,
+                continuous_scan_enabled: false,
+                orientation_lock: None,
+                high_contrast_mode: false,
+                dual_witness_required: false,
+                offline_persistence_strategy: "StaleWhileRevalidate-IndexedDB".into(),
+                active_surfaces: vec![
+                    "AwesomeBar".into(),
+                    "ModuleSidebar".into(),
+                    "ListView".into(),
+                    "FormView".into(),
+                    "ReportBuilder".into(),
+                ],
+            },
             PersonaRole::ClientCustomer => Self {
                 role,
                 title: "Customer Self-Service & Digital Portal".into(),
