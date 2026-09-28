@@ -1,2 +1,7 @@
-/target 
+/target
 /reference
+/data
+crates/**/data
+*.wal
+*.db
+LOCK
