@@ -18,7 +18,8 @@ use serde::{Deserialize, Serialize};
 use std::sync::Arc;
 
 /// Default master token signing secret key for tenant cluster.
-pub const MASTER_JWT_SECRET: &[u8] = b"rustnext_enterprise_paseto_master_secret_key_2026_offline_first";
+pub const MASTER_JWT_SECRET: &[u8] =
+    b"rustnext_enterprise_paseto_master_secret_key_2026_offline_first";
 
 /// Authenticated Security Context extracted from verified session tokens.
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
@@ -94,11 +95,17 @@ impl FromRequest for SecurityContext {
                     let ctx = SecurityContext::new(claims);
                     return futures_util::future::ready(Ok(ctx));
                 }
-                Err(e) => return futures_util::future::ready(Err(ActixError::from(AuthMiddlewareError::InvalidToken(e.to_string())))),
+                Err(e) => {
+                    return futures_util::future::ready(Err(ActixError::from(
+                        AuthMiddlewareError::InvalidToken(e.to_string()),
+                    )));
+                }
             }
         }
 
-        futures_util::future::ready(Err(ActixError::from(AuthMiddlewareError::MissingAuthorization)))
+        futures_util::future::ready(Err(ActixError::from(
+            AuthMiddlewareError::MissingAuthorization,
+        )))
     }
 }
 
@@ -200,12 +207,16 @@ where
                     Box::pin(async move { svc.call(req).await })
                 }
                 Err(e) => Box::pin(async move {
-                    Err(ActixError::from(AuthMiddlewareError::InvalidToken(e.to_string())))
+                    Err(ActixError::from(AuthMiddlewareError::InvalidToken(
+                        e.to_string(),
+                    )))
                 }),
             },
-            None => Box::pin(async move {
-                Err(ActixError::from(AuthMiddlewareError::MissingAuthorization))
-            }),
+            None => {
+                Box::pin(
+                    async move { Err(ActixError::from(AuthMiddlewareError::MissingAuthorization)) },
+                )
+            }
         }
     }
 }

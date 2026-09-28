@@ -32,12 +32,12 @@ pub async fn list_resource(
         None => return HttpResponse::BadRequest().body("Missing tenant context"),
     };
 
-    if let Some(ctx) = req.extensions().get::<SecurityContext>() {
-        if !check_permission(&ctx.claims.roles, &[], Permission::Read, 0) {
-            return HttpResponse::Forbidden().json(serde_json::json!({
-                "error": "Permission Denied: insufficient read privileges"
-            }));
-        }
+    if let Some(ctx) = req.extensions().get::<SecurityContext>()
+        && !check_permission(&ctx.claims.roles, &[], Permission::Read, 0)
+    {
+        return HttpResponse::Forbidden().json(serde_json::json!({
+            "error": "Permission Denied: insufficient read privileges"
+        }));
     }
 
     let client = match pool_mgr.get_or_initialize_client(&tenant_id).await {
@@ -75,12 +75,12 @@ pub async fn get_resource(
         None => return HttpResponse::BadRequest().body("Missing tenant context"),
     };
 
-    if let Some(ctx) = req.extensions().get::<SecurityContext>() {
-        if !check_permission(&ctx.claims.roles, &[], Permission::Read, 0) {
-            return HttpResponse::Forbidden().json(serde_json::json!({
-                "error": "Permission Denied: insufficient read privileges"
-            }));
-        }
+    if let Some(ctx) = req.extensions().get::<SecurityContext>()
+        && !check_permission(&ctx.claims.roles, &[], Permission::Read, 0)
+    {
+        return HttpResponse::Forbidden().json(serde_json::json!({
+            "error": "Permission Denied: insufficient read privileges"
+        }));
     }
 
     let client = match pool_mgr.get_or_initialize_client(&tenant_id).await {
@@ -119,12 +119,12 @@ pub async fn create_resource(
         None => return HttpResponse::BadRequest().body("Missing tenant context"),
     };
 
-    if let Some(ctx) = req.extensions().get::<SecurityContext>() {
-        if !check_permission(&ctx.claims.roles, &[], Permission::Create, 0) {
-            return HttpResponse::Forbidden().json(serde_json::json!({
-                "error": "Permission Denied: insufficient create privileges"
-            }));
-        }
+    if let Some(ctx) = req.extensions().get::<SecurityContext>()
+        && !check_permission(&ctx.claims.roles, &[], Permission::Create, 0)
+    {
+        return HttpResponse::Forbidden().json(serde_json::json!({
+            "error": "Permission Denied: insufficient create privileges"
+        }));
     }
 
     let client = match pool_mgr.get_or_initialize_client(&tenant_id).await {
@@ -187,12 +187,12 @@ pub async fn delete_resource(
         None => return HttpResponse::BadRequest().body("Missing tenant context"),
     };
 
-    if let Some(ctx) = req.extensions().get::<SecurityContext>() {
-        if !check_permission(&ctx.claims.roles, &[], Permission::Delete, 0) {
-            return HttpResponse::Forbidden().json(serde_json::json!({
-                "error": "Permission Denied: insufficient delete privileges"
-            }));
-        }
+    if let Some(ctx) = req.extensions().get::<SecurityContext>()
+        && !check_permission(&ctx.claims.roles, &[], Permission::Delete, 0)
+    {
+        return HttpResponse::Forbidden().json(serde_json::json!({
+            "error": "Permission Denied: insufficient delete privileges"
+        }));
     }
 
     let client = match pool_mgr.get_or_initialize_client(&tenant_id).await {

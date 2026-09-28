@@ -10,7 +10,10 @@ use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::sync::Arc;
 use std::time::{Duration, Instant};
-use surrealdb::{Surreal, engine::local::{Mem, SurrealKv}};
+use surrealdb::{
+    Surreal,
+    engine::local::{Mem, SurrealKv},
+};
 use thiserror::Error;
 use tokio::sync::RwLock;
 
@@ -244,15 +247,14 @@ impl ConnectionPoolManager {
         }
 
         let db = match &self.backend {
-            DatabaseBackend::Memory => {
-                Surreal::new::<Mem>(())
-                    .await
-                    .map_err(|e| TenantError::ConnectionFailed(e.to_string()))?
-            }
+            DatabaseBackend::Memory => Surreal::new::<Mem>(())
+                .await
+                .map_err(|e| TenantError::ConnectionFailed(e.to_string()))?,
             DatabaseBackend::SurrealKv { base_path } => {
                 let tenant_dir = format!("{}/{}", base_path, tenant.0);
-                std::fs::create_dir_all(&tenant_dir)
-                    .map_err(|e| TenantError::ConnectionFailed(format!("Failed to create tenant data dir: {e}")))?;
+                std::fs::create_dir_all(&tenant_dir).map_err(|e| {
+                    TenantError::ConnectionFailed(format!("Failed to create tenant data dir: {e}"))
+                })?;
                 Surreal::new::<SurrealKv>(&tenant_dir)
                     .await
                     .map_err(|e| TenantError::ConnectionFailed(e.to_string()))?
@@ -395,17 +397,15 @@ pub async fn provision_tenant(
     let tenant = validate_and_create_tenant_id(tenant_id)?;
     let client = pool_manager.get_or_initialize_client(&tenant).await?;
 
-    // Seed baseline core tables
+    // Seed baseline core tables (idempotent DDL)
     let seed_query = r#"
-        DEFINE TABLE system_settings SCHEMAFULL;
-        DEFINE FIELD tenant_name ON TABLE system_settings TYPE string;
-        DEFINE FIELD created_at ON TABLE system_settings TYPE datetime DEFAULT time::now();
-        CREATE system_settings SET tenant_name = $tenant_name;
+        DEFINE TABLE IF NOT EXISTS system_settings SCHEMAFULL;
+        DEFINE FIELD IF NOT EXISTS tenant_name ON TABLE system_settings TYPE string;
+        DEFINE FIELD IF NOT EXISTS created_at ON TABLE system_settings TYPE datetime DEFAULT time::now();
     "#;
 
     client
         .query(seed_query)
-        .bind(("tenant_name", tenant.0))
         .await
         .map_err(|e| TenantError::NamespaceInitializationFailed(e.to_string()))?
         .check()
@@ -493,10 +493,18 @@ mod tenant_unit_tests {
 
     #[tokio::test]
     async fn test_surrealkv_persistent_storage() {
-        let temp_dir = format!("./target/test_data_tenants_{}", std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH).unwrap().as_nanos());
+        let temp_dir = format!(
+            "./target/test_data_tenants_{}",
+            std::time::SystemTime::now()
+                .duration_since(std::time::UNIX_EPOCH)
+                .unwrap()
+                .as_nanos()
+        );
         let pool = ConnectionPoolManager::with_backend(
             Duration::from_secs(300),
-            DatabaseBackend::SurrealKv { base_path: temp_dir.clone() },
+            DatabaseBackend::SurrealKv {
+                base_path: temp_dir.clone(),
+            },
         );
         let t1 = TenantId("persistent-tenant".into());
         let s1 = pool.get_or_initialize_client(&t1).await.unwrap();

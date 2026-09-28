@@ -70,7 +70,7 @@ pub fn get_desk_workspaces() -> Vec<WorkspaceModule> {
         WorkspaceModule {
             id: "wms".into(),
             title: "WMS & AMR Logistics".into(),
-            icon_svg: "M9 17a2 2 0 11-4 0 2 2 0 014 0zM19 17a2 2 0 11-4 0 2 2 0 014 0z M13 16V6a1 1 0 00-1-1H4a1 1 0 00-1 1v10a1 1 0 001 1h1m8-1a1 1 0 01-1 1H9m4-1V8a1 1 0 011-1h2.586a1 1 0 01.707.293l3.414 3.414a1 1 0 01.293.707V16a1 1 0 01-1 1h-1m-6-1a1 1 0 001 1h1M5 17a2 2 0 104 0m-4 0a2 2 0 114 0m6 0a2 2 0 104 0m-4 0a2 2 0 114 0".into(),
+            icon_svg: "M9 17a2 2 0 11-4 0 2 2 0 014 0zM19 17a2 2 0 11-4 0 2 2 0 014 0z".into(),
             badge: "VDA 5050 Robot Fleet".into(),
             description: "3D Bin Visualizer, Directed Pick-Paths, AMR Mission Dispatcher & Cross-Docking".into(),
             doctypes: vec!["Putaway Rule".into(), "Pick List".into(), "AMR Vehicle".into()],
@@ -124,6 +124,142 @@ pub fn get_desk_workspaces() -> Vec<WorkspaceModule> {
     ]
 }
 
+const DESK_BASE_HTML: &str = r#"<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RustNext Enterprise Desk — __PERSONA__</title>
+    <style>
+        :root {
+            --bg-primary: #0a0b10;
+            --bg-secondary: #12141c;
+            --bg-card: rgba(22, 25, 37, 0.75);
+            --border: rgba(255, 255, 255, 0.08);
+            --accent: #6366f1;
+            --accent-glow: rgba(99, 102, 241, 0.25);
+            --text-primary: #f8fafc;
+            --text-secondary: #94a3b8;
+            --success: #10b981;
+            --font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: var(--font-family); }
+        body { background: var(--bg-primary); color: var(--text-primary); min-height: 100vh; display: flex; flex-direction: column; overflow-x: hidden; }
+        
+        header {
+            position: sticky; top: 0; z-index: 50;
+            background: rgba(10, 11, 16, 0.85); backdrop-filter: blur(16px);
+            border-bottom: 1px solid var(--border);
+            padding: 0.75rem 2rem; display: flex; justify-content: space-between; align-items: center;
+        }
+        .brand { display: flex; align-items: center; gap: 0.75rem; font-weight: 700; font-size: 1.25rem; letter-spacing: -0.02em; }
+        .brand-logo { width: 32px; height: 32px; background: linear-gradient(135deg, #6366f1, #a855f7); border-radius: 8px; display: flex; align-items: center; justify-content: center; font-weight: 900; color: white; }
+        
+        .omnibar {
+            display: flex; align-items: center; gap: 0.5rem;
+            background: var(--bg-secondary); border: 1px solid var(--border); border-radius: 10px;
+            padding: 0.5rem 1rem; width: 420px; transition: all 0.2s;
+        }
+        .omnibar:focus-within { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-glow); }
+        .omnibar input { background: transparent; border: none; color: white; width: 100%; outline: none; font-size: 0.875rem; }
+        .omnibar kbd { background: rgba(255, 255, 255, 0.1); border-radius: 4px; padding: 0.15rem 0.4rem; font-size: 0.75rem; color: var(--text-secondary); }
+        
+        .nav-actions { display: flex; align-items: center; gap: 1rem; }
+        .persona-select {
+            background: var(--bg-secondary); border: 1px solid var(--border); color: var(--text-primary);
+            padding: 0.4rem 0.8rem; border-radius: 8px; font-size: 0.875rem; outline: none; cursor: pointer;
+        }
+        .user-chip { display: flex; align-items: center; gap: 0.5rem; font-size: 0.875rem; font-weight: 500; color: var(--text-secondary); }
+        .user-avatar { width: 32px; height: 32px; border-radius: 50%; background: #334155; display: flex; align-items: center; justify-content: center; color: white; font-weight: 600; font-size: 0.875rem; }
+        
+        main { max-width: 1440px; margin: 0 auto; width: 100%; padding: 2.5rem 2rem; flex: 1; }
+        .welcome-hero { margin-bottom: 2.5rem; }
+        .welcome-hero h1 { font-size: 2.25rem; font-weight: 800; letter-spacing: -0.03em; margin-bottom: 0.5rem; background: linear-gradient(135deg, #ffffff, #94a3b8); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        .welcome-hero p { color: var(--text-secondary); font-size: 1rem; }
+        
+        .grid {
+            display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 1.5rem;
+        }
+        .card {
+            background: var(--bg-card); border: 1px solid var(--border); border-radius: 14px;
+            padding: 1.5rem; cursor: pointer; transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+            display: flex; flex-direction: column; position: relative; overflow: hidden;
+        }
+        .card:hover {
+            transform: translateY(-4px); border-color: rgba(99, 102, 241, 0.4);
+            box-shadow: 0 12px 24px -10px var(--accent-glow);
+        }
+        .card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; }
+        .card-icon { width: 44px; height: 44px; border-radius: 10px; background: rgba(99, 102, 241, 0.12); color: #818cf8; display: flex; align-items: center; justify-content: center; }
+        .badge { font-size: 0.75rem; font-weight: 600; padding: 0.25rem 0.6rem; border-radius: 9999px; background: rgba(255, 255, 255, 0.06); color: #c7d2fe; border: 1px solid rgba(255, 255, 255, 0.08); }
+        .card-title { font-size: 1.15rem; font-weight: 700; margin-bottom: 0.5rem; letter-spacing: -0.01em; }
+        .card-desc { font-size: 0.875rem; color: var(--text-secondary); line-height: 1.5; margin-bottom: 1.25rem; flex: 1; }
+        .pills-container { display: flex; flex-wrap: wrap; gap: 0.4rem; }
+        .pill { font-size: 0.75rem; padding: 0.2rem 0.5rem; border-radius: 6px; background: rgba(255, 255, 255, 0.04); color: #cbd5e1; border: 1px solid rgba(255, 255, 255, 0.04); }
+        
+        footer {
+            background: var(--bg-secondary); border-top: 1px solid var(--border);
+            padding: 0.6rem 2rem; display: flex; justify-content: space-between; align-items: center; font-size: 0.8rem; color: var(--text-secondary);
+        }
+        .status-badge { display: flex; align-items: center; gap: 0.4rem; }
+        .status-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--success); box-shadow: 0 0 8px var(--success); }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="brand">
+            <div class="brand-logo">R</div>
+            <span>RustNext Desk</span>
+        </div>
+        <div class="omnibar">
+            <input type="text" placeholder="Search DocTypes, records, methods, or shortcuts..." id="omni-search" />
+            <kbd>Ctrl+K</kbd>
+        </div>
+        <div class="nav-actions">
+            <select class="persona-select" onchange="window.location.href=this.value">
+                <option value="/desk" __DESK_SEL__>Unified Enterprise Desk</option>
+                <option value="/portal" __PORTAL_SEL__>Customer Portal</option>
+                <option value="/worker" __WORKER_SEL__>Warehouse Scanner</option>
+                <option value="/factory" __FACTORY_SEL__>Shopfloor MES</option>
+                <option value="/approvals" __APPROVALS_SEL__>Approval Deck</option>
+                <option value="/admin" __ADMIN_SEL__>Admin Cockpit</option>
+            </select>
+            <div class="user-chip">
+                <div class="user-avatar">__AVATAR__</div>
+                <span>__USERNAME__</span>
+            </div>
+        </div>
+    </header>
+
+    <main>
+        <div class="welcome-hero">
+            <h1>Welcome to __PERSONA__</h1>
+            <p>High-performance local-first Rust ERP runtime with ACID transaction ledger and sub-millisecond hypermedia response.</p>
+        </div>
+        <div class="grid">
+            __CARDS__
+        </div>
+    </main>
+
+    <footer>
+        <div class="status-badge">
+            <div class="status-dot"></div>
+            <span>SurrealDB 3.3.0 KV Local Engine • Tokio Multi-Thread • Wasmtime Sandboxed</span>
+        </div>
+        <div>RustNext v0.2.0 (2024 Edition) • Zero-IPC In-Memory Cache</div>
+    </footer>
+
+    <script>
+        document.addEventListener('keydown', (e) => {
+            if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
+                e.preventDefault();
+                document.getElementById('omni-search').focus();
+            }
+        });
+    </script>
+</body>
+</html>"#;
+
 /// Compiles the complete, standalone Enterprise Desk HTML user interface.
 #[must_use]
 pub fn render_desk_shell_html(persona: &str, user_name: &str) -> String {
@@ -139,184 +275,66 @@ pub fn render_desk_shell_html(persona: &str, user_name: &str) -> String {
             .join(" ");
 
         cards_html.push_str(&format!(
-            r#"<div class="card" onclick="window.location.href='{route}'">
+            r#"<div class="card" onclick="window.location.href='{}'">
                 <div class="card-header">
                     <div class="card-icon">
                         <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <path d="{icon}"/>
+                            <path d="{}"/>
                         </svg>
                     </div>
-                    <span class="badge">{badge}</span>
+                    <span class="badge">{}</span>
                 </div>
-                <h3 class="card-title">{title}</h3>
-                <p class="card-desc">{desc}</p>
-                <div class="pills-container">{pills}</div>
+                <h3 class="card-title">{}</h3>
+                <p class="card-desc">{}</p>
+                <div class="pills-container">{}</div>
             </div>"#,
-            route = ws.route,
-            icon = ws.icon_svg,
-            badge = ws.badge,
-            title = ws.title,
-            desc = ws.description,
-            pills = doctypes_pills,
+            ws.route, ws.icon_svg, ws.badge, ws.title, ws.description, doctypes_pills,
         ));
     }
 
-    format!(
-        r#"<!DOCTYPE html>
-<html lang="en" class="dark">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>RustNext Enterprise Desk — {persona}</title>
-    <style>
-        :root {{
-            --bg-primary: #0a0b10;
-            --bg-secondary: #12141c;
-            --bg-card: rgba(22, 25, 37, 0.75);
-            --border: rgba(255, 255, 255, 0.08);
-            --accent: #6366f1;
-            --accent-glow: rgba(99, 102, 241, 0.25);
-            --text-primary: #f8fafc;
-            --text-secondary: #94a3b8;
-            --success: #10b981;
-            --font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-        }}
-        * {{ margin: 0; padding: 0; box-sizing: border-box; font-family: var(--font-family); }}
-        body {{ background: var(--bg-primary); color: var(--text-primary); min-height: 100vh; display: flex; flex-direction: column; overflow-x: hidden; }}
-        
-        /* Glassmorphism Header */
-        header {{
-            position: sticky; top: 0; z-index: 50;
-            background: rgba(10, 11, 16, 0.85); backdrop-filter: blur(16px);
-            border-bottom: 1px solid var(--border);
-            padding: 0.75rem 2rem; display: flex; justify-content: space-between; align-items: center;
-        }}
-        .brand {{ display: flex; align-items: center; gap: 0.75rem; font-weight: 700; font-size: 1.25rem; letter-spacing: -0.02em; }}
-        .brand-logo {{ width: 32px; height: 32px; background: linear-gradient(135deg, #6366f1, #a855f7); border-radius: 8px; display: flex; align-items: center; justify-content: center; font-weight: 900; color: white; }}
-        
-        /* OmniBar */
-        .omnibar {{
-            display: flex; align-items: center; gap: 0.5rem;
-            background: var(--bg-secondary); border: 1px solid var(--border); border-radius: 10px;
-            padding: 0.5rem 1rem; width: 420px; transition: all 0.2s;
-        }}
-        .omnibar:focus-within {{ border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-glow); }}
-        .omnibar input {{ background: transparent; border: none; color: white; width: 100%; outline: none; font-size: 0.875rem; }}
-        .omnibar kbd {{ background: rgba(255, 255, 255, 0.1); border-radius: 4px; padding: 0.15rem 0.4rem; font-size: 0.75rem; color: var(--text-secondary); }}
-        
-        /* User & Persona Switcher */
-        .nav-actions {{ display: flex; align-items: center; gap: 1rem; }}
-        .persona-select {{
-            background: var(--bg-secondary); border: 1px solid var(--border); color: var(--text-primary);
-            padding: 0.4rem 0.8rem; border-radius: 8px; font-size: 0.875rem; outline: none; cursor: pointer;
-        }}
-        .user-chip {{ display: flex; align-items: center; gap: 0.5rem; font-size: 0.875rem; font-weight: 500; color: var(--text-secondary); }}
-        .user-avatar {{ width: 32px; height: 32px; border-radius: 50%; background: #334155; display: flex; align-items: center; justify-content: center; color: white; font-weight: 600; font-size: 0.875rem; }}
-        
-        /* Main Grid Layout */
-        main {{ max-width: 1440px; margin: 0 auto; width: 100%; padding: 2.5rem 2rem; flex: 1; }}
-        .welcome-hero {{ margin-bottom: 2.5rem; }}
-        .welcome-hero h1 {{ font-size: 2.25rem; font-weight: 800; letter-spacing: -0.03em; margin-bottom: 0.5rem; background: linear-gradient(135deg, #ffffff, #94a3b8); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }}
-        .welcome-hero p {{ color: var(--text-secondary); font-size: 1rem; }}
-        
-        .grid {{
-            display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 1.5rem;
-        }}
-        .card {{
-            background: var(--bg-card); border: 1px solid var(--border); border-radius: 14px;
-            padding: 1.5rem; cursor: pointer; transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
-            display: flex; flex-direction: column; position: relative; overflow: hidden;
-        }}
-        .card:hover {{
-            transform: translateY(-4px); border-color: rgba(99, 102, 241, 0.4);
-            box-shadow: 0 12px 24px -10px var(--accent-glow);
-        }}
-        .card-header {{ display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; }}
-        .card-icon {{ width: 44px; height: 44px; border-radius: 10px; background: rgba(99, 102, 241, 0.12); color: #818cf8; display: flex; align-items: center; justify-content: center; }}
-        .badge {{ font-size: 0.75rem; font-weight: 600; padding: 0.25rem 0.6rem; border-radius: 9999px; background: rgba(255, 255, 255, 0.06); color: #c7d2fe; border: 1px solid rgba(255, 255, 255, 0.08); }}
-        .card-title {{ font-size: 1.15rem; font-weight: 700; margin-bottom: 0.5rem; letter-spacing: -0.01em; }}
-        .card-desc {{ font-size: 0.875rem; color: var(--text-secondary); line-height: 1.5; margin-bottom: 1.25rem; flex: 1; }}
-        .pills-container {{ display: flex; flex-wrap: wrap; gap: 0.4rem; }}
-        .pill {{ font-size: 0.75rem; padding: 0.2rem 0.5rem; border-radius: 6px; background: rgba(255, 255, 255, 0.04); color: #cbd5e1; border: 1px solid rgba(255, 255, 255, 0.04); }}
-        
-        /* Telemetry Status Bar */
-        footer {{
-            background: var(--bg-secondary); border-top: 1px solid var(--border);
-            padding: 0.6rem 2rem; display: flex; justify-content: space-between; align-items: center; font-size: 0.8rem; color: var(--text-secondary);
-        }}
-        .status-badge {{ display: flex; align-items: center; gap: 0.4rem; }}
-        .status-dot {{ width: 8px; height: 8px; border-radius: 50%; background: var(--success); box-shadow: 0 0 8px var(--success); }}
-    </style>
-</head>
-<body>
-    <header>
-        <div class="brand">
-            <div class="brand-logo">R</div>
-            <span>RustNext Desk</span>
-        </div>
-        <div class="omnibar">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" stroke-width="2">
-                <circle cx="11" cy="11" r="8"></circle>
-                <path d="M21 21l-4.35-4.35"></path>
-            </svg>
-            <input type="text" placeholder="Search DocTypes, records, methods, or shortcuts..." id="omni-search" />
-            <kbd>Ctrl+K</kbd>
-        </div>
-        <div class="nav-actions">
-            <select class="persona-select" onchange="window.location.href=this.value">
-                <option value="/desk" {desk_sel}>Unified Enterprise Desk</option>
-                <option value="/portal" {portal_sel}>Customer Portal</option>
-                <option value="/worker" {worker_sel}>Warehouse Scanner</option>
-                <option value="/factory" {factory_sel}>Shopfloor MES</option>
-                <option value="/approvals" {approvals_sel}>Approval Deck</option>
-                <option value="/admin" {admin_sel}>Admin Cockpit</option>
-            </select>
-            <div class="user-chip">
-                <div class="user-avatar">{avatar_char}</div>
-                <span>{user_name}</span>
-            </div>
-        </div>
-    </header>
+    let desk_sel = if persona == "Enterprise Desk" || persona == "Desk" {
+        "selected"
+    } else {
+        ""
+    };
+    let portal_sel = if persona == "Customer Portal" {
+        "selected"
+    } else {
+        ""
+    };
+    let worker_sel = if persona == "Warehouse Scanner" {
+        "selected"
+    } else {
+        ""
+    };
+    let factory_sel = if persona == "Shopfloor MES" {
+        "selected"
+    } else {
+        ""
+    };
+    let approvals_sel = if persona == "Approval Deck" {
+        "selected"
+    } else {
+        ""
+    };
+    let admin_sel = if persona == "Admin Cockpit" {
+        "selected"
+    } else {
+        ""
+    };
+    let avatar_char = user_name.chars().next().unwrap_or('A').to_string();
 
-    <main>
-        <div class="welcome-hero">
-            <h1>Welcome to {persona}</h1>
-            <p>High-performance local-first Rust ERP runtime with ACID transaction ledger and sub-millisecond hypermedia response.</p>
-        </div>
-        <div class="grid">
-            {cards_html}
-        </div>
-    </main>
-
-    <footer>
-        <div class="status-badge">
-            <div class="status-dot"></div>
-            <span>SurrealDB 3.3.0 KV Local Engine • Tokio Multi-Thread • Wasmtime Sandboxed</span>
-        </div>
-        <div>RustNext v0.2.0 (2024 Edition) • Zero-IPC In-Memory Cache</div>
-    </footer>
-
-    <script>
-        document.addEventListener('keydown', (e) => {{
-            if ((e.ctrlKey || e.metaKey) && e.key === 'k') {{
-                e.preventDefault();
-                document.getElementById('omni-search').focus();
-            }}
-        }});
-    </script>
-</body>
-</html>"#,
-        persona = persona,
-        desk_sel = if persona == "Enterprise Desk" || persona == "Desk" { "selected" } else { "" },
-        portal_sel = if persona == "Customer Portal" { "selected" } else { "" },
-        worker_sel = if persona == "Warehouse Scanner" { "selected" } else { "" },
-        factory_sel = if persona == "Shopfloor MES" { "selected" } else { "" },
-        approvals_sel = if persona == "Approval Deck" { "selected" } else { "" },
-        admin_sel = if persona == "Admin Cockpit" { "selected" } else { "" },
-        avatar_char = user_name.chars().next().unwrap_or('A'),
-        user_name = user_name,
-        cards_html = cards_html,
-    )
+    DESK_BASE_HTML
+        .replace("__PERSONA__", persona)
+        .replace("__USERNAME__", user_name)
+        .replace("__AVATAR__", &avatar_char)
+        .replace("__DESK_SEL__", desk_sel)
+        .replace("__PORTAL_SEL__", portal_sel)
+        .replace("__WORKER_SEL__", worker_sel)
+        .replace("__FACTORY_SEL__", factory_sel)
+        .replace("__APPROVALS_SEL__", approvals_sel)
+        .replace("__ADMIN_SEL__", admin_sel)
+        .replace("__CARDS__", &cards_html)
 }
 
 #[cfg(test)]
@@ -334,8 +352,8 @@ mod tests {
     fn test_render_desk_shell_html() {
         let html = render_desk_shell_html("Enterprise Desk", "Administrator");
         assert!(html.contains("RustNext Desk"));
-        assert!(html.contains("OmniBar"));
-        assert!(html.contains("Accounting &amp; Finance") || html.contains("Accounting & Finance"));
+        assert!(html.contains("omnibar"));
+        assert!(html.contains("Accounting & Finance"));
         assert!(html.contains("SurrealDB 3.3.0"));
     }
 }

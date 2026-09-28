@@ -108,8 +108,8 @@ mod tests {
     #[test]
     fn test_wasmtime_fuel_trip_on_loop() {
         let sandbox = RealSandbox::new(100, 32 * 1024 * 1024).expect("Sandbox init");
-        let result =
-            sandbox.run_wat("(module (func (export \"run\") (result i32) (loop $l (br $l)) i32.const 0))");
+        let result = sandbox
+            .run_wat("(module (func (export \"run\") (result i32) (loop $l (br $l)) i32.const 0))");
         assert!(result.is_err(), "Expected out-of-fuel trap");
     }
 

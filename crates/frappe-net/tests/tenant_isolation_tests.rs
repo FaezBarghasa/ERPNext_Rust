@@ -3,7 +3,7 @@ use std::time::Duration;
 
 #[tokio::test]
 async fn test_tenant_database_isolation() {
-    let pool_mgr = ConnectionPoolManager::new(Duration::from_secs(60));
+    let pool_mgr = ConnectionPoolManager::in_memory(Duration::from_secs(60));
 
     let tenant_a = TenantId("alpha-corp".to_string());
     let tenant_b = TenantId("beta-industries".to_string());

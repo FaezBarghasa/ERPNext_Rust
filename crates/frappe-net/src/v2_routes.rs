@@ -18,12 +18,24 @@ use std::sync::LazyLock;
 static SAFE_FIELD_REGEX: LazyLock<Regex> =
     LazyLock::new(|| Regex::new(r"^[a-zA-Z_][a-zA-Z0-9_.]*$").expect("Regex compile"));
 
-static SAFE_ORDER_REGEX: LazyLock<Regex> =
-    LazyLock::new(|| Regex::new(r"^[a-zA-Z_][a-zA-Z0-9_.]*(\s+(?i:asc|desc))?$").expect("Regex compile"));
+static SAFE_ORDER_REGEX: LazyLock<Regex> = LazyLock::new(|| {
+    Regex::new(r"^[a-zA-Z_][a-zA-Z0-9_.]*(\s+(?i:asc|desc))?$").expect("Regex compile")
+});
 
 /// Allowed safe operators for SurrealQL filter clauses.
 const ALLOWED_OPERATORS: &[&str] = &[
-    "=", "!=", "<", "<=", ">", ">=", "CONTAINS", "CONTAINSNOT", "LIKE", "NOT LIKE", "IN", "NOT IN",
+    "=",
+    "!=",
+    "<",
+    "<=",
+    ">",
+    ">=",
+    "CONTAINS",
+    "CONTAINSNOT",
+    "LIKE",
+    "NOT LIKE",
+    "IN",
+    "NOT IN",
 ];
 
 #[derive(Debug, Deserialize)]
@@ -106,12 +118,12 @@ pub async fn v2_list_document(
     };
 
     // RBAC check if SecurityContext is present
-    if let Some(ctx) = req.extensions().get::<SecurityContext>() {
-        if !check_permission(&ctx.claims.roles, &[], Permission::Read, 0) {
-            return HttpResponse::Forbidden().json(serde_json::json!({
-                "error": "Permission Denied: insufficient read privileges"
-            }));
-        }
+    if let Some(ctx) = req.extensions().get::<SecurityContext>()
+        && !check_permission(&ctx.claims.roles, &[], Permission::Read, 0)
+    {
+        return HttpResponse::Forbidden().json(serde_json::json!({
+            "error": "Permission Denied: insufficient read privileges"
+        }));
     }
 
     let client = match pool_mgr.get_or_initialize_client(&tenant_id).await {
@@ -191,12 +203,12 @@ pub async fn v2_get_document(
     };
 
     // RBAC check if SecurityContext is present
-    if let Some(ctx) = req.extensions().get::<SecurityContext>() {
-        if !check_permission(&ctx.claims.roles, &[], Permission::Read, 0) {
-            return HttpResponse::Forbidden().json(serde_json::json!({
-                "error": "Permission Denied: insufficient read privileges"
-            }));
-        }
+    if let Some(ctx) = req.extensions().get::<SecurityContext>()
+        && !check_permission(&ctx.claims.roles, &[], Permission::Read, 0)
+    {
+        return HttpResponse::Forbidden().json(serde_json::json!({
+            "error": "Permission Denied: insufficient read privileges"
+        }));
     }
 
     let client = match pool_mgr.get_or_initialize_client(&tenant_id).await {
@@ -258,10 +270,7 @@ pub async fn login_handler(
     let password = body.pwd.trim();
 
     // Query user record from SurrealDB
-    let query_sql = format!(
-        "SELECT * FROM user:{}",
-        sanitize_surrealql_string(user_id)
-    );
+    let query_sql = format!("SELECT * FROM user:{}", sanitize_surrealql_string(user_id));
     let user_record: Option<serde_json::Value> = match client.query(&query_sql).await {
         Ok(mut res) => res.take(0).unwrap_or(None),
         Err(_) => None,
@@ -287,7 +296,9 @@ pub async fn login_handler(
         }
         None => {
             // First-run bootstrap for Administrator / admin
-            if (user_id == "Administrator" || user_id == "admin") && (password == "admin" || password == "admin123" || password == "Administrator") {
+            if (user_id == "Administrator" || user_id == "admin")
+                && (password == "admin" || password == "admin123" || password == "Administrator")
+            {
                 // Auto-seed Administrator record in DB
                 if let Ok(hashed) = hash_password(password) {
                     let _ = client
@@ -298,7 +309,11 @@ pub async fn login_handler(
                         ))
                         .await;
                 }
-                (true, vec!["System Manager".into(), "Administrator".into()], "Administrator".into())
+                (
+                    true,
+                    vec!["System Manager".into(), "Administrator".into()],
+                    "Administrator".into(),
+                )
             } else {
                 (false, vec![], String::new())
             }

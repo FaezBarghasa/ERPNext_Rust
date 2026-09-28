@@ -108,8 +108,8 @@ impl SessionClaims {
 
 /// Issues a cryptographically signed PASETO-style token (`v4.local.<payload_hex>.<sig_hex>`).
 pub fn issue_token(claims: &SessionClaims, secret_key: &[u8]) -> Result<String, AuthError> {
-    let payload_json = serde_json::to_string(claims)
-        .map_err(|e| AuthError::HashingFailed(e.to_string()))?;
+    let payload_json =
+        serde_json::to_string(claims).map_err(|e| AuthError::HashingFailed(e.to_string()))?;
     let payload_hex = hex::encode(payload_json.as_bytes());
 
     let mut mac = HmacSha256::new_from_slice(secret_key)
@@ -131,8 +131,8 @@ pub fn verify_token(token_str: &str, secret_key: &[u8]) -> Result<SessionClaims,
     let payload_hex = parts[2];
     let sig_hex = parts[3];
 
-    let mut mac = HmacSha256::new_from_slice(secret_key)
-        .map_err(|_| AuthError::InvalidSignature)?;
+    let mut mac =
+        HmacSha256::new_from_slice(secret_key).map_err(|_| AuthError::InvalidSignature)?;
     mac.update(payload_hex.as_bytes());
 
     let Ok(expected_sig) = hex::decode(sig_hex) else {
@@ -143,10 +143,9 @@ pub fn verify_token(token_str: &str, secret_key: &[u8]) -> Result<SessionClaims,
         return Err(AuthError::InvalidSignature);
     }
 
-    let payload_bytes = hex::decode(payload_hex)
-        .map_err(|_| AuthError::MalformedToken)?;
-    let claims: SessionClaims = serde_json::from_slice(&payload_bytes)
-        .map_err(|_| AuthError::MalformedToken)?;
+    let payload_bytes = hex::decode(payload_hex).map_err(|_| AuthError::MalformedToken)?;
+    let claims: SessionClaims =
+        serde_json::from_slice(&payload_bytes).map_err(|_| AuthError::MalformedToken)?;
 
     if claims.is_expired() {
         return Err(AuthError::TokenExpired);
@@ -193,10 +192,16 @@ mod tests {
 
         // Tamper with payload
         let tampered = token.replace(".local.", ".local.tampered");
-        assert_eq!(verify_token(&tampered, secret), Err(AuthError::InvalidSignature));
+        assert_eq!(
+            verify_token(&tampered, secret),
+            Err(AuthError::InvalidSignature)
+        );
 
         // Wrong secret
         let wrong_secret = b"wrong_secret_key_12345678901234567890";
-        assert_eq!(verify_token(&token, wrong_secret), Err(AuthError::InvalidSignature));
+        assert_eq!(
+            verify_token(&token, wrong_secret),
+            Err(AuthError::InvalidSignature)
+        );
     }
 }
