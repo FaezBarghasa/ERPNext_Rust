@@ -14,9 +14,101 @@ use surrealdb::{engine::local::Mem, Surreal};
 use thiserror::Error;
 use tokio::sync::RwLock;
 
+use actix_web::dev::Payload;
+use actix_web::FromRequest;
+use actix_web::HttpRequest;
+
 /// Unique Tenant Identifier.
 #[derive(Clone, Debug, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub struct TenantId(pub String);
+
+/// Scoped Tenant Context extracted from incoming requests.
+#[derive(Clone, Debug, PartialEq, Eq, Hash, Serialize, Deserialize)]
+pub struct TenantContext {
+    pub tenant_id: TenantId,
+    pub namespace: String,
+    pub database: String,
+}
+
+impl FromRequest for TenantContext {
+    type Error = ActixError;
+    type Future = Ready<Result<Self, Self::Error>>;
+
+    fn from_request(req: &HttpRequest, _payload: &mut Payload) -> Self::Future {
+        if let Some(ctx) = req.extensions().get::<TenantContext>() {
+            return futures_util::future::ready(Ok(ctx.clone()));
+        }
+        if let Some(tenant_id) = req.extensions().get::<TenantId>() {
+            let ns = format!("tenant_{}", tenant_id.0.replace('-', "_"));
+            return futures_util::future::ready(Ok(TenantContext {
+                tenant_id: tenant_id.clone(),
+                namespace: ns,
+                database: "erp".to_string(),
+            }));
+        }
+        let host = req.connection_info().host().to_string();
+        let headers = req.headers();
+        match parse_tenant_id(headers, &host) {
+            Ok(tenant_id) => {
+                let ns = format!("tenant_{}", tenant_id.0.replace('-', "_"));
+                futures_util::future::ready(Ok(TenantContext {
+                    tenant_id,
+                    namespace: ns,
+                    database: "erp".to_string(),
+                }))
+            }
+            Err(e) => futures_util::future::ready(Err(ActixError::from(e))),
+        }
+    }
+}
+
+/// In-Process Automated ACME Reverse Proxy Gateway (Milestone 1.3).
+#[derive(Clone, Default)]
+pub struct AcmeGateway {
+    domain_mapping: Arc<RwLock<HashMap<String, TenantId>>>,
+    cached_certificates: Arc<RwLock<HashMap<String, String>>>,
+}
+
+impl AcmeGateway {
+    #[must_use]
+    pub fn new() -> Self {
+        Self {
+            domain_mapping: Arc::new(RwLock::new(HashMap::new())),
+            cached_certificates: Arc::new(RwLock::new(HashMap::new())),
+        }
+    }
+
+    /// Registers an authorized custom domain mapping to a tenant namespace.
+    pub async fn register_domain(&self, domain: &str, tenant: TenantId) {
+        let mut map = self.domain_mapping.write().await;
+        map.insert(domain.to_lowercase(), tenant);
+    }
+
+    /// Resolves a domain against the authorized domain mapping table.
+    pub async fn resolve_domain(&self, domain: &str) -> Option<TenantId> {
+        let map = self.domain_mapping.read().await;
+        map.get(&domain.to_lowercase()).cloned()
+    }
+
+    /// Simulates dynamic ACME challenge issuance & certificate caching in <4000ms.
+    pub async fn issue_and_cache_certificate(
+        &self,
+        domain: &str,
+    ) -> Result<String, TenantError> {
+        let domain_norm = domain.to_lowercase();
+        if self.resolve_domain(&domain_norm).await.is_none() {
+            return Err(TenantError::AuthenticationFailed(format!(
+                "Domain {} not authorized for dynamic ACME issuance",
+                domain
+            )));
+        }
+
+        let cert = format!("---BEGIN CERTIFICATE---\nDOMAIN:{}\n---END CERTIFICATE---", domain_norm);
+        let mut cert_cache = self.cached_certificates.write().await;
+        cert_cache.insert(domain_norm, cert.clone());
+        Ok(cert)
+    }
+}
 
 /// Multi-tenant pool and routing errors.
 #[derive(Debug, Error, PartialEq, Eq)]

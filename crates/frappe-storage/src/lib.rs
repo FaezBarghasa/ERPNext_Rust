@@ -1,10 +1,14 @@
 pub mod bitemporal;
+pub mod crdt;
 pub mod drive;
+pub mod encryption;
 pub mod merkle;
 pub mod surreal;
 
 pub use bitemporal::{BiTemporalQuery, BiTemporalRecord, TimeInterval};
+pub use crdt::{LwwDocumentState, OfflineOutboxManager, PnCounter, SyncQueueEntry, VectorClock};
 pub use drive::{DeduplicatedStorage, DriveFile, DriveFolder, StorageError};
+pub use encryption::{EncryptionError, EnvelopeEncryption};
 pub use merkle::MerkleHasher;
 pub use surreal::open_tenant;
 
