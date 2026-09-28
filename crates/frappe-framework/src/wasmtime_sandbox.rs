@@ -8,6 +8,7 @@
 use anyhow::{Result, bail};
 use compact_str::CompactString;
 use serde::{Deserialize, Serialize};
+use wasmtime::{Config, Engine, Instance, Module, Store};
 
 /// Fuel & Linear memory execution limits.
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq, Eq)]
@@ -25,8 +26,9 @@ impl Default for SandboxLimits {
     }
 }
 
-/// Fault-isolated WebAssembly sandbox executor.
+/// Fault-isolated WebAssembly sandbox executor powered by Wasmtime.
 pub struct RealSandbox {
+    engine: Engine,
     fuel: u64,
     max_bytes: usize,
 }
@@ -34,7 +36,12 @@ pub struct RealSandbox {
 impl RealSandbox {
     /// Creates a new sandboxed execution context with specified fuel and memory bounds.
     pub fn new(fuel: u64, max_mem_bytes: usize) -> Result<Self> {
+        let mut config = Config::new();
+        config.consume_fuel(true);
+        let engine = Engine::new(&config)?;
+
         Ok(Self {
+            engine,
             fuel,
             max_bytes: max_mem_bytes,
         })
@@ -42,29 +49,25 @@ impl RealSandbox {
 
     /// Evaluates bytecode / WAT program with deterministic fuel decrement and memory check.
     pub fn run_wat(&self, wat: &str) -> Result<i32> {
-        // Parse basic instructions for simulation / verification
-        if wat.contains("while true") || wat.contains("loop") || wat.contains("br_if") {
-            // Infinite loop check: if fuel is constrained, trap with out-of-fuel error
-            if self.fuel < 100_000 {
-                bail!(
-                    "Host trapped execution: Instruction fuel exhausted (fuel <= {})",
-                    self.fuel
-                );
-            }
-        }
+        let module = Module::new(&self.engine, wat)?;
+        let mut store = Store::new(&self.engine, ());
+        store.set_fuel(self.fuel)?;
 
-        if wat.contains("i32.const 42") {
-            Ok(42)
-        } else if let Some(pos) = wat.find("i32.const ") {
-            let sub = &wat[pos + 10..];
-            let num_str: String = sub
-                .chars()
-                .take_while(|c| c.is_ascii_digit() || *c == '-')
-                .collect();
-            let val = num_str.parse::<i32>().unwrap_or(0);
-            Ok(val)
-        } else {
-            Ok(0)
+        let instance = Instance::new(&mut store, &module, &[])?;
+        let run_fn = instance.get_typed_func::<(), i32>(&mut store, "run")?;
+
+        match run_fn.call(&mut store, ()) {
+            Ok(val) => Ok(val),
+            Err(trap) => {
+                let err_msg = trap.to_string();
+                if err_msg.contains("all fuel consumed") || err_msg.contains("fuel") {
+                    bail!(
+                        "Host trapped execution: Instruction fuel exhausted (fuel <= {})",
+                        self.fuel
+                    );
+                }
+                bail!("Host trapped execution: {err_msg}");
+            }
         }
     }
 
@@ -106,7 +109,7 @@ mod tests {
     fn test_wasmtime_fuel_trip_on_loop() {
         let sandbox = RealSandbox::new(100, 32 * 1024 * 1024).expect("Sandbox init");
         let result =
-            sandbox.run_wat("(module (func (export \"run\") (result i32) (loop $l (br_if $l))))");
+            sandbox.run_wat("(module (func (export \"run\") (result i32) (loop $l (br $l)) i32.const 0))");
         assert!(result.is_err(), "Expected out-of-fuel trap");
     }
 
