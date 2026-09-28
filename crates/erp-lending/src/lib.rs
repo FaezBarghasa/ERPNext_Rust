@@ -1,6 +1,8 @@
 pub mod amortization;
+pub mod collateral;
 
 pub use amortization::{AmortizationEngine, AmortizationPeriod, LendingError, LoanGlEngine};
+pub use collateral::{CollateralEngine, MarginCallNotice, PledgedCollateral};
 
 #[cfg(test)]
 mod tests {

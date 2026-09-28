@@ -1,5 +1,6 @@
 pub mod ageing;
 pub mod batches;
+pub mod catch_weight;
 pub mod fifo;
 pub mod reconciliation;
 pub mod reposting;
@@ -8,6 +9,7 @@ pub mod warehouse;
 
 pub use ageing::{AgeingBucket, StockAgeingEngine, StockAgeingSummary, StockReceiptLayer};
 pub use batches::{Batch, SerialNo, SerialStatus};
+pub use catch_weight::CatchWeightItem;
 pub use fifo::{FifoBatchItem, InventoryError, StockLedgerEntry, add_fifo_layer, consume_fifo};
 pub use reconciliation::{BatchAuditReport, BatchDiscrepancy, BatchRecalculator};
 pub use reposting::{ItemPartitionQueue, ParallelRepostingSettings, RepostItemJob};

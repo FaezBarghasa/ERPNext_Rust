@@ -4,6 +4,7 @@ pub mod dmn;
 pub mod lifecycle;
 pub mod saga;
 pub mod scripting;
+pub mod typestate;
 pub mod wasmtime_sandbox;
 
 pub use ai_tools::{
@@ -16,6 +17,10 @@ pub use dmn::{ConditionOp, DecisionRule, DecisionTable, HitPolicy};
 pub use lifecycle::{Document, DocumentController, DocumentError};
 pub use saga::{SagaAction, SagaCoordinator, SagaTransaction};
 pub use scripting::{LifecycleEvent, RhaiHookEngine, ScriptError};
+pub use typestate::{
+    CancelledState, Doc, DocumentLifecycle, DocumentState, DraftState, SecurityContext,
+    SubmittedState,
+};
 pub use wasmtime_sandbox::RealSandbox;
 
 #[cfg(test)]
