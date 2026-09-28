@@ -1,5 +1,11 @@
+pub mod academic;
 pub mod lms;
 
+pub use academic::{
+    AcademicError, AcademicProgram, ApplicationStatus, AssessmentResult, FeeCategoryItem,
+    FeeStructure, GradeInterval, GradingScale, ProgramEnrollment, StudentApplicant,
+    StudentFeeSchedule, StudentMaster,
+};
 pub use lms::{Certificate, Course, CourseModule, Lesson, LmsError, StudentProgressTracker};
 
 #[cfg(test)]

@@ -120,8 +120,16 @@ impl MaintenanceSchedule {
 
             current = match periodicity {
                 MaintenancePeriodicity::Monthly => {
-                    let next_month = if current.month() == 12 { 1 } else { current.month() + 1 };
-                    let next_year = if current.month() == 12 { current.year() + 1 } else { current.year() };
+                    let next_month = if current.month() == 12 {
+                        1
+                    } else {
+                        current.month() + 1
+                    };
+                    let next_year = if current.month() == 12 {
+                        current.year() + 1
+                    } else {
+                        current.year()
+                    };
                     current
                         .with_year(next_year)
                         .and_then(|d| d.with_month(next_month))
@@ -248,7 +256,11 @@ mod tests {
             completed: false,
         };
 
-        assert!(visit.complete_visit("data:image/svg+xml;base64,sign123").is_ok());
+        assert!(
+            visit
+                .complete_visit("data:image/svg+xml;base64,sign123")
+                .is_ok()
+        );
         assert!(visit.completed);
         assert_eq!(
             visit.customer_signature,
