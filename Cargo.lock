@@ -1234,10 +1234,17 @@ name = "desk-app"
 version = "0.2.0"
 dependencies = [
  "chrono",
+ "compact_str",
  "desk-components",
  "frappe-meta",
+ "frappe-storage",
  "rust_decimal",
  "rust_decimal_macros",
+ "serde",
+ "serde_json",
+ "smallvec",
+ "thiserror",
+ "tokio",
 ]
 
 [[package]]
