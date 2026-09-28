@@ -68,7 +68,16 @@
 - **`erp-crm`**: Multi-stage lead acquisition funnels, deal conversion pipelines, and weighted opportunity scoring.
 - **`erp-support`**: Ticket SLA countdown timers and priority escalation matrices.
 - **`erp-lending`**: Reducing-balance and compound interest accrual with exact-decimal amortization schedules.
-- **`erp-learning`**: Course curriculums, lesson tracking, student enrollment, and automated quiz scoring.
+### 3.8 Universal Work-Type Templates & Theme Engine (`erp-cms` & `frappe-meta`)
+- **FR-CMS-01**: Must embed 6 prebuilt enterprise template suites (`svod-streaming`, `lms-academy`, `digital-goods`, `b2b-industrial`, `b2c-retail`, `trading-exchange`) with sub-10ms SSR rendering and specialized interactive widgets.
+- **FR-CMS-02**: Must provide a dynamic multi-tenant `ThemeRegistry` compiling JSON `DesignTokens` into CSS custom properties (`:root { ... }`) with $<50\,\mu\text{s}$ cache invalidation.
+- **FR-CMS-03**: Must support one-command fast deployment via `rbench site deploy` in $\le 2000\,\text{ms}$.
+
+### 3.9 Universal Mobile, HAL & Role-Adaptive Multi-Persona Shell (`desk-app`)
+- **FR-DESK-01**: Must provide a polymorphic `MobileHardwareAbstractionLayer` routing biometrics, barcode scanning, thermal printing, and GPS across Android JNI and W3C Web APIs.
+- **FR-DESK-02**: Must project 5 specialized role personas (`ClientCustomer`, `WarehouseWorker` with $\ge 56\,\text{px}$ touch targets, `ShopfloorMes` with dual-witness sign-offs, `ManagerApprover` with swipe deck, `SystemAdmin` cockpit).
+- **FR-DESK-03**: Must support disconnected edge transactions with causal vector clocks (`VectorClock`), local mutation buffers (`LocalMutationBuffer`), and deterministic join semilattices (`CloudSyncArbiter`).
+- **FR-DESK-04**: Must compile W3C Web App Manifests, offline Service Workers (`sw.js`), and Android NDK packaging descriptors.
 
 ---
 
@@ -78,3 +87,14 @@
 - **Zero-Warning Policy**: All code must compile cleanly under `cargo clippy --workspace --all-targets -- -D warnings`.
 - **Formatting Standard**: 100% compliance with `cargo fmt --check`.
 - **Test Coverage**: 100% test pass rate across unit tests and the 10-Epoch verification suite.
+
+---
+
+## 5. Related Engineering Documents
+
+* [Master Architectural Evolution Charter (`docs/master_charter.md`)](file:///home/jrad/RustroverProjects/ERPNext_workspace/docs/master_charter.md)
+* [System Architecture Specification (`docs/architecture.md`)](file:///home/jrad/RustroverProjects/ERPNext_workspace/docs/architecture.md)
+* [Universal Templates & Theme Engine Guide (`docs/templates_guide.md`)](file:///home/jrad/RustroverProjects/ERPNext_workspace/docs/templates_guide.md)
+* [Developer & System Administrator Setup Guide (`docs/setup_guide.md`)](file:///home/jrad/RustroverProjects/ERPNext_workspace/docs/setup_guide.md)
+* [Universal Operator & User Guide (`docs/user_guide.md`)](file:///home/jrad/RustroverProjects/ERPNext_workspace/docs/user_guide.md)
+

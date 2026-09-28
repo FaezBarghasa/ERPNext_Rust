@@ -91,10 +91,12 @@ ERPNext_workspace/
   - Field-level Envelope Encryption (AEAD AES-GCM-256 / ChaCha20-Poly1305 with Master KEK & tenant DEK).
   - Zero-Knowledge balance sheet arithmetic proof engine (`ZkProofEngine`) proving solvent ledger books without revealing line amounts.
 
-- **Epoch X: High-Density Agency Domain Map & Vertical Profiles**
+- **Epoch X: High-Density Agency Fleet, 6 Universal Template Suites & Dual Mobile Engine**
   - High-density single-binary deployment supporting thousands of tenant domains per node.
+  - 6 Universal Prebuilt Template Suites (`svod-streaming`, `lms-academy`, `digital-goods`, `b2b-industrial`, `b2c-retail`, `trading-exchange`) with sub-10ms SSR TTFB and dynamic theme compiler (`ThemeRegistry`).
+  - Single-command fast tenant provisioning via `rbench site deploy` in $<600\,\text{ms}$ ($\le 2000\,\text{ms}$ SLA).
+  - Universal Hardware Abstraction Layer (`MobileHardwareAbstractionLayer`), Local-First Edge Synchronization (`LocalMutationBuffer`, `CloudSyncArbiter`), Dual Mobile Engine (Android NDK + Tier-1 PWA), and Role-Adaptive Multi-Persona Shells (`/portal`, `/worker`, `/factory`, `/approvals`, `/admin`).
   - Direct streaming WooCommerce migration ingestion (`WooMigrationEngine`).
-  - Pre-configured vertical domain profiles (`ProfileRegistry` for Restaurant, Clinic, E-Commerce, and Agency).
 
 ---
 
@@ -102,8 +104,24 @@ ERPNext_workspace/
 
 ### Prerequisites
 
-- **Rust Toolchain**: 1.85+ (2024 Edition & 2021 Edition compatible)
+- **Rust Toolchain**: 1.85+ (2024 Edition)
 - **Cargo**: Standard toolchain
+
+### Quickstart & Site Provisioning
+
+```bash
+# 1. Provision a prebuilt template site in under 2 seconds
+cargo run -p rbench -- site deploy \
+  --site-name demo.rustnext.org \
+  --template svod-streaming \
+  --admin-email admin@enterprise.local
+
+# 2. Launch the Actix-web server (HTTP/1.1, HTTP/2, HTTP/3, WebSockets)
+cargo run -p frappe-net
+
+# 3. Launch the reactive desktop & mobile workstation shell
+cargo run -p desk-app
+```
 
 ### Build, Test & Lint
 
@@ -111,27 +129,25 @@ ERPNext_workspace/
 # Verify compilation across all 21 workspace crates
 cargo check --workspace
 
-# Run complete 10-Epoch verification test suite and domain unittests
+# Run complete verification test suite across all crates
 cargo test --workspace
 
-# Run isolated 10-Epoch charter integration suite
-cargo test --package frappe-net --test charter_all_epochs_test
-
-# Validate code formatting and lint cleanlines
+# Validate code formatting and lint cleanliness (zero warnings)
 cargo fmt --check
 cargo clippy --workspace --all-targets -- -D warnings
-
-# Run synthetic multi-tenant load generator & latency benchmarks
-cargo run -p rbench -- benchmark 20 10000
 ```
 
 ---
 
-## 📚 Technical Documentation
+## 📚 Technical Documentation & Guides
 
-- [Master Architectural Evolution & Transcendence Plan](file:///home/jrad/RustroverProjects/ERPNext_workspace/docs/master_charter.md)
-- [System Architecture Specification](file:///home/jrad/RustroverProjects/ERPNext_workspace/docs/architecture.md)
-- [Product Requirements Document (PRD)](file:///home/jrad/RustroverProjects/ERPNext_workspace/docs/prd.md)
-- [Test-Driven Development (TDD) Guide](file:///home/jrad/RustroverProjects/ERPNext_workspace/docs/tdd.md)
-- [Project Changelog](file:///home/jrad/RustroverProjects/ERPNext_workspace/CHANGELOG.md)
+- [Master Architectural Evolution Charter (`docs/master_charter.md`)](file:///home/jrad/RustroverProjects/ERPNext_workspace/docs/master_charter.md)
+- [System Architecture Specification (`docs/architecture.md`)](file:///home/jrad/RustroverProjects/ERPNext_workspace/docs/architecture.md)
+- [Universal Templates & Theme Engine Guide (`docs/templates_guide.md`)](file:///home/jrad/RustroverProjects/ERPNext_workspace/docs/templates_guide.md)
+- [Developer & System Administrator Setup Guide (`docs/setup_guide.md`)](file:///home/jrad/RustroverProjects/ERPNext_workspace/docs/setup_guide.md)
+- [Universal Operator & User Guide (`docs/user_guide.md`)](file:///home/jrad/RustroverProjects/ERPNext_workspace/docs/user_guide.md)
+- [Product Requirements Document (PRD) (`docs/prd.md`)](file:///home/jrad/RustroverProjects/ERPNext_workspace/docs/prd.md)
+- [Test-Driven Development (TDD) Guide (`docs/tdd.md`)](file:///home/jrad/RustroverProjects/ERPNext_workspace/docs/tdd.md)
+- [Project Changelog (`CHANGELOG.md`)](file:///home/jrad/RustroverProjects/ERPNext_workspace/CHANGELOG.md)
+
 

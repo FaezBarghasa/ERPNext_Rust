@@ -75,11 +75,15 @@ graph TD
 - **Sub-64MB Micro-Topology (`MicroTopologyConfig`)**: Optimized runtime profile configured for low-memory appliances (8MB write buffer, 16MB read cache, bounded 1024-item task queues, 2MB payload cap).
 - **In-Process Automated ACME Gateway (`AcmeGateway`)**: Manages Let's Encrypt automated certificate negotiation, caching, and host-to-tenant SNI routing.
 - **Tenant Context Scoping (`TenantContext`, `resolve_scoped_session`)**: Strictly isolates tenant database handles extracted from headers (`X-Tenant-Id`) or subdomain routing.
-- **LiveSync Actor & Background Worker**: WebSocket actor broadcasting live document mutation events and managing prioritized asynchronous background jobs.
-
 ### 3.5 `rbench`
-- **Site Orchestration CLI**: Automates tenant namespace provisioning (`new-site`), schema migration (`migrate`), and app archive verification (`install-app`).
+- **Site Orchestration CLI**: Automates tenant namespace provisioning (`new-site`), fast template deployment (`site deploy`), schema migration (`migrate`), and app archive verification (`install-app`).
 - **Synthetic Load Generator (`benchmark`)**: Multi-threaded async benchmark engine tracking latency percentiles (p50, p90, p95, p99) and QPS throughput across in-memory and cluster deployments.
+
+### 3.6 `desk-app` & `desk-components`
+- **Universal Hardware Abstraction Layer (`MobileHardwareAbstractionLayer`)**: Async Rust 2024 trait routing biometric verification, barcode scanning, thermal ESC/POS printing, and geolocation between Android JNI (`AndroidJniHalAdapter`) and W3C Web APIs (`WebApisHalAdapter`).
+- **Role-Adaptive Multi-Persona Shell (`PersonaShellConfig`)**: Projects 5 specialized interfaces (`ClientCustomer`, `WarehouseWorker`, `ShopfloorMes`, `ManagerApprover`, `SystemAdmin`) from a single binary.
+- **Local-First Edge Synchronization (`LocalMutationBuffer`, `CloudSyncArbiter`)**: Enforces offline resilience via causal vector clocks (`VectorClock`), commutative PN-Counters for stock movements, and LWW element sets with cryptographic tombstones.
+- **Dual Mobile Delivery Engine (`PwaWebManifest`, `ServiceWorkerGenerator`)**: Compiles theme-aware W3C web app manifests, caching service workers (`sw.js`), and Android NDK packaging descriptors (`cargo-apk`).
 
 ---
 
@@ -95,7 +99,7 @@ graph TD
 | **`erp-asset`** | Asset Life Cycle & Operational Safety | Linear Referencing Systems (LRS), Weibull $(\beta, \eta)$ Remaining Useful Life (RUL) predictive degradation, and tamper-evident Permit-to-Work (PTW) / Lockout-Tagout (LOTO) interlocks. |
 | **`erp-software`** | Subscription Billing & Revenue Recognition | ASC 606 5-step standalone selling price (SSP) allocation, graduated SaaS subscription tiers, and SLA penalty credit ledgers. |
 | **`erp-trade`** | Commercial Operations & Logistics | Cascading pricing rules, metered billing models, landed cost allocation, automated 3-way invoice matching (`InvoiceMatchingEngine`), and streaming WooCommerce migration (`WooMigrationEngine`). |
-| **`erp-cms`** | Digital Commerce & Content Delivery | Declarative `PageBlock` canvas AST, pre-allocated Server-Side HTML Rendering (`SsrEngine` with $<10\text{ms}$ TTFB), atomic e-commerce checkout transactions (`AtomicCheckoutEngine`), LuxeGen 3D WebGL procedural configurator (Three.js PBR + GSAP ScrollTrigger kinetics), and universal multi-template work-type layout engine. |
+| **`erp-cms`** | Digital Commerce & Content Delivery | Declarative `PageBlock` canvas AST, pre-allocated Server-Side HTML Rendering (`SsrEngine` with $<10\text{ms}$ TTFB), atomic e-commerce checkout transactions (`AtomicCheckoutEngine`), LuxeGen 3D WebGL procedural configurator (Three.js PBR + GSAP ScrollTrigger kinetics), 6 prebuilt enterprise template suites (`template_catalog.rs`), and dynamic multi-tenant theme compiler (`theme_engine.rs`). |
 | **`erp-hr`** | Human Resources & Workforce Management | Departmental structures, biometric attendance logging, flexible salary rule matrix, and automated payroll slip generation. |
 | **`erp-crm`** | Sales Pipeline & Customer Engagement | Multi-stage lead acquisition funnels, deal conversion state machines, and weighted opportunity scoring algorithms. |
 | **`erp-support`** | Service Desk & Customer Support | Ticket lifecycle management, multi-tier SLA response/resolution countdown timers, and automated priority escalation matrices. |
@@ -111,3 +115,15 @@ graph TD
 3. **Execution Sandbox**: Custom plugin scripts are trapped in WASI 0.2 Wasmtime sandboxes bounded by deterministic fuel metering and linear memory ceilings.
 4. **Zero-Knowledge Financial Proofs**: Solvency and ledger balance equations can be mathematically attested to auditors via non-interactive zero-knowledge arithmetic proofs without revealing confidential transaction amounts.
 5. **Tamper-Evident Logs**: Audit mutations form a cryptographically linked Merkle tree, preventing retroactive alterations or deletion of ledger entries.
+6. **Edge Convergence Invariant**: Disconnected edge operations reconcile automatically upon cloud reconnection via join semilattices with zero manual conflict resolution.
+
+---
+
+## 6. Related Documentation & User Guides
+
+* [Master Architectural Evolution Charter (`docs/master_charter.md`)](file:///home/jrad/RustroverProjects/ERPNext_workspace/docs/master_charter.md)
+* [Universal Templates & Theme Engine Guide (`docs/templates_guide.md`)](file:///home/jrad/RustroverProjects/ERPNext_workspace/docs/templates_guide.md)
+* [Developer & System Administrator Setup Guide (`docs/setup_guide.md`)](file:///home/jrad/RustroverProjects/ERPNext_workspace/docs/setup_guide.md)
+* [Universal Operator & User Guide (`docs/user_guide.md`)](file:///home/jrad/RustroverProjects/ERPNext_workspace/docs/user_guide.md)
+* [Product Requirements Document (`docs/prd.md`)](file:///home/jrad/RustroverProjects/ERPNext_workspace/docs/prd.md)
+
