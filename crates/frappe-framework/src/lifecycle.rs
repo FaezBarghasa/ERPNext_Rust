@@ -333,12 +333,11 @@ impl DocumentController {
                     }
 
                     // Check condition field if specified
-                    if let (Some(field), Some(expected)) = (&t.condition_field, &t.condition_value) {
-                        if let Some(actual) = doc.data.get(field).and_then(|v| v.as_str()) {
-                            if actual != expected {
-                                continue;
-                            }
-                        }
+                    if let (Some(field), Some(expected)) = (&t.condition_field, &t.condition_value)
+                        && let Some(actual) = doc.data.get(field).and_then(|v| v.as_str())
+                        && actual != expected
+                    {
+                        continue;
                     }
 
                     doc.workflow_state = Some(t.next_state.clone());

@@ -47,8 +47,8 @@ impl BankStatementParser {
 
         for line in raw_text.lines() {
             let line = line.trim();
-            if line.starts_with(":25:") {
-                account_iban = CompactString::new(&line[4..]);
+            if let Some(iban) = line.strip_prefix(":25:") {
+                account_iban = CompactString::new(iban);
             } else if line.starts_with(":28C:") || line.starts_with(":28:") {
                 statement_number = CompactString::new(&line[4..]);
             } else if line.starts_with(":60F:") {
@@ -67,7 +67,7 @@ impl BankStatementParser {
                         closing_balance = d;
                     }
                 }
-            } else if line.starts_with(":61:") {
+            } else if let Some(desc) = line.strip_prefix(":61:") {
                 // Statement line: :61:2601150115CR5000,00NTRFNONREF
                 let is_credit = line.contains("C") && !line.contains("RC");
                 transactions.push(BankTransactionLine {
@@ -78,7 +78,7 @@ impl BankStatementParser {
                     reference_number: Some("REF-001".into()),
                     party_name: None,
                     fee_amount: None,
-                    description: CompactString::new(&line[4..]),
+                    description: CompactString::new(desc),
                 });
             }
         }

@@ -43,20 +43,15 @@ pub enum DataPreset {
 }
 
 /// Naming generation rules supported by the DocType engine.
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+#[derive(Debug, Clone, Default, Serialize, Deserialize, PartialEq, Eq)]
 #[serde(tag = "type", content = "value")]
 pub enum NamingRule {
     Autoincrement,
+    #[default]
     SetByUser,
     ByField(String),
     Series(String),
     Expression(String),
-}
-
-impl Default for NamingRule {
-    fn default() -> Self {
-        Self::SetByUser
-    }
 }
 
 /// Universal Field Types matching all 40+ Frappe Framework field types.

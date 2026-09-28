@@ -42,7 +42,7 @@ impl ListViewModel {
 
     pub fn toggle_select_row(&mut self, row_id: impl Into<CompactString>) {
         let id = row_id.into();
-        if let Some(pos) = self.selected_rows.iter().position(|r| r == &id) {
+        if let Some(pos) = self.selected_rows.iter().position(|r| *r == id) {
             self.selected_rows.remove(pos);
         } else {
             self.selected_rows.push(id);
