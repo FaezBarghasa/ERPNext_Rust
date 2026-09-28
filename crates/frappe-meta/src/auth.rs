@@ -130,7 +130,7 @@ fn apply_keystream(data: &[u8], key: &[u8; 32], nonce: &[u8; 16]) -> Vec<u8> {
         let mut hasher = Sha256::new();
         hasher.update(key);
         hasher.update(nonce);
-        hasher.update(&block_idx.to_be_bytes());
+        hasher.update(block_idx.to_be_bytes());
         let block = hasher.finalize();
 
         let chunk_len = (data.len() - pos).min(32);

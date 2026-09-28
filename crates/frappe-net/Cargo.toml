@@ -28,6 +28,10 @@ desk-components = { workspace = true }
 tracing = { workspace = true }
 tracing-subscriber = { workspace = true }
 argon2 = { workspace = true }
+sha2 = { workspace = true }
+hex = { workspace = true }
+rand = { workspace = true }
+
 
 [dev-dependencies]
 frappe-meta = { workspace = true }

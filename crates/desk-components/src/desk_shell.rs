@@ -249,11 +249,51 @@ const DESK_BASE_HTML: &str = r#"<!DOCTYPE html>
         <div>RustNext v0.2.0 (2024 Edition) • Zero-IPC In-Memory Cache</div>
     </footer>
 
+    <div id="toast-container" style="position:fixed;bottom:24px;right:24px;display:flex;flex-direction:column;gap:8px;z-index:9999;"></div>
+
     <script>
+        function showToast(msg, type = 'info') {
+            const container = document.getElementById('toast-container');
+            const toast = document.createElement('div');
+            toast.style.cssText = 'background:rgba(18,24,38,0.95);border:1px solid rgba(255,255,255,0.15);color:#fff;padding:12px 18px;border-radius:8px;font-size:13px;backdrop-filter:blur(8px);box-shadow:0 8px 32px rgba(0,0,0,0.5);display:flex;align-items:center;gap:10px;animation:fadeIn 0.2s ease;';
+            toast.innerHTML = `<span style="color:${type==='success'?'#10b981':'#60a5fa'};">●</span> <span>${msg}</span>`;
+            container.appendChild(toast);
+            setTimeout(() => { toast.style.opacity = '0'; setTimeout(() => toast.remove(), 300); }, 4000);
+        }
+
+        // Live WebSocket Telemetry Stream
+        (function connectLive() {
+            try {
+                const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+                const ws = new WebSocket(`${protocol}//${window.location.host}/api/v1/live`);
+                ws.onmessage = (event) => {
+                    try {
+                        const data = JSON.parse(event.data);
+                        if (data.topic || data.doctype) {
+                            showToast(`Live update: ${data.doctype || data.topic} ${data.action || 'updated'}`, 'info');
+                        }
+                    } catch (_) {}
+                };
+                ws.onclose = () => setTimeout(connectLive, 5000);
+            } catch (_) {}
+        })();
+
+        // Real-Time OmniBar Search Filtering
+        const searchInput = document.getElementById('omni-search');
+        if (searchInput) {
+            searchInput.addEventListener('input', (e) => {
+                const q = e.target.value.toLowerCase().trim();
+                document.querySelectorAll('.card').forEach(card => {
+                    const text = card.textContent.toLowerCase();
+                    card.style.display = text.includes(q) ? '' : 'none';
+                });
+            });
+        }
+
         document.addEventListener('keydown', (e) => {
             if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
                 e.preventDefault();
-                document.getElementById('omni-search').focus();
+                if (searchInput) searchInput.focus();
             }
         });
     </script>

@@ -3,7 +3,7 @@
 //! Provides brute-force IP rate-limiting and API throttling backed by atomic in-memory registers
 //! and Actix Web middleware integration.
 
-use actix_web::body::BoxBody;
+use actix_web::body::{BoxBody, MessageBody};
 use actix_web::dev::{Service, ServiceRequest, ServiceResponse, Transform};
 use actix_web::http::StatusCode;
 use actix_web::{Error as ActixError, HttpResponse};
@@ -92,7 +92,7 @@ impl<S, B> Transform<S, ServiceRequest> for RateLimitMiddleware
 where
     S: Service<ServiceRequest, Response = ServiceResponse<B>, Error = ActixError> + 'static,
     S::Future: 'static,
-    B: 'static,
+    B: MessageBody + 'static,
 {
     type Response = ServiceResponse<BoxBody>;
     type Error = ActixError;
@@ -117,7 +117,7 @@ impl<S, B> Service<ServiceRequest> for RateLimitService<S>
 where
     S: Service<ServiceRequest, Response = ServiceResponse<B>, Error = ActixError> + 'static,
     S::Future: 'static,
-    B: 'static,
+    B: MessageBody + 'static,
 {
     type Response = ServiceResponse<BoxBody>;
     type Error = ActixError;
@@ -151,9 +151,10 @@ where
                     "error": "Too Many Requests: Rate limit exceeded"
                 }));
             let (http_req, _) = req.into_parts();
-            return Box::pin(ready(Ok(
-                ServiceResponse::new(http_req, res.map_into_boxed_body())
-            )));
+            return Box::pin(ready(Ok(ServiceResponse::new(
+                http_req,
+                res.map_into_boxed_body(),
+            ))));
         }
 
         let fut = self.service.call(req);

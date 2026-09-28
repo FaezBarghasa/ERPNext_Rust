@@ -299,10 +299,21 @@ pub fn parse_tenant_id(
     headers: &actix_web::http::header::HeaderMap,
     host: &str,
 ) -> Result<TenantId, TenantError> {
-    if let Some(tenant_hdr) = headers.get("X-Tenant-Id")
+    if let Some(tenant_hdr) = headers
+        .get("X-Tenant-Id")
+        .or_else(|| headers.get("X-Tenant-ID"))
+        .or_else(|| headers.get("X-Frappe-Site-Name"))
         && let Ok(tenant_str) = tenant_hdr.to_str()
     {
         return validate_and_create_tenant_id(tenant_str);
+    }
+
+    if host == "localhost"
+        || host.starts_with("localhost:")
+        || host == "127.0.0.1"
+        || host.starts_with("127.0.0.1:")
+    {
+        return Ok(TenantId("default".to_string()));
     }
 
     let host_regex = Regex::new(r"^(?P<tenant>[a-z0-9-]+)\.[a-z0-9.-]+$")

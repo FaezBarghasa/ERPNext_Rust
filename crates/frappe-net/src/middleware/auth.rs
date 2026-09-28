@@ -24,10 +24,11 @@ pub const MASTER_JWT_SECRET: &[u8] =
 /// Retrieves the active master token secret key from environment or fallback default.
 #[must_use]
 pub fn get_master_token_secret() -> Vec<u8> {
-    if let Ok(key) = std::env::var("RUSTNEXT_SECRET_KEY").or_else(|_| std::env::var("FRAPPE_SECRET_KEY")) {
-        if !key.trim().is_empty() {
-            return key.into_bytes();
-        }
+    if let Ok(key) =
+        std::env::var("RUSTNEXT_SECRET_KEY").or_else(|_| std::env::var("FRAPPE_SECRET_KEY"))
+        && !key.trim().is_empty()
+    {
+        return key.into_bytes();
     }
     MASTER_JWT_SECRET.to_vec()
 }
@@ -120,7 +121,6 @@ impl FromRequest for SecurityContext {
         )))
     }
 }
-
 
 /// HTTP Middleware errors for authentication.
 #[derive(Debug, thiserror::Error)]

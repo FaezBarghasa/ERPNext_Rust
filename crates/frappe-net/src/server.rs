@@ -2,18 +2,23 @@
 //!
 //! Provides:
 //! - Multi-Persona Desktop & Portal SSR Shells (`/desk`, `/portal`, `/worker`, `/factory`, `/approvals`, `/admin`)
-//! - REST API v1 & v2 Document/RPC Routers with Tenant Isolation and RBAC
-//! - SurrealDB-backed Dynamic Storefront & Atomic Checkout
-//! - Tracing Observability, Metrics, and ACME Security Gateway
+//! - REST API v1 & v2 Document/RPC Routers with Tenant Isolation, Typestate Lifecycle and RBAC
+//! - SurrealDB-backed Dynamic Storefront, Atomic Checkout, and Payment Webhook Receivers
+//! - Content-Addressable Storage (CAS) Upload & Download Streams
+//! - Visual CMS Builder Persistence API
+//! - Tracing Observability, Token-Bucket Rate Limiter, and ACME Security Gateway
 
 use crate::live::live_ws_handler;
 use crate::middleware::auth::SecurityContext;
+use crate::rate_limit::RateLimitMiddleware;
 use crate::routes::{create_resource, delete_resource, get_resource, list_resource};
 use crate::tenant::{
     AcmeGateway, ConnectionPoolManager, MicroTopologyConfig, TenantId, TenantResolver,
 };
 use crate::v2_routes::{
-    login_handler, logout_handler, ping_handler, v2_get_document, v2_list_document,
+    download_file_handler, login_handler, logout_handler, ping_handler, upload_file_handler,
+    v2_amend_document, v2_cancel_document, v2_create_document, v2_delete_document, v2_get_document,
+    v2_list_document, v2_submit_document, v2_update_document,
 };
 use actix_web::{
     App, HttpMessage, HttpRequest, HttpResponse, HttpServer, Responder, middleware::Compress,
@@ -21,7 +26,7 @@ use actix_web::{
 };
 use desk_components::{get_desk_workspaces, render_desk_shell_html};
 use std::time::Duration;
-use tracing::{error, info, instrument};
+use tracing::{info, instrument};
 
 #[instrument]
 async fn health_check() -> impl Responder {
@@ -98,7 +103,7 @@ async fn admin_handler(req: HttpRequest) -> impl Responder {
         .extensions()
         .get::<SecurityContext>()
         .map(|ctx| ctx.claims.sub.clone())
-        .unwrap_or_else(|| "System Administrator".to_string());
+        .unwrap_or_else(|| "Administrator".to_string());
 
     HttpResponse::Ok()
         .content_type("text/html; charset=utf-8")
@@ -128,26 +133,31 @@ async fn storefront_products_handler(
 
     let client = match pool_mgr.get_or_initialize_client(&tenant_id).await {
         Ok(c) => c,
-        Err(e) => {
-            error!("Failed to acquire tenant client: {e}");
-            return HttpResponse::Ok().json(erp_cms::luxury_storefront::get_luxury_catalog());
-        }
+        Err(e) => return HttpResponse::InternalServerError().body(e.to_string()),
     };
 
-    // Query SurrealDB for products
-    let query_res: Result<Vec<serde_json::Value>, _> =
-        match client.query("SELECT * FROM product;").await {
-            Ok(mut res) => res.take(0),
-            Err(e) => {
-                error!("Product query failed: {e}");
-                Ok(vec![])
+    match client.query("SELECT * FROM product;").await {
+        Ok(mut res) => {
+            let products: Vec<serde_json::Value> = res.take(0).unwrap_or_default();
+            if products.is_empty() {
+                let catalog = erp_cms::luxury_storefront::get_luxury_catalog();
+                for item in &catalog {
+                    if let Ok(item_val) = serde_json::to_value(item) {
+                        let _ = client
+                            .query(format!(
+                                "CREATE product:{} CONTENT $item;",
+                                item.id.replace('-', "_")
+                            ))
+                            .bind(("item", item_val))
+                            .await;
+                    }
+                }
+                HttpResponse::Ok().json(catalog)
+            } else {
+                HttpResponse::Ok().json(products)
             }
-        };
-
-    match query_res {
-        Ok(records) if !records.is_empty() => HttpResponse::Ok().json(records),
-        _ => {
-            // Seed default luxury catalog into SurrealDB if empty
+        }
+        Err(_) => {
             let catalog = erp_cms::luxury_storefront::get_luxury_catalog();
             for item in &catalog {
                 if let Ok(item_val) = serde_json::to_value(item) {
@@ -180,7 +190,6 @@ async fn storefront_checkout_handler(
     let checkout_req = payload.into_inner();
     match erp_cms::AtomicCheckoutEngine::process_checkout(&checkout_req) {
         Ok(result) => {
-            // Record invoice in SurrealDB
             if let Ok(client) = pool_mgr.get_or_initialize_client(&tenant_id).await
                 && let Ok(invoice_val) = serde_json::to_value(&result)
             {
@@ -197,6 +206,140 @@ async fn storefront_checkout_handler(
         Err(err) => HttpResponse::BadRequest().json(serde_json::json!({
             "error": err.to_string(),
         })),
+    }
+}
+
+#[instrument(skip(req, pool_mgr, payload))]
+async fn stripe_webhook_handler(
+    req: HttpRequest,
+    pool_mgr: web::Data<ConnectionPoolManager>,
+    payload: web::Json<serde_json::Value>,
+) -> impl Responder {
+    let tenant_id = req
+        .extensions()
+        .get::<TenantId>()
+        .cloned()
+        .unwrap_or_else(|| TenantId("default".into()));
+
+    let event = payload.into_inner();
+    let event_type = event
+        .get("type")
+        .and_then(|t| t.as_str())
+        .unwrap_or_default();
+
+    if (event_type == "payment_intent.succeeded" || event_type == "checkout.session.completed")
+        && let Some(data) = event.get("data").and_then(|d| d.get("object"))
+        && let Some(invoice_id) = data
+            .get("invoice_id")
+            .or_else(|| data.get("id"))
+            .and_then(|i| i.as_str())
+        && let Ok(client) = pool_mgr.get_or_initialize_client(&tenant_id).await
+    {
+        let sanitized_id = invoice_id.replace('-', "_");
+        let now = chrono::Utc::now().to_rfc3339();
+        let _ = client
+            .query(format!(
+                "UPDATE sales_invoice:{sanitized_id} SET status = 'Paid', paid_at = '{now}';"
+            ))
+            .await;
+    }
+
+    HttpResponse::Ok().json(serde_json::json!({
+        "received": true,
+        "event_type": event_type
+    }))
+}
+
+async fn cms_get_page_handler(
+    path: web::Path<String>,
+    pool_mgr: web::Data<ConnectionPoolManager>,
+) -> impl Responder {
+    let slug = path.into_inner();
+    let client = match pool_mgr
+        .get_or_initialize_client(&TenantId("default".into()))
+        .await
+    {
+        Ok(c) => c,
+        Err(e) => return HttpResponse::InternalServerError().body(e.to_string()),
+    };
+
+    let sql = format!("SELECT * FROM cms_page_draft:{};", slug.replace('-', "_"));
+    match client.query(&sql).await {
+        Ok(mut res) => {
+            let record: Option<serde_json::Value> = res.take(0).unwrap_or(None);
+            match record {
+                Some(r) => HttpResponse::Ok().json(r),
+                None => HttpResponse::NotFound()
+                    .json(serde_json::json!({"error": "Page draft not found"})),
+            }
+        }
+        Err(e) => HttpResponse::InternalServerError().body(e.to_string()),
+    }
+}
+
+async fn cms_save_page_handler(
+    path: web::Path<String>,
+    payload: web::Json<serde_json::Value>,
+    pool_mgr: web::Data<ConnectionPoolManager>,
+) -> impl Responder {
+    let slug = path.into_inner();
+    let client = match pool_mgr
+        .get_or_initialize_client(&TenantId("default".into()))
+        .await
+    {
+        Ok(c) => c,
+        Err(e) => return HttpResponse::InternalServerError().body(e.to_string()),
+    };
+
+    let doc = payload.into_inner();
+    let sql = format!(
+        "CREATE cms_page_draft:{} CONTENT $doc;",
+        slug.replace('-', "_")
+    );
+    match client.query(&sql).bind(("doc", doc.clone())).await {
+        Ok(_) => HttpResponse::Ok().json(serde_json::json!({
+            "message": "Page draft saved",
+            "slug": slug
+        })),
+        Err(e) => HttpResponse::InternalServerError().body(e.to_string()),
+    }
+}
+
+async fn cms_publish_page_handler(
+    path: web::Path<String>,
+    pool_mgr: web::Data<ConnectionPoolManager>,
+) -> impl Responder {
+    let slug = path.into_inner();
+    let client = match pool_mgr
+        .get_or_initialize_client(&TenantId("default".into()))
+        .await
+    {
+        Ok(c) => c,
+        Err(e) => return HttpResponse::InternalServerError().body(e.to_string()),
+    };
+
+    let fetch_sql = format!("SELECT * FROM cms_page_draft:{};", slug.replace('-', "_"));
+    let mut res = match client.query(&fetch_sql).await {
+        Ok(r) => r,
+        Err(e) => return HttpResponse::InternalServerError().body(e.to_string()),
+    };
+
+    let record: Option<serde_json::Value> = res.take(0).unwrap_or(None);
+    let Some(draft) = record else {
+        return HttpResponse::NotFound()
+            .json(serde_json::json!({"error": "Draft not found to publish"}));
+    };
+
+    let pub_sql = format!(
+        "CREATE cms_page_published:{} CONTENT $doc;",
+        slug.replace('-', "_")
+    );
+    match client.query(&pub_sql).bind(("doc", draft)).await {
+        Ok(_) => HttpResponse::Ok().json(serde_json::json!({
+            "message": "Page published successfully",
+            "slug": slug
+        })),
+        Err(e) => HttpResponse::InternalServerError().body(e.to_string()),
     }
 }
 
@@ -288,6 +431,7 @@ pub fn configure_app(
         .route("/sitemap.xml", web::get().to(sitemap_xml_handler))
         .route("/robots.txt", web::get().to(robots_txt_handler))
         .route("/health", web::get().to(health_check))
+        .route("/files/{hash}", web::get().to(download_file_handler))
         .route("/api/v1/live", web::get().to(live_ws_handler))
         .route(
             "/api/v1/desk/workspaces",
@@ -302,6 +446,10 @@ pub fn configure_app(
             web::post().to(storefront_checkout_handler),
         )
         .route(
+            "/api/v1/storefront/webhooks/stripe",
+            web::post().to(stripe_webhook_handler),
+        )
+        .route(
             "/api/v1/templates",
             web::get().to(list_templates_api_handler),
         )
@@ -309,10 +457,27 @@ pub fn configure_app(
             "/api/v1/templates/{slug}/manifest",
             web::get().to(template_manifest_api_handler),
         )
-        // V2 Authentication & RPC System Methods
+        // V2 Authentication, RPC System Methods & Storage
         .route("/api/v2/method/login", web::post().to(login_handler))
         .route("/api/v2/method/logout", web::post().to(logout_handler))
         .route("/api/v2/method/ping", web::get().to(ping_handler))
+        .route(
+            "/api/v2/method/upload_file",
+            web::post().to(upload_file_handler),
+        )
+        // V2 Visual CMS Persistence Endpoints
+        .route(
+            "/api/v2/cms/page/{slug}",
+            web::get().to(cms_get_page_handler),
+        )
+        .route(
+            "/api/v2/cms/page/{slug}/save",
+            web::post().to(cms_save_page_handler),
+        )
+        .route(
+            "/api/v2/cms/page/{slug}/publish",
+            web::post().to(cms_publish_page_handler),
+        )
         // Protected V1 REST Resource API Scope
         .service(
             web::scope("/api/v1/resource")
@@ -327,7 +492,19 @@ pub fn configure_app(
             web::scope("/api/v2/document")
                 .wrap(TenantResolver)
                 .route("/{doctype}", web::get().to(v2_list_document))
-                .route("/{doctype}/{name}", web::get().to(v2_get_document)),
+                .route("/{doctype}", web::post().to(v2_create_document))
+                .route("/{doctype}/{name}", web::get().to(v2_get_document))
+                .route("/{doctype}/{name}", web::put().to(v2_update_document))
+                .route("/{doctype}/{name}", web::delete().to(v2_delete_document))
+                .route(
+                    "/{doctype}/{name}/submit",
+                    web::post().to(v2_submit_document),
+                )
+                .route(
+                    "/{doctype}/{name}/cancel",
+                    web::post().to(v2_cancel_document),
+                )
+                .route("/{doctype}/{name}/amend", web::post().to(v2_amend_document)),
         );
 
     if let Some(gateway) = acme_gateway {
@@ -362,6 +539,7 @@ pub async fn run_server_with_config(
             .wrap(Logger::default())
             .wrap(Compress::default())
             .wrap(NormalizePath::trim())
+            .wrap(RateLimitMiddleware::new(300.0, 50.0))
             .configure(|cfg| configure_app(cfg, pool_mgr_data.clone(), topo, gw))
     });
 
