@@ -37,6 +37,7 @@ erp-ppm = { workspace = true }
 erp-asset = { workspace = true }
 erp-wms = { workspace = true }
 erp-cms = { workspace = true }
+desk-components = { workspace = true }
 rust_decimal = { workspace = true }
 rust_decimal_macros = { workspace = true }
 compact_str = { workspace = true }

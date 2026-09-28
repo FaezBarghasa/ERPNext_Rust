@@ -1876,6 +1876,7 @@ dependencies = [
  "chrono",
  "clap",
  "compact_str",
+ "desk-components",
  "erp-accounting",
  "erp-asset",
  "erp-cms",
