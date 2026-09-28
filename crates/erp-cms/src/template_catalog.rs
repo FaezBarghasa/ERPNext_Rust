@@ -1497,7 +1497,7 @@ mod tests {
             assert!(html.contains("</html>"));
             // Verify CSS tokens were injected
             assert!(html.contains(":root"));
-            assert!(html.contains(&s.default_tokens.color_primary.as_str()));
+            assert!(html.contains(s.default_tokens.color_primary.as_str()));
         }
     }
 
