@@ -20,8 +20,8 @@ pub use storefront::{
 };
 pub use subtitles::{SubtitleSearchEngine, SubtitleSegment};
 pub use template_catalog::{
-    get_template_suite, list_template_suites, render_template_html, render_template_index_html,
-    TemplateSuite,
+    TemplateSuite, get_template_suite, list_template_suites, render_template_html,
+    render_template_index_html,
 };
 pub use theme_engine::{
     CompiledTheme, DesignTokens, RenderEngineKind, SlotDefinition, ThemeManifest, ThemeRegistry,

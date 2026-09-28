@@ -32,6 +32,39 @@ async fn storefront_checkout_handler(
     }
 }
 
+async fn templates_portal_handler() -> impl Responder {
+    HttpResponse::Ok()
+        .content_type("text/html; charset=utf-8")
+        .body(erp_cms::render_template_index_html())
+}
+
+async fn template_detail_handler(path: web::Path<String>) -> impl Responder {
+    let slug = path.into_inner();
+    match erp_cms::render_template_html(&slug) {
+        Some(html) => HttpResponse::Ok()
+            .content_type("text/html; charset=utf-8")
+            .body(html),
+        None => HttpResponse::NotFound().json(serde_json::json!({
+            "error": format!("Template '{slug}' not found"),
+            "available_templates": erp_cms::list_template_suites().into_iter().map(|s| s.slug).collect::<Vec<_>>(),
+        })),
+    }
+}
+
+async fn list_templates_api_handler() -> impl Responder {
+    HttpResponse::Ok().json(erp_cms::list_template_suites())
+}
+
+async fn template_manifest_api_handler(path: web::Path<String>) -> impl Responder {
+    let slug = path.into_inner();
+    match erp_cms::get_template_suite(&slug) {
+        Some(suite) => HttpResponse::Ok().json(suite.to_theme_manifest()),
+        None => HttpResponse::NotFound().json(serde_json::json!({
+            "error": format!("Template '{slug}' not found"),
+        })),
+    }
+}
+
 async fn acme_challenge_handler(
     path: web::Path<String>,
     gateway: web::Data<AcmeGateway>,
@@ -54,6 +87,8 @@ pub fn configure_app(
         .app_data(web::PayloadConfig::new(topology.max_payload_bytes))
         .route("/", web::get().to(storefront_handler))
         .route("/storefront", web::get().to(storefront_handler))
+        .route("/templates", web::get().to(templates_portal_handler))
+        .route("/templates/{slug}", web::get().to(template_detail_handler))
         .route("/health", web::get().to(health_check))
         .route("/api/v1/live", web::get().to(live_ws_handler))
         .route(
@@ -63,6 +98,14 @@ pub fn configure_app(
         .route(
             "/api/v1/storefront/checkout",
             web::post().to(storefront_checkout_handler),
+        )
+        .route(
+            "/api/v1/templates",
+            web::get().to(list_templates_api_handler),
+        )
+        .route(
+            "/api/v1/templates/{slug}/manifest",
+            web::get().to(template_manifest_api_handler),
         )
         .service(
             web::scope("/api/v1/resource")

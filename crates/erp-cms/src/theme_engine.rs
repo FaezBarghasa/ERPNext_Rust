@@ -248,8 +248,15 @@ mod tests {
         assert!(duration < Duration::from_millis(5));
 
         let theme = registry.get_theme("tenant_retail").unwrap();
-        assert_eq!(theme.manifest.name.as_str(), "High-Velocity Omnichannel Flagship");
-        assert!(theme.css_custom_properties.contains("--color-primary: #e6c887;"));
+        assert_eq!(
+            theme.manifest.name.as_str(),
+            "High-Velocity Omnichannel Flagship"
+        );
+        assert!(
+            theme
+                .css_custom_properties
+                .contains("--color-primary: #e6c887;")
+        );
     }
 
     #[test]
@@ -302,10 +309,16 @@ mod tests {
             },
         };
 
-        let switch_time = registry.switch_theme_manifest("tenant_switch", manifest2).unwrap();
+        let switch_time = registry
+            .switch_theme_manifest("tenant_switch", manifest2)
+            .unwrap();
         let switched = registry.get_theme("tenant_switch").unwrap();
         assert_eq!(switched.manifest.id.as_str(), "theme_2");
-        assert!(switched.css_custom_properties.contains("--color-primary: #00e676;"));
+        assert!(
+            switched
+                .css_custom_properties
+                .contains("--color-primary: #00e676;")
+        );
         assert!(switch_time < Duration::from_millis(5));
     }
 }
