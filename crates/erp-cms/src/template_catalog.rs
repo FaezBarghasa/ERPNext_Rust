@@ -903,6 +903,13 @@ fn render_svod_streaming_html(suite: &TemplateSuite, css_tokens: &str, variant: 
         }}
         .video-title {{ font-size: 1.05rem; font-weight: 700; margin-bottom: 0.3rem; font-family: var(--font-heading); }}
         .video-meta {{ font-size: 0.8rem; color: #6b7280; font-family: var(--font-mono); }}
+        @media (max-width: 768px) {{
+            header {{ padding: 1rem 1.25rem; }}
+            .nav-links {{ display: none; }}
+            .hero-theater {{ height: auto; min-height: 60vh; padding: 5rem 1.25rem 2rem 1.25rem; }}
+            .search-strip {{ padding: 1.25rem; flex-direction: column; align-items: stretch; }}
+            .carousel-section {{ padding: 1.5rem 1.25rem; }}
+        }}
     </style>
 </head>
 <body>
@@ -1141,6 +1148,15 @@ fn render_lms_academy_html(suite: &TemplateSuite, css_tokens: &str, variant: &st
             transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1);
         }}
         .btn-typst:hover {{ transform: scale(1.03); }}
+        @media (max-width: 860px) {{
+            body {{ flex-direction: column; }}
+            aside {{ width: 100%; border-right: none; border-bottom: 1px solid rgba(255,255,255,0.08); padding: 1.5rem 1rem; }}
+            main {{ padding: 1.5rem 1rem; }}
+            .video-box {{ height: 240px; }}
+            .quiz-card {{ padding: 1.25rem 1rem; }}
+            .diploma-box {{ padding: 1.25rem 1rem; flex-direction: column; align-items: flex-start; }}
+            .btn-typst {{ width: 100%; text-align: center; }}
+        }}
     </style>
 </head>
 <body>

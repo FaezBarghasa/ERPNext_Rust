@@ -85,8 +85,10 @@ impl AiSchemaSynthesizer {
                     read_only: false,
                     hidden: false,
                     in_list_view: true,
+                    mask: false,
                     options: None,
                     default_value: None,
+                    permlevel: 0,
                 });
             }
 
@@ -95,8 +97,18 @@ impl AiSchemaSynthesizer {
                 module: "CustomAI".to_string(),
                 is_single: false,
                 is_submittable: false,
+                is_child_table: false,
+                is_tree: false,
                 track_changes: true,
+                quick_entry: false,
+                allow_rename: false,
+                allow_import: true,
+                allow_auto_repeat: false,
                 naming_rule: None,
+                naming_rule_spec: None,
+                virtual_child_tables: false,
+                lazy_materialization: false,
+                extends_class: None,
                 fields,
                 permissions: vec![],
             };
