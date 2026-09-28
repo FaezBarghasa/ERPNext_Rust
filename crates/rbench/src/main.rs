@@ -9,10 +9,13 @@
 //! - `rbench i18n [subcommand]`: Gettext POT/PO/MO compilation and parent-DocType translation indexing.
 //! - `rbench deploy`, `serve`, `worker`, `benchmark`.
 
+pub mod migration_pipeline;
+
 use frappe_meta::{
     DocFieldSchema, DocTypeSchema, FieldType, ProfileRegistry, compile_to_surrealql,
 };
 use frappe_storage::open_tenant;
+use migration_pipeline::{MigrationPhase, ZeroDowntimeMigrationEngine};
 use std::sync::Arc;
 use std::sync::atomic::{AtomicUsize, Ordering};
 use std::time::{Duration, Instant};

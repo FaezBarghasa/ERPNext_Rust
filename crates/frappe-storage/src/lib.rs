@@ -3,6 +3,7 @@ pub mod crdt;
 pub mod drive;
 pub mod encryption;
 pub mod merkle;
+pub mod replication;
 pub mod surreal;
 
 pub use bitemporal::{BiTemporalQuery, BiTemporalRecord, TimeInterval};
@@ -10,6 +11,10 @@ pub use crdt::{LwwDocumentState, OfflineOutboxManager, PnCounter, SyncQueueEntry
 pub use drive::{DeduplicatedStorage, DriveFile, DriveFolder, StorageError};
 pub use encryption::{EncryptionError, EnvelopeEncryption};
 pub use merkle::{MerkleHasher, MerkleProof, MerkleProofStep};
+pub use replication::{
+    CloudRegion, MultiRegionReplicationOrchestrator, ReconciliationOutcome, ReplicationConflict,
+    ReplicationEnvelope, ReplicationScope,
+};
 pub use surreal::open_tenant;
 
 use std::collections::HashMap;

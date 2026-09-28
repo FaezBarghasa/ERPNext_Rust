@@ -67,7 +67,8 @@ impl CollateralEngine {
             // (outstanding_balance - cure) / total_collateral = (covenant_ltv_limit / 100)
             // cure = outstanding_balance - (total_collateral * covenant_ltv_limit / 100)
             let max_allowed_balance = total_collateral * (covenant_ltv_limit / Decimal::from(100));
-            let required_cure_amount = (outstanding_balance - max_allowed_balance).max(Decimal::ZERO);
+            let required_cure_amount =
+                (outstanding_balance - max_allowed_balance).max(Decimal::ZERO);
 
             Some(MarginCallNotice {
                 loan_id: loan_id.to_string(),
