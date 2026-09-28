@@ -19,3 +19,5 @@ argon2 = { workspace = true }
 sha2 = { workspace = true }
 hmac = { workspace = true }
 hex = { workspace = true }
+rand = { workspace = true }
+

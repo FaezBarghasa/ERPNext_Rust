@@ -17,9 +17,20 @@ use futures_util::future::{LocalBoxFuture, Ready, ok};
 use serde::{Deserialize, Serialize};
 use std::sync::Arc;
 
-/// Default master token signing secret key for tenant cluster.
+/// Default master token signing secret key for tenant cluster fallback.
 pub const MASTER_JWT_SECRET: &[u8] =
     b"rustnext_enterprise_paseto_master_secret_key_2026_offline_first";
+
+/// Retrieves the active master token secret key from environment or fallback default.
+#[must_use]
+pub fn get_master_token_secret() -> Vec<u8> {
+    if let Ok(key) = std::env::var("RUSTNEXT_SECRET_KEY").or_else(|_| std::env::var("FRAPPE_SECRET_KEY")) {
+        if !key.trim().is_empty() {
+            return key.into_bytes();
+        }
+    }
+    MASTER_JWT_SECRET.to_vec()
+}
 
 /// Authenticated Security Context extracted from verified session tokens.
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
@@ -90,7 +101,8 @@ impl FromRequest for SecurityContext {
                 auth_str.trim()
             };
 
-            match verify_token(token_str, MASTER_JWT_SECRET) {
+            let secret = get_master_token_secret();
+            match verify_token(token_str, &secret) {
                 Ok(claims) => {
                     let ctx = SecurityContext::new(claims);
                     return futures_util::future::ready(Ok(ctx));
@@ -108,6 +120,7 @@ impl FromRequest for SecurityContext {
         )))
     }
 }
+
 
 /// HTTP Middleware errors for authentication.
 #[derive(Debug, thiserror::Error)]
@@ -198,8 +211,9 @@ where
             None
         };
 
+        let secret = get_master_token_secret();
         match token_opt {
-            Some(token_str) => match verify_token(&token_str, MASTER_JWT_SECRET) {
+            Some(token_str) => match verify_token(&token_str, &secret) {
                 Ok(claims) => {
                     let ctx = SecurityContext::new(claims);
                     req.extensions_mut().insert(ctx);

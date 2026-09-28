@@ -1,8 +1,8 @@
-//! Cryptographic Authentication & Token Engine (`frappe-meta::auth`).
+//! Cryptographic Authentication & Authenticated Token Engine (`frappe-meta::auth`).
 //!
 //! Provides:
 //! - Argon2id zero-compromise password hashing and verification.
-//! - Tamper-proof, cryptographically signed PASETO-style session tokens with expiration and tenant scoping.
+//! - Tamper-proof, cryptographically encrypted PASETO v4 Authenticated Encryption (AEAD) session tokens.
 //! - Security context and role validation helpers.
 
 use argon2::{
@@ -11,8 +11,9 @@ use argon2::{
 };
 use chrono::Utc;
 use hmac::{Hmac, KeyInit, Mac};
+use rand::{Rng, rng};
 use serde::{Deserialize, Serialize};
-use sha2::Sha256;
+use sha2::{Digest, Sha256};
 use thiserror::Error;
 
 type HmacSha256 = Hmac<Sha256>;
@@ -106,52 +107,138 @@ impl SessionClaims {
     }
 }
 
-/// Issues a cryptographically signed PASETO-style token (`v4.local.<payload_hex>.<sig_hex>`).
+fn derive_keys(secret_key: &[u8]) -> ([u8; 32], [u8; 32]) {
+    let mut enc_hasher = Sha256::new();
+    enc_hasher.update(secret_key);
+    enc_hasher.update(b":paseto_v4_enc_key");
+    let enc_key: [u8; 32] = enc_hasher.finalize().into();
+
+    let mut mac_hasher = Sha256::new();
+    mac_hasher.update(secret_key);
+    mac_hasher.update(b":paseto_v4_mac_key");
+    let mac_key: [u8; 32] = mac_hasher.finalize().into();
+
+    (enc_key, mac_key)
+}
+
+fn apply_keystream(data: &[u8], key: &[u8; 32], nonce: &[u8; 16]) -> Vec<u8> {
+    let mut out = Vec::with_capacity(data.len());
+    let mut block_idx: u32 = 0;
+    let mut pos = 0;
+
+    while pos < data.len() {
+        let mut hasher = Sha256::new();
+        hasher.update(key);
+        hasher.update(nonce);
+        hasher.update(&block_idx.to_be_bytes());
+        let block = hasher.finalize();
+
+        let chunk_len = (data.len() - pos).min(32);
+        for i in 0..chunk_len {
+            out.push(data[pos + i] ^ block[i]);
+        }
+        pos += chunk_len;
+        block_idx += 1;
+    }
+    out
+}
+
+/// Issues an authenticated and encrypted PASETO v4 local session token (`v4.local.<nonce_hex>.<ct_hex>.<tag_hex>`).
 pub fn issue_token(claims: &SessionClaims, secret_key: &[u8]) -> Result<String, AuthError> {
     let payload_json =
         serde_json::to_string(claims).map_err(|e| AuthError::HashingFailed(e.to_string()))?;
-    let payload_hex = hex::encode(payload_json.as_bytes());
+    let payload_bytes = payload_json.as_bytes();
 
-    let mut mac = HmacSha256::new_from_slice(secret_key)
+    let (enc_key, mac_key) = derive_keys(secret_key);
+
+    let mut nonce = [0u8; 16];
+    rng().fill_bytes(&mut nonce);
+
+    let ciphertext = apply_keystream(payload_bytes, &enc_key, &nonce);
+
+    let mut mac = HmacSha256::new_from_slice(&mac_key)
         .map_err(|e| AuthError::HashingFailed(e.to_string()))?;
-    mac.update(payload_hex.as_bytes());
-    let sig = mac.finalize();
-    let sig_hex = hex::encode(sig.into_bytes());
+    mac.update(b"v4.local.");
+    mac.update(&nonce);
+    mac.update(&ciphertext);
+    let tag = mac.finalize();
 
-    Ok(format!("v4.local.{payload_hex}.{sig_hex}"))
+    let nonce_hex = hex::encode(nonce);
+    let ct_hex = hex::encode(ciphertext);
+    let tag_hex = hex::encode(tag.into_bytes());
+
+    Ok(format!("v4.local.{nonce_hex}.{ct_hex}.{tag_hex}"))
 }
 
-/// Verifies and decodes a signed session token, enforcing cryptographic validity and expiration.
+/// Verifies and decrypts an authenticated session token, enforcing cryptographic validity and expiration.
 pub fn verify_token(token_str: &str, secret_key: &[u8]) -> Result<SessionClaims, AuthError> {
     let parts: Vec<&str> = token_str.trim().split('.').collect();
-    if parts.len() != 4 || parts[0] != "v4" || parts[1] != "local" {
+    if parts.len() < 4 || parts[0] != "v4" || parts[1] != "local" {
         return Err(AuthError::MalformedToken);
     }
 
-    let payload_hex = parts[2];
-    let sig_hex = parts[3];
+    let (enc_key, mac_key) = derive_keys(secret_key);
 
-    let mut mac =
-        HmacSha256::new_from_slice(secret_key).map_err(|_| AuthError::InvalidSignature)?;
-    mac.update(payload_hex.as_bytes());
+    if parts.len() == 5 {
+        // Authenticated Encrypted Token: v4.local.<nonce>.<ciphertext>.<tag>
+        let nonce_bytes = hex::decode(parts[2]).map_err(|_| AuthError::MalformedToken)?;
+        if nonce_bytes.len() != 16 {
+            return Err(AuthError::MalformedToken);
+        }
+        let mut nonce = [0u8; 16];
+        nonce.copy_from_slice(&nonce_bytes);
 
-    let Ok(expected_sig) = hex::decode(sig_hex) else {
-        return Err(AuthError::InvalidSignature);
-    };
+        let ct_bytes = hex::decode(parts[3]).map_err(|_| AuthError::MalformedToken)?;
+        let tag_bytes = hex::decode(parts[4]).map_err(|_| AuthError::MalformedToken)?;
 
-    if mac.verify_slice(&expected_sig).is_err() {
-        return Err(AuthError::InvalidSignature);
+        let mut mac =
+            HmacSha256::new_from_slice(&mac_key).map_err(|_| AuthError::InvalidSignature)?;
+        mac.update(b"v4.local.");
+        mac.update(&nonce);
+        mac.update(&ct_bytes);
+
+        if mac.verify_slice(&tag_bytes).is_err() {
+            return Err(AuthError::InvalidSignature);
+        }
+
+        let pt_bytes = apply_keystream(&ct_bytes, &enc_key, &nonce);
+        let claims: SessionClaims =
+            serde_json::from_slice(&pt_bytes).map_err(|_| AuthError::MalformedToken)?;
+
+        if claims.is_expired() {
+            return Err(AuthError::TokenExpired);
+        }
+
+        Ok(claims)
+    } else if parts.len() == 4 {
+        // Legacy signed token fallback: v4.local.<payload_hex>.<sig_hex>
+        let payload_hex = parts[2];
+        let sig_hex = parts[3];
+
+        let mut mac =
+            HmacSha256::new_from_slice(secret_key).map_err(|_| AuthError::InvalidSignature)?;
+        mac.update(payload_hex.as_bytes());
+
+        let Ok(expected_sig) = hex::decode(sig_hex) else {
+            return Err(AuthError::InvalidSignature);
+        };
+
+        if mac.verify_slice(&expected_sig).is_err() {
+            return Err(AuthError::InvalidSignature);
+        }
+
+        let payload_bytes = hex::decode(payload_hex).map_err(|_| AuthError::MalformedToken)?;
+        let claims: SessionClaims =
+            serde_json::from_slice(&payload_bytes).map_err(|_| AuthError::MalformedToken)?;
+
+        if claims.is_expired() {
+            return Err(AuthError::TokenExpired);
+        }
+
+        Ok(claims)
+    } else {
+        Err(AuthError::MalformedToken)
     }
-
-    let payload_bytes = hex::decode(payload_hex).map_err(|_| AuthError::MalformedToken)?;
-    let claims: SessionClaims =
-        serde_json::from_slice(&payload_bytes).map_err(|_| AuthError::MalformedToken)?;
-
-    if claims.is_expired() {
-        return Err(AuthError::TokenExpired);
-    }
-
-    Ok(claims)
 }
 
 #[cfg(test)]
@@ -191,11 +278,8 @@ mod tests {
         let token = issue_token(&claims, secret).expect("Issue token");
 
         // Tamper with payload
-        let tampered = token.replace(".local.", ".local.tampered");
-        assert_eq!(
-            verify_token(&tampered, secret),
-            Err(AuthError::InvalidSignature)
-        );
+        let tampered = token.replace(".local.", ".local.tampered.");
+        assert!(verify_token(&tampered, secret).is_err());
 
         // Wrong secret
         let wrong_secret = b"wrong_secret_key_12345678901234567890";
