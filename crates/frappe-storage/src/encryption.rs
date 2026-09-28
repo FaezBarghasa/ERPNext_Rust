@@ -44,10 +44,14 @@ impl EnvelopeEncryption {
         associated_data: &[u8],
     ) -> Vec<u8> {
         let dek = self.derive_tenant_dek(tenant_id);
-        
+
         // Generate pseudo-nonce and keystream via hash-chain stream cipher
         let mut nonce = [0u8; 16];
-        for (i, b) in tenant_id.bytes().chain(associated_data.iter().copied()).enumerate() {
+        for (i, b) in tenant_id
+            .bytes()
+            .chain(associated_data.iter().copied())
+            .enumerate()
+        {
             nonce[i % 16] ^= b;
         }
 
@@ -100,7 +104,11 @@ impl EnvelopeEncryption {
         }
 
         let mut nonce = [0u8; 16];
-        for (i, b) in tenant_id.bytes().chain(associated_data.iter().copied()).enumerate() {
+        for (i, b) in tenant_id
+            .bytes()
+            .chain(associated_data.iter().copied())
+            .enumerate()
+        {
             nonce[i % 16] ^= b;
         }
 

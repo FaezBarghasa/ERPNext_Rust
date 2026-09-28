@@ -7,6 +7,7 @@ pub mod ledger;
 pub mod multibook;
 pub mod receivables;
 pub mod treasury;
+pub mod zk_proof;
 
 pub use assets::straight_line_depreciation;
 pub use benford::BenfordGuard;
@@ -24,6 +25,7 @@ pub use multibook::{
 };
 pub use receivables::{ArApEngine, OpenInvoice, PaymentAllocationResult};
 pub use treasury::{BankAccount, TreasuryPoolingEngine, ZbaSweepTransaction};
+pub use zk_proof::{ZkBalanceProof, ZkProofEngine, ZkVerificationResult};
 
 #[cfg(test)]
 mod tests {

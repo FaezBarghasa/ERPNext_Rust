@@ -1942,12 +1942,15 @@ name = "erp-accounting"
 version = "0.1.0"
 dependencies = [
  "chrono",
+ "compact_str",
  "frappe-framework",
  "frappe-meta",
+ "hex",
  "rust_decimal",
  "rust_decimal_macros",
  "serde",
  "serde_json",
+ "sha2 0.10.9",
  "thiserror 2.0.21",
 ]
 
@@ -2127,6 +2130,7 @@ name = "erp-trade"
 version = "0.1.0"
 dependencies = [
  "chrono",
+ "compact_str",
  "erp-accounting",
  "erp-inventory",
  "frappe-framework",
@@ -2302,6 +2306,7 @@ version = "0.1.0"
 dependencies = [
  "anyhow",
  "chrono",
+ "compact_str",
  "frappe-meta",
  "frappe-storage",
  "rhai",

@@ -1,21 +1,31 @@
 pub mod atp_ctp;
 pub mod dom;
 pub mod einvoice;
+pub mod invoice_matching;
 pub mod landed_cost;
 pub mod metered;
 pub mod pricing;
 pub mod sanctions;
 pub mod taxes;
+pub mod woocommerce_ingest;
 pub mod zatca;
 
 pub use atp_ctp::{AtpCtpEngine, InventoryPosition, PromiseAvailability};
 pub use dom::{DomRouter, FulfillmentNode, ShippingRateEstimate};
 pub use einvoice::{EInvoiceDocument, EInvoiceGenerator, EInvoiceStandard};
+pub use invoice_matching::{
+    GrnItemLine, InvoiceMatchingEngine, MatchVariance, OcrInvoiceLine, PoItemRef,
+    ThreeWayMatchResult,
+};
 pub use landed_cost::distribute_landed_cost;
 pub use metered::{MeteredRatingEngine, RatingModel, UsageEvent};
 pub use pricing::{PricingEngine, PricingRule};
 pub use sanctions::{SanctionEntry, SanctionsScreener};
 pub use taxes::{TaxEngine, TaxLineResult, TaxRow, TaxScheduleResult, TaxType};
+pub use woocommerce_ingest::{
+    IngestedItem, IngestedSalesInvoice, MigrationSummary, WooCustomer, WooMigrationEngine,
+    WooOrder, WooOrderLineItem, WooProduct,
+};
 pub use zatca::ZatcaPhase2Engine;
 
 #[cfg(test)]

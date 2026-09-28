@@ -91,10 +91,7 @@ impl AcmeGateway {
     }
 
     /// Simulates dynamic ACME challenge issuance & certificate caching in <4000ms.
-    pub async fn issue_and_cache_certificate(
-        &self,
-        domain: &str,
-    ) -> Result<String, TenantError> {
+    pub async fn issue_and_cache_certificate(&self, domain: &str) -> Result<String, TenantError> {
         let domain_norm = domain.to_lowercase();
         if self.resolve_domain(&domain_norm).await.is_none() {
             return Err(TenantError::AuthenticationFailed(format!(
@@ -103,7 +100,10 @@ impl AcmeGateway {
             )));
         }
 
-        let cert = format!("---BEGIN CERTIFICATE---\nDOMAIN:{}\n---END CERTIFICATE---", domain_norm);
+        let cert = format!(
+            "---BEGIN CERTIFICATE---\nDOMAIN:{}\n---END CERTIFICATE---",
+            domain_norm
+        );
         let mut cert_cache = self.cached_certificates.write().await;
         cert_cache.insert(domain_norm, cert.clone());
         Ok(cert)

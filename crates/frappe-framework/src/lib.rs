@@ -1,9 +1,14 @@
+pub mod ai_tools;
 pub mod bpmn;
 pub mod dmn;
 pub mod lifecycle;
 pub mod saga;
 pub mod scripting;
+pub mod wasmtime_sandbox;
 
+pub use ai_tools::{
+    ErpToolCall, ErpToolDispatcher, QuotationItemDto, ToolExecutionError, ToolExecutionResult,
+};
 pub use bpmn::{
     ActivityType, BpmnEngine, BpmnProcessDefinition, FlowNode, ProcessInstance, SequenceFlow,
 };
@@ -11,6 +16,7 @@ pub use dmn::{ConditionOp, DecisionRule, DecisionTable, HitPolicy};
 pub use lifecycle::{Document, DocumentController, DocumentError};
 pub use saga::{SagaAction, SagaCoordinator, SagaTransaction};
 pub use scripting::{LifecycleEvent, RhaiHookEngine, ScriptError};
+pub use wasmtime_sandbox::RealSandbox;
 
 #[cfg(test)]
 mod tests {

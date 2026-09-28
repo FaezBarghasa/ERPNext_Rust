@@ -99,7 +99,9 @@ impl ProfileRegistry {
     /// Retrieves a specific profile by ID.
     #[must_use]
     pub fn get_profile(id: &str) -> Option<VerticalProfile> {
-        Self::list_profiles().into_iter().find(|p| p.profile_id.as_str() == id)
+        Self::list_profiles()
+            .into_iter()
+            .find(|p| p.profile_id.as_str() == id)
     }
 }
 
@@ -114,7 +116,9 @@ mod tests {
 
         let restaurant = ProfileRegistry::get_profile("restaurant").unwrap();
         assert_eq!(restaurant.title, "The Rust Restaurant & Hospitality OS");
-        assert!(restaurant.initial_doctypes.contains(&"KitchenOrderTicket".into()));
+        assert!(restaurant
+            .initial_doctypes
+            .contains(&"KitchenOrderTicket".into()));
 
         let clinic = ProfileRegistry::get_profile("clinic").unwrap();
         assert!(clinic.initial_doctypes.contains(&"HipaaAuditLog".into()));

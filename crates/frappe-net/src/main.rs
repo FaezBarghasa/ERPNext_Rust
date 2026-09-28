@@ -19,7 +19,10 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             };
 
             if let Some(acme_domain) = &args.acme_domain {
-                println!("🔒 Automated In-Process ACME TLS enabled for domain: {}", acme_domain);
+                println!(
+                    "🔒 Automated In-Process ACME TLS enabled for domain: {}",
+                    acme_domain
+                );
             }
 
             println!("⚡ Actix-web server binding to http://{}", args.bind);

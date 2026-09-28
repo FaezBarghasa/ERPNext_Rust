@@ -15,7 +15,9 @@ use thiserror::Error;
 pub enum CheckoutError {
     #[error("Cart is empty")]
     EmptyCart,
-    #[error("Insufficient stock for item {item_code}: requested {requested}, available {available}")]
+    #[error(
+        "Insufficient stock for item {item_code}: requested {requested}, available {available}"
+    )]
     InsufficientStock {
         item_code: CompactString,
         requested: Decimal,

@@ -6,7 +6,11 @@ use clap::{Args, Parser, Subcommand};
 
 /// Planetary-scale pure-Rust ERP, CMS, and Digital Commerce OS runtime.
 #[derive(Parser, Debug)]
-#[command(name = "rustnext", version, about = "High-performance Frappe/ERPNext engine in pure Rust")]
+#[command(
+    name = "rustnext",
+    version,
+    about = "High-performance Frappe/ERPNext engine in pure Rust"
+)]
 pub struct Cli {
     #[command(subcommand)]
     pub command: Commands,

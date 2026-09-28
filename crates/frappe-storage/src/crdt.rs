@@ -193,6 +193,7 @@ impl OfflineOutboxManager {
     }
 
     /// Appends a new mutation to the offline replication queue.
+    #[allow(clippy::too_many_arguments)]
     pub fn enqueue_mutation(
         &mut self,
         tenant_id: impl Into<CompactString>,
@@ -206,7 +207,12 @@ impl OfflineOutboxManager {
         clock.increment(node_id);
         let doc_name_str: CompactString = doc_name.into();
         let entry = SyncQueueEntry {
-            sync_id: format!("sync_{}_{}", doc_name_str.as_str(), Utc::now().timestamp_millis()).into(),
+            sync_id: format!(
+                "sync_{}_{}",
+                doc_name_str.as_str(),
+                Utc::now().timestamp_millis()
+            )
+            .into(),
             tenant_id: tenant_id.into(),
             doctype: doctype.into(),
             doc_name: doc_name_str,
@@ -222,7 +228,11 @@ impl OfflineOutboxManager {
 
     /// Drains unsynced transactions for cloud WebSocket synchronization.
     pub fn get_pending_sync(&self) -> Vec<SyncQueueEntry> {
-        self.queue.iter().filter(|e| !e.is_synced).cloned().collect()
+        self.queue
+            .iter()
+            .filter(|e| !e.is_synced)
+            .cloned()
+            .collect()
     }
 
     /// Marks entries as acknowledged by the central SurrealDB cluster.

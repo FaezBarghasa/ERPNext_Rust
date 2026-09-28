@@ -225,14 +225,8 @@ mod tests {
         let decoded: DynamicDocument = serde_json::from_str(&json).unwrap();
 
         assert_eq!(decoded.doctype, doc.doctype);
-        assert_eq!(
-            decoded.get_str("company_name"),
-            Some("Apex Solutions")
-        );
-        assert_eq!(
-            decoded.get_currency("credit_limit"),
-            Some(dec!(50000.00))
-        );
+        assert_eq!(decoded.get_str("company_name"), Some("Apex Solutions"));
+        assert_eq!(decoded.get_currency("credit_limit"), Some(dec!(50000.00)));
     }
 
     #[test]
@@ -245,7 +239,11 @@ mod tests {
 
         let ddl = SurrealDdlGenerator::generate_table_ddl("tab_sales_invoice", &fields);
         assert!(ddl.contains("DEFINE TABLE tab_sales_invoice SCHEMAFULL;"));
-        assert!(ddl.contains("DEFINE FIELD grand_total ON TABLE tab_sales_invoice TYPE decimal ASSERT $value >= 0;"));
-        assert!(ddl.contains("DEFINE FIELD customer ON TABLE tab_sales_invoice ASSERT $value != NONE;"));
+        assert!(ddl.contains(
+            "DEFINE FIELD grand_total ON TABLE tab_sales_invoice TYPE decimal ASSERT $value >= 0;"
+        ));
+        assert!(
+            ddl.contains("DEFINE FIELD customer ON TABLE tab_sales_invoice ASSERT $value != NONE;")
+        );
     }
 }

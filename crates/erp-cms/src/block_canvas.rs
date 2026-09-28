@@ -34,9 +34,7 @@ pub enum PageBlock {
         columns: u8,
     },
     /// Pure Markdown content block.
-    Markdown {
-        source: CompactString,
-    },
+    Markdown { source: CompactString },
     /// Live digital commerce product showcase block.
     ProductShowcase {
         category_id: CompactString,
@@ -107,7 +105,10 @@ impl SsrEngine {
                 image_url,
             } => {
                 let img_tag = match image_url {
-                    Some(url) => format!("<img src=\"{}\" alt=\"Hero\" class=\"hero-img\">", html_escape(url)),
+                    Some(url) => format!(
+                        "<img src=\"{}\" alt=\"Hero\" class=\"hero-img\">",
+                        html_escape(url)
+                    ),
                     None => String::new(),
                 };
 
@@ -142,10 +143,7 @@ impl SsrEngine {
                     html_escape(source)
                 );
             }
-            PageBlock::ProductShowcase {
-                category_id,
-                limit,
-            } => {
+            PageBlock::ProductShowcase { category_id, limit } => {
                 let _ = write!(
                     buffer,
                     "<section class=\"block-product-showcase\" data-category=\"{}\" data-limit=\"{}\"><div class=\"showcase-grid\"><!-- Atomic Live Commerce Catalog --></div></section>",
