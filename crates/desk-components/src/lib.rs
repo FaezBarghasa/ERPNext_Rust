@@ -1,4 +1,5 @@
 pub mod cpq_view;
+pub mod desk_shell;
 pub mod forms;
 pub mod gantt;
 pub mod grid;
@@ -9,6 +10,8 @@ pub mod spc_view;
 pub mod video_hud;
 pub mod views;
 pub mod wms_view;
+
+pub use desk_shell::{WorkspaceModule, get_desk_workspaces, render_desk_shell_html};
 
 pub use cpq_view::{CpqConfiguratorModel, OptionCard};
 pub use forms::{DynamicFormModel, FormFieldWidget, eval_depends_on};

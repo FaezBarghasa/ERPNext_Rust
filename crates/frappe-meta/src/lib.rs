@@ -1,4 +1,5 @@
 pub mod ai_schema;
+pub mod auth;
 pub mod class_inheritance;
 pub mod dynamic_doc;
 pub mod lazy_doc;
@@ -10,6 +11,11 @@ pub mod role_tools;
 pub mod schema;
 pub mod schema_compiler;
 pub mod tree;
+
+pub use auth::{
+    AuthError, DEFAULT_SESSION_EXPIRY_SECS, SessionClaims, hash_password, issue_token,
+    verify_password, verify_token,
+};
 
 pub use ai_schema::{AiSchemaSynthesizer, SynthesisResult, SynthesizedEntity, SynthesizedField};
 pub use class_inheritance::ClassInheritanceRegistry;

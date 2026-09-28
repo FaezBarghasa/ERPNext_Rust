@@ -1,8 +1,16 @@
+//! Generic REST Resource Handlers with RBAC Guarding (`frappe-net::routes`).
+
+use crate::middleware::auth::SecurityContext;
 use crate::tenant::{ConnectionPoolManager, TenantId};
 use actix_web::{HttpMessage, HttpRequest, HttpResponse, Responder, web};
 use frappe_framework::{Document, DocumentController};
-use frappe_meta::DocTypeSchema;
+use frappe_meta::{DocTypeSchema, Permission, check_permission};
+use regex::Regex;
 use serde::Deserialize;
+use std::sync::LazyLock;
+
+static SAFE_ID_REGEX: LazyLock<Regex> =
+    LazyLock::new(|| Regex::new(r"^[a-zA-Z0-9_-]+$").expect("Regex compile"));
 
 #[derive(Debug, Deserialize)]
 pub struct ListQuery {
@@ -24,12 +32,24 @@ pub async fn list_resource(
         None => return HttpResponse::BadRequest().body("Missing tenant context"),
     };
 
+    if let Some(ctx) = req.extensions().get::<SecurityContext>() {
+        if !check_permission(&ctx.claims.roles, &[], Permission::Read, 0) {
+            return HttpResponse::Forbidden().json(serde_json::json!({
+                "error": "Permission Denied: insufficient read privileges"
+            }));
+        }
+    }
+
     let client = match pool_mgr.get_or_initialize_client(&tenant_id).await {
         Ok(c) => c,
         Err(e) => return HttpResponse::InternalServerError().body(e.to_string()),
     };
 
     let table = doctype.to_lowercase().replace(' ', "_");
+    if !SAFE_ID_REGEX.is_match(&table) {
+        return HttpResponse::BadRequest().body("Invalid doctype identifier");
+    }
+
     let limit = query.limit.unwrap_or(20);
     let offset = query.offset.unwrap_or(0);
 
@@ -55,12 +75,24 @@ pub async fn get_resource(
         None => return HttpResponse::BadRequest().body("Missing tenant context"),
     };
 
+    if let Some(ctx) = req.extensions().get::<SecurityContext>() {
+        if !check_permission(&ctx.claims.roles, &[], Permission::Read, 0) {
+            return HttpResponse::Forbidden().json(serde_json::json!({
+                "error": "Permission Denied: insufficient read privileges"
+            }));
+        }
+    }
+
     let client = match pool_mgr.get_or_initialize_client(&tenant_id).await {
         Ok(c) => c,
         Err(e) => return HttpResponse::InternalServerError().body(e.to_string()),
     };
 
     let table = doctype.to_lowercase().replace(' ', "_");
+    if !SAFE_ID_REGEX.is_match(&table) || !SAFE_ID_REGEX.is_match(&id) {
+        return HttpResponse::BadRequest().body("Invalid identifier");
+    }
+
     let sql = format!("SELECT * FROM {table}:{id};");
     match client.query(&sql).await {
         Ok(mut res) => {
@@ -86,6 +118,14 @@ pub async fn create_resource(
         Some(t) => t.clone(),
         None => return HttpResponse::BadRequest().body("Missing tenant context"),
     };
+
+    if let Some(ctx) = req.extensions().get::<SecurityContext>() {
+        if !check_permission(&ctx.claims.roles, &[], Permission::Create, 0) {
+            return HttpResponse::Forbidden().json(serde_json::json!({
+                "error": "Permission Denied: insufficient create privileges"
+            }));
+        }
+    }
 
     let client = match pool_mgr.get_or_initialize_client(&tenant_id).await {
         Ok(c) => c,
@@ -121,6 +161,10 @@ pub async fn create_resource(
     }
 
     let table = doctype.to_lowercase().replace(' ', "_");
+    if !SAFE_ID_REGEX.is_match(&table) {
+        return HttpResponse::BadRequest().body("Invalid doctype identifier");
+    }
+
     let sql = format!("CREATE {table} CONTENT $doc;");
     match client.query(&sql).bind(("doc", doc.data)).await {
         Ok(mut res) => {
@@ -143,12 +187,24 @@ pub async fn delete_resource(
         None => return HttpResponse::BadRequest().body("Missing tenant context"),
     };
 
+    if let Some(ctx) = req.extensions().get::<SecurityContext>() {
+        if !check_permission(&ctx.claims.roles, &[], Permission::Delete, 0) {
+            return HttpResponse::Forbidden().json(serde_json::json!({
+                "error": "Permission Denied: insufficient delete privileges"
+            }));
+        }
+    }
+
     let client = match pool_mgr.get_or_initialize_client(&tenant_id).await {
         Ok(c) => c,
         Err(e) => return HttpResponse::InternalServerError().body(e.to_string()),
     };
 
     let table = doctype.to_lowercase().replace(' ', "_");
+    if !SAFE_ID_REGEX.is_match(&table) || !SAFE_ID_REGEX.is_match(&id) {
+        return HttpResponse::BadRequest().body("Invalid identifier");
+    }
+
     let sql = format!("DELETE {table}:{id};");
     match client.query(&sql).await {
         Ok(_) => HttpResponse::NoContent().finish(),

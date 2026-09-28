@@ -1,6 +1,7 @@
 pub mod cache;
 pub mod cli;
 pub mod live;
+pub mod middleware;
 pub mod queue;
 pub mod rate_limit;
 pub mod routes;

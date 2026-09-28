@@ -10,13 +10,30 @@ use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::sync::Arc;
 use std::time::{Duration, Instant};
-use surrealdb::{Surreal, engine::local::Mem};
+use surrealdb::{Surreal, engine::local::{Mem, SurrealKv}};
 use thiserror::Error;
 use tokio::sync::RwLock;
 
 use actix_web::FromRequest;
 use actix_web::HttpRequest;
 use actix_web::dev::Payload;
+
+/// Storage engine backend for tenant database instances.
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
+pub enum DatabaseBackend {
+    /// In-memory storage (ephemeral, zero-disk).
+    Memory,
+    /// Persistent on-disk key-value storage engine (`SurrealKV`).
+    SurrealKv { base_path: String },
+}
+
+impl Default for DatabaseBackend {
+    fn default() -> Self {
+        Self::SurrealKv {
+            base_path: "./data/tenants".to_string(),
+        }
+    }
+}
 
 /// Unique Tenant Identifier.
 #[derive(Clone, Debug, PartialEq, Eq, Hash, Serialize, Deserialize)]
@@ -167,6 +184,7 @@ type TenantPoolMap = Arc<RwLock<HashMap<TenantId, TenantPoolEntry>>>;
 pub struct ConnectionPoolManager {
     pools: TenantPoolMap,
     inactivity_threshold: Duration,
+    backend: DatabaseBackend,
 }
 
 impl Default for ConnectionPoolManager {
@@ -176,12 +194,33 @@ impl Default for ConnectionPoolManager {
 }
 
 impl ConnectionPoolManager {
-    /// Creates a new connection pool manager.
+    /// Creates a new connection pool manager with the default persistent SurrealKV backend.
     #[must_use]
     pub fn new(inactivity_threshold: Duration) -> Self {
         Self {
             pools: Arc::new(RwLock::new(HashMap::new())),
             inactivity_threshold,
+            backend: DatabaseBackend::default(),
+        }
+    }
+
+    /// Creates an in-memory connection pool manager for tests and ephemeral workspaces.
+    #[must_use]
+    pub fn in_memory(inactivity_threshold: Duration) -> Self {
+        Self {
+            pools: Arc::new(RwLock::new(HashMap::new())),
+            inactivity_threshold,
+            backend: DatabaseBackend::Memory,
+        }
+    }
+
+    /// Creates a connection pool manager with a customized database backend.
+    #[must_use]
+    pub fn with_backend(inactivity_threshold: Duration, backend: DatabaseBackend) -> Self {
+        Self {
+            pools: Arc::new(RwLock::new(HashMap::new())),
+            inactivity_threshold,
+            backend,
         }
     }
 
@@ -204,9 +243,21 @@ impl ConnectionPoolManager {
             return Ok(client.clone());
         }
 
-        let db = Surreal::new::<Mem>(())
-            .await
-            .map_err(|e| TenantError::ConnectionFailed(e.to_string()))?;
+        let db = match &self.backend {
+            DatabaseBackend::Memory => {
+                Surreal::new::<Mem>(())
+                    .await
+                    .map_err(|e| TenantError::ConnectionFailed(e.to_string()))?
+            }
+            DatabaseBackend::SurrealKv { base_path } => {
+                let tenant_dir = format!("{}/{}", base_path, tenant.0);
+                std::fs::create_dir_all(&tenant_dir)
+                    .map_err(|e| TenantError::ConnectionFailed(format!("Failed to create tenant data dir: {e}")))?;
+                Surreal::new::<SurrealKv>(&tenant_dir)
+                    .await
+                    .map_err(|e| TenantError::ConnectionFailed(e.to_string()))?
+            }
+        };
 
         let ns = format!("tenant_{}", tenant.0.replace('-', "_"));
         db.use_ns(&ns)
@@ -423,7 +474,7 @@ mod tenant_unit_tests {
 
     #[tokio::test]
     async fn test_scoped_session_isolation() {
-        let pool = ConnectionPoolManager::default();
+        let pool = ConnectionPoolManager::in_memory(Duration::from_secs(300));
         let t1 = TenantId("alpha-shop".into());
         let t2 = TenantId("beta-clinic".into());
 
@@ -438,5 +489,20 @@ mod tenant_unit_tests {
         assert!(micro.is_micro_mode);
         assert_eq!(micro.max_write_buffer_mb, 8);
         assert_eq!(micro.max_read_cache_mb, 16);
+    }
+
+    #[tokio::test]
+    async fn test_surrealkv_persistent_storage() {
+        let temp_dir = format!("./target/test_data_tenants_{}", std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH).unwrap().as_nanos());
+        let pool = ConnectionPoolManager::with_backend(
+            Duration::from_secs(300),
+            DatabaseBackend::SurrealKv { base_path: temp_dir.clone() },
+        );
+        let t1 = TenantId("persistent-tenant".into());
+        let s1 = pool.get_or_initialize_client(&t1).await.unwrap();
+        assert!(s1.query("INFO FOR DB;").await.is_ok());
+
+        // Cleanup test directory
+        let _ = std::fs::remove_dir_all(&temp_dir);
     }
 }
