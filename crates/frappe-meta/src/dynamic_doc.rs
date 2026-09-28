@@ -285,11 +285,8 @@ mod tests {
             "RELATE sales_order:SO_001->has_child->sales_order_item:SOI_001 SET order_idx = 0;"
         );
 
-        let query_sql = SurrealDdlGenerator::generate_child_query(
-            "sales_order",
-            "SO_001",
-            "sales_order_item",
-        );
+        let query_sql =
+            SurrealDdlGenerator::generate_child_query("sales_order", "SO_001", "sales_order_item");
         assert_eq!(
             query_sql,
             "SELECT *, ->has_child->(sales_order_item AS items) FROM sales_order:SO_001;"
