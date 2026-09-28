@@ -376,8 +376,11 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             match target {
                 "deb" | "debian" => {
                     let arch = args.get(4).map(|s| s.as_str()).unwrap_or("amd64");
-                    let scaffold = UniversalDistributionBuilder::scaffold_debian_package(version, arch);
-                    println!("📦 Scaffolding Debian/Ubuntu .deb package for ERPNext v{version} ({arch})...");
+                    let scaffold =
+                        UniversalDistributionBuilder::scaffold_debian_package(version, arch);
+                    println!(
+                        "📦 Scaffolding Debian/Ubuntu .deb package for ERPNext v{version} ({arch})..."
+                    );
                     println!("  - Target: {}", scaffold.package_name);
                     println!("  - Systemd Service: /lib/systemd/system/erpnext.service");
                     println!("  - Desktop Entry: /usr/share/applications/erpnext.desktop");
@@ -385,20 +388,26 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                 }
                 "windows" | "exe" => {
                     let scaffold = UniversalDistributionBuilder::scaffold_windows_package(version);
-                    println!("📦 Scaffolding Windows Inno Setup installer for ERPNext v{version}...");
+                    println!(
+                        "📦 Scaffolding Windows Inno Setup installer for ERPNext v{version}..."
+                    );
                     println!("  - Output Executable: {}", scaffold.package_name);
                     println!("  - Windows Service: ERPNextService (Automatic)");
                     println!("✅ Inno Setup script generated successfully.");
                 }
                 "macos" | "dmg" => {
                     let scaffold = UniversalDistributionBuilder::scaffold_macos_package(version);
-                    println!("📦 Scaffolding macOS Universal Bundle & DMG for ERPNext v{version}...");
+                    println!(
+                        "📦 Scaffolding macOS Universal Bundle & DMG for ERPNext v{version}..."
+                    );
                     println!("  - Target DMG: {}", scaffold.package_name);
                     println!("  - LaunchDaemon: /Library/LaunchDaemons/com.erpnext.server.plist");
                     println!("✅ macOS distribution script generated successfully.");
                 }
                 _ => {
-                    println!("Usage: rbench package <deb [version] [arch] | windows [version] | macos [version]>");
+                    println!(
+                        "Usage: rbench package <deb [version] [arch] | windows [version] | macos [version]>"
+                    );
                 }
             }
         }
@@ -414,10 +423,14 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                     println!("✅ Service registered successfully.");
                 }
                 "status" => {
-                    println!("ERPNext Daemon: RUNNING (PID 10842, 0.0.0.0:8000, 16 active worker threads)");
+                    println!(
+                        "ERPNext Daemon: RUNNING (PID 10842, 0.0.0.0:8000, 16 active worker threads)"
+                    );
                 }
                 _ => {
-                    println!("Usage: rbench service <install [--systemd|--windows|--launchd] | status>");
+                    println!(
+                        "Usage: rbench service <install [--systemd|--windows|--launchd] | status>"
+                    );
                 }
             }
         }

@@ -72,8 +72,7 @@ Categories=Office;Finance;Accounting;
 StartupNotify=true
 "#;
 
-        let postinst_script = format!(
-            r#"#!/bin/sh
+        let postinst_script = r#"#!/bin/sh
 set -e
 # Create system user & directories
 if ! id -u erpnext >/dev/null 2>&1; then
@@ -89,7 +88,7 @@ if [ -d /run/systemd/system ]; then
 fi
 exit 0
 "#
-        );
+        .to_string();
 
         let installer_script = format!(
             r#"Package: erpnext
@@ -242,8 +241,15 @@ mod tests {
     fn test_debian_package_scaffolding() {
         let pkg = UniversalDistributionBuilder::scaffold_debian_package("0.2.0", "amd64");
         assert_eq!(pkg.package_name, "erpnext_0.2.0_amd64.deb");
-        assert!(pkg.service_definition.contains("ExecStart=/usr/bin/erpnext --server"));
-        assert!(pkg.desktop_launcher_entry.unwrap().contains("Categories=Office;Finance;Accounting;"));
+        assert!(
+            pkg.service_definition
+                .contains("ExecStart=/usr/bin/erpnext --server")
+        );
+        assert!(
+            pkg.desktop_launcher_entry
+                .unwrap()
+                .contains("Categories=Office;Finance;Accounting;")
+        );
     }
 
     #[test]
@@ -251,14 +257,20 @@ mod tests {
         let pkg = UniversalDistributionBuilder::scaffold_windows_package("0.2.0");
         assert_eq!(pkg.package_name, "ERPNext_Setup_0.2.0.exe");
         assert!(pkg.service_definition.contains("<id>ERPNextService</id>"));
-        assert!(pkg.installer_script.contains("ArchitecturesInstallIn64BitMode=x64"));
+        assert!(
+            pkg.installer_script
+                .contains("ArchitecturesInstallIn64BitMode=x64")
+        );
     }
 
     #[test]
     fn test_macos_package_scaffolding() {
         let pkg = UniversalDistributionBuilder::scaffold_macos_package("0.2.0");
         assert_eq!(pkg.package_name, "ERPNext_0.2.0_Universal.dmg");
-        assert!(pkg.service_definition.contains("<string>com.erpnext.server</string>"));
+        assert!(
+            pkg.service_definition
+                .contains("<string>com.erpnext.server</string>")
+        );
         assert!(pkg.installer_script.contains("lipo -create"));
     }
 }
