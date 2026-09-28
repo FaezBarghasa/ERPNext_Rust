@@ -1588,6 +1588,7 @@ dependencies = [
  "chrono",
  "frappe-framework",
  "frappe-meta",
+ "rust_decimal",
  "serde",
  "serde_json",
  "thiserror",

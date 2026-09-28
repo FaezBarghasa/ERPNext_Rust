@@ -1,10 +1,15 @@
 pub mod gameplan;
 pub mod sla;
+pub mod warranty;
 
 pub use gameplan::{TaskStatus, WorkspaceManager, WorkspaceTask};
 pub use sla::{
     SlaEscalationEvent, SlaWatchdog, SupportAgent, SupportError, SupportTicket, TicketPriority,
     TicketRouter, TicketStatus,
+};
+pub use warranty::{
+    MaintenanceChecklistItem, MaintenancePeriodicity, MaintenanceSchedule, MaintenanceVisit,
+    ScheduledMaintenanceEvent, WarrantyClaim, WarrantyError, WarrantyStatus,
 };
 
 #[cfg(test)]
