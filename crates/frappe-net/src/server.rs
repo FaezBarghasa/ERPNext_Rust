@@ -11,6 +11,27 @@ async fn health_check() -> impl Responder {
     }))
 }
 
+async fn storefront_handler() -> impl Responder {
+    HttpResponse::Ok()
+        .content_type("text/html; charset=utf-8")
+        .body(erp_cms::luxury_storefront::render_luxury_storefront_html())
+}
+
+async fn storefront_products_handler() -> impl Responder {
+    HttpResponse::Ok().json(erp_cms::luxury_storefront::get_luxury_catalog())
+}
+
+async fn storefront_checkout_handler(
+    payload: web::Json<erp_cms::CustomerCheckoutRequest>,
+) -> impl Responder {
+    match erp_cms::AtomicCheckoutEngine::process_checkout(&payload.into_inner()) {
+        Ok(result) => HttpResponse::Ok().json(result),
+        Err(err) => HttpResponse::BadRequest().json(serde_json::json!({
+            "error": err.to_string(),
+        })),
+    }
+}
+
 async fn acme_challenge_handler(
     path: web::Path<String>,
     gateway: web::Data<AcmeGateway>,
@@ -31,8 +52,18 @@ pub fn configure_app(
 ) {
     cfg.app_data(web::Data::new(pool_mgr))
         .app_data(web::PayloadConfig::new(topology.max_payload_bytes))
+        .route("/", web::get().to(storefront_handler))
+        .route("/storefront", web::get().to(storefront_handler))
         .route("/health", web::get().to(health_check))
         .route("/api/v1/live", web::get().to(live_ws_handler))
+        .route(
+            "/api/v1/storefront/products",
+            web::get().to(storefront_products_handler),
+        )
+        .route(
+            "/api/v1/storefront/checkout",
+            web::post().to(storefront_checkout_handler),
+        )
         .service(
             web::scope("/api/v1/resource")
                 .wrap(TenantResolver)

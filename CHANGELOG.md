@@ -34,10 +34,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - VDA 5050 AMR robot fleet dispatch (`Vda5050FleetCoordinator`) and GS1 SSCC-18 handling unit check-digit verification.
   - Linear Referencing Systems (`LrsEngine`), Weibull $(\beta, \eta)$ Remaining Useful Life (`WeibullReliabilityEngine`), and cryptographic Permit-to-Work (PTW) / Lockout-Tagout (LOTO) safety interlocks.
 
-- **Epoch V: Visual Block Canvas & Compiled SSR Engine**
+- **Epoch V: Visual Block Canvas, Compiled SSR & 3D WebGL Commerce**
   - Declarative `PageBlock` AST (Hero, FeaturesGrid, ProductShowcase, Testimonial).
   - Zero-allocation compiled Server-Side HTML Rendering engine (`SsrEngine`) delivering $<10\text{ms}$ TTFB.
   - Atomic multi-tier e-commerce checkout transaction (`AtomicCheckoutEngine`) generating balanced GL entries.
+  - Universal Multi-Template Work-Type Engine (`ThemeManifest`) and zero-downtime layout slot binding.
+  - LuxeGen Haute Horlogerie 3D WebGL procedural configurator (Three.js PBR + GSAP ScrollTrigger kinetics) with dynamic metallurgy swapping and atomic checkout integration.
+  - HTTP endpoints in `frappe-net`: `GET /` & `GET /storefront`, `GET /api/v1/storefront/products`, and `POST /api/v1/storefront/checkout`.
 
 - **Epoch VI: WASI 0.2 Sandbox & Resource Isolation**
   - Fault-isolated WASI 0.2 runtime (`RealSandbox`) with deterministic instruction fuel metering ($1,000,000$ ops default limit) and 32MB linear memory isolation.
@@ -58,7 +61,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - **Epoch X: High-Density Agency Domain Map & Vertical Profiles**
   - Direct streaming WooCommerce migration ingestion engine (`WooMigrationEngine`).
-  - Pre-configured vertical profile registry (`ProfileRegistry` for Clinic, Restaurant, E-Commerce, and Agency).
+  - Curated 12-Archetype "Business-in-a-Box" Universal Work-Type Template Catalog: Haute Horlogerie & Luxury, Omnichannel Retail Superstore, B2B Industrial Manufacturing, Developer SaaS Platform, EPCM Megaprojects, Gastronomy & Ghost Kitchens, Healthcare & Telehealth, SVoD Media Streaming, Real Estate & Linear AEC, Higher Education LMS, Non-Profit Foundations, and Offline-First POS Kiosks.
+  - Dynamic Multi-Tenant Theme Compiler & zero-downtime hot-swapping engine (`tab_theme` with sub-50µs cache invalidation).
+  - Pre-configured vertical profile registry (`ProfileRegistry`).
   - Comprehensive 10-Epoch master verification integration suite (`tests/charter_all_epochs_test.rs`).
   - Unified workspace dependencies (`[workspace.dependencies]`) and upgraded workspace resolver to `resolver = "3"` (Rust 2024 Edition standard).
 

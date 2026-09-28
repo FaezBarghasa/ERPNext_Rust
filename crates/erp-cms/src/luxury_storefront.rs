@@ -90,13 +90,16 @@ pub fn get_luxury_catalog() -> Vec<LuxuryProduct> {
 }
 
 /// Raw embedded CSS for the luxury storefront.
-pub const LUXURY_STOREFRONT_CSS: &str = include_str!("../../../frontend/templates/luxegen-storefront/style.css");
+pub const LUXURY_STOREFRONT_CSS: &str =
+    include_str!("../../../frontend/templates/luxegen-storefront/style.css");
 
 /// Raw embedded JavaScript application engine for the luxury storefront.
-pub const LUXURY_STOREFRONT_JS: &str = include_str!("../../../frontend/templates/luxegen-storefront/app.js");
+pub const LUXURY_STOREFRONT_JS: &str =
+    include_str!("../../../frontend/templates/luxegen-storefront/app.js");
 
 /// Raw embedded base HTML template for the luxury storefront.
-pub const LUXURY_STOREFRONT_HTML: &str = include_str!("../../../frontend/templates/luxegen-storefront/index.html");
+pub const LUXURY_STOREFRONT_HTML: &str =
+    include_str!("../../../frontend/templates/luxegen-storefront/index.html");
 
 /// Compiles a standalone, zero-IPC self-contained HTML document with inlined CSS & JS.
 #[must_use]

@@ -20,6 +20,7 @@ tokio = { workspace = true }
 chrono = { workspace = true }
 surrealdb = { workspace = true }
 clap = { workspace = true }
+erp-cms = { workspace = true }
 
 [dev-dependencies]
 frappe-meta = { workspace = true }

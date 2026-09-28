@@ -6,9 +6,11 @@ This document establishes the definitive, multi-stage engineering roadmap to evo
 
 The platform eliminates interpreted runtimes, multi-tier daemon sprawl, and foreign database bridges. The entire operational architecture is strictly constructed on an uncompromised, three-pillar foundation:
 
-1. **Web & Network Substrate — [Actix-web](https://actix.rs):** An actor-driven, asynchronous HTTP/1.1, HTTP/2, HTTP/3, and WebSocket networking engine built on the Tokio reactor. Actix-web manages multi-tenant request routing, zero-copy payload streaming, in-process reverse proxying, background actor mailboxes, and server-side HTML template rendering with zero GIL overhead.
-2. **Persistence & Data Core — [SurrealDB](https://surrealdb.com):** A native, multi-model database engine embedded or clustered natively in Rust. SurrealDB unifies document structures, native graph edges (`->`), ACID multi-table transactions, vector embeddings, and real-time push events (`LIVE SELECT`) under a single declarative engine with cryptographic tenant namespace isolation.
-3. **Reactive Universal Client — [Dioxus](https://dioxuslabs.com):** A pure-Rust, signal-driven client framework compiling directly to WebAssembly for browser desks, native desktop binaries via Wry/TAO (macOS, Linux, Windows), and mobile/POS targets, eliminating JavaScript frameworks and external browser automation engines.
+1. **Web & Network Substrate — Actix-web:** An actor-driven, asynchronous HTTP/1.1, HTTP/2, HTTP/3, and WebSocket networking engine built on the Tokio reactor. Actix-web manages multi-tenant request routing, zero-copy payload streaming, in-process reverse proxying, background actor mailboxes, and server-side HTML template rendering with zero GIL overhead.
+
+2. **Persistence & Data Core — SurrealDB:** A native, multi-model database engine embedded or clustered natively in Rust. SurrealDB unifies document structures, native graph edges (`->`), ACID multi-table transactions, vector embeddings, and real-time push events (`LIVE SELECT`) under a single declarative engine with cryptographic tenant namespace isolation.
+
+3. **Reactive Universal Client — Dioxus:** A pure-Rust, signal-driven client framework compiling directly to WebAssembly for browser desks, native desktop binaries via Wry/TAO (macOS, Linux, Windows), and mobile/POS targets, eliminating JavaScript frameworks and external browser automation engines.
 
 ```
 +───────────────────────────────────────────────────────────────────────────────────────────────────+
@@ -25,6 +27,7 @@ The platform eliminates interpreted runtimes, multi-tier daemon sprawl, and fore
 |  ├── Asynchronous Actor Arbiter & Persistent Queue Bus (`actix::Actor` + SurrealDB Backing)       |
 |  ├── Pure-Rust SSR Block Engine (Askama / Tera compiled templates in Actix handlers: $< 10ms)     |
 |  ├── Crash-Proof Extension Sandbox (Wasmtime WASI 0.2: Fuel & Linear Memory Bounds)              |
+|  ├── Multi-Template Work-Type Engine (Dynamic slot binding & theme compiler)                      |
 |  └── Data-Parallel Processing Engine: Rayon Worker Pools (SIMD FIFO, EVM, Monte Carlo, MILP)      |
 |                                     │                                                             |
 |                                     ▼                                                             |
@@ -41,6 +44,7 @@ The platform eliminates interpreted runtimes, multi-tier daemon sprawl, and fore
 |  ├── Viewport-Virtualized DOM Grid (1,000,000+ Records at 60 FPS)                                 |
 |  ├── Dynamic AST Form Interpreter (`depends_on` Reactive Expression Evaluator)                    |
 |  ├── Local-First Offline Edge Replica (Dioxus Desktop + Embedded SurrealDB CRDT Convergence)     |
+|  ├── 3D WebGL Substrate & Kinetic Choreography Engine (Three.js + GSAP WebGL Pipelines)           |
 |  └── In-Process Typst PDF/A Document Compiler (Zero Headless Browser Dependencies)               |
 +───────────────────────────────────────────────────────────────────────────────────────────────────+
 ```
@@ -60,7 +64,9 @@ The platform eliminates interpreted runtimes, multi-tier daemon sprawl, and fore
   4. Build against `x86_64-unknown-linux-musl` and `aarch64-unknown-linux-musl`.
 
 * **Verification Invariant:**
-  $$\text{Binary Footprint} \le 35\,\text{MB}, \quad \text{Cold Boot Time to Port Ready} \le 45\,\text{ms}$$
+  $$
+  \text{Binary Footprint} \le 35\,\text{MB}, \quad \text{Cold Boot Time to Port Ready} \le 45\,\text{ms}
+  $$
 
 ### Milestone 1.2: The Sub-$64\,\text{MB}$ "Micro-Mode" Engine Topology
 
@@ -77,7 +83,9 @@ The platform eliminates interpreted runtimes, multi-tier daemon sprawl, and fore
   4. Configure Actix-web to run on a single-core Tokio runtime profile (`tokio::runtime::Builder::new_current_thread`) with aggressive thread yielding.
 
 * **Verification Invariant:**
-  $$\text{RSS}_{\text{idle}} \le 48\,\text{MB}, \quad \text{RSS}_{\text{load}(100\,\text{req/s})} \le 62\,\text{MB}, \quad \text{OOM Panics} \equiv 0$$
+  $$
+  \text{RSS}_{\text{idle}} \le 48\,\text{MB}, \quad \text{RSS}_{\text{load}(100\,\text{req/s})} \le 62\,\text{MB}, \quad \text{OOM Panics} \equiv 0
+  $$
 
 ### Milestone 1.3: In-Process Automated ACME Reverse Proxy
 
@@ -89,7 +97,9 @@ The platform eliminates interpreted runtimes, multi-tier daemon sprawl, and fore
   3. When an unknown domain arrives via SNI, query the SurrealDB tenant table `tab_domain_mapping`. If authorized, dynamically issue an ACME challenge request, persist the signed certificate into SurrealDB table `sys_ssl_certificate`, and cache it in memory.
 
 * **Verification Invariant:**
-  $$\forall d \in \text{AuthorizedDomains}, \quad \text{Handshake}(d) \xrightarrow{\text{ACME Negotiation}} \text{TLS Established} \quad \text{in } \le 4000\,\text{ms}$$
+  $$
+  \forall d \in \text{AuthorizedDomains}, \quad \text{Handshake}(d) \xrightarrow{\text{ACME Negotiation}} \text{TLS Established} \quad \text{in } \le 4000\,\text{ms}
+  $$
 
 ### Milestone 1.4: Scoped Session Pooling & Async Isolation
 
@@ -113,7 +123,9 @@ The platform eliminates interpreted runtimes, multi-tier daemon sprawl, and fore
      ```
 
 * **Verification Invariant:**
-  $$\forall (t_1, t_2) \text{ where } t_1 \neq t_2, \quad \text{Session}(t_1) \cap \text{Session}(t_2) \equiv \emptyset$$
+  $$
+  \forall (t_1, t_2) \text{ where } t_1 \neq t_2, \quad \text{Session}(t_1) \cap \text{Session}(t_2) \equiv \emptyset
+  $$
 
 ---
 
@@ -174,7 +186,9 @@ Permissions & Assertions     - CompactString Keys
   2. Implement accessor methods providing $O(1)$ lookups for small documents and fallback indexed binary searches for documents exceeding 16 fields.
 
 * **Verification Invariant:**
-  $$\text{Memory Overhead per Empty Document} \le 128\,\text{bytes}$$
+  $$
+  \text{Memory Overhead per Empty Document} \le 128\,\text{bytes}
+  $$
 
 ### Milestone 2.2: Dynamic Schema Compilation & Lock-Free Migration Engine
 
@@ -191,7 +205,9 @@ Permissions & Assertions     - CompactString Keys
   4. Generate differential migration statements (`DEFINE FIELD ...`, `REMOVE FIELD ...`) and commit them within an atomic SurrealDB transaction block (`BEGIN TRANSACTION ... COMMIT TRANSACTION`).
 
 * **Verification Invariant:**
-  $$\text{Schema Compilation Latency} \le 250\,\mu\text{s per DocType}, \quad \text{Schema Migration Lock Contention} \equiv 0$$
+  $$
+  \text{Schema Compilation Latency} \le 250\,\mu\text{s per DocType}, \quad \text{Schema Migration Lock Contention} \equiv 0
+  $$
 
 ### Milestone 2.3: Lock-Free Naming Series & Sequence Generators
 
@@ -203,10 +219,12 @@ Permissions & Assertions     - CompactString Keys
      ```surrealql
      UPDATE ONLY counter:tab_sales_invoice SET current_value += 1 RETURN current_value;
      ```
-  3. Support client-side batch pre-fetching of sequence intervals (e.g., reserving ranges $[1000..1050]$) to eliminate database round-trips in high-throughput retail scenarios.
+  3. Support client-side batch pre-fetching of sequence intervals to eliminate database round-trips in high-throughput retail scenarios.
 
 * **Verification Invariant:**
-  $$\text{Sequence Generation Throughput} \ge 250{,}000\,\text{identifiers/sec}$$
+  $$
+  \text{Sequence Generation Throughput} \ge 250{,}000\,\text{identifiers/sec}
+  $$
 
 ---
 
@@ -237,68 +255,62 @@ Permissions & Assertions     - CompactString Keys
 ### Milestone 3.1: Arbitrary-Precision Multi-Book General Ledger
 
 * **Objective:** Execute financial ledger postings across multiple independent financial accounting books with strict double-entry balancing.
-
 * **Implementation Mechanics:**
   1. Represent all financial quantities using 128-bit arbitrary-precision integers backed by `rust_decimal::Decimal`.
-  2. Implement multi-book posting pipelines in `crates/erp-accounting/src/multibook.rs`:
-     * Book 1: Local Statutory GAAP (Tax compliance, historical cost).
-     * Book 2: International Financial Reporting Standards (IFRS / ASC 842 Fair-Value adjustments).
-     * Book 3: Analytic Management Accounting (Cost center and project margin absorption).
+  2. Implement multi-book posting pipelines for Local Statutory GAAP, Group IFRS, and Analytic Management Accounting.
   3. Enforce the double-entry invariant before committing to SurrealDB table `tab_gl_entry`:
-     $$\left\vert{} \sum_{i=1}^n \text{Debit}_i - \sum_{i=1}^n \text{Credit}_i \right\vert{} < 10^{-18}$$
-
+     $$
+     \left\vert{} \sum_{i=1}^n \text{Debit}_i - \sum_{i=1}^n \text{Credit}_i \right\vert{} < 10^{-18}
+     $$
 * **Verification Invariant:**
-  $$\text{Drift across } 100{,}000{,}000 \text{ transactions} \equiv 0.000000000000000000\,\text{units}$$
+  $$
+  \text{Drift across } 100{,}000{,}000 \text{ transactions} \equiv 0.000000000000000000\,\text{units}
+  $$
 
 ### Milestone 3.2: SIMD-Vectorized Contiguous FIFO Inventory Valuation
 
-* **Objective:** Process inventory batch consumption and Cost of Goods Sold (COGS) calculations at memory bandwidth speeds, eliminating interpreted loop overhead.
-
+* **Objective:** Process inventory batch consumption and Cost of Goods Sold (COGS) calculations at memory bandwidth speeds.
 * **Implementation Mechanics:**
-  1. Store physical warehouse stock batches in contiguous, SIMD-aligned memory slices (`#[repr(C, align(64))]`):
-     ```rust
-     #[repr(C, align(64))]
-     #[derive(Clone, Copy, Debug)]
-     pub struct StockBatchLayer {
-         pub qty: Decimal,
-         pub unit_rate: Decimal,
-         pub timestamp_epoch_secs: u64,
-     }
-     ```
+  1. Store physical warehouse stock batches in contiguous, SIMD-aligned memory slices (`#[repr(C, align(64))]`).
   2. Implement parallel drain logic using Rayon to compute layer depletion across multi-warehouse locations simultaneously.
-  3. Persist transactions append-only to SurrealDB `tab_stock_ledger_entry`. Back-dated receipt adjustments recalculate downstream valuation rates chronologically without locking active sales transactions.
-
+  3. Persist transactions append-only to SurrealDB `tab_stock_ledger_entry`.
 * **Verification Invariant:**
-  $$\text{FIFO Consumption Rate} \ge 2{,}000{,}000\,\text{layers/sec per core}$$
+  $$
+  \text{FIFO Consumption Rate} \ge 2{,}000{,}000\,\text{layers/sec per core}
+  $$
 
 ### Milestone 3.3: Native Graph Chart of Accounts & BOM Aggregation
 
-* **Objective:** Replace recursive SQL Common Table Expressions (CTEs) with native SurrealDB graph edges (`->`), enabling instant financial and engineering tree rollups.
-
+* **Objective:** Replace recursive SQL Common Table Expressions with native SurrealDB graph edges (`->`), enabling instant financial and engineering tree rollups.
 * **Implementation Mechanics:**
   1. Map Chart of Accounts and Bills of Materials as directed acyclic graphs in SurrealDB:
      ```surrealql
      RELATE tab_account:bank_checking->parent_of->tab_account:current_assets;
      RELATE tab_bom:drone_assembly->requires {qty: 4}->tab_item:brushless_motor;
      ```
-  2. Calculate recursive rollups in pure Rust: traverse node references in memory using graph paths (`<-parent_of<-`), accumulating balances and component costs without repeated database lookups.
-
+  2. Calculate recursive rollups in pure Rust: traverse node references in memory using graph paths (`<-parent_of<-`), accumulating balances without repeated database queries.
 * **Verification Invariant:**
-  $$\text{Recursive BOM Explosion Depth } 25 \le 1.8\,\text{ms}$$
+  $$
+  \text{Recursive BOM Explosion Depth } 25 \le 1.8\,\text{ms}
+  $$
 
 ### Milestone 3.4: Algorithmic Fraud Engine (Benford's Law Watchdog)
 
 * **Objective:** Continuous real-time detection of financial tampering and duplicate vendor invoice manipulation.
-
 * **Implementation Mechanics:**
   1. Implement first-digit distribution analysis:
-     $$P(d) = \log_{10} \left( 1 + \frac{1}{d} \right), \quad d \in \{1, \dots, 9\}$$
+     $$
+     P(d) = \log_{10} \left( 1 + \frac{1}{d} \right), \quad d \in \{1, \dots, 9\}
+     $$
   2. Compute goodness-of-fit $\chi^2$ statistics over sliding transaction windows:
-     $$\chi^2 = \sum_{d=1}^9 \frac{(O_d - E_d)^2}{E_d}$$
-  3. Automatically isolate transactions breaching a $99.9\%$ confidence threshold, freezing automated payment batch authorization in SurrealDB.
-
+     $$
+     \chi^2 = \sum_{d=1}^9 \frac{(O_d - E_d)^2}{E_d}
+     $$
+  3. Automatically isolate transactions breaching a $99.9\%$ confidence threshold.
 * **Verification Invariant:**
-  $$\text{Detection Runtime Overhead} \le 15\,\mu\text{s per invoice}$$
+  $$
+  \text{Detection Runtime Overhead} \le 15\,\mu\text{s per invoice}
+  $$
 
 ---
 
@@ -318,74 +330,81 @@ Permissions & Assertions     - CompactString Keys
 ### Milestone 4.1: ANSI/EIA-748 Earned Value Management & Stochastic Risk Core
 
 * **Objective:** Provide project portfolio management matching Oracle Primavera P6 and Planview, capable of multi-calendar schedule computation and Latin Hypercube risk simulations.
-
 * **Implementation Mechanics:**
-  1. Dual-engine scheduler computing forward and backward passes across four dependency classes:
-     $$\text{Finish-to-Start (FS)}, \quad \text{Start-to-Start (SS)}, \quad \text{Finish-to-Finish (FF)}, \quad \text{Start-to-Finish (SF)}$$
+  1. Dual-engine scheduler computing forward and backward passes across FS, SS, FF, and SF dependencies.
   2. Compute EVM performance and predictive metrics:
-     $$\text{CPI} = \frac{\text{EV}}{\text{AC}}, \quad \text{SPI} = \frac{\text{EV}}{\text{PV}}, \quad \text{EAC} = \text{AC} + \frac{\text{BAC} - \text{EV}}{\text{CPI} \times \text{SPI}}$$
-  3. Embed a parallel Monte Carlo engine running $100{,}000$ iterations using Latin Hypercube Sampling across Beta/PERT distributions to establish probabilistic completion confidence bounds ($P_{50}, P_{80}, P_{90}, P_{99}$).
-
+     $$
+     \text{CPI} = \frac{\text{EV}}{\text{AC}}, \quad \text{SPI} = \frac{\text{EV}}{\text{PV}}, \quad \text{EAC} = \text{AC} + \frac{\text{BAC} - \text{EV}}{\text{CPI} \times \text{SPI}}
+     $$
+  3. Embed a parallel Monte Carlo engine running $100{,}000$ iterations using Latin Hypercube Sampling across Beta/PERT distributions.
 * **Verification Invariant:**
-  $$100{,}000 \text{ Monte Carlo Iterations on 500 Tasks} \le 850\,\text{ms on 8 Cores}$$
+  $$
+  100{,}000 \text{ Monte Carlo Iterations on 500 Tasks} \le 850\,\text{ms on 8 Cores}
+  $$
 
 ### Milestone 4.2: Mixed-Integer Linear Programming (MILP) Production Scheduler
 
 * **Objective:** Finite workstation capacity scheduling minimizing total makespan, worker qualification constraints, and setup-matrix changeovers.
-
 * **Implementation Mechanics:**
   1. Embed an interior-point and branch-and-cut linear programming optimizer.
   2. Formulate sequence-dependent changeovers using the Traveling Salesperson model:
-     $$\min \left( \sum_{j \in \text{Jobs}} w_j \cdot T_j + \sum_{j \in \text{Jobs}} \sum_{k \in \text{Jobs}} S_{j,k} \cdot x_{j,k} \right)$$
-     Where $T_j = \max(0, C_j - d_j)$ and $S_{j,k}$ is the setup time between job $j$ and $k$.
+     $$
+     \min \left( \sum_{j \in \text{Jobs}} w_j \cdot T_j + \sum_{j \in \text{Jobs}} \sum_{k \in \text{Jobs}} S_{j,k} \cdot x_{j,k} \right)
+     $$
   3. Synchronize EBOM, MBOM, and SBOM hierarchies in real time (`crates/erp-manufacturing/src/quad_bom.rs`).
-
 * **Verification Invariant:**
-  $$\text{Optimal Finite Schedule for } 50 \text{ Workstations and } 500 \text{ Jobs resolved in } \le 2500\,\text{ms}$$
+  $$
+  \text{Optimal Finite Schedule for } 50 \text{ Workstations and } 500 \text{ Jobs resolved in } \le 2500\,\text{ms}
+  $$
 
 ### Milestone 4.3: Industrial Telemetry Mesh & Statistical Process Control (SPC)
 
 * **Objective:** Direct machine connectivity via OPC-UA, MQTT Sparkplug B, and Modbus TCP with real-time quality control alerts.
-
 * **Implementation Mechanics:**
   1. Build an asynchronous Actix-web UDP/TCP telemetry receiver ingesting spindle speeds, thermal data, and vibration metrics directly into SurrealDB time-series ring buffers.
   2. Compute $\bar{X}-R$ and $\bar{X}-S$ control charts in real time:
-     $$\text{UCL} = \bar{\bar{X}} + 3 \frac{\bar{S}}{c_4 \sqrt{n}}, \quad \text{LCL} = \bar{\bar{X}} - 3 \frac{\bar{S}}{c_4 \sqrt{n}}$$
-  3. Enforce Nelson and Western Electric rules; any 9 consecutive points on one side of the center line triggers automated job pausing and Non-Conformance Report (NCR) generation.
-
+     $$
+     \text{UCL} = \bar{\bar{X}} + 3 \frac{\bar{S}}{c_4 \sqrt{n}}, \quad \text{LCL} = \bar{\bar{X}} - 3 \frac{\bar{S}}{c_4 \sqrt{n}}
+     $$
+  3. Enforce Nelson and Western Electric rules with instant Non-Conformance Report (NCR) dispatch.
 * **Verification Invariant:**
-  $$\text{Telemetry Ingestion Throughput} \ge 100{,}000\,\text{events/sec per core}, \quad \text{SPC Rule Check Latency} \le 5\,\mu\text{s}$$
+  $$
+  \text{Telemetry Ingestion Throughput} \ge 100{,}000\,\text{events/sec per core}, \quad \text{SPC Rule Check Latency} \le 5\,\mu\text{s}
+  $$
 
 ### Milestone 4.4: 3D Volumetric Warehouse Cubing & VDA 5050 AMR Mesh
 
 * **Objective:** High-density distribution logistics, automated bin slotting, and robotic autonomous mobile robot (AMR) dispatch.
-
 * **Implementation Mechanics:**
   1. Solve 3D bin packing using multi-criteria scoring:
-     $$\text{Score} = w_1 \cdot \text{Proximity} + w_2 \cdot \text{Velocity (ABC)} + w_3 \cdot \text{VolumetricFit} - w_4 \cdot \text{SegregationPenalty}$$
-  2. Enforce hazardous material co-storage matrices (preventing flammable liquids from occupying aisles adjacent to oxidizing agents).
+     $$
+     \text{Score} = w_1 \cdot \text{Proximity} + w_2 \cdot \text{Velocity (ABC)} + w_3 \cdot \text{VolumetricFit} - w_4 \cdot \text{SegregationPenalty}
+     $$
+  2. Enforce hazardous material co-storage matrices.
   3. Optimize pick routes across continuous warehouse graphs using the Lin-Kernighan Traveling Salesperson heuristic.
   4. Dispatch mobile robotic transport tasks directly via Actix WebSockets using the open **VDA 5050** JSON protocol.
-
 * **Verification Invariant:**
-  $$\text{Pick Route Distance Reduction} \ge 35\% \text{ relative to standard S-shape heuristics}$$
+  $$
+  \text{Pick Route Distance Reduction} \ge 35\% \text{ relative to standard S-shape heuristics}
+  $$
 
 ### Milestone 4.5: Linear Asset Management (LRS) & Weibull Degradation
 
 * **Objective:** Reliability-Centered Maintenance (RCM) for continuous non-discrete infrastructure (pipelines, railways, electrical grids) matching IBM Maximo.
-
 * **Implementation Mechanics:**
   1. Model linear assets in SurrealDB via dynamic milepost offsets ($LRS$):
-     $$\text{AssetSegment} = \langle \text{LinearAssetID}, \text{StartOffset}, \text{EndOffset} \rangle$$
+     $$
+     \text{AssetSegment} = \langle \text{LinearAssetID}, \text{StartOffset}, \text{EndOffset} \rangle
+     $$
   2. Predict component failure probability using Weibull hazard distributions:
-     $$h(t) = \frac{\beta}{\eta} \left( \frac{t}{\eta} \right)^{\beta - 1}$$
-     * $\beta < 1$: Early infant mortality.
-     * $\beta = 1$: Constant random failures.
-     * $\beta > 1$: Wear-out degradation, automatically scheduling maintenance work orders.
-  3. Cryptographic Permit-to-Work (PTW) and Lockout/Tagout (LOTO) safety interlocks: prevent maintenance work orders from shifting to `In Progress` until verified by an authorized safety marshal's signature in SurrealDB.
-
+     $$
+     h(t) = \frac{\beta}{\eta} \left( \frac{t}{\eta} \right)^{\beta - 1}
+     $$
+  3. Cryptographic Permit-to-Work (PTW) and Lockout/Tagout (LOTO) safety interlocks in SurrealDB.
 * **Verification Invariant:**
-  $$\text{Safety Interlock Bypass Probability} \equiv 0.000000\%$$
+  $$
+  \text{Safety Interlock Bypass Probability} \equiv 0.000000\%
+  $$
 
 ---
 
@@ -405,7 +424,6 @@ Permissions & Assertions     - CompactString Keys
 ### Milestone 5.1: The Block-Based Visual Canvas & JSON AST Persistence
 
 * **Objective:** Eliminate insecure, unstructured HTML database storage in favor of a strongly typed, polymorphic JSON Abstract Syntax Tree.
-
 * **Implementation Mechanics:**
   1. Define page layout blocks as polymorphic Rust data structures (`PageBlock`) serialized as pure JSON into SurrealDB:
      ```rust
@@ -434,14 +452,14 @@ Permissions & Assertions     - CompactString Keys
      }
      ```
   2. Provide a Dioxus-based drag-and-drop builder canvas where visual manipulation translates directly into JSON tree mutations persisted to SurrealDB table `tab_page`.
-
 * **Verification Invariant:**
-  $$\text{Unsanitized HTML in Database} \equiv 0\,\text{bytes}, \quad \text{Stored Page Schema Parse Time} \le 12\,\mu\text{s}$$
+  $$
+  \text{Unsanitized HTML in Database} \equiv 0\,\text{bytes}, \quad \text{Stored Page Schema Parse Time} \le 12\,\mu\text{s}
+  $$
 
 ### Milestone 5.2: Server-Side Rendering (SSR) via Compiled Templates in Actix-web
 
-* **Objective:** Deliver public web pages and e-commerce catalogs in single-digit milliseconds ($< 10\,\text{ms}$) directly through Actix-web handlers, delivering unmatched SEO advantages over interpreted PHP and client-side JavaScript apps.
-
+* **Objective:** Deliver public web pages and e-commerce catalogs in single-digit milliseconds ($< 10\,\text{ms}$) directly through Actix-web handlers.
 * **Implementation Mechanics:**
   1. Implement server-side rendering using statically compiled templates via Askama or Tera.
   2. Pre-compile templates directly into the binary at build time. Actix-web handlers write HTML directly into memory buffers without runtime template parsing:
@@ -469,25 +487,15 @@ Permissions & Assertions     - CompactString Keys
          pub meta_description: &'a str,
          pub rendered_body: &'a str,
      }
-
-     #[get("/{slug}")]
-     pub async fn render_page_handler(
-         path: web::Path<String>,
-         tenant: web::ReqData<TenantContext>,
-     ) -> impl Responder {
-         let slug = path.into_inner();
-         // Read JSON AST from SurrealDB and render HTML in < 10ms
-         HttpResponse::Ok().content_type("text/html; charset=utf-8").body("...")
-     }
      ```
-
 * **Verification Invariant:**
-  $$\text{Time to First Byte (TTFB)} \le 10\,\text{ms under concurrent load}$$
+  $$
+  \text{Time to First Byte (TTFB)} \le 10\,\text{ms under concurrent load}
+  $$
 
 ### Milestone 5.3: The "DocType to Web Page" Dynamic Pipeline
 
 * **Objective:** Allow business analysts to map any backend ERP DocType (e.g., `Item`, `Course`, `JobOpening`) directly to public web components without writing code.
-
 * **Implementation Mechanics:**
   1. The CMS engine evaluates visual mappings and auto-generates SurrealDB queries that filter stock-available, published records:
      ```surrealql
@@ -496,14 +504,14 @@ Permissions & Assertions     - CompactString Keys
      WHERE is_published = true AND (math::sum(->tab_stock_ledger_entry.actual_qty) > 0);
      ```
   2. Public visitors view live inventory levels directly from SurrealDB without intermediate synchronization plugins.
-
 * **Verification Invariant:**
-  $$\text{Data Latency between Warehouse Ingestion and Public Web Grid} \le 5\,\text{ms}$$
+  $$
+  \text{Data Latency between Warehouse Ingestion and Public Web Grid} \le 5\,\text{ms}
+  $$
 
 ### Milestone 5.4: Native E-Commerce & Atomic Checkout Pipeline
 
 * **Objective:** Eliminate external synchronization loops (e.g., Shopify, WooCommerce) by unifying digital commerce directly with SurrealDB's core general ledger and warehouse inventory.
-
 * **Implementation Mechanics:**
   1. When a customer initiates a checkout, execute the entire transaction within a single atomic SurrealDB transaction:
      ```
@@ -525,10 +533,103 @@ Permissions & Assertions     - CompactString Keys
                    ▼
      [ Broadcast Real-Time Stock Depletion via Actix WebSocket Live Stream ]
      ```
-  2. Inventory cannot be oversold; if concurrent checkouts target the last unit, SurrealDB's transaction isolation cleanly rolls back the second transaction and presents the customer with a backorder option.
+* **Verification Invariant:**
+  $$
+  \text{Cart-to-Ledger Consistency} \equiv 100\%, \quad \text{Double-Selling Anomalies} \equiv 0
+  $$
+
+### Milestone 5.5: The Universal Multi-Template Work-Type Engine & Dynamic Layout Protocol
+
+* **Objective:** Enable a single `rustnext` instance to host and render diverse commercial and operational website templates across any business work-type (luxury goods, high-velocity B2C retail, industrial B2B, developer SaaS, clinical medical, gastronomy, streaming media, and field kiosks) with zero custom code or recompilation.
+
+* **Implementation Mechanics:**
+  1. **The Universal Template Manifest Schema (`ThemeManifest`):**
+     Represent templates as strongly typed manifests stored in SurrealDB table `tab_theme`:
+     ```rust
+     use compact_str::CompactString;
+     use serde::{Serialize, Deserialize};
+
+     #[derive(Clone, Debug, Serialize, Deserialize)]
+     pub struct ThemeManifest {
+         pub id: CompactString,
+         pub name: CompactString,
+         pub work_type: WorkTypeClassification,
+         pub engine: RenderEngineKind, // "SSR_Tera", "Dioxus_Wasm", "Hybrid"
+         pub assets_dir: CompactString,
+         pub layout_slots: Vec<SlotDefinition>,
+         pub default_design_tokens: DesignTokens,
+     }
+
+     #[derive(Clone, Debug, Serialize, Deserialize)]
+     pub enum WorkTypeClassification {
+         LuxuryAtelier,
+         HighVelocityRetail,
+         IndustrialWholesaleB2B,
+         DeveloperSaaS,
+         EpcmCreativeAgency,
+         GastronomyKitchen,
+         HealthcareClinical,
+         SvodMediaStreaming,
+         RealEstateSpatial,
+         HigherEducationLMS,
+         NonProfitFoundation,
+         FieldLogisticsPosKiosk,
+     }
+
+     #[derive(Clone, Debug, Serialize, Deserialize)]
+     pub struct SlotDefinition {
+         pub slot_id: CompactString,       // e.g., "hero_stage", "product_grid", "interactive_customizer"
+         pub target_doctype: CompactString,// e.g., "Item", "WorkOrder", "PatientAppointment"
+         pub filter_query: CompactString,  // Parameterized SurrealQL filter
+         pub component_view: CompactString,// Name of pre-compiled Tera template or Dioxus view
+     }
+     ```
+
+  2. **Zero-Downtime Template Slot Binding:**
+     The Actix-web SSR router extracts the incoming tenant context, queries `tab_theme` for the active tenant's assigned manifest, and streams the data directly into template slot contexts:
+     ```
+     [ Tenant HTTP Ingress ] ──► [ Lookup Tenant `tab_theme` ] ──► [ Resolve Slot Directives ]
+                                                                             │
+                    ┌────────────────────────────────────────────────────────┴────────────────────┐
+                    ▼                                                                             ▼
+     [ Execute Scoped SurrealQL Queries ]                                      [ Compile HTML via Tera / Askama ]
+     - Filtered by `is_published` & live stock                                 - Sub-10ms memory buffer write
+     - Scoped strictly to tenant namespace                                     - Injects responsive Tailwind classes
+     ```
+
+  3. **Universal Design Token Engine (`DesignTokens`):**
+     Designers configure color spaces, typography stacks, rounded geometry scales, and optical noise overlays through JSON schemas. Actix-web injects these variables as dynamic CSS custom properties (`:root { --color-primary: #e6c887; ... }`), enabling instant white-labeling across any industry vertical without altering HTML structures.
 
 * **Verification Invariant:**
-  $$\text{Cart-to-Ledger Consistency} \equiv 100\%, \quad \text{Double-Selling Anomalies} \equiv 0$$
+  $$
+  \text{Template Manifest Switch Latency} \le 15\,\mu\text{s}, \quad \text{Recompilation Overhead} \equiv 0
+  $$
+
+### Milestone 5.6: High-End Visual Choreography Substrate (Three.js WebGL & GSAP ScrollTrigger)
+
+* **Objective:** Deliver Awwwards-tier visual benchmarks across flagship storefronts and customer portals, integrating procedural WebGL 3D model decomposition, kinetic typography, and scroll-linked assembly choreography without sacrificing mobile frame rates.
+
+* **Implementation Mechanics:**
+  1. **Embedded Procedural WebGL Canvas (`three.js` Native Substrate):**
+     - Single-file embedded 3D scene engine initialized via WebGL with `ACESFilmicToneMapping` and high dynamic range studio lighting (ambient, key gold directional, and rim blue directional).
+     - Procedural horological/product models assembled from stepped torus bezels, planetary gear trains, and physical transmission crystals with refractive physical materials (`MeshPhysicalMaterial`).
+     - Mouse-parallax tracking with linear interpolation (lerp) damping for dynamic 3D perspective shifts.
+  2. **ScrollTrigger Kinetic Decomposition:**
+     - Connect GSAP `ScrollTrigger` to Actix-web server-rendered DOM sections.
+     - As the user traverses viewport sections, the 3D engine smoothly disassembles components along spatial vectors (bezel moves $+Z$, gear cluster moves $-Z$, core crystal scales $\times 1.4$), providing exploded mechanical visualization.
+     - Seamless reassembly and docking into interactive 360-degree Atelier configurator stages.
+  3. **Zero-Delay Dynamic Metallurgy Shader Compilations:**
+     - Material presets (Titanium Grade 5, 18K Celestial Gold, Diamond DLC Carbon) swap roughness, metalness, and environment map intensity dynamically in WebGL with zero render delay.
+     - Configurator updates calculate bespoke pricing adjustments and dispatch reactive UI signals.
+  4. **Performance & Touch Adaptation:**
+     - Automatic pixel ratio capping (`Math.min(window.devicePixelRatio, 2)`).
+     - Pointer-event isolation guaranteeing zero scroll-jank on low-power mobile devices.
+     - Fallback SVG vectors and static WebP previews for legacy clients.
+
+* **Verification Invariant:**
+  $$
+  \text{Sustained Mobile Frame Rate} \ge 60\,\text{FPS}, \quad \text{3D Scene Memory Overhead} \le 18\,\text{MB}
+  $$
 
 ---
 
@@ -555,31 +656,30 @@ Permissions & Assertions     - CompactString Keys
 ### Milestone 6.1: Wasmtime Runtime & Linear Memory Isolation
 
 * **Objective:** Enable third-party developers to write extensions in Rust, Go, or JavaScript, compile them to WebAssembly (.wasm), and run them safely without compromising host server stability.
-
 * **Implementation Mechanics:**
   1. Embed `wasmtime` configured with the WebAssembly Component Model and WASI 0.2 directly inside Actix-web worker threads.
   2. Enforce strict linear memory limits per guest instance (default: $32\,\text{MB}$).
   3. Pre-allocate isolated memory arenas; any guest attempt to allocate beyond the boundary triggers an out-of-memory trap caught by the host process.
-
 * **Verification Invariant:**
-  $$\text{Guest Memory Leak Impact on Host Binary} \equiv 0.00\,\text{bytes}$$
+  $$
+  \text{Guest Memory Leak Impact on Host Binary} \equiv 0.00\,\text{bytes}
+  $$
 
 ### Milestone 6.2: Deterministic Instruction Fuel Metering
 
 * **Objective:** Prevent faulty or malicious third-party plugins from locking CPU threads with infinite loops or heavy compute workloads.
-
 * **Implementation Mechanics:**
   1. Configure `wasmtime::Config::consume_fuel(true)`.
   2. Each plugin invocation receives a fixed fuel allocation ($1{,}000{,}000$ operations).
-  3. When fuel is exhausted, the host traps execution, safely unwinds the invocation stack, logs the fault to SurrealDB table `sys_plugin_error_log`, and returns a controlled `Err(PluginExecutionExhausted)` response.
-
+  3. When fuel is exhausted, the host traps execution, unwinds the invocation stack, logs the fault to SurrealDB table `sys_plugin_error_log`, and returns a controlled `Err(PluginExecutionExhausted)` response.
 * **Verification Invariant:**
-  $$\text{Time to Contain an Infinite Loop (e.g., `while(true) {}`)} \le 1.2\,\text{ms}$$
+  $$
+  \text{Time to Contain an Infinite Loop} \le 1.2\,\text{ms}
+  $$
 
 ### Milestone 6.3: WebAssembly Interface Types (WIT) Security Envelope
 
 * **Objective:** Provide capability-based security access to database operations, logging, and events without granting direct socket, network, or filesystem access.
-
 * **Implementation Mechanics:**
   1. Define host-guest contracts using WIT:
      ```wit
@@ -596,10 +696,11 @@ Permissions & Assertions     - CompactString Keys
          export on-event: func(payload: hook-payload) -> result<string, string>;
      }
      ```
-  2. The host runtime enforces tenant context scoping on all guest-initiated data reads, preventing plugins from accessing cross-tenant records in SurrealDB.
-
+  2. The host runtime enforces tenant context scoping on all guest-initiated data reads.
 * **Verification Invariant:**
-  $$\text{Unauthorized Operating System Calls Permitted} \equiv 0$$
+  $$
+  \text{Unauthorized Operating System Calls Permitted} \equiv 0
+  $$
 
 ---
 
@@ -624,32 +725,36 @@ Permissions & Assertions     - CompactString Keys
 
 ### Milestone 7.1: State-Based Conflict-Free Replicated Data Types (CRDTs)
 
-* **Objective:** Allow retail stores, distribution facilities, and field service crews to execute transactions entirely offline on local hardware, automatically synchronizing upon network restoration without human conflict intervention.
-
+* **Objective:** Allow retail stores, distribution facilities, and field service crews to execute transactions entirely offline on local hardware, automatically synchronizing upon network restoration.
 * **Implementation Mechanics:**
-  1. Implement state-based CRDTs in `frappe-sync`:
+  1. Implement state-based CRDTs:
      * **PN-Counters:** Used for real-time inventory adjustments and tallying.
      * **LWW-Element-Sets (Last-Write-Wins):** Used for non-financial master document field updates with microsecond-level cryptographic timestamps.
   2. Maintain vector clocks across cluster nodes:
-     $$\vec{V}(\text{Node}_k) = \langle c_1, c_2, \dots, c_n \rangle$$
+     $$
+     \vec{V}(\text{Node}_k) = \langle c_1, c_2, \dots, c_n \rangle
+     $$
   3. Formulate the state join-semilattice merger:
-     $$S_{\text{merged}} = S_{\text{local}} \sqcup S_{\text{cloud}}$$
-
+     $$
+     S_{\text{merged}} = S_{\text{local}} \sqcup S_{\text{cloud}}
+     $$
 * **Verification Invariant:**
-  $$\text{Convergence Divergence after Full Network Partition} \equiv 0$$
+  $$
+  \text{Convergence Divergence after Full Network Partition} \equiv 0
+  $$
 
 ### Milestone 7.2: Offline POS Transaction Ledger Buffering
 
 * **Objective:** Guarantee that retail checkouts, order submissions, and cash draws execute instantly on local tablets even during complete internet failure.
-
 * **Implementation Mechanics:**
   1. Local writes commit directly to the embedded SurrealDB instance running on the device.
   2. Sales invoices and payments append to a local replication outbox (`sys_sync_queue`).
   3. When network connectivity returns, an Actix WebSocket client streams queued transaction deltas to the central cloud cluster.
   4. The central server validates vector clocks and commits ledger entries atomically to SurrealDB.
-
 * **Verification Invariant:**
-  $$\text{Offline Checkout Response Time} \le 8\,\text{ms}, \quad \text{Transaction Loss on Reconnection} \equiv 0$$
+  $$
+  \text{Offline Checkout Response Time} \le 8\,\text{ms}, \quad \text{Transaction Loss on Reconnection} \equiv 0
+  $$
 
 ---
 
@@ -673,41 +778,40 @@ Permissions & Assertions     - CompactString Keys
 ### Milestone 8.1: Natural Language to DocType Schema Compiler
 
 * **Objective:** Generate complete, fully validated DocType schemas, relationships, and business logic directly from natural language prompts.
-
 * **Implementation Mechanics:**
   1. LLM agents interact with the typed `frappe-meta` compiler API.
   2. The compiler synthesizes JSON DocType schemas, validates identifier sanitization, and compiles the result into SurrealQL tables and permissions.
   3. Pre-seed standard localized Chart of Accounts, tax templates, and customer groups automatically into SurrealDB.
-
 * **Verification Invariant:**
-  $$\text{Prompt-to-Operational Business Platform Latency} \le 30\,\text{seconds}$$
+  $$
+  \text{Prompt-to-Operational Business Platform Latency} \le 30\,\text{seconds}
+  $$
 
 ### Milestone 8.2: Strongly Typed Autonomous ERP Tool Calling
 
 * **Objective:** Enable AI autonomous agents to execute complex workflows safely without granting unvetted SQL or system access.
-
 * **Implementation Mechanics:**
-  1. Expose standard DocType controllers as strongly typed JSON schema tool interfaces:
-     * `create_quotation(customer_id, items, valid_until)`
-     * `check_inventory_availability(item_code, warehouse_id)`
-     * `reschedule_production_order(work_order_id, new_date)`
-  2. Actix-web handlers execute tools through the standard permission evaluation engine, guaranteeing that AI agents cannot perform actions that the authenticated user lacks permissions to execute.
-
+  1. Expose standard DocType controllers as strongly typed JSON schema tool interfaces (`create_quotation`, `check_inventory_availability`, `reschedule_production_order`).
+  2. Actix-web handlers execute tools through the standard permission evaluation engine.
 * **Verification Invariant:**
-  $$\text{Unauthorized Privilege Escalations via AI Tool Calls} \equiv 0$$
+  $$
+  \text{Unauthorized Privilege Escalations via AI Tool Calls} \equiv 0
+  $$
 
 ### Milestone 8.3: Computer Vision OCR & Automated 3-Way Invoice Matching
 
 * **Objective:** Automate purchase invoice ingestion, optical character recognition (OCR), and three-way reconciliation against Purchase Orders and Goods Receipts.
-
 * **Implementation Mechanics:**
   1. Ingest scanned PDF and image vendor bills; extract tabular line items, tax numbers, and invoice totals.
   2. Execute three-way matching logic:
-     $$\text{Matched} \iff \text{Invoice}(\text{Qty}, \text{Rate}) \equiv \text{Receipt}(\text{Qty}) \land \text{PurchaseOrder}(\text{Rate})$$
-  3. When variances remain within predefined tolerance thresholds (e.g., $\le 0.5\%$), auto-post draft payment entries directly into SurrealDB.
-
+     $$
+     \text{Matched} \iff \text{Invoice}(\text{Qty}, \text{Rate}) \equiv \text{Receipt}(\text{Qty}) \land \text{PurchaseOrder}(\text{Rate})
+     $$
+  3. Auto-post draft payment entries directly into SurrealDB when variances remain $\le 0.5\%$.
 * **Verification Invariant:**
-  $$\text{OCR to Draft Purchase Invoice Pipeline Latency} \le 1500\,\text{ms}$$
+  $$
+  \text{OCR to Draft Purchase Invoice Pipeline Latency} \le 1500\,\text{ms}
+  $$
 
 ---
 
@@ -731,39 +835,38 @@ Permissions & Assertions     - CompactString Keys
 ### Milestone 9.1: Cryptographic Merkle Tree Audit Anchoring
 
 * **Objective:** Render all general ledger and stock movements mathematically tamper-evident.
-
 * **Implementation Mechanics:**
   1. Every database mutation generates an immutable audit record containing a cryptographic hash chaining to the preceding entry:
-     $$\text{Hash}_t = \text{SHA256}(\text{RecordPayload}_t \mathbin{\Vert} \text{UserID} \mathbin{\Vert} \text{Hash}_{t-1})$$
+     $$
+     \text{Hash}_t = \text{SHA256}(\text{RecordPayload}_t \mathbin{\Vert} \text{UserID} \mathbin{\Vert} \text{Hash}_{t-1})
+     $$
   2. Audit records are aggregated into Merkle trees whose root hashes are committed to immutable SurrealDB system log tables.
-  3. Any retroactive manipulation of historical records breaks the hash chain, triggering instant administrative security alerts.
-
 * **Verification Invariant:**
-  $$\text{Historical Data Tampering Detection Probability} \equiv 100\%$$
+  $$
+  \text{Historical Data Tampering Detection Probability} \equiv 100\%
+  $$
 
 ### Milestone 9.2: Field-Level Envelope Encryption (AEAD)
 
 * **Objective:** Secure sensitive personal data (PII, salaries, credit card tokens, national identification numbers) before database persistence.
-
 * **Implementation Mechanics:**
   1. Utilize AES-256-GCM or ChaCha20-Poly1305 authenticated encryption with associated data (AEAD).
-  2. A Master Key Encryption Key (KEK) manages individual, ephemeral Data Encryption Keys (DEK) per tenant.
-  3. Sensitive fields decrypt only in memory within the authorized user's Actix request context.
-
+  2. A Master Key Encryption Key (KEK) manages individual ephemeral Data Encryption Keys (DEK) per tenant.
 * **Verification Invariant:**
-  $$\text{Plaintext Sensitive Data at Rest} \equiv 0\,\text{bytes}$$
+  $$
+  \text{Plaintext Sensitive Data at Rest} \equiv 0\,\text{bytes}
+  $$
 
 ### Milestone 9.3: Zero-Knowledge Balance Sheet Proofs (zk-SNARKs)
 
-* **Objective:** Allow enterprises to mathematically prove to external auditors and tax authorities that general ledgers balance and statutory taxes are calculated accurately without revealing private financial transactions.
-
+* **Objective:** Allow enterprises to mathematically prove to external auditors that general ledgers balance without revealing private financial transactions.
 * **Implementation Mechanics:**
-  1. Formulate arithmetic circuits representing the double-entry balance invariant:
-     $$\sum \text{Debit} - \sum \text{Credit} = 0$$
-  2. Generate non-interactive zero-knowledge proofs demonstrating that the balance sheet equation holds without exposing customer names, profit margins, or item quantities.
-
+  1. Formulate arithmetic circuits representing the double-entry balance invariant $\sum \text{Debit} - \sum \text{Credit} = 0$.
+  2. Generate non-interactive zero-knowledge proofs demonstrating that the balance sheet equation holds without exposing proprietary vendor or customer data.
 * **Verification Invariant:**
-  $$\text{Proof Generation Time} \le 4500\,\text{ms}, \quad \text{Proof Verification Time} \le 15\,\text{ms}$$
+  $$
+  \text{Proof Generation Time} \le 4500\,\text{ms}, \quad \text{Proof Verification Time} \le 15\,\text{ms}
+  $$
 
 ---
 
@@ -789,42 +892,117 @@ Permissions & Assertions     - CompactString Keys
 ### Milestone 10.1: High-Density Multi-Tenant Agency Hosting
 
 * **Objective:** Enable digital web agencies to host 100+ production, white-labeled client websites, ERPs, and CRMs on a single low-cost server.
-
 * **Implementation Mechanics:**
   1. Idle tenants consume near-zero memory footprint until active HTTP traffic arrives, leveraging Actix-web's asynchronous request multiplexing.
   2. Subdomains and custom domains map dynamically to isolated SurrealDB tenant namespaces via an in-memory lock-free table (`arc-swap`).
-  3. Platform updates execute via rolling in-place binary upgrades without service interruptions.
-
 * **Verification Invariant:**
-  $$\text{Active Tenant Density} \ge 100 \text{ Isolated Environments per } 16\,\text{GB RAM}$$
+  $$
+  \text{Active Tenant Density} \ge 100 \text{ Isolated Environments per } 16\,\text{GB RAM}
+  $$
 
 ### Milestone 10.2: Direct WooCommerce Migration Ingestion
 
 * **Objective:** Provide a fast migration path from legacy WordPress/WooCommerce installations into `rustnext` without requiring external database drivers.
-
 * **Implementation Mechanics:**
   1. Actix-web provides streaming ingestion endpoints accepting standard WooCommerce JSON exports or SQL dump files.
-  2. The parser extracts products, variants, orders, customer records, and password hashes on the fly.
-  3. Transform relational rows directly into native `tab_item`, `tab_customer`, and `tab_sales_invoice` SurrealDB records.
-  4. Generate side-by-side performance audit reports comparing Time-to-First-Byte (TTFB) and transaction throughput.
-
+  2. Transform relational rows directly into native `tab_item`, `tab_customer`, and `tab_sales_invoice` SurrealDB records.
 * **Verification Invariant:**
-  $$\text{Migration Speed} \ge 10{,}000\,\text{products and orders ingested in } \le 12\,\text{seconds}$$
+  $$
+  \text{Migration Speed} \ge 10{,}000\,\text{products and orders ingested in } \le 12\,\text{seconds}
+  $$
 
-### Milestone 10.3: Curated "Business-in-a-Box" Vertical Profiles
+### Milestone 10.3: Curated "Business-in-a-Box" Universal Work-Type Template Catalog
 
-* **Objective:** Deliver fully pre-configured, production-ready enterprise vertical solutions ready for deployment in under 3 minutes.
+* **Objective:** Ship a comprehensive suite of 12 production-ready, pre-configured work-type templates embedded directly into the binary. A user provisions an environment, picks a work-type archetype, and deploys an operational ERP, CRM, and storefront in under 180 seconds.
+
+* **Detailed Specifications Across 12 Work-Type Archetypes:**
+
+  1. **Haute Horlogerie, Luxury Goods & Bespoke Craftsmanship:**
+     - *Primary Archetype:* High-ticket luxury e-commerce, custom atelier configurator, and cryptographic ownership certification.
+     - *Visual Paradigm:* Three.js procedural WebGL 3D exploded disassembly, kinetic GSAP typography, ACESFilmic tone-mapped lighting, gold/titanium PBR shaders.
+     - *Operational Flow:* Bespoke customization $\to$ serial number reservation $\to$ Merkle caseback genesis anchoring $\to$ deposit settlement in SurrealDB GL.
+     - *Verification Invariant:* 3D orbital FPS $\ge 60$ on mobile; zero decimal drift on deposits.
+
+  2. **High-Velocity Omnichannel Retail & Superstore (Shopify Killer):**
+     - *Primary Archetype:* Multi-category consumer retail, flash sales, high-density SKU grids.
+     - *Visual Paradigm:* Viewport-virtualized grid, sub-5ms instant faceted category filters, quick-add drawer, predictive search autocomplete.
+     - *Operational Flow:* Cart drawer $\to$ atomic FIFO batch layer depletion $\to$ sales tax calculation $\to$ live stock WebSocket fanout.
+     - *Verification Invariant:* $10{,}000$ concurrent checkouts without double-selling or inventory lock contention.
+
+  3. **B2B Heavy Machinery, Industrial Manufacturing & Wholesale:**
+     - *Primary Archetype:* Capital equipment, engineered assemblies, tiered wholesale price breaks.
+     - *Visual Paradigm:* STEP/CAD 3D assembly viewer, interactive BOM parts explosion, technical spec sheet PDF/A instant compiler.
+     - *Operational Flow:* Request for Quote (RFQ) $\to$ CPQ constraint solver check $\to$ dynamic MBOM generation $\to$ credit limit check $\to$ Sales Order.
+     - *Verification Invariant:* BOM recursive traversal depth 25 resolved in $\le 1.8\,\text{ms}$.
+
+  4. **Developer Platform, Cloud Infrastructure & SaaS Hub:**
+     - *Primary Archetype:* Subscription software, developer API tooling, metered infrastructure.
+     - *Visual Paradigm:* Live WebSocket network latency HUD, interactive code syntax highlighting, tiered pricing slider with cost calculator.
+     - *Operational Flow:* Self-service signup $\to$ API key issuance $\to$ metered usage telemetry ingestion $\to$ automated ASC 606 revenue recognition.
+     - *Verification Invariant:* $100{,}000$ telemetry usage events rated per second per core.
+
+  5. **EPCM, Architecture, Megaproject Construction & Creative Studio:**
+     - *Primary Archetype:* Milestone-based contracting, project portfolio management, architectural bidding.
+     - *Visual Paradigm:* Interactive Gantt timeline canvas, 3D BIM model viewer, milestone progress burn-down chart.
+     - *Operational Flow:* WBS/OBS/CBS task breakdown $\to$ CPM critical path computation $\to$ AIA G702/G703 certificate generation $\to$ lien waiver payout gate.
+     - *Verification Invariant:* $100{,}000$ Monte Carlo schedule risk iterations resolved in $< 850\,\text{ms}$.
+
+  6. **Gastronomy, Hospitality, Fine Dining & Ghost Kitchens:**
+     - *Primary Archetype:* Restaurant operations, table reservations, high-volume kitchen fulfillment.
+     - *Visual Paradigm:* SVG floor plan table designer, interactive multi-course digital menu with allergen filters, mobile curbside pickup tracker.
+     - *Operational Flow:* Table reservation $\to$ POS food order $\to$ real-time Kitchen Display System (KDS) WebSocket broadcast $\to$ tip-distribution payroll entry.
+     - *Verification Invariant:* Table reservation-to-kitchen broadcast latency $\le 3\,\text{ms}$.
+
+  7. **Healthcare, Specialist Clinical Practice & Telehealth:**
+     - *Primary Archetype:* Electronic Medical Records (EMR), practitioner appointments, clinical compliance.
+     - *Visual Paradigm:* Secure encrypted patient portal, practitioner shift booking calendar, diagnostic document vault.
+     - *Operational Flow:* Appointment booking $\to$ encrypted clinical note capture $\to$ insurance co-pay billing $\to$ HIPAA-compliant audit log chain.
+     - *Verification Invariant:* Zero unencrypted health data at rest; zero practitioner double-booking.
+
+  8. **Subscription Video on Demand (SVoD), Audio & Multimedia Streaming:**
+     - *Primary Archetype:* Streaming entertainment, podcast distribution, digital media paywalls.
+     - *Visual Paradigm:* WASM HLS video player HUD, season/episode carousels, timestamped interactive comments, HNSW vector dialogue search.
+     - *Operational Flow:* User subscription auth $\to$ HMAC signed streaming token issuance $\to$ HTTP 206 Range stream delivery $\to$ content studio royalty ledger post.
+     - *Verification Invariant:* Vector dialogue semantic search query latency $\le 12\,\text{ms}$.
+
+  9. **Real Estate, AEC & Linear Infrastructure:**
+     - *Primary Archetype:* Property portfolios, pipeline/railway maintenance, facility management.
+     - *Visual Paradigm:* Interactive GIS boundary parcel mapping, 3D architectural floorplans, dynamic property filter grid.
+     - *Operational Flow:* Property listing $\to$ lease contract generation $\to$ maintenance work order dispatch $\to$ Weibull degradation failure prediction.
+     - *Verification Invariant:* GeoJSON spatial bounding-box query latency $\le 4\,\text{ms}$.
+
+  10. **Higher Education, Corporate Academies & LMS:**
+      - *Primary Archetype:* University portals, compliance certification, interactive learning paths.
+      - *Visual Paradigm:* Course syllabus tree, interactive quiz player, student cohort progress matrix.
+      - *Operational Flow:* Enrollment $\to$ lesson completion tracking $\to$ automated grading $\to$ Merkle-anchored verifiable PDF diploma issuance.
+      - *Verification Invariant:* Student completion join-semilattice convergence across distributed edge replicas $\equiv 0$ error.
+
+  11. **Non-Profit Foundations, Charities & Philanthropic Trusts:**
+      - *Primary Archetype:* Donor campaigns, humanitarian aid tracking, audited grant distribution.
+      - *Visual Paradigm:* Real-time funding thermometer widgets, donor recurring contribution checkout, project impact timeline.
+      - *Operational Flow:* Contribution checkout $\to$ immediate tax-deductible receipt compilation $\to$ restricted fund accounting allocation $\to$ public audit ledger export.
+      - *Verification Invariant:* Restricted vs. unrestricted fund balance verified to $0.00\text{dec}$ drift.
+
+  12. **Field Operations, Distribution Logistics & Offline-First POS Kiosks:**
+      - *Primary Archetype:* Warehouse barcode scanning, retail counter terminals, delivery vans.
+      - *Visual Paradigm:* Ergonomic high-contrast touch interface, large tactile button hitboxes, dark industrial warehouse theme, hardware scanner listener.
+      - *Operational Flow:* Barcode scan $\to$ offline local SurrealKV stock deduction $\to$ receipt generation $\to$ vector-clock CRDT sync upon network recovery.
+      - *Verification Invariant:* Offline POS checkout response time $\le 8\,\text{ms}$.
+
+### Milestone 10.4: Dynamic Multi-Tenant Theme Compiler & Zero-Downtime Hot-Swapping
+
+* **Objective:** Allow designers and agencies to upload custom Tailwind CSS themes, layout files, and work-type templates without compiling the Rust server binary or causing client downtime.
 
 * **Implementation Mechanics:**
-  1. Embed pre-configured domain profiles directly into the binary:
-     * **The Rust Restaurant:** Floor plans, kitchen display system (KDS), recipe BOMs, tip distribution payroll, POS.
-     * **The Rust Clinic:** Electronic medical records (EMR), practitioner shift scheduling, insurance billing, HIPAA logs.
-     * **The Rust E-Commerce Store:** Multi-warehouse inventory, automated courier integrations (DHL/FedEx), automated VAT/GST.
-     * **The Professional Agency:** Timesheets, milestone billing, retainers, AIA G702 billing, buying center CRM.
-  2. Deploying a profile writes the pre-configured DocTypes, accounts, and block templates to the tenant's SurrealDB namespace, rendering them immediately available in the Dioxus Desk.
+  1. Store pre-parsed Tera/Askama layout snippets and Tailwind design tokens directly in SurrealDB table `tab_theme`.
+  2. Implement an in-memory lock-free theme registry using `ArcSwap<HashMap<TenantId, CompiledTheme>>`.
+  3. When an agency client updates color tokens, fonts, or hero blocks, write changes to SurrealDB, invalidate the local cache entry via Live Query notifications, and reload the compiled template context in $< 50\,\mu\text{s}$.
+  4. Public visitors immediately receive the updated visual theme on their subsequent HTTP request with single-digit millisecond TTFB.
 
 * **Verification Invariant:**
-  $$\text{Deployment Time to Full Production Readiness} \le 180\,\text{seconds}$$
+  $$
+  \text{Theme Hot-Swap Cache Invalidation Time} \le 50\,\mu\text{s}, \quad \text{HTTP Dropped Connections} \equiv 0
+  $$
 
 ---
 
@@ -836,5 +1014,5 @@ Permissions & Assertions     - CompactString Keys
 | **Gate Beta: Metamodel & Scripting** | Dynamic DocTypes compile to SurrealQL DDL; Wasmtime sandbox traps panics and fuel exhaustion. | Zero host crashes across $1{,}000{,}000$ faulty plugin executions; zero compile-time schema dependencies. |
 | **Gate Gamma: Financial & Trade Parity** | Double-entry general ledger and SIMD-accelerated FIFO inventory maintain zero decimal drift in SurrealDB. | $100{,}000{,}000$ ledger lines balance to $0.00\text{dec}$; FIFO processes $2{,}000{,}000\,\text{layers/sec per core}$. |
 | **Gate Delta: Factory, PPM & Logistics** | Dual-engine CPM/CCPM scheduler, EVM metrics, and MILP makespan optimizer run concurrently via Actix workers. | $100{,}000$ Monte Carlo iterations complete in $< 850\,\text{ms}$; WMS Lin-Kernighan TSP pick path saves $\ge 35\%$ transit distance. |
-| **Gate Epsilon: Visual CMS & Commerce** | Block-based visual builder in Dioxus saves pure JSON AST; Actix-web SSR renders HTML. | Server-side HTML render time $< 10\,\text{ms}$; storefront checkout commits stock and ledger atomically in one SurrealDB transaction. |
+| **Gate Epsilon: Visual CMS, Commerce & Multi-Template Work-Type Engine** | Block-based visual builder in Dioxus saves pure JSON AST; Actix-web SSR renders HTML; 12 work-type templates switch dynamically. | Server-side HTML render time $< 10\,\text{ms}$; storefront checkout commits stock and ledger atomically in one SurrealDB transaction; 3D WebGL renders at $\ge 60\,\text{FPS}$. |
 | **Gate Zeta: Local-First Mesh & Agency Scale** | Offline retail POS on Dioxus Desktop synchronizes with central cloud cluster via CRDTs without conflict. | Agency fleet hosts 100+ isolated tenant environments on a single $16\,\text{GB}$ VPS at 60+ FPS responsiveness. |

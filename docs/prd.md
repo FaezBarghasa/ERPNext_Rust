@@ -17,6 +17,7 @@
 | **ZK Balance Sheet Proof** | Verification Time | $< 15\,\text{ms}$ non-interactive verification |
 | **3-Way Invoice Matching** | Price & Quantity Variance | Automated approval within $\pm 0.5\%$ variance |
 | **Local-First CRDT** | Convergence Guarantee | Strongly eventual consistency with zero loss |
+| **3D WebGL Storefront Performance** | Sustained Frame Rate & Memory | $\ge 60\,\text{FPS}$ with $\le 18\,\text{MB}$ memory overhead |
 
 ---
 
@@ -62,7 +63,7 @@
 - **`erp-ppm`**: Dual-engine CPM/CCPM project scheduling, ANSI/EIA-748 EVMS metrics (CPI, SPI, EAC, TCPI), and 100k-run Monte Carlo risk simulator.
 - **`erp-asset`**: Linear Referencing Systems (LRS), Weibull $(\beta, \eta)$ Remaining Useful Life (RUL) predictive degradation, and tamper-evident PTW / LOTO safety interlocks.
 - **`erp-software`**: ASC 606 5-step revenue recognition, graduated SaaS subscription tiers, and SLA penalty credit ledgers.
-- **`erp-cms`**: Declarative `PageBlock` AST, pre-allocated SSR HTML renderer ($<10\,\text{ms}$ TTFB), atomic e-commerce checkout, and HMAC-signed SVOD token streaming.
+- **`erp-cms`**: Declarative `PageBlock` AST, pre-allocated SSR HTML renderer ($<10\,\text{ms}$ TTFB), atomic e-commerce checkout, LuxeGen 3D WebGL configurator (Three.js PBR + GSAP kinetic typography), and 12 universal work-type templates.
 - **`erp-hr`**: Attendance logs, biometric tracking, multi-component salary structures, and automated payroll batches.
 - **`erp-crm`**: Multi-stage lead acquisition funnels, deal conversion pipelines, and weighted opportunity scoring.
 - **`erp-support`**: Ticket SLA countdown timers and priority escalation matrices.
