@@ -1,16 +1,19 @@
-//! Enterprise Operating System - Software, SaaS & Professional Services Engine.
-//!
-//! Provides comprehensive institutional-grade SaaS recurring billing, ASC 606 / IFRS 15
-//! multi-element revenue recognition with zero-float drift, Professional Services Automation (PSA)
-//! utilization tracking, and support SLA service credit ledgers.
-
+pub mod ecommerce_connector;
 pub mod errors;
+pub mod product_pack;
 pub mod psa;
 pub mod revenue_recognition;
 pub mod sla_ledger;
 pub mod subscription;
 
+pub use ecommerce_connector::{
+    ChannelOrderLineItem, ChannelOrderPayload, ChannelProductPayload, ECommercePlatform,
+    ECommerceSyncEngine,
+};
 pub use errors::SoftwareBillingError;
+pub use product_pack::{
+    PackComponent, PreOrderConfig, ProductPack, StockBadge,
+};
 pub use psa::{
     EmployeeUtilizationScorecard, MilestoneInvoiceRequest, ProjectPsaSummary, PsaEngine,
     PsaInvoice, PsaInvoiceType, TimeLog,
