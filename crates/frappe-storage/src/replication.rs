@@ -113,10 +113,10 @@ impl MultiRegionReplicationOrchestrator {
 
     /// Resolves the home region for a given tenant.
     pub fn get_tenant_home(&self, tenant_id: &str) -> CloudRegion {
-        if let Ok(table) = self.routing_table.read() {
-            if let Some(r) = table.get(tenant_id) {
-                return r.clone();
-            }
+        if let Ok(table) = self.routing_table.read()
+            && let Some(r) = table.get(tenant_id)
+        {
+            return r.clone();
         }
         self.local_region.clone()
     }
@@ -136,7 +136,9 @@ impl MultiRegionReplicationOrchestrator {
 
         if let Ok(mut clocks) = self.clocks.write() {
             let entry = clocks.entry(key).or_default();
-            let current = entry.entry(self.local_region.as_str().to_string()).or_insert(0);
+            let current = entry
+                .entry(self.local_region.as_str().to_string())
+                .or_insert(0);
             *current += 1;
             clock = entry.clone();
         }
@@ -166,7 +168,10 @@ impl MultiRegionReplicationOrchestrator {
             }
         }
 
-        let key = format!("{}::{}::{}", envelope.tenant_id, envelope.doctype, envelope.doc_id);
+        let key = format!(
+            "{}::{}::{}",
+            envelope.tenant_id, envelope.doctype, envelope.doc_id
+        );
 
         let mut clocks = match self.clocks.write() {
             Ok(c) => c,
@@ -245,7 +250,9 @@ impl MultiRegionReplicationOrchestrator {
 
                 ReconciliationOutcome::ConflictEscalated {
                     conflict_id,
-                    reason: "Concurrent modification detected on transactional voucher during partition".into(),
+                    reason:
+                        "Concurrent modification detected on transactional voucher during partition"
+                            .into(),
                 }
             }
         }
@@ -254,7 +261,11 @@ impl MultiRegionReplicationOrchestrator {
     /// Lists open conflicts awaiting human or automated supervisory resolution.
     pub fn list_pending_conflicts(&self) -> Vec<ReplicationConflict> {
         if let Ok(conflicts) = self.pending_conflicts.read() {
-            conflicts.values().filter(|c| !c.resolved).cloned().collect()
+            conflicts
+                .values()
+                .filter(|c| !c.resolved)
+                .cloned()
+                .collect()
         } else {
             Vec::new()
         }
@@ -262,11 +273,11 @@ impl MultiRegionReplicationOrchestrator {
 
     /// Resolves an open conflict with a selected resolution payload.
     pub fn resolve_conflict(&self, conflict_id: &str) -> bool {
-        if let Ok(mut conflicts) = self.pending_conflicts.write() {
-            if let Some(c) = conflicts.get_mut(conflict_id) {
-                c.resolved = true;
-                return true;
-            }
+        if let Ok(mut conflicts) = self.pending_conflicts.write()
+            && let Some(c) = conflicts.get_mut(conflict_id)
+        {
+            c.resolved = true;
+            return true;
         }
         false
     }
@@ -323,7 +334,10 @@ mod tests {
         // Force concurrent clock
         concurrent_env.vector_clock.insert("us-east-1".into(), 0);
         let res2 = virginia.ingest_peer_envelope(concurrent_env);
-        assert!(matches!(res2, ReconciliationOutcome::Applied | ReconciliationOutcome::MergedCrDt));
+        assert!(matches!(
+            res2,
+            ReconciliationOutcome::Applied | ReconciliationOutcome::MergedCrDt
+        ));
     }
 
     #[test]
@@ -352,7 +366,10 @@ mod tests {
 
         // Ingesting peer envelope causes concurrent conflict -> escalated to review queue
         let res = frankfurt.ingest_peer_envelope(peer_env);
-        assert!(matches!(res, ReconciliationOutcome::ConflictEscalated { .. }));
+        assert!(matches!(
+            res,
+            ReconciliationOutcome::ConflictEscalated { .. }
+        ));
 
         let pending = frankfurt.list_pending_conflicts();
         assert_eq!(pending.len(), 1);

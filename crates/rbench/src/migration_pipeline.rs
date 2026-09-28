@@ -29,9 +29,7 @@ pub enum MigrationStep {
         field: DocFieldSchema,
     },
     /// Creates a new child or standalone table.
-    CreateTable {
-        doctype: String,
-    },
+    CreateTable { doctype: String },
     /// Backfills legacy record values to new field layout.
     BackfillField {
         doctype: String,
@@ -40,10 +38,7 @@ pub enum MigrationStep {
         batch_size: usize,
     },
     /// Drops an obsolete deprecated field during contract phase.
-    DropDeprecatedField {
-        doctype: String,
-        fieldname: String,
-    },
+    DropDeprecatedField { doctype: String, fieldname: String },
 }
 
 /// A zero-downtime migration plan consisting of ordered phase tasks.
@@ -128,7 +123,11 @@ impl ZeroDowntimeMigrationEngine {
         }
 
         ExpandContractMigrationPlan {
-            plan_id: format!("mig_{}_{}", old_schema.name.to_lowercase(), chrono::Utc::now().timestamp()),
+            plan_id: format!(
+                "mig_{}_{}",
+                old_schema.name.to_lowercase(),
+                chrono::Utc::now().timestamp()
+            ),
             title: format!("Zero-Downtime Migration for {}", new_schema.name),
             target_doctype: new_schema.name.clone(),
             current_phase: MigrationPhase::Expand,
@@ -152,9 +151,13 @@ impl ZeroDowntimeMigrationEngine {
                 for step in &plan.expand_steps {
                     if let MigrationStep::AddField { doctype, field } = step {
                         let surreal_type = match &field.fieldtype {
-                            FieldType::Data | FieldType::Link { .. } | FieldType::Select { .. } => "string",
+                            FieldType::Data | FieldType::Link { .. } | FieldType::Select { .. } => {
+                                "string"
+                            }
                             FieldType::Int => "int",
-                            FieldType::Currency | FieldType::Percent | FieldType::Float => "decimal",
+                            FieldType::Currency | FieldType::Percent | FieldType::Float => {
+                                "decimal"
+                            }
                             FieldType::Check => "bool",
                             FieldType::Datetime | FieldType::Date => "datetime",
                             FieldType::Table { .. } => "array",
@@ -188,9 +191,7 @@ impl ZeroDowntimeMigrationEngine {
             MigrationPhase::Contract => {
                 for step in &plan.contract_steps {
                     if let MigrationStep::DropDeprecatedField { doctype, fieldname } = step {
-                        queries.push(format!(
-                            "REMOVE FIELD {fieldname} ON TABLE {doctype};"
-                        ));
+                        queries.push(format!("REMOVE FIELD {fieldname} ON TABLE {doctype};"));
                         executed_count += 1;
                     }
                 }
@@ -335,18 +336,30 @@ mod tests {
         let expand_rep = ZeroDowntimeMigrationEngine::execute_phase(&plan, MigrationPhase::Expand);
         assert!(expand_rep.success);
         assert_eq!(expand_rep.executed_steps, 2); // vat_tax_id and credit_limit added
-        assert!(expand_rep.generated_surrealql.iter().any(|q| q.contains("credit_limit")));
+        assert!(
+            expand_rep
+                .generated_surrealql
+                .iter()
+                .any(|q| q.contains("credit_limit"))
+        );
 
         // Verify Sync Phase
         let sync_rep = ZeroDowntimeMigrationEngine::execute_phase(&plan, MigrationPhase::Sync);
         assert!(sync_rep.success);
         assert_eq!(sync_rep.executed_steps, 1); // backfill old_tax_code to vat_tax_id
-        assert!(sync_rep.generated_surrealql[0].contains("UPDATE Customer SET vat_tax_id = old_tax_code"));
+        assert!(
+            sync_rep.generated_surrealql[0]
+                .contains("UPDATE Customer SET vat_tax_id = old_tax_code")
+        );
 
         // Verify Contract Phase
-        let contract_rep = ZeroDowntimeMigrationEngine::execute_phase(&plan, MigrationPhase::Contract);
+        let contract_rep =
+            ZeroDowntimeMigrationEngine::execute_phase(&plan, MigrationPhase::Contract);
         assert!(contract_rep.success);
         assert_eq!(contract_rep.executed_steps, 1); // drop old_tax_code
-        assert!(contract_rep.generated_surrealql[0].contains("REMOVE FIELD old_tax_code ON TABLE Customer"));
+        assert!(
+            contract_rep.generated_surrealql[0]
+                .contains("REMOVE FIELD old_tax_code ON TABLE Customer")
+        );
     }
 }

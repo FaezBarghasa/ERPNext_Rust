@@ -230,6 +230,10 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
         "migrate" => {
             let skip_fixtures = args.iter().any(|a| a == "--skip-fixtures");
+            let is_expand = args.iter().any(|a| a == "--expand");
+            let is_sync = args.iter().any(|a| a == "--sync");
+            let is_contract = args.iter().any(|a| a == "--contract");
+
             println!(
                 "Running lock-free SurrealQL schema migrations (skip-fixtures: {skip_fixtures})..."
             );
@@ -287,6 +291,26 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
             let ddl = compile_to_surrealql(&sample_invoice)?;
             println!("Generated SurrealQL DDL:\n{}", ddl.join("\n"));
+
+            if is_expand || is_sync || is_contract {
+                let plan =
+                    ZeroDowntimeMigrationEngine::plan_migration(&sample_invoice, &sample_invoice);
+                let phase = if is_expand {
+                    MigrationPhase::Expand
+                } else if is_sync {
+                    MigrationPhase::Sync
+                } else {
+                    MigrationPhase::Contract
+                };
+                let rep = ZeroDowntimeMigrationEngine::execute_phase(&plan, phase);
+                println!(
+                    "Zero-Downtime Migration [{:?} Phase]: {} queries generated, success: {}",
+                    rep.phase,
+                    rep.generated_surrealql.len(),
+                    rep.success
+                );
+            }
+
             println!("All DocTypes compiled & synchronized with zero table locking.");
         }
 
