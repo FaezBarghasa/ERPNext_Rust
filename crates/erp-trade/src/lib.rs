@@ -4,8 +4,11 @@ pub mod einvoice;
 pub mod invoice_matching;
 pub mod landed_cost;
 pub mod metered;
+pub mod order_tools;
+pub mod partner_reference;
 pub mod pricing;
 pub mod sanctions;
+pub mod subcontracting;
 pub mod taxes;
 pub mod woocommerce_ingest;
 pub mod zatca;
@@ -19,8 +22,18 @@ pub use invoice_matching::{
 };
 pub use landed_cost::distribute_landed_cost;
 pub use metered::{MeteredRatingEngine, RatingModel, UsageEvent};
+pub use order_tools::{
+    BulkOrderManager, InPlaceItemUpdate, MaterialRequestDoc, OrderItemLine, OrderWorkflowStatus,
+    QuotationItem, RequisitionItem, calculate_quotation_totals,
+    split_material_requests_by_supplier,
+};
+pub use partner_reference::{PartnerReference, PartnerReferenceResolver, PartnerType};
 pub use pricing::{PricingEngine, PricingRule};
 pub use sanctions::{SanctionEntry, SanctionsScreener};
+pub use subcontracting::{
+    CustomerSuppliedItem, LandedCostVoucher, SubcontractServiceCharge, SubcontractedSalesOrder,
+    SubcontractingReceipt,
+};
 pub use taxes::{TaxEngine, TaxLineResult, TaxRow, TaxScheduleResult, TaxType};
 pub use woocommerce_ingest::{
     IngestedItem, IngestedSalesInvoice, MigrationSummary, WooCustomer, WooMigrationEngine,

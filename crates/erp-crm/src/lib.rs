@@ -1,18 +1,29 @@
+pub mod appointment;
 pub mod buying_center;
 pub mod clm;
 pub mod cpq;
+pub mod forecast;
+pub mod lead_ads;
 pub mod pipeline;
+pub mod prospect;
 pub mod revops;
 pub mod scoring;
 
+pub use appointment::{AppointmentBookingEngine, AppointmentSlot, CalendarInvitePayload};
 pub use buying_center::{
     BuyingCenterGraph, CorporateHierarchy, InfluenceEdge, Stakeholder, StakeholderRole,
 };
 pub use clm::{ClauseLibrary, ClauseVariant, ContractClause, ContractRedliner};
 pub use cpq::{CpqSolver, OptionConstraint, PriceWaterfall};
+pub use forecast::{
+    DealSlaConfig, DealStage, OpportunityDeal, PipelineForecastEngine, PipelineForecastSummary,
+    SlaBreachReason,
+};
+pub use lead_ads::{IngestedLead, MetaFieldData, MetaLeadAdPayload, MetaLeadIngestor, UtmAttribution};
 pub use pipeline::{
     CrmError, CrmPipeline, Lead, LeadStatus, Quotation, QuotationItem, QuotationStatus, SalesOrder,
 };
+pub use prospect::{ConvertedCustomer, Prospect, ProspectContact, ProspectOpportunity};
 pub use revops::{PerformanceObligation, RevOpsEngine, RevenueContract, SatisfactionMethod};
 pub use scoring::calculate_lead_score;
 

@@ -32,11 +32,13 @@ mod tests {
             Bom {
                 name: "BOM-A".into(),
                 item: "ITEM_A".into(),
+                is_phantom: false,
                 items: vec![BomItem {
                     item_code: "ITEM_B".into(),
                     qty: dec!(1.0),
                     scrap_percentage: dec!(0.0),
                     bom_no: Some("BOM-B".into()),
+                    is_secondary: false,
                 }],
                 operations: vec![],
                 is_active: true,
@@ -49,11 +51,13 @@ mod tests {
             Bom {
                 name: "BOM-B".into(),
                 item: "ITEM_B".into(),
+                is_phantom: false,
                 items: vec![BomItem {
                     item_code: "ITEM_C".into(),
                     qty: dec!(1.0),
                     scrap_percentage: dec!(0.0),
                     bom_no: Some("BOM-C".into()),
+                    is_secondary: false,
                 }],
                 operations: vec![],
                 is_active: true,
@@ -66,11 +70,13 @@ mod tests {
             Bom {
                 name: "BOM-C".into(),
                 item: "ITEM_C".into(),
+                is_phantom: false,
                 items: vec![BomItem {
                     item_code: "ITEM_A".into(),
                     qty: dec!(1.0),
                     scrap_percentage: dec!(0.0),
                     bom_no: Some("BOM-A".into()),
+                    is_secondary: false,
                 }],
                 operations: vec![],
                 is_active: true,
@@ -98,11 +104,13 @@ mod tests {
             Bom {
                 name: "BOM-PCB".into(),
                 item: "ASSY_PCB".into(),
+                is_phantom: false,
                 items: vec![BomItem {
                     item_code: "RAW_CHIP".into(),
                     qty: dec!(2.0),
                     scrap_percentage: dec!(0.0),
                     bom_no: None,
+                    is_secondary: false,
                 }],
                 operations: vec![BomOperation {
                     operation: "SMD Assembly".into(),
@@ -120,11 +128,13 @@ mod tests {
             Bom {
                 name: "BOM-DRONE".into(),
                 item: "DRONE".into(),
+                is_phantom: false,
                 items: vec![BomItem {
                     item_code: "ASSY_PCB".into(),
                     qty: dec!(2.0),
                     scrap_percentage: dec!(0.0),
                     bom_no: Some("BOM-PCB".into()),
+                    is_secondary: false,
                 }],
                 operations: vec![BomOperation {
                     operation: "Final Assembly".into(),

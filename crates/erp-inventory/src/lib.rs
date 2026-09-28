@@ -1,9 +1,19 @@
+pub mod ageing;
 pub mod batches;
 pub mod fifo;
+pub mod reconciliation;
+pub mod reposting;
+pub mod reservation;
 pub mod warehouse;
 
+pub use ageing::{AgeingBucket, StockAgeingEngine, StockAgeingSummary, StockReceiptLayer};
 pub use batches::{Batch, SerialNo, SerialStatus};
 pub use fifo::{FifoBatchItem, InventoryError, StockLedgerEntry, add_fifo_layer, consume_fifo};
+pub use reconciliation::{BatchAuditReport, BatchDiscrepancy, BatchRecalculator};
+pub use reposting::{ItemPartitionQueue, ParallelRepostingSettings, RepostItemJob};
+pub use reservation::{
+    ReservationStatus, ReservationType, StockReservationEngine, StockReservationEntry,
+};
 pub use warehouse::{
     Warehouse, create_delivery_note_gl_entries, create_purchase_receipt_gl_entries,
     gl_entries_to_journal_entry,
