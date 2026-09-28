@@ -103,6 +103,18 @@ pub enum PsaInvoiceType {
     },
 }
 
+/// Parameters for generating a Fixed-Price Milestone Invoice.
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+pub struct MilestoneInvoiceRequest {
+    pub invoice_id: String,
+    pub customer_id: String,
+    pub project_id: String,
+    pub milestone_id: String,
+    pub milestone_name: String,
+    pub amount: Decimal,
+    pub revenue_account: String,
+}
+
 /// PSA & Professional Services automation engine.
 pub struct PsaEngine;
 
@@ -189,7 +201,10 @@ impl PsaEngine {
         let mut total_amount = Decimal::ZERO;
 
         for log in time_logs.iter_mut() {
-            if log.project_id == project_id && !log.is_invoiced && log.billable_hours > Decimal::ZERO {
+            if log.project_id == project_id
+                && !log.is_invoiced
+                && log.billable_hours > Decimal::ZERO
+            {
                 let amount = log.billable_value();
                 total_amount += amount;
 
@@ -227,39 +242,33 @@ impl PsaEngine {
 
     /// Generates a Fixed-Price milestone invoice.
     pub fn generate_milestone_invoice(
-        invoice_id: String,
-        customer_id: String,
-        project_id: String,
-        milestone_id: String,
-        milestone_name: String,
-        amount: Decimal,
-        revenue_account: String,
+        req: MilestoneInvoiceRequest,
         now: DateTime<Utc>,
     ) -> Result<PsaInvoice, SoftwareBillingError> {
-        if amount <= Decimal::ZERO {
+        if req.amount <= Decimal::ZERO {
             return Err(SoftwareBillingError::InvalidContractTerms(
                 "Milestone invoice amount must be positive".into(),
             ));
         }
 
         let line_items = vec![InvoiceLineItem {
-            description: format!("Milestone: {} - {}", milestone_id, milestone_name),
+            description: format!("Milestone: {} - {}", req.milestone_id, req.milestone_name),
             quantity: Decimal::ONE,
-            unit_price: amount,
-            amount,
-            account: revenue_account,
+            unit_price: req.amount,
+            amount: req.amount,
+            account: req.revenue_account,
         }];
 
         Ok(PsaInvoice {
-            invoice_id,
-            customer_id,
-            project_id,
+            invoice_id: req.invoice_id,
+            customer_id: req.customer_id,
+            project_id: req.project_id,
             invoice_type: PsaInvoiceType::FixedPriceMilestone {
-                milestone_id,
-                milestone_name,
+                milestone_id: req.milestone_id,
+                milestone_name: req.milestone_name,
             },
             line_items,
-            total_amount: amount,
+            total_amount: req.amount,
             invoiced_time_log_ids: Vec::new(),
             issued_at: now,
         })
@@ -274,29 +283,27 @@ mod tests {
     #[test]
     fn test_employee_utilization_calculation() {
         let now = Utc::now();
-        let logs = vec![
-            TimeLog {
-                id: "log-1".into(),
-                employee_id: "emp-alice".into(),
-                project_id: "proj-web".into(),
-                task_id: Some("task-backend".into()),
-                contract_id: Some("ctr-1".into()),
-                billable_hours: dec!(32.0),
-                non_billable_hours: dec!(8.0), // 40 hours total
-                billable_rate: dec!(150.0),    // $150/hr
-                cost_rate: dec!(60.0),         // $60/hr
-                log_date: now,
-                description: "Built Actix Web microservices".into(),
-                is_invoiced: false,
-            },
-        ];
+        let logs = vec![TimeLog {
+            id: "log-1".into(),
+            employee_id: "emp-alice".into(),
+            project_id: "proj-web".into(),
+            task_id: Some("task-backend".into()),
+            contract_id: Some("ctr-1".into()),
+            billable_hours: dec!(32.0),
+            non_billable_hours: dec!(8.0), // 40 hours total
+            billable_rate: dec!(150.0),    // $150/hr
+            cost_rate: dec!(60.0),         // $60/hr
+            log_date: now,
+            description: "Built Actix Web microservices".into(),
+            is_invoiced: false,
+        }];
 
         // 32 billable hours / 40 available capacity = 80.00% utilization
         let scorecard =
             PsaEngine::compute_employee_utilization("emp-alice", &logs, dec!(40.0)).unwrap();
         assert_eq!(scorecard.utilization_rate_percent, dec!(80.00));
         assert_eq!(scorecard.total_billable_value, dec!(4800.00)); // 32 * 150
-        assert_eq!(scorecard.total_labor_cost, dec!(2400.00));     // 40 * 60
+        assert_eq!(scorecard.total_labor_cost, dec!(2400.00)); // 40 * 60
 
         // Project summary
         let proj = PsaEngine::compute_project_summary("proj-web", &logs);
@@ -308,22 +315,20 @@ mod tests {
     #[test]
     fn test_tm_invoice_generation() {
         let now = Utc::now();
-        let mut logs = vec![
-            TimeLog {
-                id: "log-10".into(),
-                employee_id: "emp-bob".into(),
-                project_id: "proj-ai".into(),
-                task_id: None,
-                contract_id: None,
-                billable_hours: dec!(10.0),
-                non_billable_hours: dec!(0.0),
-                billable_rate: dec!(200.0),
-                cost_rate: dec!(80.0),
-                log_date: now,
-                description: "SurrealDB query optimization".into(),
-                is_invoiced: false,
-            },
-        ];
+        let mut logs = vec![TimeLog {
+            id: "log-10".into(),
+            employee_id: "emp-bob".into(),
+            project_id: "proj-ai".into(),
+            task_id: None,
+            contract_id: None,
+            billable_hours: dec!(10.0),
+            non_billable_hours: dec!(0.0),
+            billable_rate: dec!(200.0),
+            cost_rate: dec!(80.0),
+            log_date: now,
+            description: "SurrealDB query optimization".into(),
+            is_invoiced: false,
+        }];
 
         let inv = PsaEngine::generate_tm_invoice(
             "INV-TM-01".into(),

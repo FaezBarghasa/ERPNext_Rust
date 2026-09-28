@@ -4,8 +4,8 @@
 //! performance obligations (POBs) via relative Standalone Selling Prices (SSP) and generates
 //! balanced General Ledger amortization posting lines without float drift.
 
-use chrono::{DateTime, Duration, Utc};
-use erp_accounting::decimal_ledger::{verify_balanced_dec, DecLine};
+use chrono::{DateTime, Utc};
+use erp_accounting::decimal_ledger::DecLine;
 use rust_decimal::Decimal;
 use rust_decimal_macros::dec;
 use serde::{Deserialize, Serialize};
@@ -303,6 +303,8 @@ impl Asc606Engine {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use chrono::Duration;
+    use erp_accounting::decimal_ledger::verify_balanced_dec;
     use rust_decimal_macros::dec;
 
     #[test]

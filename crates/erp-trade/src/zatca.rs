@@ -9,13 +9,20 @@ impl ZatcaPhase2Engine {
     /// Computes the cryptographic invoice hash chaining:
     /// Hash_n = SHA-256(UBL_Bytes_n || Hash_{n-1})
     #[must_use]
-    pub fn compute_invoice_hash(ubl_xml_bytes: &[u8], previous_invoice_hash: Option<&str>) -> String {
+    pub fn compute_invoice_hash(
+        ubl_xml_bytes: &[u8],
+        previous_invoice_hash: Option<&str>,
+    ) -> String {
         let mut hasher = Sha256::new();
         hasher.update(ubl_xml_bytes);
         if let Some(prev) = previous_invoice_hash {
             hasher.update(prev.as_bytes());
         }
-        hasher.finalize().iter().map(|b| format!("{b:02x}")).collect()
+        hasher
+            .finalize()
+            .iter()
+            .map(|b| format!("{b:02x}"))
+            .collect()
     }
 
     /// Encodes a single TLV tag: Tag (1 byte) + Length (1 byte) + Value.
@@ -63,15 +70,31 @@ impl ZatcaPhase2Engine {
 
         for chunk in chunks {
             let b0 = chunk[0] as usize;
-            let b1 = if chunk.len() > 1 { chunk[1] as usize } else { 0 };
-            let b2 = if chunk.len() > 2 { chunk[2] as usize } else { 0 };
+            let b1 = if chunk.len() > 1 {
+                chunk[1] as usize
+            } else {
+                0
+            };
+            let b2 = if chunk.len() > 2 {
+                chunk[2] as usize
+            } else {
+                0
+            };
 
             let triple = (b0 << 16) | (b1 << 8) | b2;
 
             let c0 = b64_chars[(triple >> 18) & 0x3F] as char;
             let c1 = b64_chars[(triple >> 12) & 0x3F] as char;
-            let c2 = if chunk.len() > 1 { b64_chars[(triple >> 6) & 0x3F] as char } else { '=' };
-            let c3 = if chunk.len() > 2 { b64_chars[triple & 0x3F] as char } else { '=' };
+            let c2 = if chunk.len() > 1 {
+                b64_chars[(triple >> 6) & 0x3F] as char
+            } else {
+                '='
+            };
+            let c3 = if chunk.len() > 2 {
+                b64_chars[triple & 0x3F] as char
+            } else {
+                '='
+            };
 
             let _ = write!(result, "{c0}{c1}{c2}{c3}");
         }

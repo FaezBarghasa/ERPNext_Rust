@@ -63,7 +63,7 @@ impl TenantRegistry {
     }
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
 pub enum TaskState {
     Queued,
     Processing,
@@ -71,7 +71,7 @@ pub enum TaskState {
     Failed,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
 pub struct QueueTask {
     pub id: String,
     pub queue: &'static str,

@@ -12,8 +12,8 @@ pub mod subscription;
 
 pub use errors::SoftwareBillingError;
 pub use psa::{
-    EmployeeUtilizationScorecard, ProjectPsaSummary, PsaEngine, PsaInvoice, PsaInvoiceType,
-    TimeLog,
+    EmployeeUtilizationScorecard, MilestoneInvoiceRequest, ProjectPsaSummary, PsaEngine,
+    PsaInvoice, PsaInvoiceType, TimeLog,
 };
 pub use revenue_recognition::{
     AllocatedObligation, AmortizationScheduleEntry, Asc606Engine, CustomerContract,

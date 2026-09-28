@@ -11,10 +11,7 @@ pub enum SoftwareBillingError {
 
     /// Relative SSP allocation mismatch where allocated sum differs from transaction price.
     #[error("SSP allocation mismatch: total allocated revenue {allocated} does not match transaction price {expected}")]
-    SspAllocationMismatch {
-        allocated: String,
-        expected: String,
-    },
+    SspAllocationMismatch { allocated: String, expected: String },
 
     /// Standalone Selling Price sum is zero, preventing ratio computation.
     #[error("Total Standalone Selling Price (SSP) cannot be zero")]
