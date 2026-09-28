@@ -387,6 +387,7 @@ pub struct MicroTopologyConfig {
     pub max_read_cache_mb: usize,
     pub max_queue_capacity: usize,
     pub idle_reap_interval_secs: u64,
+    pub max_payload_bytes: usize,
 }
 
 impl Default for MicroTopologyConfig {
@@ -397,6 +398,7 @@ impl Default for MicroTopologyConfig {
             max_read_cache_mb: 128,
             max_queue_capacity: 10_000,
             idle_reap_interval_secs: 300,
+            max_payload_bytes: 10 * 1024 * 1024,
         }
     }
 }
@@ -410,6 +412,7 @@ impl MicroTopologyConfig {
             max_read_cache_mb: 16,
             max_queue_capacity: 1024,
             idle_reap_interval_secs: 60,
+            max_payload_bytes: 2 * 1024 * 1024,
         }
     }
 }

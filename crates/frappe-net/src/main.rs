@@ -10,7 +10,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     match cli.command {
         Commands::Start(args) => {
-            let _topology = if args.micro {
+            let topology = if args.micro {
                 println!("🚀 Launching in Sub-64MB Micro-Topology Mode (<64MB RSS budget)...");
                 MicroTopologyConfig::micro_mode()
             } else {
@@ -18,15 +18,27 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                 MicroTopologyConfig::default()
             };
 
-            if let Some(acme_domain) = &args.acme_domain {
+            let acme_gateway = if let Some(acme_domain) = &args.acme_domain {
                 println!(
                     "🔒 Automated In-Process ACME TLS enabled for domain: {}",
                     acme_domain
                 );
-            }
+                let gw = frappe_net::tenant::AcmeGateway::new();
+                gw.register_domain(acme_domain, TenantId("default".to_string()))
+                    .await;
+                Some(gw)
+            } else {
+                None
+            };
 
             println!("⚡ Actix-web server binding to http://{}", args.bind);
-            run_server(&args.bind).await?;
+            frappe_net::run_server_with_config(
+                &args.bind,
+                topology,
+                acme_gateway,
+                args.workers,
+            )
+            .await?;
         }
         Commands::Migrate(args) => {
             println!(

@@ -3881,10 +3881,12 @@ dependencies = [
 name = "rbench"
 version = "0.2.0"
 dependencies = [
+ "chrono",
  "frappe-framework",
  "frappe-meta",
  "frappe-net",
  "frappe-storage",
+ "futures-util",
  "serde",
  "serde_json",
  "surrealdb",
