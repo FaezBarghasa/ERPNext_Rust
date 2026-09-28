@@ -282,13 +282,13 @@ impl StatementGenerator {
         let mut total_expense = Decimal::ZERO;
 
         for e in entries {
-            if e.posting_date <= as_of {
-                if let Some(acct) = accounts.get(&e.account) {
-                    match acct.root_type {
-                        RootType::Income => total_income += e.credit - e.debit,
-                        RootType::Expense => total_expense += e.debit - e.credit,
-                        _ => {}
-                    }
+            if e.posting_date <= as_of
+                && let Some(acct) = accounts.get(&e.account)
+            {
+                match acct.root_type {
+                    RootType::Income => total_income += e.credit - e.debit,
+                    RootType::Expense => total_expense += e.debit - e.credit,
+                    _ => {}
                 }
             }
         }
@@ -308,14 +308,14 @@ impl StatementGenerator {
         let mut total_equity = Decimal::ZERO;
 
         for e in entries {
-            if e.posting_date <= as_of {
-                if let Some(acct) = accounts.get(&e.account) {
-                    match acct.root_type {
-                        RootType::Asset => total_assets += e.debit - e.credit,
-                        RootType::Liability => total_liabilities += e.credit - e.debit,
-                        RootType::Equity => total_equity += e.credit - e.debit,
-                        _ => {}
-                    }
+            if e.posting_date <= as_of
+                && let Some(acct) = accounts.get(&e.account)
+            {
+                match acct.root_type {
+                    RootType::Asset => total_assets += e.debit - e.credit,
+                    RootType::Liability => total_liabilities += e.credit - e.debit,
+                    RootType::Equity => total_equity += e.credit - e.debit,
+                    _ => {}
                 }
             }
         }

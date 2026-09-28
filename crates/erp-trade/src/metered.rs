@@ -51,10 +51,10 @@ impl MeteredRatingEngine {
                     remaining -= units_in_tier;
                     prev_threshold = *threshold;
                 }
-                if remaining > Decimal::ZERO {
-                    if let Some((_, last_rate)) = tiers.last() {
-                        total_cost += remaining * last_rate;
-                    }
+                if remaining > Decimal::ZERO
+                    && let Some((_, last_rate)) = tiers.last()
+                {
+                    total_cost += remaining * last_rate;
                 }
                 total_cost.round_dp(2)
             }

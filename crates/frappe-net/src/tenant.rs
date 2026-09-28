@@ -246,19 +246,19 @@ pub fn parse_tenant_id(
     headers: &actix_web::http::header::HeaderMap,
     host: &str,
 ) -> Result<TenantId, TenantError> {
-    if let Some(tenant_hdr) = headers.get("X-Tenant-Id") {
-        if let Ok(tenant_str) = tenant_hdr.to_str() {
-            return validate_and_create_tenant_id(tenant_str);
-        }
+    if let Some(tenant_hdr) = headers.get("X-Tenant-Id")
+        && let Ok(tenant_str) = tenant_hdr.to_str()
+    {
+        return validate_and_create_tenant_id(tenant_str);
     }
 
     let host_regex = Regex::new(r"^(?P<tenant>[a-z0-9-]+)\.[a-z0-9.-]+$")
         .map_err(|e| TenantError::ConnectionFailed(e.to_string()))?;
 
-    if let Some(caps) = host_regex.captures(host) {
-        if let Some(m) = caps.name("tenant") {
-            return validate_and_create_tenant_id(m.as_str());
-        }
+    if let Some(caps) = host_regex.captures(host)
+        && let Some(m) = caps.name("tenant")
+    {
+        return validate_and_create_tenant_id(m.as_str());
     }
 
     Err(TenantError::TenantUnresolved)

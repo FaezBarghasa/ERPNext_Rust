@@ -23,13 +23,13 @@ impl BenfordGuard {
 
         for amt in amounts {
             let s = amt.abs().to_string();
-            if let Some(first_char) = s.chars().find(|c| c.is_ascii_digit() && *c != '0') {
-                if let Some(d) = first_char.to_digit(10) {
-                    let digit = d as usize;
-                    if (1..=9).contains(&digit) {
-                        counts[digit - 1] += 1;
-                        total += 1;
-                    }
+            if let Some(first_char) = s.chars().find(|c| c.is_ascii_digit() && *c != '0')
+                && let Some(d) = first_char.to_digit(10)
+            {
+                let digit = d as usize;
+                if (1..=9).contains(&digit) {
+                    counts[digit - 1] += 1;
+                    total += 1;
                 }
             }
         }

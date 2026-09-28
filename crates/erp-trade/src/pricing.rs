@@ -41,20 +41,20 @@ impl PricingEngine {
                 if qty < r.min_qty {
                     return false;
                 }
-                if let Some(max) = r.max_qty {
-                    if qty > max {
-                        return false;
-                    }
+                if let Some(max) = r.max_qty
+                    && qty > max
+                {
+                    return false;
                 }
-                if let Some(cg) = &r.customer_group {
-                    if customer_group != Some(cg.as_str()) {
-                        return false;
-                    }
+                if let Some(cg) = &r.customer_group
+                    && customer_group != Some(cg.as_str())
+                {
+                    return false;
                 }
-                if let Some(ig) = &r.item_group {
-                    if item_group != Some(ig.as_str()) {
-                        return false;
-                    }
+                if let Some(ig) = &r.item_group
+                    && item_group != Some(ig.as_str())
+                {
+                    return false;
                 }
                 true
             })
