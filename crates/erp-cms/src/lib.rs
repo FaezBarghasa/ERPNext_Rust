@@ -4,6 +4,8 @@ pub mod print;
 pub mod security;
 pub mod storefront;
 pub mod subtitles;
+pub mod template_catalog;
+pub mod theme_engine;
 pub mod transcoder;
 
 pub use block_canvas::{CmsPage, FeatureItem, PageBlock, SsrEngine};
@@ -17,6 +19,14 @@ pub use storefront::{
     AtomicCheckoutEngine, CheckoutError, CheckoutItem, CheckoutResult, CustomerCheckoutRequest,
 };
 pub use subtitles::{SubtitleSearchEngine, SubtitleSegment};
+pub use template_catalog::{
+    get_template_suite, list_template_suites, render_template_html, render_template_index_html,
+    TemplateSuite,
+};
+pub use theme_engine::{
+    CompiledTheme, DesignTokens, RenderEngineKind, SlotDefinition, ThemeManifest, ThemeRegistry,
+    WorkTypeClassification,
+};
 pub use transcoder::{HlsPlaylistGenerator, STANDARD_VARIANTS, VideoVariant};
 
 #[cfg(test)]
