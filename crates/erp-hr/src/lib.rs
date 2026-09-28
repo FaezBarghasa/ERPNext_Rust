@@ -1,10 +1,20 @@
+pub mod advances;
+pub mod arrears;
 pub mod attendance;
+pub mod benefits;
+pub mod overtime;
 pub mod payroll;
 
+pub use advances::{
+    EmployeeAdvance, ExpenseClaimDetail, ExpenseClaimEngine, SettledExpenseClaim,
+};
+pub use arrears::{ArrearsEngine, RetroactiveArrearsSummary, RetroactiveMonthDifference};
 pub use attendance::{
     AttendanceReconciler, AttendanceStatus, BiometricIngestionGateway, BiometricPunch, HrError,
     ShiftType,
 };
+pub use benefits::{FlexBenefitCategory, FlexBenefitLedger, HolidayList};
+pub use overtime::{OvertimeEngine, OvertimeMultiplier, OvertimeSlip};
 pub use payroll::{
     EnterprisePayrollCoordinator, LeaveApplication, LeaveEngine, PayrollGlAccounts,
     SalaryCalculator, SalarySlip, SalaryStructure,
