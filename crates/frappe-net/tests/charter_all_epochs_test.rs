@@ -495,9 +495,9 @@ fn test_epoch_10_agency_fleet_woocommerce_and_vertical_profiles() {
     assert_eq!(items[0].item_code.as_str(), "PROP-PR-01");
     assert_eq!(items[0].standard_rate, dec!(45.00));
 
-    // 10.3 Curated Vertical Profiles
+    // 10.3 Curated Vertical Profiles & 6 Prebuilt Template Suites
     let profiles = ProfileRegistry::list_profiles();
-    assert_eq!(profiles.len(), 4);
+    assert_eq!(profiles.len(), 10);
 
     let clinic = ProfileRegistry::get_profile("clinic").unwrap();
     assert_eq!(clinic.target_industry.as_str(), "Healthcare");
@@ -505,4 +505,26 @@ fn test_epoch_10_agency_fleet_woocommerce_and_vertical_profiles() {
 
     let restaurant = ProfileRegistry::get_profile("restaurant").unwrap();
     assert!(restaurant.initial_doctypes.contains(&"DiningTable".into()));
+
+    let svod = ProfileRegistry::get_profile("svod-streaming").unwrap();
+    assert_eq!(svod.target_industry.as_str(), "Media & Entertainment");
+    assert!(svod.initial_doctypes.contains(&"VideoAsset".into()));
+
+    let lms = ProfileRegistry::get_profile("lms-academy").unwrap();
+    assert!(
+        lms.initial_doctypes
+            .contains(&"GraduationCertificate".into())
+    );
+
+    let digital = ProfileRegistry::get_profile("digital-goods").unwrap();
+    assert!(digital.initial_doctypes.contains(&"LicenseKey".into()));
+
+    let b2b = ProfileRegistry::get_profile("b2b-industrial").unwrap();
+    assert!(b2b.initial_doctypes.contains(&"ZugferdInvoice".into()));
+
+    let b2c = ProfileRegistry::get_profile("b2c-retail").unwrap();
+    assert!(b2c.initial_doctypes.contains(&"FlashSaleEvent".into()));
+
+    let trading = ProfileRegistry::get_profile("trading-exchange").unwrap();
+    assert!(trading.initial_doctypes.contains(&"ExchangeOrder".into()));
 }

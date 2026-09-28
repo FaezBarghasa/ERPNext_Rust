@@ -911,83 +911,217 @@ Permissions & Assertions     - CompactString Keys
   \text{Migration Speed} \ge 10{,}000\,\text{products and orders ingested in } \le 12\,\text{seconds}
   $$
 
-### Milestone 10.3: Curated "Business-in-a-Box" Universal Work-Type Template Catalog
+### Milestone 10.3: Curated Prebuilt Template Sites Suite (Universal Work-Type Archetypes)
 
-* **Objective:** Ship a comprehensive suite of 12 production-ready, pre-configured work-type templates embedded directly into the binary. A user provisions an environment, picks a work-type archetype, and deploys an operational ERP, CRM, and storefront in under 180 seconds.
+* **Objective:** Embed six production-grade, end-to-end commercial and operational website templates directly into the `rustnext` binary. Every template integrates with the full enterprise suite (`erp-accounting`, `erp-inventory`, `erp-trade`, `erp-software`, `erp-wms`, `erp-manufacturing`, `erp-crm`, `erp-support`, `erp-learning`, `erp-ppm`, `frappe-storage`, and `frappe-framework`), providing specialized UI/UX paradigms while enforcing zero decimal drift and low RAM overhead.
 
-* **Detailed Specifications Across 12 Work-Type Archetypes:**
+```
++───────────────────────────────────────────────────────────────────────────────────────────────────+
+|                           THE 6 PREBUILT ENTERPRISE TEMPLATE SUITES                               |
+|                                                                                                   |
+|  1. SVoD Video Streaming Platform (Netflix / 30nama Class)                                        |
+|     ├── Modules: `erp-cms`, `erp-software`, `erp-accounting`, `erp-support`, `frappe-storage`     |
+|     └── Stack: HLS Transcoder, 1536-dim Subtitle Vector Search, Watch Party WebSockets, DRM HMAC |
+|                                                                                                   |
+|  2. Digital Learning & LMS Academy (Coursera / Skillshare Class)                                  |
+|     ├── Modules: `erp-learning`, `erp-software`, `erp-accounting`, `erp-cms`, `frappe-storage`   |
+|     └── Stack: Course Graph Trees, ASC 606 Tuition Amortization, Merkle PDF/A Typst Diplomas     |
+|                                                                                                   |
+|  3. Digital Products & Creator Hub (Gumroad / LemonSqueezy Class)                                 |
+|     ├── Modules: `erp-trade`, `erp-software`, `erp-accounting`, `frappe-storage`, `frappe-meta`  |
+|     └── Stack: Encrypted Signed URLs, Node-Locked Licenses, Split Payouts, Global EU VAT MOSS    |
+|                                                                                                   |
+|  4. Industrial B2B & Wholesale Matrix (Grainger / Misumi Class)                                   |
+|     ├── Modules: `erp-trade`, `erp-manufacturing`, `erp-inventory`, `erp-wms`, `erp-accounting`  |
+|     └── Stack: WebGL CAD 3D Exploded Viewer, Tiered Price Matrix, Net Terms, ZUGFeRD E-Invoice    |
+|                                                                                                   |
+|  5. Consumer B2C Omnichannel Flagship (Shopify Killer / ASOS Class)                               |
+|     ├── Modules: `erp-trade`, `erp-inventory`, `erp-wms`, `erp-accounting`, `erp-cms`          |
+|     └── Stack: 60 FPS Viewport Grid, Real-Time Flash Stock Feed, Slide-Over Drawer, FIFO Reserve  |
+|                                                                                                   |
+|  6. Financial Trading & Brokerage Hub (Robinhood / TradingView Class)                             |
+|     ├── Modules: `erp-trade`, `erp-accounting`, `erp-crm`, `frappe-net`, `frappe-storage`       |
+|     └── Stack: WebGL Canvas Candlesticks, Microsecond Tick Streams, Sanctions KYC, FX Auto-Sweep |
++───────────────────────────────────────────────────────────────────────────────────────────────────+
+```
 
-  1. **Haute Horlogerie, Luxury Goods & Bespoke Craftsmanship:**
-     - *Primary Archetype:* High-ticket luxury e-commerce, custom atelier configurator, and cryptographic ownership certification.
-     - *Visual Paradigm:* Three.js procedural WebGL 3D exploded disassembly, kinetic GSAP typography, ACESFilmic tone-mapped lighting, gold/titanium PBR shaders.
-     - *Operational Flow:* Bespoke customization $\to$ serial number reservation $\to$ Merkle caseback genesis anchoring $\to$ deposit settlement in SurrealDB GL.
-     - *Verification Invariant:* 3D orbital FPS $\ge 60$ on mobile; zero decimal drift on deposits.
+#### Template 1: Subscription Video on Demand (SVoD) & Streaming Platform (`template-svod-streaming`)
 
-  2. **High-Velocity Omnichannel Retail & Superstore (Shopify Killer):**
-     - *Primary Archetype:* Multi-category consumer retail, flash sales, high-density SKU grids.
-     - *Visual Paradigm:* Viewport-virtualized grid, sub-5ms instant faceted category filters, quick-add drawer, predictive search autocomplete.
-     - *Operational Flow:* Cart drawer $\to$ atomic FIFO batch layer depletion $\to$ sales tax calculation $\to$ live stock WebSocket fanout.
-     - *Verification Invariant:* $10{,}000$ concurrent checkouts without double-selling or inventory lock contention.
+* **Business Model & Core Operational Narrative:**
+  Subscription entertainment, tiered video-on-demand passes (4K, HD, Ad-Supported), digital pay-per-view live events, and film studio content royalty management.
+* **Module Integration Matrix:**
+  1. `erp-cms` (`video_player.rs`, `transcoder.rs`, `subtitles.rs`): Handles chunked multipart video ingestion; executes asynchronous FFmpeg HLS segmentation (4-second `.ts` chunks with `.m3u8` playlists); provides HTTP 206 Partial Content range streaming; compiles 1536-dimensional HNSW cosine vector indexes for subtitle dialog search.
+  2. `erp-software` (`subscription.rs`, `sla_ledger.rs`): Manages recurring billing plans, household concurrent stream ceilings, bandwidth overage tiers, and SLA credit tracking.
+  3. `erp-accounting` (`multibook.rs`, `ledger.rs`): Computes studio content royalties based on watch duration minutes; posts double-entry accruals to `tab_gl_entry` debiting `Royalty Expense` and crediting `Studio Accounts Payable`.
+  4. `erp-support` (`gameplan.rs`): Manages synchronized watch party rooms via Actix WebSockets (`WSHubManager`), maintaining real-time video playback locks (play, pause, seek offsets) and live chat across participants.
+  5. `frappe-storage` (`encryption.rs`, `drive.rs`): Issues cryptographically signed HMAC streaming tokens (`verify_token()`) with configurable expiration windows, blocking direct asset hotlinking.
+* **Specialized DocType Fixtures in SurrealDB:**
+  ```surrealql
+  DEFINE TABLE tab_video_asset SCHEMAFULL;
+  DEFINE FIELD title ON tab_video_asset TYPE string;
+  DEFINE FIELD duration_seconds ON tab_video_asset TYPE int;
+  DEFINE FIELD hls_master_url ON tab_video_asset TYPE string;
+  DEFINE FIELD studio_partner ON tab_video_asset TYPE record(tab_supplier);
+  DEFINE FIELD royalty_rate_per_hour ON tab_video_asset TYPE decimal DEFAULT 0.15;
+  DEFINE FIELD is_premium_tier ON tab_video_asset TYPE bool DEFAULT true;
 
-  3. **B2B Heavy Machinery, Industrial Manufacturing & Wholesale:**
-     - *Primary Archetype:* Capital equipment, engineered assemblies, tiered wholesale price breaks.
-     - *Visual Paradigm:* STEP/CAD 3D assembly viewer, interactive BOM parts explosion, technical spec sheet PDF/A instant compiler.
-     - *Operational Flow:* Request for Quote (RFQ) $\to$ CPQ constraint solver check $\to$ dynamic MBOM generation $\to$ credit limit check $\to$ Sales Order.
-     - *Verification Invariant:* BOM recursive traversal depth 25 resolved in $\le 1.8\,\text{ms}$.
+  DEFINE TABLE media_transcripts SCHEMAFULL;
+  DEFINE FIELD video_id ON media_transcripts TYPE record(tab_video_asset);
+  DEFINE FIELD start_time_ms ON media_transcripts TYPE int;
+  DEFINE FIELD end_time_ms ON media_transcripts TYPE int;
+  DEFINE FIELD text_content ON media_transcripts TYPE string;
+  DEFINE FIELD embedding ON media_transcripts TYPE array<float> ASSERT array::len($value) == 1536;
+  DEFINE INDEX idx_transcript_vector ON media_transcripts FIELDS embedding TYPE HNSW DISTANCE COSINE DIMENSION 1536;
+  ```
+* **Frontend UI/UX Paradigm:**
+  Dark cinematic theater layout; responsive Dioxus WebAssembly player HUD (`desk-components/src/video_hud.rs`) with chapter scrubbing markers; interactive natural-language scene search overlay; live viewer reaction pulses; ambient background color sampling.
 
-  4. **Developer Platform, Cloud Infrastructure & SaaS Hub:**
-     - *Primary Archetype:* Subscription software, developer API tooling, metered infrastructure.
-     - *Visual Paradigm:* Live WebSocket network latency HUD, interactive code syntax highlighting, tiered pricing slider with cost calculator.
-     - *Operational Flow:* Self-service signup $\to$ API key issuance $\to$ metered usage telemetry ingestion $\to$ automated ASC 606 revenue recognition.
-     - *Verification Invariant:* $100{,}000$ telemetry usage events rated per second per core.
+#### Template 2: Digital Learning & LMS Academy (`template-lms-academy`)
 
-  5. **EPCM, Architecture, Megaproject Construction & Creative Studio:**
-     - *Primary Archetype:* Milestone-based contracting, project portfolio management, architectural bidding.
-     - *Visual Paradigm:* Interactive Gantt timeline canvas, 3D BIM model viewer, milestone progress burn-down chart.
-     - *Operational Flow:* WBS/OBS/CBS task breakdown $\to$ CPM critical path computation $\to$ AIA G702/G703 certificate generation $\to$ lien waiver payout gate.
-     - *Verification Invariant:* $100{,}000$ Monte Carlo schedule risk iterations resolved in $< 850\,\text{ms}$.
+* **Business Model & Core Operational Narrative:**
+  Higher education, professional corporate certification, multi-course subscriptions, instructor revenue sharing, and verified cryptographically anchored credentials.
+* **Module Integration Matrix:**
+  1. `erp-learning` (`lms.rs`, `learning_progress.rs`): Manages structured curriculums (Course $\to$ Module $\to$ Lesson $\to$ Assessment); tracks granular student completion percentages using relational graph edges (`RELATE student:id->completed->lesson:id`); manages interactive quiz state evaluation.
+  2. `erp-software` (`revenue_recognition.rs`): Automates ASC 606 / IFRS 15 five-step revenue recognition: allocates tuition transaction prices ($TP$) across individual learning modules based on Standalone Selling Prices ($SSP$), recognizing revenue progressively as lessons are completed.
+  3. `erp-cms` (`print.rs`): Compiles verifiable, print-ready PDF/A graduation diplomas in $< 5\,\text{ms}$ using embedded Typst, eliminating external headless browser dependencies.
+  4. `frappe-storage` (`merkle.rs`): Embeds a SHA-256 Merkle root hash on each graduation diploma pointing to SurrealDB table `tab_certificate`, allowing public validation of credentials without exposing student records.
+  5. `erp-hr` (`payroll.rs`): Tracks instructor office hours and mentor bookings, auto-generating royalty disbursements into monthly payroll runs.
+* **Specialized DocType Fixtures in SurrealDB:**
+  ```surrealql
+  DEFINE TABLE tab_course SCHEMAFULL;
+  DEFINE FIELD title ON tab_course TYPE string;
+  DEFINE FIELD price ON tab_course TYPE decimal ASSERT $value >= 0;
+  DEFINE FIELD instructor ON tab_course TYPE record(tab_employee);
+  DEFINE FIELD passing_grade_percent ON tab_course TYPE decimal DEFAULT 80.00;
 
-  6. **Gastronomy, Hospitality, Fine Dining & Ghost Kitchens:**
-     - *Primary Archetype:* Restaurant operations, table reservations, high-volume kitchen fulfillment.
-     - *Visual Paradigm:* SVG floor plan table designer, interactive multi-course digital menu with allergen filters, mobile curbside pickup tracker.
-     - *Operational Flow:* Table reservation $\to$ POS food order $\to$ real-time Kitchen Display System (KDS) WebSocket broadcast $\to$ tip-distribution payroll entry.
-     - *Verification Invariant:* Table reservation-to-kitchen broadcast latency $\le 3\,\text{ms}$.
+  DEFINE TABLE tab_certificate SCHEMAFULL;
+  DEFINE FIELD student ON tab_certificate TYPE record(tab_customer);
+  DEFINE FIELD course ON tab_certificate TYPE record(tab_course);
+  DEFINE FIELD issue_date ON tab_certificate TYPE datetime DEFAULT time::now();
+  DEFINE FIELD merkle_root_hash ON tab_certificate TYPE string;
+  DEFINE FIELD verification_uuid ON tab_certificate TYPE string;
+  ```
+* **Frontend UI/UX Paradigm:**
+  Structured sidebar syllabus tree; video lesson player with synchronized markdown notes; inline interactive quiz cards with instant signal-driven grading; verifiable credential showcase with a one-click Typst PDF download button.
 
-  7. **Healthcare, Specialist Clinical Practice & Telehealth:**
-     - *Primary Archetype:* Electronic Medical Records (EMR), practitioner appointments, clinical compliance.
-     - *Visual Paradigm:* Secure encrypted patient portal, practitioner shift booking calendar, diagnostic document vault.
-     - *Operational Flow:* Appointment booking $\to$ encrypted clinical note capture $\to$ insurance co-pay billing $\to$ HIPAA-compliant audit log chain.
-     - *Verification Invariant:* Zero unencrypted health data at rest; zero practitioner double-booking.
+#### Template 3: Digital Products & Software Creator Hub (`template-digital-goods`)
 
-  8. **Subscription Video on Demand (SVoD), Audio & Multimedia Streaming:**
-     - *Primary Archetype:* Streaming entertainment, podcast distribution, digital media paywalls.
-     - *Visual Paradigm:* WASM HLS video player HUD, season/episode carousels, timestamped interactive comments, HNSW vector dialogue search.
-     - *Operational Flow:* User subscription auth $\to$ HMAC signed streaming token issuance $\to$ HTTP 206 Range stream delivery $\to$ content studio royalty ledger post.
-     - *Verification Invariant:* Vector dialogue semantic search query latency $\le 12\,\text{ms}$.
+* **Business Model & Core Operational Narrative:**
+  Software licensing, developer SDK sales, downloadable design assets, audio samples, e-books, and developer API credits.
+* **Module Integration Matrix:**
+  1. `erp-trade` (`pricing.rs`, `taxes.rs`, `dom.rs`): Implements volume discount rules, promotional coupon codes, and real-time EU VAT MOSS (Mini One Stop Shop) and US state sales tax calculations based on buyer IP geolocation.
+  2. `frappe-storage` (`drive.rs`, `encryption.rs`): Delivers time-limited, encrypted single-use download links via AES-256-GCM without exposing raw storage bucket endpoints; streams file payloads using memory-capped Actix chunks.
+  3. `erp-software` (`subscription.rs`, `psa.rs`): Manages node-locked and floating software license keys; handles hardware machine ID activations (`uuid`); provides metered API rate-limiting gates.
+  4. `erp-accounting` (`receivables.rs`, `ledger.rs`): Manages instant creator payout splits (e.g., $85\%$ creator, $15\%$ platform fee), posting balanced journal entries automatically upon checkout confirmation.
+  5. `erp-crm` (`scoring.rs`, `pipeline.rs`): Tracks affiliate referral links and computes tiered partner commissions.
+* **Specialized DocType Fixtures in SurrealDB:**
+  ```surrealql
+  DEFINE TABLE tab_digital_product SCHEMAFULL;
+  DEFINE FIELD product_name ON tab_digital_product TYPE string;
+  DEFINE FIELD file_payload_hash ON tab_digital_product TYPE string;
+  DEFINE FIELD base_price ON tab_digital_product TYPE decimal ASSERT $value >= 0;
+  DEFINE FIELD license_type ON tab_digital_product TYPE string; -- "Perpetual", "Subscription", "SeatBased"
+  DEFINE FIELD max_activations ON tab_digital_product TYPE int DEFAULT 3;
 
-  9. **Real Estate, AEC & Linear Infrastructure:**
-     - *Primary Archetype:* Property portfolios, pipeline/railway maintenance, facility management.
-     - *Visual Paradigm:* Interactive GIS boundary parcel mapping, 3D architectural floorplans, dynamic property filter grid.
-     - *Operational Flow:* Property listing $\to$ lease contract generation $\to$ maintenance work order dispatch $\to$ Weibull degradation failure prediction.
-     - *Verification Invariant:* GeoJSON spatial bounding-box query latency $\le 4\,\text{ms}$.
+  DEFINE TABLE tab_license_key SCHEMAFULL;
+  DEFINE FIELD product ON tab_license_key TYPE record(tab_digital_product);
+  DEFINE FIELD customer ON tab_license_key TYPE record(tab_customer);
+  DEFINE FIELD key_string ON tab_license_key TYPE string;
+  DEFINE FIELD activation_count ON tab_license_key TYPE int DEFAULT 0;
+  DEFINE FIELD is_revoked ON tab_license_key TYPE bool DEFAULT false;
+  ```
+* **Frontend UI/UX Paradigm:**
+  Minimalist high-conversion checkout drawer; instant license key display with clipboard copy hooks; authenticated customer digital asset vault; real-time license activation status HUD.
 
-  10. **Higher Education, Corporate Academies & LMS:**
-      - *Primary Archetype:* University portals, compliance certification, interactive learning paths.
-      - *Visual Paradigm:* Course syllabus tree, interactive quiz player, student cohort progress matrix.
-      - *Operational Flow:* Enrollment $\to$ lesson completion tracking $\to$ automated grading $\to$ Merkle-anchored verifiable PDF diploma issuance.
-      - *Verification Invariant:* Student completion join-semilattice convergence across distributed edge replicas $\equiv 0$ error.
+#### Template 4: Industrial B2B E-Commerce & Wholesale Matrix (`template-b2b-industrial`)
 
-  11. **Non-Profit Foundations, Charities & Philanthropic Trusts:**
-      - *Primary Archetype:* Donor campaigns, humanitarian aid tracking, audited grant distribution.
-      - *Visual Paradigm:* Real-time funding thermometer widgets, donor recurring contribution checkout, project impact timeline.
-      - *Operational Flow:* Contribution checkout $\to$ immediate tax-deductible receipt compilation $\to$ restricted fund accounting allocation $\to$ public audit ledger export.
-      - *Verification Invariant:* Restricted vs. unrestricted fund balance verified to $0.00\text{dec}$ drift.
+* **Business Model & Core Operational Narrative:**
+  Capital equipment, industrial hardware, replacement components, scheduled wholesale replenishment, and corporate Net-term purchasing.
+* **Module Integration Matrix:**
+  1. `erp-trade` (`pricing.rs`, `sanctions.rs`, `atp_ctp.rs`, `einvoice.rs`): Evaluates tiered customer wholesale price contracts; checks corporate credit limits; performs automated OFAC/EU sanctions screening; issues statutory ZUGFeRD 2.2 and Peppol BIS 3.0 XML e-invoices.
+  2. `erp-inventory` (`fifo.rs`, `warehouse.rs`, `batches.rs`): Manages multi-facility inventory; executes Capable-to-Promise (CTP) queries across factory production schedules; calculates lot-traceable COGS via SIMD FIFO queues.
+  3. `erp-manufacturing` (`bom.rs`, `quad_bom.rs`): Renders interactive CAD assembly diagrams in WebGL; provides recursive BOM component explosions; allows buyers to inspect individual sub-parts and download technical spec sheets.
+  4. `erp-wms` (`grid.rs`, `amr.rs`, `slotting.rs`): Calculates shipping weights and pallet handling units (HU); manages freight carrier dock scheduling and hazardous material co-storage restrictions.
+  5. `erp-accounting` (`receivables.rs`, `multibook.rs`): Enforces Net 30/60/90 billing terms, automated dunning schedules, and parallel IFRS/US GAAP revenue recognition.
+* **Specialized DocType Fixtures in SurrealDB:**
+  ```surrealql
+  DEFINE TABLE tab_b2b_item SCHEMAFULL;
+  DEFINE FIELD sku_code ON tab_b2b_item TYPE string;
+  DEFINE FIELD cad_model_url ON tab_b2b_item TYPE string;
+  DEFINE FIELD minimum_order_qty ON tab_b2b_item TYPE int DEFAULT 10;
+  DEFINE FIELD wholesale_price_breaks ON tab_b2b_item TYPE array<object>;
+  DEFINE FIELD technical_datasheet_pdf ON tab_b2b_item TYPE string;
+  DEFINE FIELD hazardous_class ON tab_b2b_item TYPE string;
 
-  12. **Field Operations, Distribution Logistics & Offline-First POS Kiosks:**
-      - *Primary Archetype:* Warehouse barcode scanning, retail counter terminals, delivery vans.
-      - *Visual Paradigm:* Ergonomic high-contrast touch interface, large tactile button hitboxes, dark industrial warehouse theme, hardware scanner listener.
-      - *Operational Flow:* Barcode scan $\to$ offline local SurrealKV stock deduction $\to$ receipt generation $\to$ vector-clock CRDT sync upon network recovery.
-      - *Verification Invariant:* Offline POS checkout response time $\le 8\,\text{ms}$.
+  DEFINE TABLE tab_trade_credit_account SCHEMAFULL;
+  DEFINE FIELD customer ON tab_trade_credit_account TYPE record(tab_customer);
+  DEFINE FIELD credit_limit ON tab_trade_credit_account TYPE decimal;
+  DEFINE FIELD payment_terms_days ON tab_trade_credit_account TYPE int DEFAULT 30;
+  DEFINE FIELD outstanding_exposure ON tab_trade_credit_account TYPE decimal DEFAULT 0.00;
+  ```
+* **Frontend UI/UX Paradigm:**
+  High-density tabular product matrix; interactive Three.js 3D mechanical CAD assembly viewer; CSV multi-line quick order upload; live corporate credit limit balance bar; Request for Quote (RFQ) configuration modal.
+
+#### Template 5: High-Velocity Consumer B2C Storefront (`template-b2c-retail`)
+
+* **Business Model & Core Operational Narrative:**
+  Fast-fashion, lifestyle electronics, consumer packaged goods (CPG), seasonal flash sales, and omni-channel physical/digital retail.
+* **Module Integration Matrix:**
+  1. `erp-trade` (`pricing.rs`, `taxes.rs`, `dom.rs`): Powers promotional coupon rule engines; handles multi-tier tax matrices; calculates optimal shipping routing across regional fulfillment hubs.
+  2. `erp-inventory` (`fifo.rs`, `warehouse.rs`): Real-time stock counters powered by SurrealDB `LIVE SELECT`; prevents overselling during high-concurrency flash sales via atomic row reservation locks.
+  3. `erp-accounting` (`ledger.rs`, `decimal_ledger.rs`): Executes atomic sales invoices and inventory COGS entries within a single ACID transaction, eliminating stock and ledger drift.
+  4. `erp-cms` (`block_canvas.rs`, `storefront.rs`): Statically pre-compiles SEO landing pages via Tera SSR ($< 10\,\text{ms}$ TTFB); renders 3D product preview canvases; provides a responsive slide-over allocations bag.
+  5. `erp-wms` (`picker.rs`, `slotting.rs`): Clusters incoming online sales into pick waves and generates optimized warehouse pick paths using the Lin-Kernighan TSP heuristic.
+  6. `erp-crm` (`scoring.rs`, `buying_center.rs`): Manages customer loyalty points, rewards drawdowns, and personalized product recommendations.
+* **Specialized DocType Fixtures in SurrealDB:**
+  ```surrealql
+  DEFINE TABLE tab_retail_product SCHEMAFULL;
+  DEFINE FIELD title ON tab_retail_product TYPE string;
+  DEFINE FIELD barcode_gtin ON tab_retail_product TYPE string;
+  DEFINE FIELD retail_price ON tab_retail_product TYPE decimal ASSERT $value >= 0;
+  DEFINE FIELD variant_options ON tab_retail_product TYPE array<object>;
+  DEFINE FIELD is_flash_sale ON tab_retail_product TYPE bool DEFAULT false;
+  DEFINE FIELD live_stock_display ON tab_retail_product TYPE int;
+
+  DEFINE TABLE tab_customer_cart SCHEMAFULL;
+  DEFINE FIELD session_id ON tab_customer_cart TYPE string;
+  DEFINE FIELD items ON tab_customer_cart TYPE array<object>;
+  DEFINE FIELD reserved_until ON tab_customer_cart TYPE datetime;
+  ```
+* **Frontend UI/UX Paradigm:**
+  60+ FPS viewport-virtualized SKU grid; instant sub-millisecond faceted category filtering; reactive slide-over shopping bag drawer; real-time low-stock alert badges (`LIVE SELECT`); one-click checkout modal.
+
+#### Template 6: Financial Trading, Exchange & Multi-Asset Brokerage (`template-trading-exchange`)
+
+* **Business Model & Core Operational Narrative:**
+  Foreign exchange (FX), digital asset trading, spot commodities, equities brokerage, and automated settlement ledgers.
+* **Module Integration Matrix:**
+  1. `erp-trade` (`metered.rs`, `sanctions.rs`, `pricing.rs`): Validates incoming orders against international PEP and sanctions registries; calculates maker/taker exchange fee tiers; verifies margin leverage requirements.
+  2. `erp-accounting` (`multibook.rs`, `treasury.rs`, `decimal_ledger.rs`): Manages multi-currency customer wallet ledgers using 128-bit `rust_decimal` precision; enforces the double-entry invariant with zero fraction drift; calculates real-time realized and unrealized FX gains and losses.
+  3. `frappe-storage` (`bitemporal.rs`, `merkle.rs`): Records all order fills and cancellations with orthogonal Valid Time ($T_{\text{valid}}$) and System Time ($T_{\text{system}}$); groups settlements into cryptographic Merkle blocks for regulatory auditability.
+  4. `frappe-net` (`h3_server.rs`, `live.rs`): Ingests high-frequency tick data over UDP/WebSockets; broadcasts streaming Level-2 order book depth matrices to connected clients.
+  5. `erp-crm` (`pipeline.rs`): Manages KYC (Know Your Customer) identity verification workflows and accredited investor compliance sign-offs.
+* **Specialized DocType Fixtures in SurrealDB:**
+  ```surrealql
+  DEFINE TABLE tab_trading_pair SCHEMAFULL;
+  DEFINE FIELD symbol ON tab_trading_pair TYPE string; -- e.g., "BTC-USD", "EUR-USD"
+  DEFINE FIELD base_currency ON tab_trading_pair TYPE string;
+  DEFINE FIELD quote_currency ON tab_trading_pair TYPE string;
+  DEFINE FIELD min_order_size ON tab_trading_pair TYPE decimal;
+  DEFINE FIELD taker_fee_pct ON tab_trading_pair TYPE decimal DEFAULT 0.001;
+
+  DEFINE TABLE tab_exchange_order SCHEMAFULL;
+  DEFINE FIELD account ON tab_exchange_order TYPE record(tab_customer);
+  DEFINE FIELD pair ON tab_exchange_order TYPE record(tab_trading_pair);
+  DEFINE FIELD order_side ON tab_exchange_order TYPE string; -- "BUY", "SELL"
+  DEFINE FIELD order_type ON tab_exchange_order TYPE string; -- "MARKET", "LIMIT", "STOP"
+  DEFINE FIELD price ON tab_exchange_order TYPE decimal;
+  DEFINE FIELD amount ON tab_exchange_order TYPE decimal;
+  DEFINE FIELD filled_amount ON tab_exchange_order TYPE decimal DEFAULT 0.00;
+  DEFINE FIELD order_status ON tab_exchange_order TYPE string; -- "OPEN", "PARTIAL", "FILLED", "CANCELLED"
+  ```
+* **Frontend UI/UX Paradigm:**
+  Professional high-density trading desk; WebGL Canvas candlestick charts with volume bars; streaming Level-2 order book depth ladder; interactive buy/sell order entry form with fee calculation preview; real-time portfolio balance summary.
 
 ### Milestone 10.4: Dynamic Multi-Tenant Theme Compiler & Zero-Downtime Hot-Swapping
 
@@ -1004,6 +1138,150 @@ Permissions & Assertions     - CompactString Keys
   \text{Theme Hot-Swap Cache Invalidation Time} \le 50\,\mu\text{s}, \quad \text{HTTP Dropped Connections} \equiv 0
   $$
 
+### Milestone 10.5: Fast Script-Driven Template Deployment Engine (One-Command Provisioning)
+
+* **Objective:** Enable system administrators, developers, and agency teams to provision, configure, seed, and launch any of the six prebuilt template sites in under 2 seconds via a single CLI invocation.
+
+```
+       [ CLI Invocation: `./rustnext site deploy --template <slug>` ]
+                                      │
+                                      ▼
+                  [ Step 1: Initialize Tenant Boundary ]
+                  - Create isolated SurrealDB Namespace & Database
+                  - Configure request-scoped session connection pool
+                                      │
+                                      ▼
+                  [ Step 2: Compile & Apply DDL Fixtures ]
+                  - Execute `DEFINE TABLE ... SCHEMAFULL` definitions
+                  - Configure field types, assertions, and indexes
+                                      │
+                                      ▼
+                  [ Step 3: Seed Domain Data & Ledger Roots ]
+                  - Populate standard Chart of Accounts & Tax Templates
+                  - Seed demo catalog items, courses, video metadata
+                  - Initialize atomic sequence counter states
+                                      │
+                                      ▼
+                  [ Step 4: Hydrate Visual Canvas & Design Tokens ]
+                  - Store initial JSON AST blocks in `tab_page`
+                  - Persist primary, secondary, and typography tokens in `tab_theme`
+                                      │
+                                      ▼
+                  [ Step 5: Issue In-Process TLS & Bind Routes ]
+                  - Negotiate Let's Encrypt certificates via `rustls-acme`
+                  - Register Actix-web router mappings and live endpoints
+                                      │
+                                      ▼
+             [ Target Site Online & Serving Traffic in < 2000ms ]
+```
+
+* **Implementation Mechanics:**
+  1. **The CLI Command Syntax (`crates/frappe-net/src/cli.rs`):**
+     ```bash
+     ./rustnext site deploy \
+       --template <svod-streaming | lms-academy | digital-goods | b2b-industrial | b2c-retail | trading-exchange> \
+       --site-name <client_domain> \
+       --admin-email admin@domain.com \
+       [--micro]
+     ```
+  2. **In-Memory Embedded Fixture Ingestion (`rust-embed`):**
+     All SurrealQL migration scripts, sample catalog assets, default block layouts, and design tokens compile directly into the static `rustnext` binary using `rust-embed`. The deployment runner streams these assets directly into memory buffers without filesystem disk I/O bottlenecks.
+  3. **Atomic Transactional Seed Pipeline:**
+     The deployment engine executes the entire template seeding routine within a single SurrealDB transaction block (`BEGIN TRANSACTION ... COMMIT TRANSACTION`). If any step encounters an assertion failure, the transaction aborts completely, leaving zero orphan records.
+  4. **Dynamic Domain & ACME Binding:**
+     The deployment runner inserts the target domain directly into the tenant routing table (`tab_domain_mapping`). Actix-web's in-process `rustls-acme` gateway detects the new mapping and begins the TLS 1.3 handshake immediately.
+
+* **Verification Invariant:**
+  $$
+  \text{Total Deployment Execution Latency} \le 2000\,\text{ms on Micro-Mode}, \quad \text{Manual Config Steps} \equiv 0
+  $$
+
+### Milestone 10.6: Dynamic Runtime Customization & WordPress-Grade Block/Theme Protocol
+
+* **Objective:** Deliver the visual flexibility and theme customizability of WordPress and Elementor without their security vulnerabilities, PHP interpreter overhead, or table locks. Designers and business users modify page layouts, theme colors, typography, and custom fields dynamically at runtime without recompiling the Rust binary.
+
+```
++───────────────────────────────────────────────────────────────────────────────────────────────────+
+|                    THE DYNAMIC RUNTIME CUSTOMIZATION ARCHITECTURE                                 |
+|                                                                                                   |
+|  [ Visual Design Tokens (`tab_theme`) ] ──► Injected as Dynamic CSS Variables (`:root`)          |
+|    - Primary, Secondary, Background colors, Font family, Corner radius, Optical grain             |
+|                                                                                                   |
+|  [ Polymorphic Block AST (`tab_page`) ] ──► Compiled to Static HTML via Tera / Askama (< 10ms)    |
+|    - Hero, DocType Grid, Product Showcase, Video Player, Quiz Evaluator, Markdown                  |
+|                                                                                                   |
+|  [ Polymorphic Field Extensibility ]  ──► Stored Zero-Copy via `DynamicDocument`                  |
+|    - Users add custom fields at runtime without alter table locks or binary recompilation         |
+|                                                                                                   |
+|  [ Business Logic Scripting ]         ──► Evaluated in Sandboxed Rhai / WASI 0.2                  |
+|    - Custom pricing discounts, form validations, and lifecycle hooks execute safely               |
++───────────────────────────────────────────────────────────────────────────────────────────────────+
+```
+
+* **Implementation Mechanics:**
+  1. **Dynamic Design Token Injection Engine:**
+     - Store visual tokens in SurrealDB table `tab_theme`:
+       ```json
+       {
+         "theme_id": "theme_atelier_dark",
+         "tokens": {
+           "color_primary": "#e6c887",
+           "color_background": "#070709",
+           "color_surface": "#15171e",
+           "font_heading": "'Syne', sans-serif",
+           "font_body": "'Plus Jakarta Sans', sans-serif",
+           "border_radius": "1.5rem",
+           "noise_opacity": 0.035
+         }
+       }
+       ```
+     - Actix-web's template renderer converts these tokens into CSS custom properties injected directly into the HTML `<head>` tag:
+       ```html
+       <style>
+         :root {
+           --color-primary: {{ theme.tokens.color_primary }};
+           --color-bg: {{ theme.tokens.color_background }};
+           --font-heading: {{ theme.tokens.font_heading }};
+           --border-radius: {{ theme.tokens.border_radius }};
+         }
+       </style>
+       ```
+     - Changing a color or font in the administrative desk takes effect immediately across all public web pages upon cache invalidation ($< 50\,\mu\text{s}$).
+
+  2. **The Polymorphic JSON Block Canvas:**
+     - Store page layouts in SurrealDB table `tab_page` as a structured array of typed polymorphic blocks (`PageBlock`).
+     - Adding a product carousel, custom testimonial slider, or video hero section involves appending a JSON node to the page document:
+       ```json
+       {
+         "slug": "landing",
+         "blocks": [
+           {
+             "type": "Hero",
+             "props": { "heading": "NEXT-GEN HOROLOGY", "cta_url": "/catalog" }
+           },
+           {
+             "type": "DocTypeGrid",
+             "props": { "target_doctype": "tab_retail_product", "filter": "is_featured = true" }
+           }
+         ]
+       }
+       ```
+     - The Actix-web server evaluates the JSON tree and compiles it into static, cache-ready HTML in single-digit milliseconds.
+
+  3. **Runtime Field Customization via `DynamicDocument`:**
+     - Users add arbitrary custom fields (e.g., `passport_number` on a patient record, `vat_id` on an organization) through the Dioxus Desk UI.
+     - The system stores these fields inside the `DynamicDocument.fields` vector (`SmallVec<[(CompactString, DocValue); 16]>`).
+     - Fields are validated against the schema metadata stored in SurrealDB without executing table-locking SQL `ALTER TABLE` statements.
+
+  4. **Sandboxed Dynamic Logic Customization:**
+     - Non-developers write promotional discounts, approval routing rules, and field formatting scripts in Rhai or compile them to WebAssembly (.wasm).
+     - Scripts execute inside the memory-capped, fuel-guarded sandbox, preventing runaway loops or runtime server crashes.
+
+* **Verification Invariant:**
+  $$
+  \text{Theme & Layout Update Reflection Time} \le 50\,\mu\text{s}, \quad \text{Binary Recompilation Required} \equiv \text{false}
+  $$
+
 ---
 
 ## Architectural Capability Verification Matrix
@@ -1014,5 +1292,5 @@ Permissions & Assertions     - CompactString Keys
 | **Gate Beta: Metamodel & Scripting** | Dynamic DocTypes compile to SurrealQL DDL; Wasmtime sandbox traps panics and fuel exhaustion. | Zero host crashes across $1{,}000{,}000$ faulty plugin executions; zero compile-time schema dependencies. |
 | **Gate Gamma: Financial & Trade Parity** | Double-entry general ledger and SIMD-accelerated FIFO inventory maintain zero decimal drift in SurrealDB. | $100{,}000{,}000$ ledger lines balance to $0.00\text{dec}$; FIFO processes $2{,}000{,}000\,\text{layers/sec per core}$. |
 | **Gate Delta: Factory, PPM & Logistics** | Dual-engine CPM/CCPM scheduler, EVM metrics, and MILP makespan optimizer run concurrently via Actix workers. | $100{,}000$ Monte Carlo iterations complete in $< 850\,\text{ms}$; WMS Lin-Kernighan TSP pick path saves $\ge 35\%$ transit distance. |
-| **Gate Epsilon: Visual CMS, Commerce & Multi-Template Work-Type Engine** | Block-based visual builder in Dioxus saves pure JSON AST; Actix-web SSR renders HTML; 12 work-type templates switch dynamically. | Server-side HTML render time $< 10\,\text{ms}$; storefront checkout commits stock and ledger atomically in one SurrealDB transaction; 3D WebGL renders at $\ge 60\,\text{FPS}$. |
-| **Gate Zeta: Local-First Mesh & Agency Scale** | Offline retail POS on Dioxus Desktop synchronizes with central cloud cluster via CRDTs without conflict. | Agency fleet hosts 100+ isolated tenant environments on a single $16\,\text{GB}$ VPS at 60+ FPS responsiveness. |
+| **Gate Epsilon: Visual CMS, Commerce & Prebuilt Templates Suite** | Block-based visual builder in Dioxus saves pure JSON AST; Actix-web SSR renders HTML; 6 prebuilt templates deploy via script. | Server-side HTML render time $< 10\,\text{ms}$; template site deployment completes in $\le 2000\,\text{ms}$; 3D WebGL renders at $\ge 60\,\text{FPS}$. |
+| **Gate Zeta: Local-First Mesh, Trading & Agency Scale** | Offline retail POS on Dioxus Desktop synchronizes with central cloud cluster via CRDTs; Level-2 order book streams ticks. | Agency fleet hosts 100+ isolated tenant environments on a single $16\,\text{GB}$ VPS; sub-millisecond trading execution. |
