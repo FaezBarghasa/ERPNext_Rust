@@ -1,6 +1,5 @@
 use clap::Parser;
 use frappe_net::cli::{Cli, Commands};
-use frappe_net::server::run_server;
 use frappe_net::tenant::{ConnectionPoolManager, MicroTopologyConfig, TenantId};
 use std::time::Duration;
 
@@ -32,13 +31,8 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             };
 
             println!("⚡ Actix-web server binding to http://{}", args.bind);
-            frappe_net::run_server_with_config(
-                &args.bind,
-                topology,
-                acme_gateway,
-                args.workers,
-            )
-            .await?;
+            frappe_net::run_server_with_config(&args.bind, topology, acme_gateway, args.workers)
+                .await?;
         }
         Commands::Migrate(args) => {
             println!(

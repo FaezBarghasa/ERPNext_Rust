@@ -207,7 +207,10 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             println!();
             println!("📊 Benchmark Results:");
             println!("  Elapsed Time:     {total_elapsed:.2?}");
-            println!("  Total Executed:   {} / {total_requests}", all_latencies.len());
+            println!(
+                "  Total Executed:   {} / {total_requests}",
+                all_latencies.len()
+            );
             println!("  Successful:       {successful}");
             println!("  Throughput (QPS): {qps:.1} ops/sec");
             println!("  Latency p50:      {p50:.3?}");
@@ -233,15 +236,11 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             println!(
                 "  serve [port]                   Start the high-throughput Actix-Web HTTP/WebSocket server"
             );
-            println!(
-                "  worker                         Start the Tokio actor task queue mesh"
-            );
+            println!("  worker                         Start the Tokio actor task queue mesh");
             println!(
                 "  benchmark [concur] [total]     Execute high-throughput synthetic load & latency test"
             );
-            println!(
-                "  help                           Display this help menu"
-            );
+            println!("  help                           Display this help menu");
         }
     }
 

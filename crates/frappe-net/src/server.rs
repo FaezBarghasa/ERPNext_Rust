@@ -29,8 +29,7 @@ pub fn configure_app(
     topology: MicroTopologyConfig,
     acme_gateway: Option<AcmeGateway>,
 ) {
-    let mut app_cfg = cfg
-        .app_data(web::Data::new(pool_mgr))
+    cfg.app_data(web::Data::new(pool_mgr))
         .app_data(web::PayloadConfig::new(topology.max_payload_bytes))
         .route("/health", web::get().to(health_check))
         .route("/api/v1/live", web::get().to(live_ws_handler))
@@ -44,12 +43,10 @@ pub fn configure_app(
         );
 
     if let Some(gateway) = acme_gateway {
-        app_cfg = app_cfg
-            .app_data(web::Data::new(gateway))
-            .route(
-                "/.well-known/acme-challenge/{token}",
-                web::get().to(acme_challenge_handler),
-            );
+        cfg.app_data(web::Data::new(gateway)).route(
+            "/.well-known/acme-challenge/{token}",
+            web::get().to(acme_challenge_handler),
+        );
     }
 }
 
@@ -71,7 +68,11 @@ pub async fn run_server_with_config(
         App::new().configure(|cfg| configure_app(cfg, pool_mgr_data.clone(), topo, gw))
     });
 
-    let effective_workers = workers.unwrap_or(if topology.is_micro_mode { 1 } else { num_cpus() });
+    let effective_workers = workers.unwrap_or(if topology.is_micro_mode {
+        1
+    } else {
+        num_cpus()
+    });
     server = server.workers(effective_workers);
 
     server.bind(addr)?.run().await
