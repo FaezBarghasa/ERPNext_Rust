@@ -38,9 +38,18 @@ async fn templates_portal_handler() -> impl Responder {
         .body(erp_cms::render_template_index_html())
 }
 
-async fn template_detail_handler(path: web::Path<String>) -> impl Responder {
+#[derive(serde::Deserialize)]
+struct TemplateQuery {
+    variant: Option<String>,
+}
+
+async fn template_detail_handler(
+    path: web::Path<String>,
+    query: web::Query<TemplateQuery>,
+) -> impl Responder {
     let slug = path.into_inner();
-    match erp_cms::render_template_html(&slug) {
+    let variant = query.variant.as_deref();
+    match erp_cms::render_template_html_with_variant(&slug, variant) {
         Some(html) => HttpResponse::Ok()
             .content_type("text/html; charset=utf-8")
             .body(html),
@@ -49,6 +58,18 @@ async fn template_detail_handler(path: web::Path<String>) -> impl Responder {
             "available_templates": erp_cms::list_template_suites().into_iter().map(|s| s.slug).collect::<Vec<_>>(),
         })),
     }
+}
+
+async fn sitemap_xml_handler() -> impl Responder {
+    HttpResponse::Ok()
+        .content_type("application/xml; charset=utf-8")
+        .body(erp_cms::generate_sitemap_xml())
+}
+
+async fn robots_txt_handler() -> impl Responder {
+    HttpResponse::Ok()
+        .content_type("text/plain; charset=utf-8")
+        .body(erp_cms::generate_robots_txt())
 }
 
 async fn list_templates_api_handler() -> impl Responder {
@@ -89,6 +110,8 @@ pub fn configure_app(
         .route("/storefront", web::get().to(storefront_handler))
         .route("/templates", web::get().to(templates_portal_handler))
         .route("/templates/{slug}", web::get().to(template_detail_handler))
+        .route("/sitemap.xml", web::get().to(sitemap_xml_handler))
+        .route("/robots.txt", web::get().to(robots_txt_handler))
         .route("/health", web::get().to(health_check))
         .route("/api/v1/live", web::get().to(live_ws_handler))
         .route(

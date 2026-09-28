@@ -188,6 +188,41 @@ The platform features 6 production-grade, prebuilt vertical template archetypes 
 
 ---
 
+### 🎨 30 Dynamic Aesthetic Archetypes & Interactive Theme Dock
+
+Every enterprise domain supports 5 distinct design permutations ($6 \times 5 = 30$ permutations total), switchable at runtime via URL query parameter (`?variant={name}`) or through the floating theme dock widget:
+
+1. **Awwwards Editorial (`?variant=awwwards`)**: Refined editorial typography, fluid spacing, micro-interactions, and gold accents.
+2. **Cyberpunk Tactical HUD (`?variant=cyberpunk`)**: High-contrast Samurai Yellow/Crimson, neon scanlines, telemetry metrics, and angled clip-paths.
+3. **Vaporwave Glassmorphism (`?variant=vaporwave`)**: Dreamland sunset gradients, frosted glass blur, pastel accents, and ambient glow.
+4. **80s Retro Wave / Outrun (`?variant=retrowave`)**: Outrun chrome typography, analog CRT scanlines, LED VU meters, and neon grid horizons.
+5. **Neon Wave Horizon (`?variant=neonwave`)**: Cyber-retro electric cyan, perspective 3D grid, and audio-reactive wave aesthetics.
+6. **Tasteful Minimalist (`?variant=tasteful`)**: Obsidian dark palette, physics-based springs, and clean information hierarchy.
+
+| Cyberpunk HUD (`svod-streaming?variant=cyberpunk`) | Vaporwave Glass (`lms-academy?variant=vaporwave`) |
+| :---: | :---: |
+| ![Cyberpunk SVOD](docs/screenshots/13_variant_cyberpunk_svod.png) | ![Vaporwave LMS](docs/screenshots/14_variant_vaporwave_lms.png) |
+| **Tactical Cyberpunk HUD Layout**<br>Telemetry headers, angled badge chips, and high-visibility neon accents | **Glassmorphic Vaporwave LMS**<br>Frosted blur cards, soft purple-pink gradients, and calm tech pedagogy |
+
+| 80s Retro Wave (`digital-goods?variant=retrowave`) | Neon Wave (`trading-exchange?variant=neonwave`) |
+| :---: | :---: |
+| ![80s Retro Wave Goods](docs/screenshots/15_variant_retrowave_goods.png) | ![Neon Wave Trading Desk](docs/screenshots/16_variant_neonwave_exchange.png) |
+| **Outrun Cassette Aesthetics**<br>Hot magenta accents, analog font hierarchy, and retro creator store | **Electric Cyan Trading Desk**<br>High-contrast glowing order books, ultra-clean trade tape, and sub-1ms HUD |
+
+---
+
+### 🌐 Technical SEO Engine & Semantic Web Standards
+
+Built-in zero-allocation metadata generation conforming to modern search engine and semantic web standards:
+
+- **Schema.org Structured Data (JSON-LD)**: Injected natively per domain (`VideoObject`, `Course`, `SoftwareApplication`, `Product`, `FinancialProduct`).
+- **OpenGraph & Twitter Cards**: High-resolution 1200x630 cards, dynamic social preview tags, and canonical permalinks.
+- **XML Sitemap Generator (`/sitemap.xml`)**: Automated indexing of all 30 domain-variant permutations with `<lastmod>` and priority weighting.
+- **Search Directives (`/robots.txt`)**: Crawler rules and automated sitemap discovery link.
+- **Accessibility & WCAG 2.1 AA**: Validated `<a href="#main-content" class="skip-link">` bypass links, semantic landmarks (`<header>`, `<main>`, `<aside>`, `<footer>`), and accessible ARIA attributes across all 30 templates.
+
+---
+
 ## 📚 Technical Documentation & Guides
 
 - [Master Architectural Evolution Charter (`docs/master_charter.md`)](file:///home/jrad/RustroverProjects/ERPNext_workspace/docs/master_charter.md)

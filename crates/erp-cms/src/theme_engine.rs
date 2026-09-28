@@ -103,6 +103,137 @@ impl DesignTokens {
     }
 }
 
+/// Aesthetic Theme Archetypes spanning the 5 design philosophies.
+#[derive(Clone, Copy, Debug, Serialize, Deserialize, PartialEq, Eq, Hash)]
+pub enum ThemeVariant {
+    AwwwardsEditorial,
+    CyberpunkHud,
+    VaporwaveGlass,
+    RetroWave80s,
+    NeonWave,
+    TastefulMinimal,
+}
+
+impl ThemeVariant {
+    /// Parses a string query parameter into a `ThemeVariant`, defaulting to `AwwwardsEditorial`.
+    #[must_use]
+    pub fn parse(s: &str) -> Self {
+        match s.to_lowercase().as_str() {
+            "cyberpunk" | "cyber" | "tactical" => Self::CyberpunkHud,
+            "vaporwave" | "glass" | "glassmorphism" => Self::VaporwaveGlass,
+            "retrowave" | "retro" | "outrun" | "80s" => Self::RetroWave80s,
+            "neonwave" | "neon" | "synthwave" => Self::NeonWave,
+            "tasteful" | "minimal" | "emil" => Self::TastefulMinimal,
+            _ => Self::AwwwardsEditorial,
+        }
+    }
+
+    /// Returns the slug identifier.
+    #[must_use]
+    pub fn slug(&self) -> &'static str {
+        match self {
+            Self::AwwwardsEditorial => "awwwards",
+            Self::CyberpunkHud => "cyberpunk",
+            Self::VaporwaveGlass => "vaporwave",
+            Self::RetroWave80s => "retrowave",
+            Self::NeonWave => "neonwave",
+            Self::TastefulMinimal => "tasteful",
+        }
+    }
+
+    /// Returns human-readable label.
+    #[must_use]
+    pub fn label(&self) -> &'static str {
+        match self {
+            Self::AwwwardsEditorial => "Awwwards Editorial",
+            Self::CyberpunkHud => "Cyberpunk Tactical HUD",
+            Self::VaporwaveGlass => "Vaporwave Glassmorphic",
+            Self::RetroWave80s => "80s Retro Wave / Outrun",
+            Self::NeonWave => "Neon Wave High-Luminance",
+            Self::TastefulMinimal => "Tasteful Minimalist",
+        }
+    }
+
+    /// Constructs curated `DesignTokens` for this specific archetype.
+    #[must_use]
+    pub fn tokens(&self) -> DesignTokens {
+        match self {
+            Self::AwwwardsEditorial => DesignTokens {
+                color_primary: "#ffffff".into(),
+                color_secondary: "#888888".into(),
+                color_background: "#08080a".into(),
+                color_surface: "#121215".into(),
+                color_accent: "#d4af37".into(),
+                font_heading: "'Syne', sans-serif".into(),
+                font_body: "'Outfit', sans-serif".into(),
+                font_mono: "'Space Mono', monospace".into(),
+                border_radius: "1.25rem".into(),
+                noise_opacity: 0.035,
+            },
+            Self::CyberpunkHud => DesignTokens {
+                color_primary: "#fcee0a".into(),
+                color_secondary: "#ff003c".into(),
+                color_background: "#050508".into(),
+                color_surface: "#12131a".into(),
+                color_accent: "#00f0ff".into(),
+                font_heading: "'Oxanium', sans-serif".into(),
+                font_body: "'Share Tech Mono', monospace".into(),
+                font_mono: "'Space Mono', monospace".into(),
+                border_radius: "0.25rem".into(),
+                noise_opacity: 0.05,
+            },
+            Self::VaporwaveGlass => DesignTokens {
+                color_primary: "#ffafef".into(),
+                color_secondary: "#b595ff".into(),
+                color_background: "#0a0518".into(),
+                color_surface: "rgba(255, 255, 255, 0.07)".into(),
+                color_accent: "#00edff".into(),
+                font_heading: "'Righteous', 'Syne', sans-serif".into(),
+                font_body: "'Outfit', sans-serif".into(),
+                font_mono: "'Space Mono', monospace".into(),
+                border_radius: "1.5rem".into(),
+                noise_opacity: 0.03,
+            },
+            Self::RetroWave80s => DesignTokens {
+                color_primary: "#ff2a6d".into(),
+                color_secondary: "#05d9e8".into(),
+                color_background: "#050014".into(),
+                color_surface: "#15092a".into(),
+                color_accent: "#ffc75f".into(),
+                font_heading: "'Righteous', 'Cabinet Grotesk', sans-serif".into(),
+                font_body: "'Share Tech Mono', monospace".into(),
+                font_mono: "'VT323', monospace".into(),
+                border_radius: "0.35rem".into(),
+                noise_opacity: 0.045,
+            },
+            Self::NeonWave => DesignTokens {
+                color_primary: "#00f0ff".into(),
+                color_secondary: "#ff007f".into(),
+                color_background: "#06070d".into(),
+                color_surface: "#121324".into(),
+                color_accent: "#8a2be2".into(),
+                font_heading: "'Orbitron', 'Audiowide', sans-serif".into(),
+                font_body: "'JetBrains Mono', monospace".into(),
+                font_mono: "'Space Mono', monospace".into(),
+                border_radius: "0.75rem".into(),
+                noise_opacity: 0.04,
+            },
+            Self::TastefulMinimal => DesignTokens {
+                color_primary: "#f3f4f6".into(),
+                color_secondary: "#9ca3af".into(),
+                color_background: "#09090b".into(),
+                color_surface: "#18181b".into(),
+                color_accent: "#38bdf8".into(),
+                font_heading: "'Outfit', sans-serif".into(),
+                font_body: "'Outfit', sans-serif".into(),
+                font_mono: "'Space Mono', monospace".into(),
+                border_radius: "1.0rem".into(),
+                noise_opacity: 0.02,
+            },
+        }
+    }
+}
+
 /// The Universal Template Manifest Schema (`ThemeManifest`).
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
 pub struct ThemeManifest {

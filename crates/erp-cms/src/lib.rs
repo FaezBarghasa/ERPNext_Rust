@@ -2,6 +2,7 @@ pub mod block_canvas;
 pub mod luxury_storefront;
 pub mod print;
 pub mod security;
+pub mod seo_engine;
 pub mod storefront;
 pub mod subtitles;
 pub mod template_catalog;
@@ -15,17 +16,18 @@ pub use luxury_storefront::{
 };
 pub use print::render_invoice_html;
 pub use security::{HmacStreamingSigner, StreamingError, SvodPlaybackManager, parse_byte_range};
+pub use seo_engine::{SeoMetadata, generate_robots_txt, generate_sitemap_xml};
 pub use storefront::{
     AtomicCheckoutEngine, CheckoutError, CheckoutItem, CheckoutResult, CustomerCheckoutRequest,
 };
 pub use subtitles::{SubtitleSearchEngine, SubtitleSegment};
 pub use template_catalog::{
     TemplateSuite, get_template_suite, list_template_suites, render_template_html,
-    render_template_index_html,
+    render_template_html_with_variant, render_template_index_html, render_theme_switcher_dock,
 };
 pub use theme_engine::{
     CompiledTheme, DesignTokens, RenderEngineKind, SlotDefinition, ThemeManifest, ThemeRegistry,
-    WorkTypeClassification,
+    ThemeVariant, WorkTypeClassification,
 };
 pub use transcoder::{HlsPlaylistGenerator, STANDARD_VARIANTS, VideoVariant};
 

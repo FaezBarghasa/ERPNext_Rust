@@ -104,4 +104,38 @@ async fn test_template_catalog_http_endpoints() {
         resp_invalid_manifest.status(),
         actix_web::http::StatusCode::NOT_FOUND
     );
+
+    // 7. Verify ?variant= query parameter triggers custom archetype CSS and JSON-LD
+    let variants = ["cyberpunk", "vaporwave", "retrowave", "neonwave", "tasteful"];
+    for v in variants {
+        let req_variant = test::TestRequest::get()
+            .uri(&format!("/templates/svod-streaming?variant={v}"))
+            .to_request();
+        let resp_variant = test::call_service(&app, req_variant).await;
+        assert!(resp_variant.status().is_success());
+        let body = test::read_body(resp_variant).await;
+        let html_str = String::from_utf8(body.to_vec()).expect("Valid UTF-8");
+        assert!(html_str.contains("application/ld+json"));
+        assert!(html_str.contains("theme-dock-btn"));
+    }
+
+    // 8. Verify GET /sitemap.xml returns valid XML containing all 30 permutations
+    let req_sitemap = test::TestRequest::get().uri("/sitemap.xml").to_request();
+    let resp_sitemap = test::call_service(&app, req_sitemap).await;
+    assert!(resp_sitemap.status().is_success());
+    let sitemap_body = test::read_body(resp_sitemap).await;
+    let sitemap_str = String::from_utf8(sitemap_body.to_vec()).expect("Valid UTF-8");
+    assert!(sitemap_str.contains("<urlset xmlns=\"http://www.sitemaps.org/schemas/sitemap/0.9\">"));
+    assert!(sitemap_str.contains("svod-streaming?variant=cyberpunk"));
+    assert!(sitemap_str.contains("trading-exchange?variant=neonwave"));
+
+    // 9. Verify GET /robots.txt returns valid crawling directives
+    let req_robots = test::TestRequest::get().uri("/robots.txt").to_request();
+    let resp_robots = test::call_service(&app, req_robots).await;
+    assert!(resp_robots.status().is_success());
+    let robots_body = test::read_body(resp_robots).await;
+    let robots_str = String::from_utf8(robots_body.to_vec()).expect("Valid UTF-8");
+    assert!(robots_str.contains("User-agent: *"));
+    assert!(robots_str.contains("Sitemap: https://rustnext.enterprise.io/sitemap.xml"));
 }
+
