@@ -109,11 +109,13 @@ impl BpmnEngine {
                             }
                         }
                     }
-                    if !routed && !node.outgoing.is_empty() {
-                        if let Some(flow) = def.flows.get(&node.outgoing[0]) {
-                            next_tokens.insert(flow.target_ref.clone());
-                        }
+                    if !routed
+                        && !node.outgoing.is_empty()
+                        && let Some(flow) = def.flows.get(&node.outgoing[0])
+                    {
+                        next_tokens.insert(flow.target_ref.clone());
                     }
+
                 }
                 ActivityType::ParallelGateway => {
                     for flow_id in &node.outgoing {

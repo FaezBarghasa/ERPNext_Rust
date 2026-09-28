@@ -1,7 +1,7 @@
 use crate::live::live_ws_handler;
 use crate::routes::{create_resource, delete_resource, get_resource, list_resource};
 use crate::tenant::{ConnectionPoolManager, TenantResolver};
-use actix_web::{web, App, HttpResponse, HttpServer, Responder};
+use actix_web::{App, HttpResponse, HttpServer, Responder, web};
 use std::time::Duration;
 
 async fn health_check() -> impl Responder {

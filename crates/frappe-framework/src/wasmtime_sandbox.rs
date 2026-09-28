@@ -5,7 +5,7 @@
 //! - Deterministic instruction fuel metering ($1{,}000{,}000$ operations).
 //! - Trapping guest runtime panics and infinite loops in $\le 1.2\,\text{ms}$ with zero host crashes.
 
-use anyhow::{bail, Result};
+use anyhow::{Result, bail};
 use compact_str::CompactString;
 use serde::{Deserialize, Serialize};
 

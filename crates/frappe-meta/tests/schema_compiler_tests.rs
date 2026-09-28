@@ -1,7 +1,7 @@
 use frappe_meta::{
-    compile_to_surrealql, diff_schema, generate_migration_ddl, DocFieldSchema, DocPermSchema,
-    DocTypeSchema, ExistingDatabaseSchema, ExistingFieldDef, ExistingTableDef, FieldType,
-    SchemaError,
+    DocFieldSchema, DocPermSchema, DocTypeSchema, ExistingDatabaseSchema, ExistingFieldDef,
+    ExistingTableDef, FieldType, SchemaError, compile_to_surrealql, diff_schema,
+    generate_migration_ddl,
 };
 
 fn create_customer_schema() -> DocTypeSchema {
@@ -86,15 +86,18 @@ fn test_schema_deserialization_and_compilation() {
     assert!(customer.validate().is_ok());
 
     let ddl = compile_to_surrealql(&customer).expect("DDL compilation failed");
-    assert!(ddl
-        .iter()
-        .any(|s| s.contains("DEFINE TABLE customer SCHEMAFULL;")));
-    assert!(ddl
-        .iter()
-        .any(|s| s.contains("DEFINE FIELD customer_name ON TABLE customer TYPE string")));
-    assert!(ddl
-        .iter()
-        .any(|s| s.contains("ASSERT $value != NONE AND $value != NULL")));
+    assert!(
+        ddl.iter()
+            .any(|s| s.contains("DEFINE TABLE customer SCHEMAFULL;"))
+    );
+    assert!(
+        ddl.iter()
+            .any(|s| s.contains("DEFINE FIELD customer_name ON TABLE customer TYPE string"))
+    );
+    assert!(
+        ddl.iter()
+            .any(|s| s.contains("ASSERT $value != NONE AND $value != NULL"))
+    );
     assert!(ddl.iter().any(|s| s.contains(
         "DEFINE INDEX idx_customer_customer_name ON TABLE customer FIELDS customer_name UNIQUE;"
     )));
@@ -160,10 +163,14 @@ fn test_schema_migration_diff_and_rollback() {
     let (forward, rollback) = generate_migration_ddl(&target, &delta);
     assert!(forward.first().unwrap().contains("BEGIN TRANSACTION"));
     assert!(forward.last().unwrap().contains("COMMIT TRANSACTION"));
-    assert!(forward
-        .iter()
-        .any(|s| s.contains("DEFINE FIELD credit_limit ON TABLE customer TYPE decimal;")));
-    assert!(rollback
-        .iter()
-        .any(|s| s.contains("REMOVE FIELD credit_limit ON TABLE customer;")));
+    assert!(
+        forward
+            .iter()
+            .any(|s| s.contains("DEFINE FIELD credit_limit ON TABLE customer TYPE decimal;"))
+    );
+    assert!(
+        rollback
+            .iter()
+            .any(|s| s.contains("REMOVE FIELD credit_limit ON TABLE customer;"))
+    );
 }

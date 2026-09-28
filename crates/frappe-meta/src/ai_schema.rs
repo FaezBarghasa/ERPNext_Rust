@@ -218,14 +218,14 @@ mod tests {
         assert_eq!(result.default_tax_rate, Some(0.19));
         assert_eq!(result.chart_of_accounts.as_deref(), Some("SKR03"));
 
-        assert!(result
-            .surreal_ddl
-            .iter()
-            .any(|s| s.contains("DEFINE TABLE dronerepairorder SCHEMAFULL;")));
-        assert!(result
-            .surreal_ddl
-            .iter()
-            .any(|s| s
-                .contains("DEFINE FIELD estimated_cost ON TABLE dronerepairorder TYPE decimal")));
+        assert!(
+            result
+                .surreal_ddl
+                .iter()
+                .any(|s| s.contains("DEFINE TABLE dronerepairorder SCHEMAFULL;"))
+        );
+        assert!(result.surreal_ddl.iter().any(|s| {
+            s.contains("DEFINE FIELD estimated_cost ON TABLE dronerepairorder TYPE decimal")
+        }));
     }
 }

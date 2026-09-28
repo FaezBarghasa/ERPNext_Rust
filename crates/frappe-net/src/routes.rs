@@ -1,5 +1,5 @@
 use crate::tenant::{ConnectionPoolManager, TenantId};
-use actix_web::{web, HttpMessage, HttpRequest, HttpResponse, Responder};
+use actix_web::{HttpMessage, HttpRequest, HttpResponse, Responder, web};
 use frappe_framework::{Document, DocumentController};
 use frappe_meta::DocTypeSchema;
 use serde::Deserialize;

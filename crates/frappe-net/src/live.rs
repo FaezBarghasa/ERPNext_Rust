@@ -1,4 +1,4 @@
-use actix_web::{web, HttpRequest, HttpResponse};
+use actix_web::{HttpRequest, HttpResponse, web};
 use futures_util::StreamExt as _;
 
 /// WebSocket Live Query Streaming Actor (Milestone 1.8 & 4.3).

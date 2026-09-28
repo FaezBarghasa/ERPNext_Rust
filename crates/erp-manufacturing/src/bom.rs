@@ -13,7 +13,9 @@ pub enum ManufacturingError {
     #[error("BOM not found for item: {0}")]
     BomNotFound(String),
     /// Workstation collision.
-    #[error("Workstation '{workstation}' conflict between [{start_1}, {end_1}] and [{start_2}, {end_2}]")]
+    #[error(
+        "Workstation '{workstation}' conflict between [{start_1}, {end_1}] and [{start_2}, {end_2}]"
+    )]
     WorkstationCollision {
         workstation: String,
         start_1: u64,

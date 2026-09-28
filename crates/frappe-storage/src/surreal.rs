@@ -1,5 +1,5 @@
 //! Embedded SurrealDB (in-memory) tenant backend (Stage 2.2.1).
-use surrealdb::{engine::local::Mem, Surreal};
+use surrealdb::{Surreal, engine::local::Mem};
 
 /// Open an in-memory instance, create NS+DB, and return the handle.
 pub async fn open_tenant(

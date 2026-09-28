@@ -1,22 +1,22 @@
 use actix_web::{
+    Error as ActixError, HttpMessage, HttpResponse, ResponseError,
     body::BoxBody,
     dev::{Service, ServiceRequest, ServiceResponse, Transform},
     http::StatusCode,
-    Error as ActixError, HttpMessage, HttpResponse, ResponseError,
 };
-use futures_util::future::{ok, LocalBoxFuture, Ready};
+use futures_util::future::{LocalBoxFuture, Ready, ok};
 use regex::Regex;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::sync::Arc;
 use std::time::{Duration, Instant};
-use surrealdb::{engine::local::Mem, Surreal};
+use surrealdb::{Surreal, engine::local::Mem};
 use thiserror::Error;
 use tokio::sync::RwLock;
 
-use actix_web::dev::Payload;
 use actix_web::FromRequest;
 use actix_web::HttpRequest;
+use actix_web::dev::Payload;
 
 /// Unique Tenant Identifier.
 #[derive(Clone, Debug, PartialEq, Eq, Hash, Serialize, Deserialize)]

@@ -76,7 +76,10 @@ impl SagaCoordinator {
                         let comp_tx = &transactions[rev_idx];
                         let _ = comp_tx.forward_action.compensate(&comp_tx.payload);
                     }
-                    return Err(format!("Saga '{saga_id}' failed at step {idx} ('{}'): {err}. Compensating rollback executed.", tx.name));
+                    return Err(format!(
+                        "Saga '{saga_id}' failed at step {idx} ('{}'): {err}. Compensating rollback executed.",
+                        tx.name
+                    ));
                 }
             }
         }
@@ -89,8 +92,8 @@ impl SagaCoordinator {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use std::sync::atomic::{AtomicBool, Ordering};
     use std::sync::Arc;
+    use std::sync::atomic::{AtomicBool, Ordering};
 
     struct MockStep {
         should_fail: bool,

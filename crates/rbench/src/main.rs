@@ -1,6 +1,6 @@
 //! `rbench` — The Pure-Rust Site Orchestration & Enterprise Management CLI.
 
-use frappe_meta::{compile_to_surrealql, DocFieldSchema, DocTypeSchema, FieldType};
+use frappe_meta::{DocFieldSchema, DocTypeSchema, FieldType, compile_to_surrealql};
 use frappe_storage::open_tenant;
 use std::time::Instant;
 
@@ -19,7 +19,9 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             let tenant_ns = format!("tenant_{site_name}");
             let db_name = "site_production";
 
-            println!("[1/4] Initializing SurrealDB Tenant Namespace `{tenant_ns}` & Database `{db_name}`...");
+            println!(
+                "[1/4] Initializing SurrealDB Tenant Namespace `{tenant_ns}` & Database `{db_name}`..."
+            );
             let start = Instant::now();
             let db = open_tenant(&tenant_ns, db_name).await?;
 
@@ -143,7 +145,9 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                 "  migrate                  Execute online, lock-free SurrealQL schema migrations"
             );
             println!("  install-app <package>    Ingest and verify a signed `.frappe-pkg` archive");
-            println!("  serve [port]             Start the high-throughput Actix-Web HTTP/WebSocket server");
+            println!(
+                "  serve [port]             Start the high-throughput Actix-Web HTTP/WebSocket server"
+            );
             println!("  worker                   Start the Tokio actor task queue mesh");
             println!("  help                     Display this help menu");
         }

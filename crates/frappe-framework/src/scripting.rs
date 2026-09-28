@@ -1,4 +1,4 @@
-use rhai::{Dynamic, Engine, EvalAltResult, Scope, AST};
+use rhai::{AST, Dynamic, Engine, EvalAltResult, Scope};
 use serde::{Deserialize, Serialize};
 use thiserror::Error;
 
@@ -114,11 +114,12 @@ impl RhaiHookEngine {
 
         match result {
             Ok(_) => {
-                if let Some(updated_doc) = scope.get_value::<Dynamic>("doc") {
-                    if let Ok(json_val) = rhai::serde::from_dynamic(&updated_doc) {
-                        *doc = json_val;
-                    }
+                if let Some(updated_doc) = scope.get_value::<Dynamic>("doc")
+                    && let Ok(json_val) = rhai::serde::from_dynamic(&updated_doc)
+                {
+                    *doc = json_val;
                 }
+
                 Ok(())
             }
             Err(e) => {

@@ -10,13 +10,13 @@ pub mod schema_compiler;
 pub use ai_schema::{AiSchemaSynthesizer, SynthesisResult, SynthesizedEntity, SynthesizedField};
 pub use dynamic_doc::{DocValue, DynamicDocument, SurrealDdlGenerator};
 pub use migration::{
-    diff_schema, generate_migration_ddl, ExistingDatabaseSchema, ExistingFieldDef,
-    ExistingTableDef, MigrationDelta,
+    ExistingDatabaseSchema, ExistingFieldDef, ExistingTableDef, MigrationDelta, diff_schema,
+    generate_migration_ddl,
 };
 pub use naming::NamingSeriesParser;
 pub use profiles::{ProfileRegistry, VerticalProfile};
 pub use rbac::{
-    check_permission, compile_rls_policy, HasPermissionEdge, HasRoleEdge, Permission, Role, User,
+    HasPermissionEdge, HasRoleEdge, Permission, Role, User, check_permission, compile_rls_policy,
 };
 pub use schema::{DocFieldSchema, DocPermSchema, DocTypeSchema, FieldType, SchemaError};
 pub use schema_compiler::compile_to_surrealql;

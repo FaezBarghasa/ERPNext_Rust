@@ -1,4 +1,4 @@
-use frappe_net::{provision_tenant, ConnectionPoolManager, TenantId};
+use frappe_net::{ConnectionPoolManager, TenantId, provision_tenant};
 use std::time::Duration;
 
 #[tokio::test]

@@ -61,14 +61,15 @@ pub struct Batch {
 impl Batch {
     /// Validates whether the batch is active and unexpired as of a given posting date.
     pub fn validate_usable(&self, as_of: NaiveDate) -> Result<(), InventoryError> {
-        if let Some(exp) = self.expiry_date {
-            if as_of > exp {
-                return Err(InventoryError::BatchExpired {
-                    batch_id: self.batch_id.clone(),
-                    expiry_date: exp,
-                });
-            }
+        if let Some(exp) = self.expiry_date
+            && as_of > exp
+        {
+            return Err(InventoryError::BatchExpired {
+                batch_id: self.batch_id.clone(),
+                expiry_date: exp,
+            });
         }
+
         Ok(())
     }
 }

@@ -1,7 +1,7 @@
 [package]
 name = "frappe-net"
 version = "0.1.0"
-edition = "2021"
+edition = "2024"
 
 [dependencies]
 frappe-meta = { path = "../frappe-meta" }
@@ -25,3 +25,19 @@ surrealdb = { version = "3.3.0", default-features = false, features = [
     "kv-mem",
 ] }
 clap = { version = "4.6.7", features = ["derive"] }
+
+[dev-dependencies]
+frappe-meta = { path = "../frappe-meta" }
+frappe-storage = { path = "../frappe-storage" }
+frappe-framework = { path = "../frappe-framework" }
+erp-accounting = { path = "../erp-accounting" }
+erp-inventory = { path = "../erp-inventory" }
+erp-manufacturing = { path = "../erp-manufacturing" }
+erp-trade = { path = "../erp-trade" }
+erp-ppm = { path = "../erp-ppm" }
+erp-asset = { path = "../erp-asset" }
+erp-wms = { path = "../erp-wms" }
+erp-cms = { path = "../erp-cms" }
+rust_decimal = { version = "1.43.0", features = ["serde", "maths"] }
+rust_decimal_macros = "1.40.0"
+compact_str = { version = "0.10.0", features = ["serde"] }
