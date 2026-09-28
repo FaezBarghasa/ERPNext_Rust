@@ -6,6 +6,7 @@ pub mod saga;
 pub mod scripting;
 pub mod typestate;
 pub mod wasmtime_sandbox;
+pub mod webhook;
 
 pub use ai_tools::{
     ErpToolCall, ErpToolDispatcher, QuotationItemDto, ToolExecutionError, ToolExecutionResult,
@@ -22,6 +23,7 @@ pub use typestate::{
     SubmittedState,
 };
 pub use wasmtime_sandbox::RealSandbox;
+pub use webhook::{WebhookDispatcher, WebhookError, WebhookPayload, WebhookSubscription};
 
 #[cfg(test)]
 mod tests {

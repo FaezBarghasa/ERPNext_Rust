@@ -408,6 +408,150 @@ async fn acme_challenge_handler(
     }
 }
 
+// ---------------------------------------------------------------------------
+// Edge Analytics Handlers
+// ---------------------------------------------------------------------------
+
+async fn record_analytics_event_handler(
+    analytics: web::Data<erp_cms::EdgeAnalyticsEngine>,
+    payload: web::Json<erp_cms::PageViewEvent>,
+) -> impl Responder {
+    analytics.record_page_view(payload.into_inner());
+    HttpResponse::Ok().json(serde_json::json!({
+        "status": "recorded"
+    }))
+}
+
+async fn get_analytics_summary_handler(
+    analytics: web::Data<erp_cms::EdgeAnalyticsEngine>,
+) -> impl Responder {
+    HttpResponse::Ok().json(analytics.compute_summary())
+}
+
+// ---------------------------------------------------------------------------
+// Webhook Subscription Management Handlers
+// ---------------------------------------------------------------------------
+
+#[instrument(skip(req, pool_mgr, payload))]
+async fn create_webhook_subscription_handler(
+    req: HttpRequest,
+    pool_mgr: web::Data<ConnectionPoolManager>,
+    payload: web::Json<frappe_framework::WebhookSubscription>,
+) -> impl Responder {
+    let tenant_id = req
+        .extensions()
+        .get::<TenantId>()
+        .cloned()
+        .unwrap_or_else(|| TenantId("default".into()));
+
+    let client = match pool_mgr.get_or_initialize_client(&tenant_id).await {
+        Ok(c) => c,
+        Err(e) => return HttpResponse::InternalServerError().body(e.to_string()),
+    };
+
+    let sub = payload.into_inner();
+    let sanitized_id = sub.id.replace('-', "_");
+    let sql = format!("CREATE webhook_subscription:{sanitized_id} CONTENT $sub;");
+    let sub_val = match serde_json::to_value(&sub) {
+        Ok(v) => v,
+        Err(e) => return HttpResponse::BadRequest().body(e.to_string()),
+    };
+    match client.query(&sql).bind(("sub", sub_val)).await {
+        Ok(_) => HttpResponse::Created().json(sub),
+        Err(e) => HttpResponse::InternalServerError().body(e.to_string()),
+    }
+}
+
+#[instrument(skip(req, pool_mgr))]
+async fn list_webhook_subscriptions_handler(
+    req: HttpRequest,
+    pool_mgr: web::Data<ConnectionPoolManager>,
+) -> impl Responder {
+    let tenant_id = req
+        .extensions()
+        .get::<TenantId>()
+        .cloned()
+        .unwrap_or_else(|| TenantId("default".into()));
+
+    let client = match pool_mgr.get_or_initialize_client(&tenant_id).await {
+        Ok(c) => c,
+        Err(e) => return HttpResponse::InternalServerError().body(e.to_string()),
+    };
+
+    match client.query("SELECT * FROM webhook_subscription;").await {
+        Ok(mut res) => {
+            let subs: Vec<serde_json::Value> = res.take(0).unwrap_or_default();
+            HttpResponse::Ok().json(subs)
+        }
+        Err(e) => HttpResponse::InternalServerError().body(e.to_string()),
+    }
+}
+
+#[instrument(skip(req, pool_mgr))]
+async fn delete_webhook_subscription_handler(
+    path: web::Path<String>,
+    req: HttpRequest,
+    pool_mgr: web::Data<ConnectionPoolManager>,
+) -> impl Responder {
+    let id = path.into_inner();
+    let tenant_id = req
+        .extensions()
+        .get::<TenantId>()
+        .cloned()
+        .unwrap_or_else(|| TenantId("default".into()));
+
+    let client = match pool_mgr.get_or_initialize_client(&tenant_id).await {
+        Ok(c) => c,
+        Err(e) => return HttpResponse::InternalServerError().body(e.to_string()),
+    };
+
+    let sanitized_id = id.replace('-', "_");
+    match client
+        .query(format!("DELETE webhook_subscription:{sanitized_id};"))
+        .await
+    {
+        Ok(_) => HttpResponse::Ok().json(serde_json::json!({
+            "message": "Subscription deleted",
+            "id": id
+        })),
+        Err(e) => HttpResponse::InternalServerError().body(e.to_string()),
+    }
+}
+
+// ---------------------------------------------------------------------------
+// WASI Plugin Execution Handler
+// ---------------------------------------------------------------------------
+
+#[derive(serde::Deserialize)]
+struct RunPluginPayload {
+    wat_code: String,
+    fuel_limit: Option<u64>,
+}
+
+async fn run_plugin_handler(payload: web::Json<RunPluginPayload>) -> impl Responder {
+    let inner = payload.into_inner();
+    let fuel = inner.fuel_limit.unwrap_or(1_000_000);
+    let sandbox = match frappe_framework::RealSandbox::new(fuel, 32 * 1024 * 1024) {
+        Ok(s) => s,
+        Err(e) => {
+            return HttpResponse::InternalServerError().json(serde_json::json!({
+                "error": format!("Failed to create sandbox: {e}")
+            }));
+        }
+    };
+
+    match sandbox.run_wat(&inner.wat_code) {
+        Ok(result) => HttpResponse::Ok().json(serde_json::json!({
+            "status": "success",
+            "exit_code": result
+        })),
+        Err(e) => HttpResponse::BadRequest().json(serde_json::json!({
+            "status": "error",
+            "error": e.to_string()
+        })),
+    }
+}
+
 /// Configures the Actix Web ERP API application.
 pub fn configure_app(
     cfg: &mut web::ServiceConfig,
@@ -416,6 +560,7 @@ pub fn configure_app(
     acme_gateway: Option<AcmeGateway>,
 ) {
     cfg.app_data(web::Data::new(pool_mgr))
+        .app_data(web::Data::new(erp_cms::EdgeAnalyticsEngine::new()))
         .app_data(web::PayloadConfig::new(topology.max_payload_bytes))
         // Root storefront & Multi-Persona Shells
         .route("/", web::get().to(storefront_handler))
@@ -457,13 +602,38 @@ pub fn configure_app(
             "/api/v1/templates/{slug}/manifest",
             web::get().to(template_manifest_api_handler),
         )
-        // V2 Authentication, RPC System Methods & Storage
+        // Edge Analytics API
+        .route(
+            "/api/v1/analytics/event",
+            web::post().to(record_analytics_event_handler),
+        )
+        .route(
+            "/api/v1/analytics/summary",
+            web::get().to(get_analytics_summary_handler),
+        )
+        // V2 Authentication, RPC System Methods, Webhooks & Storage
         .route("/api/v2/method/login", web::post().to(login_handler))
         .route("/api/v2/method/logout", web::post().to(logout_handler))
         .route("/api/v2/method/ping", web::get().to(ping_handler))
         .route(
             "/api/v2/method/upload_file",
             web::post().to(upload_file_handler),
+        )
+        .route(
+            "/api/v2/method/run_plugin",
+            web::post().to(run_plugin_handler),
+        )
+        .route(
+            "/api/v2/webhooks/subscribe",
+            web::post().to(create_webhook_subscription_handler),
+        )
+        .route(
+            "/api/v2/webhooks/subscriptions",
+            web::get().to(list_webhook_subscriptions_handler),
+        )
+        .route(
+            "/api/v2/webhooks/subscribe/{id}",
+            web::delete().to(delete_webhook_subscription_handler),
         )
         // V2 Visual CMS Persistence Endpoints
         .route(
