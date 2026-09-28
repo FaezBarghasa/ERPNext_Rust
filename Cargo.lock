@@ -1978,6 +1978,23 @@ dependencies = [
 ]
 
 [[package]]
+name = "erp-software"
+version = "0.1.0"
+dependencies = [
+ "chrono",
+ "erp-accounting",
+ "erp-ppm",
+ "erp-support",
+ "frappe-framework",
+ "frappe-meta",
+ "rust_decimal",
+ "rust_decimal_macros",
+ "serde",
+ "serde_json",
+ "thiserror 2.0.21",
+]
+
+[[package]]
 name = "erp-support"
 version = "0.1.0"
 dependencies = [
