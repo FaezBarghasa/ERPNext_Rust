@@ -1,4 +1,6 @@
+pub mod analytics;
 pub mod block_canvas;
+pub mod builder_core;
 pub mod luxury_storefront;
 pub mod print;
 pub mod security;
@@ -9,7 +11,12 @@ pub mod template_catalog;
 pub mod theme_engine;
 pub mod transcoder;
 
+pub use analytics::{AnalyticsSummary, EdgeAnalyticsEngine, PageViewEvent};
 pub use block_canvas::{CmsPage, FeatureItem, PageBlock, SsrEngine};
+pub use builder_core::{
+    BlockValueResolver, BobAgentPromptRequest, CanvasBlock, CanvasBreakpoint,
+    CanvasInteractionMode, CanvasReversionLedger,
+};
 pub use luxury_storefront::{
     LUXURY_STOREFRONT_CSS, LUXURY_STOREFRONT_HTML, LUXURY_STOREFRONT_JS, LuxuryProduct,
     get_luxury_catalog, render_luxury_storefront_html,

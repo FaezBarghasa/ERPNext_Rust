@@ -1,4 +1,6 @@
+pub mod asset_capitalization;
 pub mod assets;
+pub mod bank_reconciliation;
 pub mod benford;
 pub mod coa;
 pub mod decimal_ledger;
@@ -6,10 +8,17 @@ pub mod intercompany;
 pub mod ledger;
 pub mod multibook;
 pub mod receivables;
+pub mod report_engine;
+pub mod tax_withholding;
 pub mod treasury;
 pub mod zk_proof;
 
+pub use asset_capitalization::{
+    AssetCapitalizationRecord, AssetOverhaulEngine, CapitalizationServiceItem,
+    CapitalizationStockItem,
+};
 pub use assets::straight_line_depreciation;
+pub use bank_reconciliation::{BankStatement, BankStatementParser, BankTransactionLine};
 pub use benford::BenfordGuard;
 pub use coa::{Account, RootType};
 pub use decimal_ledger::{DecLine, straight_line_dec, verify_balanced_dec};
@@ -24,6 +33,10 @@ pub use multibook::{
     AccountingBook, MultiBookJournalLine, MultiBookPostingEngine, MultiBookTransaction,
 };
 pub use receivables::{ArApEngine, OpenInvoice, PaymentAllocationResult};
+pub use report_engine::{
+    FinancialReportEngine, FinancialReportRow, ReportError, ReportRowType, StatementLine,
+};
+pub use tax_withholding::{ItemWiseTaxDetail, TaxPricingEngine, TaxWithholdingEntry};
 pub use treasury::{BankAccount, TreasuryPoolingEngine, ZbaSweepTransaction};
 pub use zk_proof::{ZkBalanceProof, ZkProofEngine, ZkVerificationResult};
 
