@@ -35,6 +35,18 @@ impl WeibullParameters {
         (self.beta / self.eta) * term.powf(self.beta - 1.0)
     }
 
+    /// Cumulative failure probability F(t) = 1.0 - R(t)
+    #[must_use]
+    pub fn cumulative_failure_probability(&self, t: f64) -> f64 {
+        1.0 - self.reliability(t)
+    }
+
+    /// Determines if preventive maintenance should be triggered when F(t) >= threshold.
+    #[must_use]
+    pub fn requires_preventive_maintenance(&self, t: f64, threshold_prob: f64) -> bool {
+        self.cumulative_failure_probability(t) >= threshold_prob
+    }
+
     #[must_use]
     pub fn failure_regime(&self) -> &'static str {
         if self.beta < 0.95 {
@@ -82,6 +94,11 @@ mod tests {
         );
         let r_5000 = pump.reliability(5000.0);
         assert!(r_5000 > 0.80 && r_5000 < 0.90);
+
+        let f_5000 = pump.cumulative_failure_probability(5000.0);
+        assert!((r_5000 + f_5000 - 1.0).abs() < 1e-6);
+        assert!(pump.requires_preventive_maintenance(9500.0, 0.50));
+        assert!(!pump.requires_preventive_maintenance(2000.0, 0.50));
 
         let fmeca = FmecaRecord {
             failure_mode: "Bearing Seizure".into(),

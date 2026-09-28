@@ -185,6 +185,30 @@ impl SurrealDdlGenerator {
 
         ddl
     }
+
+    /// Generates a SurrealQL RELATE graph edge statement for child table linking.
+    #[must_use]
+    pub fn generate_child_relate(
+        parent_table: &str,
+        parent_id: &str,
+        child_table: &str,
+        child_id: &str,
+        order_idx: usize,
+    ) -> String {
+        format!(
+            "RELATE {}:{}->has_child->{}:{} SET order_idx = {};",
+            parent_table, parent_id, child_table, child_id, order_idx
+        )
+    }
+
+    /// Generates a SurrealQL query selecting parent document with all traversed child items.
+    #[must_use]
+    pub fn generate_child_query(parent_table: &str, parent_id: &str, child_table: &str) -> String {
+        format!(
+            "SELECT *, ->has_child->({} AS items) FROM {}:{};",
+            child_table, parent_table, parent_id
+        )
+    }
 }
 
 #[cfg(test)]
@@ -244,6 +268,31 @@ mod tests {
         ));
         assert!(
             ddl.contains("DEFINE FIELD customer ON TABLE tab_sales_invoice ASSERT $value != NONE;")
+        );
+    }
+
+    #[test]
+    fn test_surreal_relate_generation() {
+        let relate_sql = SurrealDdlGenerator::generate_child_relate(
+            "sales_order",
+            "SO_001",
+            "sales_order_item",
+            "SOI_001",
+            0,
+        );
+        assert_eq!(
+            relate_sql,
+            "RELATE sales_order:SO_001->has_child->sales_order_item:SOI_001 SET order_idx = 0;"
+        );
+
+        let query_sql = SurrealDdlGenerator::generate_child_query(
+            "sales_order",
+            "SO_001",
+            "sales_order_item",
+        );
+        assert_eq!(
+            query_sql,
+            "SELECT *, ->has_child->(sales_order_item AS items) FROM sales_order:SO_001;"
         );
     }
 }

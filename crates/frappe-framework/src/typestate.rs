@@ -34,6 +34,25 @@ impl DocumentState for CancelledState {
     const NAME: &'static str = "Cancelled";
 }
 
+/// Zero-sized marker type for a purged / archived document (docstatus = -1).
+#[derive(Debug, Clone, Copy, Default, PartialEq, Eq, Serialize, Deserialize)]
+pub struct PurgedState;
+impl DocumentState for PurgedState {
+    const DOCSTATUS: i32 = -1;
+    const NAME: &'static str = "Purged";
+}
+
+/// Canonical metadata header for an enterprise document.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub struct DocumentHeader {
+    pub id: String,
+    pub tenant_id: String,
+    pub created_by: String,
+    pub modified_by: String,
+    pub sequence_number: u64,
+    pub perm_level_cache: u16,
+}
+
 /// Generic phantom-typed document wrapper enforcing compile-time state machine invariance.
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 pub struct Doc<T, S: DocumentState> {
