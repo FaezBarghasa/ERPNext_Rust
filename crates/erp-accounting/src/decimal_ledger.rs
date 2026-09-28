@@ -1,5 +1,5 @@
 use rust_decimal::Decimal;
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
 pub struct DecLine {
     pub account: String,
     pub debit: Decimal,

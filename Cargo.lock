@@ -2256,7 +2256,10 @@ version = "0.1.0"
 dependencies = [
  "anyhow",
  "chrono",
+ "compact_str",
  "frappe-meta",
+ "rust_decimal",
+ "rust_decimal_macros",
  "serde",
  "serde_json",
  "sha2 0.11.0",

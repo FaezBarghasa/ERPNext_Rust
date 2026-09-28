@@ -1,17 +1,17 @@
 {
   "app": "oxide-embed",
   "kind": "project-memory",
-  "project_id": "01a0e31c-a3c7-759b-932c-be547620e5c8",
+  "project_id": "01a0e63d-030c-7089-bbd7-fd72a64a40b5",
   "project_name": "ERPNext_workspace",
   "schema_version": 1,
   "min_supported_schema_version": 1,
   "created_by": {
     "oxide_embed_version": "0.4.0",
-    "timestamp": "2026-09-27T13:45:00.103494721Z"
+    "timestamp": "2026-09-28T04:19:13.292439610Z"
   },
   "updated_by": {
     "oxide_embed_version": "0.4.0",
-    "timestamp": "2026-09-27T13:45:00.103514906Z"
+    "timestamp": "2026-09-28T04:19:13.292858731Z"
   },
   "storage": {
     "engine": "surrealdb",
