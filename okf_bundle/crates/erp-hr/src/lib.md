@@ -10,7 +10,7 @@ tags:
   - "domain:erp-hr"
   - "git:branch:main"
   - "git:repo:ERPNext_Rust"
-timestamp: "2026-09-27T19:32:00Z"
+timestamp: "2026-09-27T21:56:26Z"
 concept_id: crates/erp-hr/src/lib
 language: rust
 ---

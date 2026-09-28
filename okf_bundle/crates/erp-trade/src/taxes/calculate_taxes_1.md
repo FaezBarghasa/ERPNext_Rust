@@ -11,7 +11,7 @@ tags:
   - "domain:erp-trade"
   - "git:branch:main"
   - "git:repo:ERPNext_Rust"
-timestamp: "2026-09-27T19:22:38Z"
+timestamp: "2026-09-27T21:39:26Z"
 concept_id: crates/erp-trade/src/taxes/calculate_taxes_1
 language: rust
 ---
@@ -40,7 +40,7 @@ Computes compounding multi-tier taxes across tax schedule rows.
 [must_use]
 
 ## Source
-Lines 59–94 in `crates/erp-trade/src/taxes.rs`
+Lines 59–92 in `crates/erp-trade/src/taxes.rs`
 
 ## Relationships
 

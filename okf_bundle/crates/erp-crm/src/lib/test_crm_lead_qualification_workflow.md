@@ -11,7 +11,7 @@ tags:
   - "domain:erp-crm"
   - "git:branch:main"
   - "git:repo:ERPNext_Rust"
-timestamp: "2026-09-27T19:36:48Z"
+timestamp: "2026-09-27T21:39:26Z"
 concept_id: crates/erp-crm/src/lib/test_crm_lead_qualification_workflow
 language: rust
 ---
@@ -35,7 +35,7 @@ fn test_crm_lead_qualification_workflow()
 [test]
 
 ## Source
-Lines 16–39 in `crates/erp-crm/src/lib.rs`
+Lines 26–49 in `crates/erp-crm/src/lib.rs`
 
 ## Relationships
 

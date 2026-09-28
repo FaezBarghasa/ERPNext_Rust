@@ -11,7 +11,7 @@ tags:
   - "domain:erp-support"
   - "git:branch:main"
   - "git:repo:ERPNext_Rust"
-timestamp: "2026-09-27T19:44:16Z"
+timestamp: "2026-09-27T21:43:11Z"
 concept_id: crates/erp-support/src/sla/evaluate_tickets_1
 language: rust
 ---
@@ -43,7 +43,7 @@ Evaluates unresolved tickets against their SLA response deadlines and escalates 
 [must_use]
 
 ## Source
-Lines 97–120 in `crates/erp-support/src/sla.rs`
+Lines 97–121 in `crates/erp-support/src/sla.rs`
 
 ## Relationships
 

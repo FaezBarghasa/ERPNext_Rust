@@ -11,9 +11,9 @@ tags:
   - "domain:rbench"
   - "git:branch:main"
   - "git:repo:ERPNext_Rust"
-  - "manifest:Cargo.toml"
   - "ecosystem:cargo"
-timestamp: "2026-09-27T13:59:35Z"
+  - "manifest:Cargo.toml"
+timestamp: "2026-09-27T21:54:01Z"
 concept_id: _dependencies/cargo/frappe-storage_4
 language: manifest
 ---

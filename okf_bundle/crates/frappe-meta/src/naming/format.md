@@ -10,7 +10,7 @@ tags:
   - "domain:frappe-meta"
   - "git:branch:main"
   - "git:repo:ERPNext_Rust"
-timestamp: "2026-09-27T14:13:33Z"
+timestamp: "2026-09-27T21:40:27Z"
 concept_id: crates/frappe-meta/src/naming/format
 language: rust
 ---
@@ -28,7 +28,7 @@ impl NamingSeriesParser { pub fn format(pattern: &str, year: u32, seq: u64) -> S
 - `pub`
 
 ## Source
-Lines 4–17 in `crates/frappe-meta/src/naming.rs`
+Lines 4–21 in `crates/frappe-meta/src/naming.rs`
 
 ## Relationships
 

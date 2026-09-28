@@ -11,7 +11,7 @@ tags:
   - "domain:erp-cms"
   - "git:branch:main"
   - "git:repo:ERPNext_Rust"
-timestamp: "2026-09-27T19:55:24Z"
+timestamp: "2026-09-27T21:39:26Z"
 concept_id: crates/erp-cms/src/transcoder/generate_master_playlist
 language: rust
 ---
@@ -36,7 +36,7 @@ Generates valid master.m3u8 playlist indexing all variants.
 [must_use]
 
 ## Source
-Lines 40–55 in `crates/erp-cms/src/transcoder.rs`
+Lines 40–52 in `crates/erp-cms/src/transcoder.rs`
 
 ## Relationships
 

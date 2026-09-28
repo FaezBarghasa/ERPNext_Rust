@@ -11,7 +11,7 @@ tags:
   - "domain:frappe-framework"
   - "git:branch:main"
   - "git:repo:ERPNext_Rust"
-timestamp: "2026-09-27T18:54:31Z"
+timestamp: "2026-09-27T21:39:26Z"
 concept_id: crates/frappe-framework/src/lib/test_rhai_operation_limit_exceeded
 language: rust
 ---
@@ -35,7 +35,7 @@ fn test_rhai_operation_limit_exceeded()
 [test]
 
 ## Source
-Lines 63–75 in `crates/frappe-framework/src/lib.rs`
+Lines 71–79 in `crates/frappe-framework/src/lib.rs`
 
 ## Relationships
 

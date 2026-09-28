@@ -11,7 +11,7 @@ tags:
   - "domain:frappe-storage"
   - "git:branch:main"
   - "git:repo:ERPNext_Rust"
-timestamp: "2026-09-27T18:51:42Z"
+timestamp: "2026-09-27T21:39:26Z"
 concept_id: crates/frappe-storage/src/lib/from_headers
 language: rust
 ---
@@ -36,7 +36,7 @@ Resolves tenant context from HTTP headers.
 [must_use]
 
 ## Source
-Lines 29–41 in `crates/frappe-storage/src/lib.rs`
+Lines 32–44 in `crates/frappe-storage/src/lib.rs`
 
 ## Relationships
 

@@ -11,7 +11,7 @@ tags:
   - "domain:erp-hr"
   - "git:branch:main"
   - "git:repo:ERPNext_Rust"
-timestamp: "2026-09-27T19:30:45Z"
+timestamp: "2026-09-27T21:39:26Z"
 concept_id: crates/erp-hr/src/attendance/AttendanceReconciler
 language: rust
 ---
@@ -35,7 +35,7 @@ pub struct AttendanceReconciler
 Shift Reconciliation Engine (Milestone 3.5).
 
 ## Source
-Lines 90–90 in `crates/erp-hr/src/attendance.rs`
+Lines 92–92 in `crates/erp-hr/src/attendance.rs`
 
 ## Relationships
 

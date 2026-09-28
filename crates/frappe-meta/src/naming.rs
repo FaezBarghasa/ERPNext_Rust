@@ -12,7 +12,7 @@ impl NamingSeriesParser {
         // count trailing # run
         let hashes = pattern.chars().rev().take_while(|&c| c == '#').count();
         if hashes > 0 {
-            let num = format!("{:0>width$}", seq, width = hashes as usize);
+            let num = format!("{:0>width$}", seq, width = hashes);
             // replace last run of #
             let idx = out.rfind('#').map(|i| i + 1 - hashes).unwrap_or(out.len());
             out.replace_range(idx..idx + hashes, &num);

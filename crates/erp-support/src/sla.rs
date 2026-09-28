@@ -101,18 +101,19 @@ impl SlaWatchdog {
         let mut escalations = Vec::new();
 
         for ticket in tickets.iter_mut() {
-            if matches!(ticket.status, TicketStatus::Open | TicketStatus::Assigned) {
-                if now > ticket.response_deadline && ticket.priority != TicketPriority::Urgent {
-                    let prev = ticket.priority;
-                    ticket.priority = TicketPriority::Urgent;
+            if matches!(ticket.status, TicketStatus::Open | TicketStatus::Assigned)
+                && now > ticket.response_deadline
+                && ticket.priority != TicketPriority::Urgent
+            {
+                let prev = ticket.priority;
+                ticket.priority = TicketPriority::Urgent;
 
-                    escalations.push(SlaEscalationEvent {
-                        ticket_id: ticket.id.clone(),
-                        previous_priority: prev,
-                        new_priority: TicketPriority::Urgent,
-                        breached_at: now,
-                    });
-                }
+                escalations.push(SlaEscalationEvent {
+                    ticket_id: ticket.id.clone(),
+                    previous_priority: prev,
+                    new_priority: TicketPriority::Urgent,
+                    breached_at: now,
+                });
             }
         }
 

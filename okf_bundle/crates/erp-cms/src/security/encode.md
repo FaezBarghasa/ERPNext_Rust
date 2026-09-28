@@ -10,7 +10,7 @@ tags:
   - "domain:erp-cms"
   - "git:branch:main"
   - "git:repo:ERPNext_Rust"
-timestamp: "2026-09-27T20:25:54Z"
+timestamp: "2026-09-27T21:39:26Z"
 concept_id: crates/erp-cms/src/security/encode
 language: rust
 ---
@@ -28,7 +28,7 @@ pub fn encode(data: impl AsRef<[u8]>) -> String
 - `pub`
 
 ## Source
-Lines 188–193 in `crates/erp-cms/src/security.rs`
+Lines 190–192 in `crates/erp-cms/src/security.rs`
 
 ## Relationships
 

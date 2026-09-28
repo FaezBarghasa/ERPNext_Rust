@@ -11,7 +11,7 @@ tags:
   - "domain:erp-learning"
   - "git:branch:main"
   - "git:repo:ERPNext_Rust"
-timestamp: "2026-09-27T19:51:14Z"
+timestamp: "2026-09-27T21:39:26Z"
 concept_id: crates/erp-learning/src/lms/Certificate
 language: rust
 ---
@@ -48,7 +48,7 @@ Verified completion certificate (Milestone 4.7).
 - `final_grade_score`
 
 ## Source
-Lines 57–63 in `crates/erp-learning/src/lms.rs`
+Lines 56–62 in `crates/erp-learning/src/lms.rs`
 
 ## Relationships
 

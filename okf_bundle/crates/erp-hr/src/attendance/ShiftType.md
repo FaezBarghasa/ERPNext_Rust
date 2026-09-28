@@ -11,7 +11,7 @@ tags:
   - "domain:erp-hr"
   - "git:branch:main"
   - "git:repo:ERPNext_Rust"
-timestamp: "2026-09-27T19:30:45Z"
+timestamp: "2026-09-27T21:39:26Z"
 concept_id: crates/erp-hr/src/attendance/ShiftType
 language: rust
 ---
@@ -48,7 +48,7 @@ Shift specification with grace period margins.
 - `early_exit_grace_mins`
 
 ## Source
-Lines 66–77 in `crates/erp-hr/src/attendance.rs`
+Lines 68–79 in `crates/erp-hr/src/attendance.rs`
 
 ## Relationships
 

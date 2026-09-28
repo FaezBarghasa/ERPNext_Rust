@@ -11,7 +11,7 @@ tags:
   - "domain:erp-learning"
   - "git:branch:main"
   - "git:repo:ERPNext_Rust"
-timestamp: "2026-09-27T19:51:14Z"
+timestamp: "2026-09-27T21:39:26Z"
 concept_id: crates/erp-learning/src/lms/evaluate_and_issue_certificate
 language: rust
 ---
@@ -41,7 +41,7 @@ impl StudentProgressTracker { pub fn evaluate_and_issue_certificate(
 Evaluates assessment and auto-issues certificate if 100% complete and passing grade achieved.
 
 ## Source
-Lines 104–133 in `crates/erp-learning/src/lms.rs`
+Lines 103–137 in `crates/erp-learning/src/lms.rs`
 
 ## Relationships
 

@@ -10,7 +10,7 @@ tags:
   - "domain:frappe-net"
   - "git:branch:main"
   - "git:repo:ERPNext_Rust"
-timestamp: "2026-09-27T18:59:03Z"
+timestamp: "2026-09-27T21:45:06Z"
 concept_id: crates/frappe-net/src/tenant/status_code_1
 language: rust
 ---
@@ -24,7 +24,7 @@ fn status_code(&self) -> StatusCode
 ```
 
 ## Source
-Lines 45–54 in `crates/frappe-net/src/tenant.rs`
+Lines 47–56 in `crates/frappe-net/src/tenant.rs`
 
 ## Relationships
 

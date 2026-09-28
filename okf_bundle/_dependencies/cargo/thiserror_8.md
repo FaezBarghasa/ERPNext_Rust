@@ -2,31 +2,31 @@
 okf_version: "0.2"
 type: Dependency
 title: thiserror
-description: Dependency from crates/erp-lending/Cargo.toml
-resource: crates/erp-lending/Cargo.toml
+description: Dependency from crates/desk-components/Cargo.toml
+resource: crates/desk-components/Cargo.toml
 tags:
   - "lang:manifest"
   - "type:Dependency"
   - "module:crates"
-  - "domain:erp-lending"
+  - "domain:desk-components"
   - "git:branch:main"
   - "git:repo:ERPNext_Rust"
-  - "manifest:Cargo.toml"
-  - "version:2.0.18"
+  - "version:2.0.21"
   - "ecosystem:cargo"
-timestamp: "2026-09-27T19:47:18Z"
+  - "manifest:Cargo.toml"
+timestamp: "2026-09-27T20:02:37Z"
 concept_id: _dependencies/cargo/thiserror_8
 language: manifest
 ---
 
 # thiserror
 
-Dependency from crates/erp-lending/Cargo.toml
+Dependency from crates/desk-components/Cargo.toml
 
 | Field | Value |
 |-------|-------|
 | Ecosystem | `cargo` |
-| Version constraint | `2.0.18` |
-| Source manifest | `crates/erp-lending/Cargo.toml` |
+| Version constraint | `2.0.21` |
+| Source manifest | `crates/desk-components/Cargo.toml` |
 | Dev dependency | `no` |
 | Used by | 0 module(s) |

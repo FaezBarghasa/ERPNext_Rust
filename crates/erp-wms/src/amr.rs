@@ -70,12 +70,12 @@ impl Vda5050FleetCoordinator {
     ) -> Option<&'a mut AmrTelemetry> {
         let mut best: Option<&'a mut AmrTelemetry> = None;
         for r in robots {
-            if r.state == AmrState::Idle && r.battery_charge_percent >= 20.0 {
-                if best.is_none()
-                    || r.battery_charge_percent > best.as_ref().unwrap().battery_charge_percent
-                {
-                    best = Some(r);
-                }
+            if r.state == AmrState::Idle
+                && r.battery_charge_percent >= 20.0
+                && (best.is_none()
+                    || r.battery_charge_percent > best.as_ref().unwrap().battery_charge_percent)
+            {
+                best = Some(r);
             }
         }
         if let Some(ref mut assigned) = best {

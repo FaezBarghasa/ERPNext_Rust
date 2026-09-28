@@ -13,7 +13,7 @@ tags:
   - "manifest:Cargo.lock"
   - "version:0.4.1"
   - "ecosystem:cargo"
-timestamp: "2026-09-27T20:02:31Z"
+timestamp: "2026-09-27T21:56:00Z"
 concept_id: _dependencies/cargo/rustc_version
 language: manifest
 ---

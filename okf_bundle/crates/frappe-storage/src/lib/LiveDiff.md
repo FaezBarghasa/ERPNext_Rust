@@ -11,7 +11,7 @@ tags:
   - "domain:frappe-storage"
   - "git:branch:main"
   - "git:repo:ERPNext_Rust"
-timestamp: "2026-09-27T18:51:42Z"
+timestamp: "2026-09-27T21:39:26Z"
 concept_id: crates/frappe-storage/src/lib/LiveDiff
 language: rust
 ---
@@ -47,7 +47,7 @@ Live-query mutation diff pushed over WebSocket.
 - `payload_json`
 
 ## Source
-Lines 96–101 in `crates/frappe-storage/src/lib.rs`
+Lines 99–104 in `crates/frappe-storage/src/lib.rs`
 
 ## Relationships
 

@@ -11,7 +11,7 @@ tags:
   - "domain:erp-accounting"
   - "git:branch:main"
   - "git:repo:ERPNext_Rust"
-timestamp: "2026-09-27T19:09:45Z"
+timestamp: "2026-09-27T21:39:26Z"
 concept_id: crates/erp-accounting/src/ledger/generate_trial_balance_1
 language: rust
 ---
@@ -40,7 +40,7 @@ Generates real-time Trial Balance.
 [must_use]
 
 ## Source
-Lines 243–268 in `crates/erp-accounting/src/ledger.rs`
+Lines 247–272 in `crates/erp-accounting/src/ledger.rs`
 
 ## Relationships
 

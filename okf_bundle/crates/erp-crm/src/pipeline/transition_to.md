@@ -11,7 +11,7 @@ tags:
   - "domain:erp-crm"
   - "git:branch:main"
   - "git:repo:ERPNext_Rust"
-timestamp: "2026-09-27T19:34:58Z"
+timestamp: "2026-09-27T21:56:26Z"
 concept_id: crates/erp-crm/src/pipeline/transition_to
 language: rust
 ---
@@ -35,7 +35,7 @@ impl Lead { pub fn transition_to(&mut self, next_status: LeadStatus) -> Result<(
 Mutates lead state.
 
 ## Source
-Lines 62–72 in `crates/erp-crm/src/pipeline.rs`
+Lines 60–70 in `crates/erp-crm/src/pipeline.rs`
 
 ## Relationships
 

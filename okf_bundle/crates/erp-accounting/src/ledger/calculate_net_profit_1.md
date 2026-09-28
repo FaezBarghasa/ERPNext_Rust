@@ -11,7 +11,7 @@ tags:
   - "domain:erp-accounting"
   - "git:branch:main"
   - "git:repo:ERPNext_Rust"
-timestamp: "2026-09-27T19:09:45Z"
+timestamp: "2026-09-27T21:39:26Z"
 concept_id: crates/erp-accounting/src/ledger/calculate_net_profit_1
 language: rust
 ---
@@ -44,7 +44,7 @@ Computes Net Profit ($\sum \text{Income} - \sum \text{Expense}$).
 [must_use]
 
 ## Source
-Lines 272–293 in `crates/erp-accounting/src/ledger.rs`
+Lines 276–297 in `crates/erp-accounting/src/ledger.rs`
 
 ## Relationships
 

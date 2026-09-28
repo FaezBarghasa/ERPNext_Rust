@@ -11,7 +11,7 @@ tags:
   - "domain:erp-support"
   - "git:branch:main"
   - "git:repo:ERPNext_Rust"
-timestamp: "2026-09-27T19:44:16Z"
+timestamp: "2026-09-27T21:43:11Z"
 concept_id: crates/erp-support/src/sla/TicketPriority
 language: rust
 ---

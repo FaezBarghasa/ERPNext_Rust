@@ -11,7 +11,7 @@ tags:
   - "domain:frappe-meta"
   - "git:branch:main"
   - "git:repo:ERPNext_Rust"
-timestamp: "2026-09-27T18:45:15Z"
+timestamp: "2026-09-27T21:40:46Z"
 concept_id: crates/frappe-meta/src/schema/DocPermSchema
 language: rust
 ---

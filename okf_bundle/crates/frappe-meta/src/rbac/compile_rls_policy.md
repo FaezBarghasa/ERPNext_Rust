@@ -11,7 +11,7 @@ tags:
   - "domain:frappe-meta"
   - "git:branch:main"
   - "git:repo:ERPNext_Rust"
-timestamp: "2026-09-27T18:47:39Z"
+timestamp: "2026-09-27T21:39:26Z"
 concept_id: crates/frappe-meta/src/rbac/compile_rls_policy
 language: rust
 ---
@@ -23,7 +23,11 @@ Generates SurrealDB Row-Level Security (RLS) predicate for a table.
 ## Signature
 
 ```rust
-pub fn compile_rls_policy(doctype: &str, roles_with_read: &[String], roles_with_write: &[String]) -> String
+pub fn compile_rls_policy(
+    doctype: &str,
+    roles_with_read: &[String],
+    roles_with_write: &[String],
+) -> String
 ```
 
 ## Decorators
@@ -40,7 +44,7 @@ Generates SurrealDB Row-Level Security (RLS) predicate for a table.
 [must_use]
 
 ## Source
-Lines 118–136 in `crates/frappe-meta/src/rbac.rs`
+Lines 119–141 in `crates/frappe-meta/src/rbac.rs`
 
 ## Relationships
 

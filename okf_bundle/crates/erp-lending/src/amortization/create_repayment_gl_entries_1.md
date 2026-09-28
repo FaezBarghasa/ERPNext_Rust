@@ -11,7 +11,7 @@ tags:
   - "domain:erp-lending"
   - "git:branch:main"
   - "git:repo:ERPNext_Rust"
-timestamp: "2026-09-27T19:48:02Z"
+timestamp: "2026-09-27T21:46:37Z"
 concept_id: crates/erp-lending/src/amortization/create_repayment_gl_entries_1
 language: rust
 ---
@@ -38,6 +38,7 @@ pub fn create_repayment_gl_entries(
 ## Decorators
 
 - `must_use`
+- `allow(clippy::too_many_arguments)`
 
 ## Visibility
 
@@ -50,9 +51,10 @@ Generates GL entries for incoming loan repayment installment:
 - Credit: Loan Principal Receivable (Principal Portion)
 - Credit: Interest Receivable (Interest Portion)
 [must_use]
+[allow(clippy::too_many_arguments)]
 
 ## Source
-Lines 166–215 in `crates/erp-lending/src/amortization.rs`
+Lines 171–220 in `crates/erp-lending/src/amortization.rs`
 
 ## Relationships
 

@@ -11,7 +11,7 @@ tags:
   - "domain:erp-accounting"
   - "git:branch:main"
   - "git:repo:ERPNext_Rust"
-timestamp: "2026-09-27T19:09:45Z"
+timestamp: "2026-09-27T21:39:26Z"
 concept_id: crates/erp-accounting/src/ledger/JournalEntry
 language: rust
 ---
@@ -47,7 +47,7 @@ A complete journal entry transaction document.
 - `remarks`
 
 ## Source
-Lines 58–67 in `crates/erp-accounting/src/ledger.rs`
+Lines 62–71 in `crates/erp-accounting/src/ledger.rs`
 
 ## Relationships
 

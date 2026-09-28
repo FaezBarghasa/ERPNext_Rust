@@ -11,7 +11,7 @@ tags:
   - "domain:frappe-net"
   - "git:branch:main"
   - "git:repo:ERPNext_Rust"
-timestamp: "2026-09-27T19:02:23Z"
+timestamp: "2026-09-27T21:39:26Z"
 concept_id: crates/frappe-net/src/server/run_server
 language: rust
 ---
@@ -35,7 +35,7 @@ pub fn run_server(addr: &str) -> std::io::Result<()>
 Runs the Actix Web Server on the specified address.
 
 ## Source
-Lines 30–40 in `crates/frappe-net/src/server.rs`
+Lines 30–38 in `crates/frappe-net/src/server.rs`
 
 ## Relationships
 
@@ -43,3 +43,4 @@ Lines 30–40 in `crates/frappe-net/src/server.rs`
 |------|--------|
 | related | [server](/crates/frappe-net/src/server.md) |
 | calls | [configure_app](/crates/frappe-net/src/server/configure_app.md) |
+| called_by | [main](/crates/rbench/src/main/main.md) |

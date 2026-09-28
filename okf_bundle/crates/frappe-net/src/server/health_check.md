@@ -10,7 +10,7 @@ tags:
   - "domain:frappe-net"
   - "git:branch:main"
   - "git:repo:ERPNext_Rust"
-timestamp: "2026-09-27T19:02:23Z"
+timestamp: "2026-09-27T21:39:26Z"
 concept_id: crates/frappe-net/src/server/health_check
 language: rust
 ---

@@ -11,7 +11,7 @@ tags:
   - "domain:erp-lending"
   - "git:branch:main"
   - "git:repo:ERPNext_Rust"
-timestamp: "2026-09-27T19:48:02Z"
+timestamp: "2026-09-27T21:46:37Z"
 concept_id: crates/erp-lending/src/amortization/LoanGlEngine
 language: rust
 ---
@@ -35,7 +35,7 @@ pub struct LoanGlEngine
 Loan Servicing & General Ledger Posting Integration (Milestone 4.5).
 
 ## Source
-Lines 118–118 in `crates/erp-lending/src/amortization.rs`
+Lines 122–122 in `crates/erp-lending/src/amortization.rs`
 
 ## Relationships
 

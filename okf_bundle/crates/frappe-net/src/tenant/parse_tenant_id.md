@@ -11,7 +11,7 @@ tags:
   - "domain:frappe-net"
   - "git:branch:main"
   - "git:repo:ERPNext_Rust"
-timestamp: "2026-09-27T18:59:03Z"
+timestamp: "2026-09-27T21:45:06Z"
 concept_id: crates/frappe-net/src/tenant/parse_tenant_id
 language: rust
 ---
@@ -23,7 +23,10 @@ Resolves tenant identity from request headers or host string.
 ## Signature
 
 ```rust
-pub fn parse_tenant_id(headers: &actix_web::http::header::HeaderMap, host: &str) -> Result<TenantId, TenantError>
+pub fn parse_tenant_id(
+    headers: &actix_web::http::header::HeaderMap,
+    host: &str,
+) -> Result<TenantId, TenantError>
 ```
 
 ## Visibility
@@ -35,7 +38,7 @@ pub fn parse_tenant_id(headers: &actix_web::http::header::HeaderMap, host: &str)
 Resolves tenant identity from request headers or host string.
 
 ## Source
-Lines 148–165 in `crates/frappe-net/src/tenant.rs`
+Lines 153–173 in `crates/frappe-net/src/tenant.rs`
 
 ## Relationships
 

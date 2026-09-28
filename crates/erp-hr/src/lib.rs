@@ -159,7 +159,8 @@ mod tests {
             to_date: NaiveDate::from_ymd_opt(2026, 10, 15).unwrap(),
             total_days: dec!(6.0),
         };
-        let err = LeaveEngine::validate_and_deduct_leave(&app2, dec!(5.0), &[app1.clone()]);
+        let err =
+            LeaveEngine::validate_and_deduct_leave(&app2, dec!(5.0), std::slice::from_ref(&app1));
         assert!(matches!(err, Err(HrError::InsufficientLeaveBalance { .. })));
 
         // Attempt requesting overlapping leave (Oct 3 to Oct 7) -> Overlap error

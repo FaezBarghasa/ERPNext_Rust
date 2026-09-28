@@ -10,10 +10,10 @@ tags:
   - "module:Cargo.lock"
   - "git:branch:main"
   - "git:repo:ERPNext_Rust"
-  - "version:1.9.2"
   - "manifest:Cargo.lock"
   - "ecosystem:cargo"
-timestamp: "2026-09-27T20:02:31Z"
+  - "version:1.9.2"
+timestamp: "2026-09-27T21:56:00Z"
 concept_id: _dependencies/cargo/arc-swap
 language: manifest
 ---

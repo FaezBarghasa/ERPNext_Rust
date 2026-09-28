@@ -10,7 +10,7 @@ tags:
   - "domain:erp-manufacturing"
   - "git:branch:main"
   - "git:repo:ERPNext_Rust"
-timestamp: "2026-09-27T19:27:07Z"
+timestamp: "2026-09-27T21:39:26Z"
 concept_id: crates/erp-manufacturing/src/bom/dfs_cycle_check_1
 language: rust
 ---
@@ -29,7 +29,7 @@ fn dfs_cycle_check(
 ```
 
 ## Source
-Lines 99–128 in `crates/erp-manufacturing/src/bom.rs`
+Lines 92–121 in `crates/erp-manufacturing/src/bom.rs`
 
 ## Relationships
 

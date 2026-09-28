@@ -6,4 +6,4 @@
 
 ## Modules
 
-- [src](main.md)
+- [src](main.md) — `desk-app` — The Pure-Rust Reactive Enterprise Desk Application.

@@ -11,7 +11,7 @@ tags:
   - "domain:erp-manufacturing"
   - "git:branch:main"
   - "git:repo:ERPNext_Rust"
-timestamp: "2026-09-27T19:27:43Z"
+timestamp: "2026-09-27T21:39:26Z"
 concept_id: crates/erp-manufacturing/src/mrp/schedule_operation_1
 language: rust
 ---
@@ -42,7 +42,7 @@ Schedules an operation interval, automatically sliding forward if a collision oc
 Returns the assigned `ScheduledSlot`.
 
 ## Source
-Lines 99–129 in `crates/erp-manufacturing/src/mrp.rs`
+Lines 100–130 in `crates/erp-manufacturing/src/mrp.rs`
 
 ## Relationships
 

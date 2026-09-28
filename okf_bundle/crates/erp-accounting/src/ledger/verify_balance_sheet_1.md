@@ -11,7 +11,7 @@ tags:
   - "domain:erp-accounting"
   - "git:branch:main"
   - "git:repo:ERPNext_Rust"
-timestamp: "2026-09-27T19:09:45Z"
+timestamp: "2026-09-27T21:39:26Z"
 concept_id: crates/erp-accounting/src/ledger/verify_balance_sheet_1
 language: rust
 ---
@@ -44,7 +44,7 @@ Verifies the Fundamental Accounting Equation: $\text{Assets} = \text{Liabilities
 [must_use]
 
 ## Source
-Lines 297–321 in `crates/erp-accounting/src/ledger.rs`
+Lines 301–325 in `crates/erp-accounting/src/ledger.rs`
 
 ## Relationships
 

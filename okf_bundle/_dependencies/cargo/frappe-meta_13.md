@@ -2,30 +2,30 @@
 okf_version: "0.2"
 type: Dependency
 title: frappe-meta
-description: Dependency from crates/erp-crm/Cargo.toml
-resource: crates/erp-crm/Cargo.toml
+description: Dependency from crates/erp-cms/Cargo.toml
+resource: crates/erp-cms/Cargo.toml
 tags:
   - "lang:manifest"
   - "type:Dependency"
   - "module:crates"
-  - "domain:erp-crm"
+  - "domain:erp-cms"
   - "git:branch:main"
   - "git:repo:ERPNext_Rust"
-  - "manifest:Cargo.toml"
   - "ecosystem:cargo"
-timestamp: "2026-09-27T19:38:12Z"
+  - "manifest:Cargo.toml"
+timestamp: "2026-09-27T20:02:25Z"
 concept_id: _dependencies/cargo/frappe-meta_13
 language: manifest
 ---
 
 # frappe-meta
 
-Dependency from crates/erp-crm/Cargo.toml
+Dependency from crates/erp-cms/Cargo.toml
 
 | Field | Value |
 |-------|-------|
 | Ecosystem | `cargo` |
 | Version constraint | `` |
-| Source manifest | `crates/erp-crm/Cargo.toml` |
+| Source manifest | `crates/erp-cms/Cargo.toml` |
 | Dev dependency | `no` |
 | Used by | 0 module(s) |

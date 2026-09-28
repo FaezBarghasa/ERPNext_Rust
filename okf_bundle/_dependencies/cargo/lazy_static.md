@@ -10,10 +10,10 @@ tags:
   - "module:Cargo.lock"
   - "git:branch:main"
   - "git:repo:ERPNext_Rust"
-  - "version:1.5.0"
   - "manifest:Cargo.lock"
+  - "version:1.5.0"
   - "ecosystem:cargo"
-timestamp: "2026-09-27T20:02:31Z"
+timestamp: "2026-09-27T21:56:00Z"
 concept_id: _dependencies/cargo/lazy_static
 language: manifest
 ---

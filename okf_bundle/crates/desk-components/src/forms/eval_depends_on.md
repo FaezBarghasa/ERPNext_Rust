@@ -11,7 +11,7 @@ tags:
   - "domain:desk-components"
   - "git:branch:main"
   - "git:repo:ERPNext_Rust"
-timestamp: "2026-09-27T20:02:50Z"
+timestamp: "2026-09-27T21:39:26Z"
 concept_id: crates/desk-components/src/forms/eval_depends_on
 language: rust
 ---
@@ -40,7 +40,7 @@ Evaluates Frappe dynamic form `depends_on` visibility conditions.
 [must_use]
 
 ## Source
-Lines 134–153 in `crates/desk-components/src/forms.rs`
+Lines 139–158 in `crates/desk-components/src/forms.rs`
 
 ## Relationships
 

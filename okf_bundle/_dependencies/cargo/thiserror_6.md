@@ -2,31 +2,31 @@
 okf_version: "0.2"
 type: Dependency
 title: thiserror
-description: Dependency from crates/desk-components/Cargo.toml
-resource: crates/desk-components/Cargo.toml
+description: Dependency from crates/frappe-storage/Cargo.toml
+resource: crates/frappe-storage/Cargo.toml
 tags:
   - "lang:manifest"
   - "type:Dependency"
   - "module:crates"
-  - "domain:desk-components"
+  - "domain:frappe-storage"
   - "git:branch:main"
   - "git:repo:ERPNext_Rust"
-  - "manifest:Cargo.toml"
-  - "version:2.0.21"
+  - "version:2.0.18"
   - "ecosystem:cargo"
-timestamp: "2026-09-27T20:02:37Z"
+  - "manifest:Cargo.toml"
+timestamp: "2026-09-27T20:54:04Z"
 concept_id: _dependencies/cargo/thiserror_6
 language: manifest
 ---
 
 # thiserror
 
-Dependency from crates/desk-components/Cargo.toml
+Dependency from crates/frappe-storage/Cargo.toml
 
 | Field | Value |
 |-------|-------|
 | Ecosystem | `cargo` |
-| Version constraint | `2.0.21` |
-| Source manifest | `crates/desk-components/Cargo.toml` |
+| Version constraint | `2.0.18` |
+| Source manifest | `crates/frappe-storage/Cargo.toml` |
 | Dev dependency | `no` |
 | Used by | 0 module(s) |

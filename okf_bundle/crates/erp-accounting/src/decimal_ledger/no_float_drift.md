@@ -11,7 +11,7 @@ tags:
   - "domain:erp-accounting"
   - "git:branch:main"
   - "git:repo:ERPNext_Rust"
-timestamp: "2026-09-27T15:20:48Z"
+timestamp: "2026-09-27T21:39:26Z"
 concept_id: crates/erp-accounting/src/decimal_ledger/no_float_drift
 language: rust
 ---
@@ -35,7 +35,7 @@ fn no_float_drift()
 [test]
 
 ## Source
-Lines 21–25 in `crates/erp-accounting/src/decimal_ledger.rs`
+Lines 50–54 in `crates/erp-accounting/src/decimal_ledger.rs`
 
 ## Relationships
 

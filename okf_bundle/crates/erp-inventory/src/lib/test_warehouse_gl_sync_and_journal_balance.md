@@ -11,7 +11,7 @@ tags:
   - "domain:erp-inventory"
   - "git:branch:main"
   - "git:repo:ERPNext_Rust"
-timestamp: "2026-09-27T19:18:09Z"
+timestamp: "2026-09-27T21:45:57Z"
 concept_id: crates/erp-inventory/src/lib/test_warehouse_gl_sync_and_journal_balance
 language: rust
 ---
@@ -35,7 +35,7 @@ fn test_warehouse_gl_sync_and_journal_balance()
 [test]
 
 ## Source
-Lines 47–67 in `crates/erp-inventory/src/lib.rs`
+Lines 46–66 in `crates/erp-inventory/src/lib.rs`
 
 ## Relationships
 

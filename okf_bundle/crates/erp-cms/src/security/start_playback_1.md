@@ -11,7 +11,7 @@ tags:
   - "domain:erp-cms"
   - "git:branch:main"
   - "git:repo:ERPNext_Rust"
-timestamp: "2026-09-27T20:25:54Z"
+timestamp: "2026-09-27T21:39:26Z"
 concept_id: crates/erp-cms/src/security/start_playback_1
 language: rust
 ---
@@ -41,7 +41,7 @@ pub fn start_playback(
 Starts a playback session if subscription is active and concurrency limit is not breached.
 
 ## Source
-Lines 150–175 in `crates/erp-cms/src/security.rs`
+Lines 152–177 in `crates/erp-cms/src/security.rs`
 
 ## Relationships
 

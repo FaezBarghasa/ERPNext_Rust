@@ -10,7 +10,7 @@ tags:
   - "domain:erp-accounting"
   - "git:branch:main"
   - "git:repo:ERPNext_Rust"
-timestamp: "2026-09-27T19:11:46Z"
+timestamp: "2026-09-27T21:41:52Z"
 concept_id: crates/erp-accounting/src/lib/sample_accounts
 language: rust
 ---
@@ -24,7 +24,7 @@ fn sample_accounts() -> Vec<Account>
 ```
 
 ## Source
-Lines 23–66 in `crates/erp-accounting/src/lib.rs`
+Lines 34–77 in `crates/erp-accounting/src/lib.rs`
 
 ## Relationships
 

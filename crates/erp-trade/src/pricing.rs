@@ -61,7 +61,7 @@ impl PricingEngine {
             .collect();
 
         // Sort by priority descending
-        applicable_rules.sort_by(|a, b| b.priority.cmp(&a.priority));
+        applicable_rules.sort_by_key(|a| std::cmp::Reverse(a.priority));
 
         if let Some(best_rule) = applicable_rules.first() {
             let pct_factor = Decimal::ONE - (best_rule.discount_percentage / Decimal::from(100));

@@ -1,31 +1,31 @@
 ---
-description: 'Top-level OKF summary: 1231 concepts across 3 domains and 66 modules'
+description: 'Top-level OKF summary: 1859 concepts across 3 domains and 110 modules'
 git_branch: main
 git_repo: ERPNext_Rust
 okf_version: '0.2'
-timestamp: '2026-09-27T20:33:58Z'
+timestamp: '2026-09-27T22:05:46Z'
 title: ERPNext_workspace — Knowledge Summary
 type: Index
 ---
 
 # ERPNext_workspace — Knowledge Summary
 
-> OKF v0.2 bundle | 1,231 concepts | 3 domains | 66 modules
+> OKF v0.2 bundle | 1,859 concepts | 3 domains | 110 modules
 
 ## Stats
 
 | Type | Count |
 |------|-------|
-| Dependency | 717 |
-| Function | 317 |
-| Class | 130 |
-| Module | 66 |
+| Dependency | 893 |
+| Function | 586 |
+| Class | 269 |
+| Module | 110 |
 | Resource | 1 |
 
 | Language | Concepts |
 |----------|----------|
-| manifest | 717 |
-| rust | 512 |
+| rust | 964 |
+| manifest | 893 |
 | yaml | 2 |
 
 ## Domain Map
@@ -40,17 +40,17 @@ Use these links to navigate the bundle or prime an AI agent with focused context
 
 - [benches/tenant_bench](benches/tenant_bench/index.md) (1 concepts)
 
-### [crates](crates/index.md) — 511 concepts
+### [crates](crates/index.md) — 963 concepts
 
 - [crates/frappe-net/src/tenant](crates/frappe-net/src/tenant/index.md) (29 concepts)
 - [crates/frappe-framework/src/lifecycle](crates/frappe-framework/src/lifecycle/index.md) (24 concepts)
 - [crates/erp-accounting/src/ledger](crates/erp-accounting/src/ledger/index.md) (23 concepts)
-- [crates/frappe-storage/src/lib](crates/frappe-storage/src/lib/index.md) (20 concepts) — Tenant context, queue states, CAS deduplication, and SurrealDB storage backend.
+- [crates/frappe-storage/src/lib](crates/frappe-storage/src/lib/index.md) (20 concepts)
+- [crates/frappe-storage/src/bitemporal](crates/frappe-storage/src/bitemporal/index.md) (19 concepts) — Bi-temporal state ledger supporting system time (transaction time) and valid tim
+- [crates/frappe-framework/src/saga](crates/frappe-framework/src/saga/index.md) (18 concepts) — Distributed Saga Orchestration Coordinator with forward execution and compensati
+- [crates/erp-ppm/src/construction](crates/erp-ppm/src/construction/index.md) (18 concepts) — EPC Contract Administration, AIA G702/G703 Billing, Retainage & Change Orders.
 - [crates/erp-cms/src/security](crates/erp-cms/src/security/index.md) (18 concepts)
-- [crates/frappe-storage/src/drive](crates/frappe-storage/src/drive/index.md) (17 concepts)
-- [crates/erp-learning/src/lms](crates/erp-learning/src/lms/index.md) (17 concepts)
-- [crates/erp-hr/src/payroll](crates/erp-hr/src/payroll/index.md) (16 concepts)
-- *…and 56 more modules*
+- *…and 100 more modules*
 
 ## Dependencies
 
@@ -58,7 +58,7 @@ Use these links to navigate the bundle or prime an AI agent with focused context
 
 | Ecosystem | Packages |
 |----------|----------|
-| cargo | 713 |
+| cargo | 889 |
 | docker | 3 |
 | docker-compose | 1 |
 
@@ -70,24 +70,24 @@ Highest-value concepts across all domains (Classes and Functions with rich descr
 |---------|------|--------|-------------|
 | [verify_balance_sheet](/crates/erp-accounting/src/ledger/verify_balance_sheet.md) | Function | `crates/erp-accounting/src` | Verifies the Fundamental Accounting Equation: $\text{Assets}… |
 | [verify_balance_sheet](/crates/erp-accounting/src/ledger/verify_balance_sheet_1.md) | Function | `crates/erp-accounting/src` | Verifies the Fundamental Accounting Equation: $\text{Assets}… |
-| [verify_balanced_dec](/crates/erp-accounting/src/decimal_ledger/verify_balanced_dec.md) | Function | `crates/erp-accounting/src` | [derive(Debug, Clone)] pub struct DecLine { pub account: Str… |
+| [allocate_contract_price](/crates/erp-crm/src/revops/allocate_contract_price.md) | Function | `crates/erp-crm/src` | 5-Step Revenue Recognition: Allocates Transaction Price (TP)… |
+| [allocate_contract_price](/crates/erp-crm/src/revops/allocate_contract_price_1.md) | Function | `crates/erp-crm/src` | 5-Step Revenue Recognition: Allocates Transaction Price (TP)… |
+| [screen_party](/crates/erp-trade/src/sanctions/screen_party.md) | Function | `crates/erp-trade/src` | Screens an entity against the watchlist. Returns matched ent… |
+| [screen_party](/crates/erp-trade/src/sanctions/screen_party_1.md) | Function | `crates/erp-trade/src` | Screens an entity against the watchlist. Returns matched ent… |
+| [recommended_safety_stock](/crates/erp-asset/src/mro/recommended_safety_stock.md) | Function | `crates/erp-asset/src` | Calculates required safety stock quantity S such that cumula… |
+| [recommended_safety_stock](/crates/erp-asset/src/mro/recommended_safety_stock_1.md) | Function | `crates/erp-asset/src` | Calculates required safety stock quantity S such that cumula… |
+| [authorize](/crates/erp-asset/src/safety/authorize.md) | Function | `crates/erp-asset/src` | Validates all cryptographic and physical isolation prerequis… |
+| [authorize](/crates/erp-asset/src/safety/authorize_1.md) | Function | `crates/erp-asset/src` | Validates all cryptographic and physical isolation prerequis… |
 | [compile_to_surrealql](/crates/frappe-meta/src/schema_compiler/compile_to_surrealql.md) | Function | `crates/frappe-meta/src` | Compiles a strongly typed `DocTypeSchema` into a sequence of… |
+| [compute_eod_sweeps](/crates/erp-accounting/src/treasury/compute_eod_sweeps.md) | Function | `crates/erp-accounting/src` | Evaluates end-of-day subsidiary accounts and sweeps excess c… |
+| [compute_eod_sweeps](/crates/erp-accounting/src/treasury/compute_eod_sweeps_1.md) | Function | `crates/erp-accounting/src` | Evaluates end-of-day subsidiary accounts and sweeps excess c… |
 | [evaluate_tickets](/crates/erp-support/src/sla/evaluate_tickets.md) | Function | `crates/erp-support/src` | Evaluates unresolved tickets against their SLA response dead… |
 | [evaluate_tickets](/crates/erp-support/src/sla/evaluate_tickets_1.md) | Function | `crates/erp-support/src` | Evaluates unresolved tickets against their SLA response dead… |
+| [simulate](/crates/erp-ppm/src/monte_carlo/simulate.md) | Function | `crates/erp-ppm/src` | Evaluates stochastic task durations over N iterations using … |
+| [simulate](/crates/erp-ppm/src/monte_carlo/simulate_1.md) | Function | `crates/erp-ppm/src` | Evaluates stochastic task durations over N iterations using … |
 | [balance_exchange_variance](/crates/erp-accounting/src/ledger/balance_exchange_variance.md) | Function | `crates/erp-accounting/src` | Automatically generates balancing Exchange Gain/Loss line wh… |
 | [balance_exchange_variance](/crates/erp-accounting/src/ledger/balance_exchange_variance_1.md) | Function | `crates/erp-accounting/src` | Automatically generates balancing Exchange Gain/Loss line wh… |
 | [process_batch_payroll](/crates/erp-hr/src/payroll/process_batch_payroll.md) | Function | `crates/erp-hr/src` | Runs concurrent payroll calculation across workforce using T… |
-| [process_batch_payroll](/crates/erp-hr/src/payroll/process_batch_payroll_1.md) | Function | `crates/erp-hr/src` | Runs concurrent payroll calculation across workforce using T… |
-| [insert](/crates/frappe-framework/src/lifecycle/insert.md) | Function | `crates/frappe-framework/src` | Handles document insertion: runs naming series, validation h… |
-| [insert](/crates/frappe-framework/src/lifecycle/insert_1.md) | Function | `crates/frappe-framework/src` | Handles document insertion: runs naming series, validation h… |
-| [generate_schedule](/crates/erp-lending/src/amortization/generate_schedule.md) | Function | `crates/erp-lending/src` | Generates complete amortization schedule with zero-loss fina… |
-| [generate_schedule](/crates/erp-lending/src/amortization/generate_schedule_1.md) | Function | `crates/erp-lending/src` | Generates complete amortization schedule with zero-loss fina… |
-| [evaluate_and_issue_certificate](/crates/erp-learning/src/lms/evaluate_and_issue_certificate.md) | Function | `crates/erp-learning/src` | Evaluates assessment and auto-issues certificate if 100% com… |
-| [evaluate_and_issue_certificate](/crates/erp-learning/src/lms/evaluate_and_issue_certificate_1.md) | Function | `crates/erp-learning/src` | Evaluates assessment and auto-issues certificate if 100% com… |
-| [allocate_fifo](/crates/erp-accounting/src/receivables/allocate_fifo.md) | Function | `crates/erp-accounting/src` | FIFO Payment Allocation: matches incoming payment against ol… |
-| [allocate_fifo](/crates/erp-accounting/src/receivables/allocate_fifo_1.md) | Function | `crates/erp-accounting/src` | FIFO Payment Allocation: matches incoming payment against ol… |
-| [DeduplicatedStorage](/crates/frappe-storage/src/drive/DeduplicatedStorage.md) | Class | `crates/frappe-storage/src` | Content-Addressable Storage (CAS) with SHA-256 deduplication… |
-| [start_playback](/crates/erp-cms/src/security/start_playback.md) | Function | `crates/erp-cms/src` | Starts a playback session if subscription is active and conc… |
 
 ## Usage with OpenCode
 

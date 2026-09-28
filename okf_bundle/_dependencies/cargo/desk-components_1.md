@@ -11,9 +11,9 @@ tags:
   - "domain:desk-app"
   - "git:branch:main"
   - "git:repo:ERPNext_Rust"
-  - "manifest:Cargo.toml"
   - "ecosystem:cargo"
-timestamp: "2026-09-27T13:59:35Z"
+  - "manifest:Cargo.toml"
+timestamp: "2026-09-27T21:55:55Z"
 concept_id: _dependencies/cargo/desk-components_1
 language: manifest
 ---

@@ -2,7 +2,7 @@
 okf_version: "0.2"
 type: Function
 title: series_formats
-description: "[cfg(test)] mod t { use super::*;"
+description: "[test]"
 resource: crates/frappe-meta/src/naming.rs
 tags:
   - "lang:rust"
@@ -11,14 +11,14 @@ tags:
   - "domain:frappe-meta"
   - "git:branch:main"
   - "git:repo:ERPNext_Rust"
-timestamp: "2026-09-27T14:13:33Z"
+timestamp: "2026-09-27T21:40:27Z"
 concept_id: crates/frappe-meta/src/naming/series_formats
 language: rust
 ---
 
 # series_formats
 
-[cfg(test)] mod t { use super::*;
+[test]
 
 ## Signature
 
@@ -32,11 +32,10 @@ fn series_formats()
 
 ## Docstring
 
-[cfg(test)] mod t { use super::*;
 [test]
 
 ## Source
-Lines 24–24 in `crates/frappe-meta/src/naming.rs`
+Lines 34–39 in `crates/frappe-meta/src/naming.rs`
 
 ## Relationships
 

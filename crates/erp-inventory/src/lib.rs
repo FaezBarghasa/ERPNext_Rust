@@ -13,7 +13,6 @@ pub use warehouse::{
 mod tests {
     use super::*;
     use chrono::NaiveDate;
-    use rust_decimal::Decimal;
     use rust_decimal_macros::dec;
 
     #[test]

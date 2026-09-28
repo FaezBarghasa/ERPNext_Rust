@@ -11,7 +11,7 @@ tags:
   - "domain:erp-lending"
   - "git:branch:main"
   - "git:repo:ERPNext_Rust"
-timestamp: "2026-09-27T19:48:02Z"
+timestamp: "2026-09-27T21:46:37Z"
 concept_id: crates/erp-lending/src/amortization/create_interest_accrual_gl_entries
 language: rust
 ---
@@ -45,7 +45,7 @@ Generates GL entries for monthly interest accrual:
 [must_use]
 
 ## Source
-Lines 125–159 in `crates/erp-lending/src/amortization.rs`
+Lines 129–163 in `crates/erp-lending/src/amortization.rs`
 
 ## Relationships
 

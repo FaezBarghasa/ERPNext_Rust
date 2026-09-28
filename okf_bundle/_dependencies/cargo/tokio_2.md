@@ -11,9 +11,9 @@ tags:
   - "domain:erp-hr"
   - "git:branch:main"
   - "git:repo:ERPNext_Rust"
-  - "manifest:Cargo.toml"
   - "version:1.53.1"
   - "ecosystem:cargo"
+  - "manifest:Cargo.toml"
 timestamp: "2026-09-27T19:41:17Z"
 concept_id: _dependencies/cargo/tokio_2
 language: manifest

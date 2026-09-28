@@ -11,7 +11,7 @@ tags:
   - "domain:erp-cms"
   - "git:branch:main"
   - "git:repo:ERPNext_Rust"
-timestamp: "2026-09-27T20:25:54Z"
+timestamp: "2026-09-27T21:39:26Z"
 concept_id: crates/erp-cms/src/security/SvodPlaybackManager
 language: rust
 ---
@@ -44,7 +44,7 @@ SVoD Subscription Gating & Real-Time Playback Concurrency Limiter (Milestone 5.5
 - `active_sessions`
 
 ## Source
-Lines 137–140 in `crates/erp-cms/src/security.rs`
+Lines 139–142 in `crates/erp-cms/src/security.rs`
 
 ## Relationships
 

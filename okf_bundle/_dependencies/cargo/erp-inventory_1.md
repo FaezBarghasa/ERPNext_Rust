@@ -11,9 +11,9 @@ tags:
   - "domain:erp-manufacturing"
   - "git:branch:main"
   - "git:repo:ERPNext_Rust"
-  - "manifest:Cargo.toml"
   - "ecosystem:cargo"
-timestamp: "2026-09-27T19:38:44Z"
+  - "manifest:Cargo.toml"
+timestamp: "2026-09-27T21:17:05Z"
 concept_id: _dependencies/cargo/erp-inventory_1
 language: manifest
 ---

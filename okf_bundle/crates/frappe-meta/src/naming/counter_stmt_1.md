@@ -11,7 +11,7 @@ tags:
   - "domain:frappe-meta"
   - "git:branch:main"
   - "git:repo:ERPNext_Rust"
-timestamp: "2026-09-27T14:13:33Z"
+timestamp: "2026-09-27T21:40:27Z"
 concept_id: crates/frappe-meta/src/naming/counter_stmt_1
 language: rust
 ---
@@ -35,7 +35,7 @@ pub fn counter_stmt(table: &str) -> String
 SurrealQL atomic counter statement for concurrent inserts.
 
 ## Source
-Lines 19–21 in `crates/frappe-meta/src/naming.rs`
+Lines 23–28 in `crates/frappe-meta/src/naming.rs`
 
 ## Relationships
 

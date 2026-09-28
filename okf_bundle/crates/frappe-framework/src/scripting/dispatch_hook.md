@@ -11,7 +11,7 @@ tags:
   - "domain:frappe-framework"
   - "git:branch:main"
   - "git:repo:ERPNext_Rust"
-timestamp: "2026-09-27T18:56:51Z"
+timestamp: "2026-09-27T21:39:26Z"
 concept_id: crates/frappe-framework/src/scripting/dispatch_hook
 language: rust
 ---
@@ -40,7 +40,7 @@ impl RhaiHookEngine { pub fn dispatch_hook(
 Executes a script on a mutable JSON document in the specified lifecycle event.
 
 ## Source
-Lines 93–134 in `crates/frappe-framework/src/scripting.rs`
+Lines 96–138 in `crates/frappe-framework/src/scripting.rs`
 
 ## Relationships
 

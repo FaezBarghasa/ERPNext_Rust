@@ -11,7 +11,7 @@ tags:
   - "domain:erp-hr"
   - "git:branch:main"
   - "git:repo:ERPNext_Rust"
-timestamp: "2026-09-27T20:27:26Z"
+timestamp: "2026-09-27T21:39:26Z"
 concept_id: crates/erp-hr/src/payroll/LeaveApplication
 language: rust
 ---
@@ -48,7 +48,7 @@ Leave Application record.
 - `total_days`
 
 ## Source
-Lines 221–227 in `crates/erp-hr/src/payroll.rs`
+Lines 225–231 in `crates/erp-hr/src/payroll.rs`
 
 ## Relationships
 

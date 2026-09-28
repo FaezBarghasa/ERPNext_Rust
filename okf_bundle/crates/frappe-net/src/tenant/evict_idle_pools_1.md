@@ -11,7 +11,7 @@ tags:
   - "domain:frappe-net"
   - "git:branch:main"
   - "git:repo:ERPNext_Rust"
-timestamp: "2026-09-27T18:59:03Z"
+timestamp: "2026-09-27T21:45:06Z"
 concept_id: crates/frappe-net/src/tenant/evict_idle_pools_1
 language: rust
 ---
@@ -35,7 +35,7 @@ pub fn evict_idle_pools(&self) -> usize
 Evicts idle pools exceeding the configured inactivity duration.
 
 ## Source
-Lines 125–133 in `crates/frappe-net/src/tenant.rs`
+Lines 130–138 in `crates/frappe-net/src/tenant.rs`
 
 ## Relationships
 

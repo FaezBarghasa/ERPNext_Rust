@@ -11,7 +11,7 @@ tags:
   - "domain:erp-inventory"
   - "git:branch:main"
   - "git:repo:ERPNext_Rust"
-timestamp: "2026-09-27T19:17:29Z"
+timestamp: "2026-09-27T21:39:26Z"
 concept_id: crates/erp-inventory/src/batches/Batch
 language: rust
 ---
@@ -48,7 +48,7 @@ Batch tracking record with expiration management.
 - `remaining_qty`
 
 ## Source
-Lines 51–62 in `crates/erp-inventory/src/batches.rs`
+Lines 48–59 in `crates/erp-inventory/src/batches.rs`
 
 ## Relationships
 

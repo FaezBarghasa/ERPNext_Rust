@@ -10,9 +10,9 @@ tags:
   - "module:Dockerfile"
   - "git:branch:main"
   - "git:repo:ERPNext_Rust"
-  - "version:1.80-bullseye"
   - "ecosystem:docker"
   - "manifest:Dockerfile"
+  - "version:1.80-bullseye"
 timestamp: "2026-07-25T14:29:56Z"
 concept_id: _dependencies/docker/rust
 language: manifest

@@ -10,8 +10,8 @@ tags:
   - "module:docker-compose.yml"
   - "git:branch:main"
   - "git:repo:ERPNext_Rust"
-  - "ecosystem:docker-compose"
   - "manifest:docker-compose.yml"
+  - "ecosystem:docker-compose"
 timestamp: "2026-07-25T14:29:56Z"
 concept_id: _dependencies/docker-compose/frappe-gateway→surrealdb
 language: manifest

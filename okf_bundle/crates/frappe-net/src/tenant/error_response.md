@@ -10,7 +10,7 @@ tags:
   - "domain:frappe-net"
   - "git:branch:main"
   - "git:repo:ERPNext_Rust"
-timestamp: "2026-09-27T18:59:03Z"
+timestamp: "2026-09-27T21:45:06Z"
 concept_id: crates/frappe-net/src/tenant/error_response
 language: rust
 ---
@@ -24,7 +24,7 @@ impl TenantError { fn error_response(&self) -> HttpResponse<BoxBody> }
 ```
 
 ## Source
-Lines 56–65 in `crates/frappe-net/src/tenant.rs`
+Lines 58–67 in `crates/frappe-net/src/tenant.rs`
 
 ## Relationships
 

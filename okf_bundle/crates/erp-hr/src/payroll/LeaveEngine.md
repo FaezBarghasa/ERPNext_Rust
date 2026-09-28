@@ -11,7 +11,7 @@ tags:
   - "domain:erp-hr"
   - "git:branch:main"
   - "git:repo:ERPNext_Rust"
-timestamp: "2026-09-27T20:27:26Z"
+timestamp: "2026-09-27T21:39:26Z"
 concept_id: crates/erp-hr/src/payroll/LeaveEngine
 language: rust
 ---
@@ -35,7 +35,7 @@ pub struct LeaveEngine
 Leave Allocation & Accrual Engine (Milestone 3.8).
 
 ## Source
-Lines 230–230 in `crates/erp-hr/src/payroll.rs`
+Lines 234–234 in `crates/erp-hr/src/payroll.rs`
 
 ## Relationships
 

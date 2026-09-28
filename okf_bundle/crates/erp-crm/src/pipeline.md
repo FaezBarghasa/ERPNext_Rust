@@ -10,7 +10,7 @@ tags:
   - "domain:erp-crm"
   - "git:branch:main"
   - "git:repo:ERPNext_Rust"
-timestamp: "2026-09-27T19:34:58Z"
+timestamp: "2026-09-27T21:56:26Z"
 concept_id: crates/erp-crm/src/pipeline
 language: rust
 ---

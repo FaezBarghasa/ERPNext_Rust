@@ -11,7 +11,7 @@ tags:
   - "domain:desk-components"
   - "git:branch:main"
   - "git:repo:ERPNext_Rust"
-timestamp: "2026-09-27T14:03:17Z"
+timestamp: "2026-09-27T21:39:26Z"
 concept_id: crates/desk-components/src/grid/visible_slice
 language: rust
 ---
@@ -23,7 +23,12 @@ Visible-row slice for virtualized grid (Stage 6.1.1): 60fps over 1M rows.
 ## Signature
 
 ```rust
-pub fn visible_slice(total: usize, row_h: usize, scroll: usize, viewport_h: usize) -> (usize, usize)
+pub fn visible_slice(
+    total: usize,
+    row_h: usize,
+    scroll: usize,
+    viewport_h: usize,
+) -> (usize, usize)
 ```
 
 ## Visibility
@@ -35,10 +40,11 @@ pub fn visible_slice(total: usize, row_h: usize, scroll: usize, viewport_h: usiz
 Visible-row slice for virtualized grid (Stage 6.1.1): 60fps over 1M rows.
 
 ## Source
-Lines 2–7 in `crates/desk-components/src/grid.rs`
+Lines 2–14 in `crates/desk-components/src/grid.rs`
 
 ## Relationships
 
 | Type | Target |
 |------|--------|
 | related | [grid](/crates/desk-components/src/grid.md) |
+| called_by | [main](/crates/desk-app/src/main/main.md) |

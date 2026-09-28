@@ -11,10 +11,10 @@ tags:
   - "domain:frappe-framework"
   - "git:branch:main"
   - "git:repo:ERPNext_Rust"
-  - "manifest:Cargo.toml"
   - "version:1.0.104"
   - "ecosystem:cargo"
-timestamp: "2026-09-27T18:52:44Z"
+  - "manifest:Cargo.toml"
+timestamp: "2026-09-27T21:00:16Z"
 concept_id: _dependencies/cargo/anyhow_2
 language: manifest
 ---

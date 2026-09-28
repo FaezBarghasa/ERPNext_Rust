@@ -11,7 +11,7 @@ tags:
   - "domain:erp-inventory"
   - "git:branch:main"
   - "git:repo:ERPNext_Rust"
-timestamp: "2026-09-27T19:18:09Z"
+timestamp: "2026-09-27T21:45:57Z"
 concept_id: crates/erp-inventory/src/lib/test_fifo_multi_batch_consumption
 language: rust
 ---
@@ -35,7 +35,7 @@ fn test_fifo_multi_batch_consumption()
 [test]
 
 ## Source
-Lines 20–44 in `crates/erp-inventory/src/lib.rs`
+Lines 19–43 in `crates/erp-inventory/src/lib.rs`
 
 ## Relationships
 

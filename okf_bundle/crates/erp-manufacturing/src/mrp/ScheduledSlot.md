@@ -11,7 +11,7 @@ tags:
   - "domain:erp-manufacturing"
   - "git:branch:main"
   - "git:repo:ERPNext_Rust"
-timestamp: "2026-09-27T19:27:43Z"
+timestamp: "2026-09-27T21:39:26Z"
 concept_id: crates/erp-manufacturing/src/mrp/ScheduledSlot
 language: rust
 ---
@@ -46,7 +46,7 @@ Scheduled operational time window on a workstation.
 - `end_time`
 
 ## Source
-Lines 74–81 in `crates/erp-manufacturing/src/mrp.rs`
+Lines 75–82 in `crates/erp-manufacturing/src/mrp.rs`
 
 ## Relationships
 

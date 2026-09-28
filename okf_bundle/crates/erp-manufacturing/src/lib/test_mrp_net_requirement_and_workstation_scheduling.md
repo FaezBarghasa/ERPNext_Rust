@@ -11,7 +11,7 @@ tags:
   - "domain:erp-manufacturing"
   - "git:branch:main"
   - "git:repo:ERPNext_Rust"
-timestamp: "2026-09-27T19:28:22Z"
+timestamp: "2026-09-27T21:48:09Z"
 concept_id: crates/erp-manufacturing/src/lib/test_mrp_net_requirement_and_workstation_scheduling
 language: rust
 ---
@@ -35,7 +35,7 @@ fn test_mrp_net_requirement_and_workstation_scheduling()
 [test]
 
 ## Source
-Lines 135–157 in `crates/erp-manufacturing/src/lib.rs`
+Lines 146–163 in `crates/erp-manufacturing/src/lib.rs`
 
 ## Relationships
 

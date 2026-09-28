@@ -50,6 +50,7 @@ impl ElectronicBatchRecord {
         }
     }
 
+    #[allow(clippy::too_many_arguments)]
     pub fn record_signed_step(
         &mut self,
         step_no: u32,

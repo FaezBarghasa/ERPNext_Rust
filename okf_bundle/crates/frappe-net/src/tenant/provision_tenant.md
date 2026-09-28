@@ -11,7 +11,7 @@ tags:
   - "domain:frappe-net"
   - "git:branch:main"
   - "git:repo:ERPNext_Rust"
-timestamp: "2026-09-27T18:59:03Z"
+timestamp: "2026-09-27T21:45:06Z"
 concept_id: crates/frappe-net/src/tenant/provision_tenant
 language: rust
 ---
@@ -38,7 +38,7 @@ pub fn provision_tenant(
 Cloud Multi-Tenant Provisioning Coordinator (Milestone 5.8).
 
 ## Source
-Lines 237–261 in `crates/frappe-net/src/tenant.rs`
+Lines 248–272 in `crates/frappe-net/src/tenant.rs`
 
 ## Relationships
 

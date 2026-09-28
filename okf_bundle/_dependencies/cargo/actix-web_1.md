@@ -11,9 +11,9 @@ tags:
   - "domain:frappe-net"
   - "git:branch:main"
   - "git:repo:ERPNext_Rust"
+  - "ecosystem:cargo"
   - "manifest:Cargo.toml"
   - "version:4.15.0"
-  - "ecosystem:cargo"
 timestamp: "2026-09-27T18:56:22Z"
 concept_id: _dependencies/cargo/actix-web_1
 language: manifest

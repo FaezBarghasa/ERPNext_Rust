@@ -10,7 +10,7 @@ tags:
   - "domain:frappe-framework"
   - "git:branch:main"
   - "git:repo:ERPNext_Rust"
-timestamp: "2026-09-27T18:54:31Z"
+timestamp: "2026-09-27T21:39:26Z"
 concept_id: crates/frappe-framework/src/lib/make_test_schema
 language: rust
 ---
@@ -24,7 +24,7 @@ fn make_test_schema() -> DocTypeSchema
 ```
 
 ## Source
-Lines 12–60 in `crates/frappe-framework/src/lib.rs`
+Lines 20–68 in `crates/frappe-framework/src/lib.rs`
 
 ## Relationships
 

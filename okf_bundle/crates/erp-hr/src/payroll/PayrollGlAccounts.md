@@ -11,7 +11,7 @@ tags:
   - "domain:erp-hr"
   - "git:branch:main"
   - "git:repo:ERPNext_Rust"
-timestamp: "2026-09-27T20:27:26Z"
+timestamp: "2026-09-27T21:39:26Z"
 concept_id: crates/erp-hr/src/payroll/PayrollGlAccounts
 language: rust
 ---
@@ -47,7 +47,7 @@ Payroll Accounting Configuration mapping GL accounts.
 - `company`
 
 ## Source
-Lines 108–113 in `crates/erp-hr/src/payroll.rs`
+Lines 109–114 in `crates/erp-hr/src/payroll.rs`
 
 ## Relationships
 

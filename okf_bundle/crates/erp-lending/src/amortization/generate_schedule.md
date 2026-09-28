@@ -11,7 +11,7 @@ tags:
   - "domain:erp-lending"
   - "git:branch:main"
   - "git:repo:ERPNext_Rust"
-timestamp: "2026-09-27T19:48:02Z"
+timestamp: "2026-09-27T21:46:37Z"
 concept_id: crates/erp-lending/src/amortization/generate_schedule
 language: rust
 ---
@@ -40,7 +40,7 @@ impl AmortizationEngine { pub fn generate_schedule(
 Generates complete amortization schedule with zero-loss final fractional cent reconciliation.
 
 ## Source
-Lines 63–114 in `crates/erp-lending/src/amortization.rs`
+Lines 67–118 in `crates/erp-lending/src/amortization.rs`
 
 ## Relationships
 

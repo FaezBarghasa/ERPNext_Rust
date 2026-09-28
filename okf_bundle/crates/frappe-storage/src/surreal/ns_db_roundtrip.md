@@ -11,7 +11,7 @@ tags:
   - "domain:frappe-storage"
   - "git:branch:main"
   - "git:repo:ERPNext_Rust"
-timestamp: "2026-09-27T15:28:21Z"
+timestamp: "2026-09-27T21:39:26Z"
 concept_id: crates/frappe-storage/src/surreal/ns_db_roundtrip
 language: rust
 ---
@@ -35,7 +35,7 @@ fn ns_db_roundtrip()
 [tokio::test]
 
 ## Source
-Lines 15–21 in `crates/frappe-storage/src/surreal.rs`
+Lines 18–33 in `crates/frappe-storage/src/surreal.rs`
 
 ## Relationships
 

@@ -10,7 +10,7 @@ tags:
   - "domain:frappe-meta"
   - "git:branch:main"
   - "git:repo:ERPNext_Rust"
-timestamp: "2026-09-27T18:47:39Z"
+timestamp: "2026-09-27T21:39:26Z"
 concept_id: crates/frappe-meta/src/rbac
 language: rust
 ---

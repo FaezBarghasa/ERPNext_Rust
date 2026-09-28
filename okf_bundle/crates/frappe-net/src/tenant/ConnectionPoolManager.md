@@ -11,7 +11,7 @@ tags:
   - "domain:frappe-net"
   - "git:branch:main"
   - "git:repo:ERPNext_Rust"
-timestamp: "2026-09-27T18:59:03Z"
+timestamp: "2026-09-27T21:45:06Z"
 concept_id: crates/frappe-net/src/tenant/ConnectionPoolManager
 language: rust
 ---
@@ -45,7 +45,7 @@ Dynamic Connection Pool Manager for multi-tenant database handles.
 - `inactivity_threshold`
 
 ## Source
-Lines 70–73 in `crates/frappe-net/src/tenant.rs`
+Lines 75–78 in `crates/frappe-net/src/tenant.rs`
 
 ## Relationships
 

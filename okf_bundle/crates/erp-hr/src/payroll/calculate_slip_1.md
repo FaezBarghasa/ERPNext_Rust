@@ -11,7 +11,7 @@ tags:
   - "domain:erp-hr"
   - "git:branch:main"
   - "git:repo:ERPNext_Rust"
-timestamp: "2026-09-27T20:27:26Z"
+timestamp: "2026-09-27T21:39:26Z"
 concept_id: crates/erp-hr/src/payroll/calculate_slip_1
 language: rust
 ---
@@ -43,7 +43,7 @@ pub fn calculate_slip(
 Computes individual salary slip based on attendance and salary structure.
 
 ## Source
-Lines 58–103 in `crates/erp-hr/src/payroll.rs`
+Lines 58–104 in `crates/erp-hr/src/payroll.rs`
 
 ## Relationships
 

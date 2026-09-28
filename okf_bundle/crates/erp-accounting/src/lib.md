@@ -10,7 +10,7 @@ tags:
   - "domain:erp-accounting"
   - "git:branch:main"
   - "git:repo:ERPNext_Rust"
-timestamp: "2026-09-27T19:11:46Z"
+timestamp: "2026-09-27T21:41:52Z"
 concept_id: crates/erp-accounting/src/lib
 language: rust
 ---
@@ -28,5 +28,4 @@ language: rust
 | related | [test_balance_sheet_equation](/crates/erp-accounting/src/lib/test_balance_sheet_equation.md) |
 | related | [test_fifo_payment_allocation_and_credit_limit](/crates/erp-accounting/src/lib/test_fifo_payment_allocation_and_credit_limit.md) |
 | related | [chrono](/_dependencies/cargo/chrono.md) |
-| related | [rust_decimal](/_dependencies/cargo/rust_decimal.md) |
 | related | [rust_decimal_macros](/_dependencies/cargo/rust_decimal_macros.md) |

@@ -11,7 +11,7 @@ tags:
   - "domain:erp-accounting"
   - "git:branch:main"
   - "git:repo:ERPNext_Rust"
-timestamp: "2026-09-27T19:11:46Z"
+timestamp: "2026-09-27T21:41:52Z"
 concept_id: crates/erp-accounting/src/lib/test_fifo_payment_allocation_and_credit_limit
 language: rust
 ---
@@ -35,7 +35,7 @@ fn test_fifo_payment_allocation_and_credit_limit()
 [test]
 
 ## Source
-Lines 262–308 in `crates/erp-accounting/src/lib.rs`
+Lines 273–319 in `crates/erp-accounting/src/lib.rs`
 
 ## Relationships
 

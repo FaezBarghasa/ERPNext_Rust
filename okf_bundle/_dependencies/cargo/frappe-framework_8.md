@@ -2,30 +2,30 @@
 okf_version: "0.2"
 type: Dependency
 title: frappe-framework
-description: Dependency from crates/erp-trade/Cargo.toml
-resource: crates/erp-trade/Cargo.toml
+description: Dependency from crates/erp-support/Cargo.toml
+resource: crates/erp-support/Cargo.toml
 tags:
   - "lang:manifest"
   - "type:Dependency"
   - "module:crates"
-  - "domain:erp-trade"
+  - "domain:erp-support"
   - "git:branch:main"
   - "git:repo:ERPNext_Rust"
-  - "manifest:Cargo.toml"
   - "ecosystem:cargo"
-timestamp: "2026-09-27T19:39:54Z"
+  - "manifest:Cargo.toml"
+timestamp: "2026-09-27T19:42:51Z"
 concept_id: _dependencies/cargo/frappe-framework_8
 language: manifest
 ---
 
 # frappe-framework
 
-Dependency from crates/erp-trade/Cargo.toml
+Dependency from crates/erp-support/Cargo.toml
 
 | Field | Value |
 |-------|-------|
 | Ecosystem | `cargo` |
 | Version constraint | `` |
-| Source manifest | `crates/erp-trade/Cargo.toml` |
+| Source manifest | `crates/erp-support/Cargo.toml` |
 | Dev dependency | `no` |
 | Used by | 0 module(s) |

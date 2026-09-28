@@ -29,7 +29,6 @@ pub use treasury::{BankAccount, TreasuryPoolingEngine, ZbaSweepTransaction};
 mod tests {
     use super::*;
     use chrono::NaiveDate;
-    use rust_decimal::Decimal;
     use rust_decimal_macros::dec;
 
     fn sample_accounts() -> Vec<Account> {

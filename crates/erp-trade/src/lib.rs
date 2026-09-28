@@ -6,6 +6,7 @@ pub mod metered;
 pub mod pricing;
 pub mod sanctions;
 pub mod taxes;
+pub mod zatca;
 
 pub use atp_ctp::{AtpCtpEngine, InventoryPosition, PromiseAvailability};
 pub use dom::{DomRouter, FulfillmentNode, ShippingRateEstimate};
@@ -15,6 +16,7 @@ pub use metered::{MeteredRatingEngine, RatingModel, UsageEvent};
 pub use pricing::{PricingEngine, PricingRule};
 pub use sanctions::{SanctionEntry, SanctionsScreener};
 pub use taxes::{TaxEngine, TaxLineResult, TaxRow, TaxScheduleResult, TaxType};
+pub use zatca::ZatcaPhase2Engine;
 
 #[cfg(test)]
 mod tests {

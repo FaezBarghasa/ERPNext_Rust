@@ -11,7 +11,7 @@ tags:
   - "domain:erp-hr"
   - "git:branch:main"
   - "git:repo:ERPNext_Rust"
-timestamp: "2026-09-27T20:27:26Z"
+timestamp: "2026-09-27T21:39:26Z"
 concept_id: crates/erp-hr/src/payroll/process_batch_payroll_1
 language: rust
 ---
@@ -38,7 +38,7 @@ pub fn process_batch_payroll(
 Runs concurrent payroll calculation across workforce using Tokio JoinSet with error isolation.
 
 ## Source
-Lines 120–161 in `crates/erp-hr/src/payroll.rs`
+Lines 121–162 in `crates/erp-hr/src/payroll.rs`
 
 ## Relationships
 

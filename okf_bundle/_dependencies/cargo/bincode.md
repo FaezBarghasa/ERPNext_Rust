@@ -10,10 +10,10 @@ tags:
   - "module:Cargo.lock"
   - "git:branch:main"
   - "git:repo:ERPNext_Rust"
-  - "version:2.0.1"
   - "manifest:Cargo.lock"
+  - "version:1.3.3"
   - "ecosystem:cargo"
-timestamp: "2026-09-27T20:02:31Z"
+timestamp: "2026-09-27T21:56:00Z"
 concept_id: _dependencies/cargo/bincode
 language: manifest
 ---
@@ -25,7 +25,7 @@ Dependency from Cargo.lock
 | Field | Value |
 |-------|-------|
 | Ecosystem | `cargo` |
-| Version constraint | `2.0.1` |
+| Version constraint | `1.3.3` |
 | Source manifest | `Cargo.lock` |
 | Dev dependency | `no` |
 | Used by | 0 module(s) |

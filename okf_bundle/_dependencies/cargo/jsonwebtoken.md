@@ -11,9 +11,9 @@ tags:
   - "git:branch:main"
   - "git:repo:ERPNext_Rust"
   - "manifest:Cargo.lock"
-  - "version:10.4.0"
   - "ecosystem:cargo"
-timestamp: "2026-09-27T20:02:31Z"
+  - "version:9.3.1"
+timestamp: "2026-09-27T21:56:00Z"
 concept_id: _dependencies/cargo/jsonwebtoken
 language: manifest
 ---
@@ -25,7 +25,7 @@ Dependency from Cargo.lock
 | Field | Value |
 |-------|-------|
 | Ecosystem | `cargo` |
-| Version constraint | `10.4.0` |
+| Version constraint | `9.3.1` |
 | Source manifest | `Cargo.lock` |
 | Dev dependency | `no` |
 | Used by | 0 module(s) |

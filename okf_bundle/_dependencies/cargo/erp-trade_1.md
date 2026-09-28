@@ -11,8 +11,8 @@ tags:
   - "domain:erp-crm"
   - "git:branch:main"
   - "git:repo:ERPNext_Rust"
-  - "manifest:Cargo.toml"
   - "ecosystem:cargo"
+  - "manifest:Cargo.toml"
 timestamp: "2026-09-27T19:38:12Z"
 concept_id: _dependencies/cargo/erp-trade_1
 language: manifest

@@ -11,7 +11,7 @@ tags:
   - "domain:erp-hr"
   - "git:branch:main"
   - "git:repo:ERPNext_Rust"
-timestamp: "2026-09-27T20:27:26Z"
+timestamp: "2026-09-27T21:39:26Z"
 concept_id: crates/erp-hr/src/payroll/EnterprisePayrollCoordinator
 language: rust
 ---
@@ -35,7 +35,7 @@ pub struct EnterprisePayrollCoordinator
 Concurrent Enterprise Payroll Coordinator (Milestone 3.7).
 
 ## Source
-Lines 116–116 in `crates/erp-hr/src/payroll.rs`
+Lines 117–117 in `crates/erp-hr/src/payroll.rs`
 
 ## Relationships
 

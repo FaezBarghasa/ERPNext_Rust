@@ -11,7 +11,7 @@ tags:
   - "domain:frappe-framework"
   - "git:branch:main"
   - "git:repo:ERPNext_Rust"
-timestamp: "2026-09-27T18:57:18Z"
+timestamp: "2026-09-27T21:39:26Z"
 concept_id: crates/frappe-framework/src/lifecycle/cancel_1
 language: rust
 ---
@@ -40,7 +40,7 @@ pub fn cancel(
 Cancels a submitted document, mutating docstatus to 2 and triggering reversal hooks.
 
 ## Source
-Lines 193–216 in `crates/frappe-framework/src/lifecycle.rs`
+Lines 190–215 in `crates/frappe-framework/src/lifecycle.rs`
 
 ## Relationships
 

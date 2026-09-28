@@ -11,7 +11,7 @@ tags:
   - "domain:desk-components"
   - "git:branch:main"
   - "git:repo:ERPNext_Rust"
-timestamp: "2026-09-27T20:18:05Z"
+timestamp: "2026-09-27T21:39:26Z"
 concept_id: crates/desk-components/src/lib/test_video_hud_state
 language: rust
 ---
@@ -35,7 +35,7 @@ fn test_video_hud_state()
 [test]
 
 ## Source
-Lines 89–114 in `crates/desk-components/src/lib.rs`
+Lines 112–137 in `crates/desk-components/src/lib.rs`
 
 ## Relationships
 

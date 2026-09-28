@@ -11,7 +11,7 @@ tags:
   - "domain:frappe-storage"
   - "git:branch:main"
   - "git:repo:ERPNext_Rust"
-timestamp: "2026-09-27T20:28:39Z"
+timestamp: "2026-09-27T21:39:26Z"
 concept_id: crates/frappe-storage/src/drive/store_file
 language: rust
 ---
@@ -44,7 +44,7 @@ Stores a binary payload, deduplicating based on SHA-256 content hash.
 Returns (DriveFile, is_duplicate).
 
 ## Source
-Lines 78–118 in `crates/frappe-storage/src/drive.rs`
+Lines 78–122 in `crates/frappe-storage/src/drive.rs`
 
 ## Relationships
 

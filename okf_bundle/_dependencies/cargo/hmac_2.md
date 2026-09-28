@@ -11,9 +11,9 @@ tags:
   - "domain:erp-cms"
   - "git:branch:main"
   - "git:repo:ERPNext_Rust"
-  - "manifest:Cargo.toml"
   - "version:0.13.0"
   - "ecosystem:cargo"
+  - "manifest:Cargo.toml"
 timestamp: "2026-09-27T20:02:25Z"
 concept_id: _dependencies/cargo/hmac_2
 language: manifest

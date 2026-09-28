@@ -258,15 +258,11 @@ impl DocTypeSchema {
             }
 
             match &field.fieldtype {
-                FieldType::Link { target_doctype } => {
-                    if target_doctype.trim().is_empty() {
-                        return Err(SchemaError::InvalidLinkTarget(field.fieldname.clone()));
-                    }
+                FieldType::Link { target_doctype } if target_doctype.trim().is_empty() => {
+                    return Err(SchemaError::InvalidLinkTarget(field.fieldname.clone()));
                 }
-                FieldType::Table { child_doctype } => {
-                    if child_doctype.trim().is_empty() {
-                        return Err(SchemaError::InvalidChildTable(field.fieldname.clone()));
-                    }
+                FieldType::Table { child_doctype } if child_doctype.trim().is_empty() => {
+                    return Err(SchemaError::InvalidChildTable(field.fieldname.clone()));
                 }
                 _ => {}
             }

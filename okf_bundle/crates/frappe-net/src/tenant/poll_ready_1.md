@@ -10,7 +10,7 @@ tags:
   - "domain:frappe-net"
   - "git:branch:main"
   - "git:repo:ERPNext_Rust"
-timestamp: "2026-09-27T18:59:03Z"
+timestamp: "2026-09-27T21:45:06Z"
 concept_id: crates/frappe-net/src/tenant/poll_ready_1
 language: rust
 ---
@@ -27,7 +27,7 @@ fn poll_ready(
 ```
 
 ## Source
-Lines 214–219 in `crates/frappe-net/src/tenant.rs`
+Lines 225–230 in `crates/frappe-net/src/tenant.rs`
 
 ## Relationships
 

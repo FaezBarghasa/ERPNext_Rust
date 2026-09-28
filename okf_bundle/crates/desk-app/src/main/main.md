@@ -10,7 +10,7 @@ tags:
   - "domain:desk-app"
   - "git:branch:main"
   - "git:repo:ERPNext_Rust"
-timestamp: "2026-09-27T14:03:17Z"
+timestamp: "2026-09-27T22:01:28Z"
 concept_id: crates/desk-app/src/main/main
 language: rust
 ---
@@ -24,10 +24,11 @@ fn main()
 ```
 
 ## Source
-Lines 1–1 in `crates/desk-app/src/main.rs`
+Lines 10–189 in `crates/desk-app/src/main.rs`
 
 ## Relationships
 
 | Type | Target |
 |------|--------|
 | related | [src](/crates/desk-app/src/main.md) |
+| calls | [visible_slice](/crates/desk-components/src/grid/visible_slice.md) |

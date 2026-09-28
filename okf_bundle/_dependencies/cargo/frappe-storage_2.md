@@ -11,9 +11,9 @@ tags:
   - "domain:frappe-framework"
   - "git:branch:main"
   - "git:repo:ERPNext_Rust"
-  - "manifest:Cargo.toml"
   - "ecosystem:cargo"
-timestamp: "2026-09-27T18:52:44Z"
+  - "manifest:Cargo.toml"
+timestamp: "2026-09-27T21:00:16Z"
 concept_id: _dependencies/cargo/frappe-storage_2
 language: manifest
 ---

@@ -11,7 +11,7 @@ tags:
   - "domain:erp-cms"
   - "git:branch:main"
   - "git:repo:ERPNext_Rust"
-timestamp: "2026-09-27T20:25:54Z"
+timestamp: "2026-09-27T21:39:26Z"
 concept_id: crates/erp-cms/src/security/StreamingError
 language: rust
 ---
@@ -49,7 +49,7 @@ Streaming and CMS security errors.
 - `max_streams`
 
 ## Source
-Lines 12–34 in `crates/erp-cms/src/security.rs`
+Lines 12–36 in `crates/erp-cms/src/security.rs`
 
 ## Relationships
 

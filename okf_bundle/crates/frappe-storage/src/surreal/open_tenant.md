@@ -11,7 +11,7 @@ tags:
   - "domain:frappe-storage"
   - "git:branch:main"
   - "git:repo:ERPNext_Rust"
-timestamp: "2026-09-27T15:28:21Z"
+timestamp: "2026-09-27T21:39:26Z"
 concept_id: crates/frappe-storage/src/surreal/open_tenant
 language: rust
 ---
@@ -23,7 +23,10 @@ Open an in-memory instance, create NS+DB, and return the handle.
 ## Signature
 
 ```rust
-pub fn open_tenant(tenant_ns: &str, db: &str) -> surrealdb::Result<Surreal<surrealdb::engine::local::Db>>
+pub fn open_tenant(
+    tenant_ns: &str,
+    db: &str,
+) -> surrealdb::Result<Surreal<surrealdb::engine::local::Db>>
 ```
 
 ## Visibility
@@ -35,7 +38,7 @@ pub fn open_tenant(tenant_ns: &str, db: &str) -> surrealdb::Result<Surreal<surre
 Open an in-memory instance, create NS+DB, and return the handle.
 
 ## Source
-Lines 5–9 in `crates/frappe-storage/src/surreal.rs`
+Lines 5–12 in `crates/frappe-storage/src/surreal.rs`
 
 ## Relationships
 
@@ -43,3 +46,4 @@ Lines 5–9 in `crates/frappe-storage/src/surreal.rs`
 |------|--------|
 | related | [surreal](/crates/frappe-storage/src/surreal.md) |
 | called_by | [ns_db_roundtrip](/crates/frappe-storage/src/surreal/ns_db_roundtrip.md) |
+| called_by | [main](/crates/rbench/src/main/main.md) |

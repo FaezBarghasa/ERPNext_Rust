@@ -11,9 +11,9 @@ tags:
   - "git:branch:main"
   - "git:repo:ERPNext_Rust"
   - "manifest:Cargo.lock"
-  - "version:2.13.2"
   - "ecosystem:cargo"
-timestamp: "2026-09-27T20:02:31Z"
+  - "version:1.3.2"
+timestamp: "2026-09-27T21:56:00Z"
 concept_id: _dependencies/cargo/bitflags
 language: manifest
 ---
@@ -25,7 +25,7 @@ Dependency from Cargo.lock
 | Field | Value |
 |-------|-------|
 | Ecosystem | `cargo` |
-| Version constraint | `2.13.2` |
+| Version constraint | `1.3.2` |
 | Source manifest | `Cargo.lock` |
 | Dev dependency | `no` |
 | Used by | 0 module(s) |

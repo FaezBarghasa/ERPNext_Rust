@@ -11,7 +11,7 @@ tags:
   - "domain:erp-hr"
   - "git:branch:main"
   - "git:repo:ERPNext_Rust"
-timestamp: "2026-09-27T20:27:26Z"
+timestamp: "2026-09-27T21:39:26Z"
 concept_id: crates/erp-hr/src/payroll/validate_and_deduct_leave_1
 language: rust
 ---
@@ -39,7 +39,7 @@ pub fn validate_and_deduct_leave(
 Validates leave application against remaining balance and existing leaves.
 
 ## Source
-Lines 234–262 in `crates/erp-hr/src/payroll.rs`
+Lines 238–266 in `crates/erp-hr/src/payroll.rs`
 
 ## Relationships
 

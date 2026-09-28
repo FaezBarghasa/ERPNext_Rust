@@ -2,4 +2,4 @@
 
 ## Functions
 
-- [main](main.md)
+- [main](main.md) — [tokio::main]

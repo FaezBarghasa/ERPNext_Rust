@@ -11,7 +11,7 @@ tags:
   - "domain:erp-trade"
   - "git:branch:main"
   - "git:repo:ERPNext_Rust"
-timestamp: "2026-09-27T19:24:28Z"
+timestamp: "2026-09-27T21:28:11Z"
 concept_id: crates/erp-trade/src/lib/test_pricing_rules_volume_breaks
 language: rust
 ---
@@ -35,7 +35,7 @@ fn test_pricing_rules_volume_breaks()
 [test]
 
 ## Source
-Lines 15–48 in `crates/erp-trade/src/lib.rs`
+Lines 25–58 in `crates/erp-trade/src/lib.rs`
 
 ## Relationships
 

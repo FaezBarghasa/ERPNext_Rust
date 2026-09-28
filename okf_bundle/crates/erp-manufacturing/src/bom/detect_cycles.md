@@ -11,7 +11,7 @@ tags:
   - "domain:erp-manufacturing"
   - "git:branch:main"
   - "git:repo:ERPNext_Rust"
-timestamp: "2026-09-27T19:27:07Z"
+timestamp: "2026-09-27T21:39:26Z"
 concept_id: crates/erp-manufacturing/src/bom/detect_cycles
 language: rust
 ---
@@ -23,9 +23,7 @@ Detects circular dependencies across BOM hierarchies using DFS cycle detection.
 ## Signature
 
 ```rust
-impl BomEngine { pub fn detect_cycles(
-        boms_by_item: &HashMap<String, Bom>,
-    ) -> Result<(), ManufacturingError> }
+impl BomEngine { pub fn detect_cycles(boms_by_item: &HashMap<String, Bom>) -> Result<(), ManufacturingError> }
 ```
 
 ## Visibility
@@ -37,7 +35,7 @@ impl BomEngine { pub fn detect_cycles(
 Detects circular dependencies across BOM hierarchies using DFS cycle detection.
 
 ## Source
-Lines 80–97 in `crates/erp-manufacturing/src/bom.rs`
+Lines 80–90 in `crates/erp-manufacturing/src/bom.rs`
 
 ## Relationships
 

@@ -10,7 +10,7 @@ tags:
   - "domain:erp-inventory"
   - "git:branch:main"
   - "git:repo:ERPNext_Rust"
-timestamp: "2026-09-27T19:18:09Z"
+timestamp: "2026-09-27T21:45:57Z"
 concept_id: crates/erp-inventory/src/lib
 language: rust
 ---
@@ -25,5 +25,4 @@ language: rust
 | related | [test_warehouse_gl_sync_and_journal_balance](/crates/erp-inventory/src/lib/test_warehouse_gl_sync_and_journal_balance.md) |
 | related | [test_serial_and_batch_validation](/crates/erp-inventory/src/lib/test_serial_and_batch_validation.md) |
 | related | [chrono](/_dependencies/cargo/chrono.md) |
-| related | [rust_decimal](/_dependencies/cargo/rust_decimal.md) |
 | related | [rust_decimal_macros](/_dependencies/cargo/rust_decimal_macros.md) |

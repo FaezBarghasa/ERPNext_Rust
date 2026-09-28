@@ -10,7 +10,7 @@ tags:
   - "domain:frappe-storage"
   - "git:branch:main"
   - "git:repo:ERPNext_Rust"
-timestamp: "2026-09-27T18:51:42Z"
+timestamp: "2026-09-27T21:39:26Z"
 concept_id: crates/frappe-storage/src/lib/insert_1
 language: rust
 ---
@@ -28,7 +28,7 @@ pub fn insert(&self, ctx: TenantContext)
 - `pub`
 
 ## Source
-Lines 51–55 in `crates/frappe-storage/src/lib.rs`
+Lines 54–58 in `crates/frappe-storage/src/lib.rs`
 
 ## Relationships
 

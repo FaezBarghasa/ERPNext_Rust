@@ -69,6 +69,6 @@ mod tests {
         };
 
         let safety_stock = PoissonMroOptimizer::recommended_safety_stock(&part);
-        assert!(safety_stock >= 4 && safety_stock <= 6);
+        assert!((4..=6).contains(&safety_stock));
     }
 }

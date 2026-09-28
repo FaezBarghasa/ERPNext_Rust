@@ -11,7 +11,7 @@ tags:
   - "domain:frappe-framework"
   - "git:branch:main"
   - "git:repo:ERPNext_Rust"
-timestamp: "2026-09-27T18:56:51Z"
+timestamp: "2026-09-27T21:39:26Z"
 concept_id: crates/frappe-framework/src/scripting/new_1
 language: rust
 ---
@@ -40,7 +40,7 @@ Creates a hardened, sandboxed Rhai script engine.
 [must_use]
 
 ## Source
-Lines 57–83 in `crates/frappe-framework/src/scripting.rs`
+Lines 57–86 in `crates/frappe-framework/src/scripting.rs`
 
 ## Relationships
 

@@ -10,7 +10,7 @@ tags:
   - "domain:erp-manufacturing"
   - "git:branch:main"
   - "git:repo:ERPNext_Rust"
-timestamp: "2026-09-27T19:28:22Z"
+timestamp: "2026-09-27T21:48:09Z"
 concept_id: crates/erp-manufacturing/src/lib
 language: rust
 ---
@@ -24,5 +24,4 @@ language: rust
 | related | [test_bom_cycle_detection](/crates/erp-manufacturing/src/lib/test_bom_cycle_detection.md) |
 | related | [test_recursive_bom_cost_rollup](/crates/erp-manufacturing/src/lib/test_recursive_bom_cost_rollup.md) |
 | related | [test_mrp_net_requirement_and_workstation_scheduling](/crates/erp-manufacturing/src/lib/test_mrp_net_requirement_and_workstation_scheduling.md) |
-| related | [rust_decimal](/_dependencies/cargo/rust_decimal.md) |
 | related | [rust_decimal_macros](/_dependencies/cargo/rust_decimal_macros.md) |

@@ -11,7 +11,7 @@ tags:
   - "domain:frappe-framework"
   - "git:branch:main"
   - "git:repo:ERPNext_Rust"
-timestamp: "2026-09-27T18:57:18Z"
+timestamp: "2026-09-27T21:39:26Z"
 concept_id: crates/frappe-framework/src/lifecycle/insert_1
 language: rust
 ---
@@ -42,7 +42,7 @@ pub fn insert(
 Handles document insertion: runs naming series, validation hooks, and commits to draft state.
 
 ## Source
-Lines 94–134 in `crates/frappe-framework/src/lifecycle.rs`
+Lines 94–131 in `crates/frappe-framework/src/lifecycle.rs`
 
 ## Relationships
 

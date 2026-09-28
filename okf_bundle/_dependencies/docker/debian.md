@@ -10,9 +10,9 @@ tags:
   - "module:Dockerfile"
   - "git:branch:main"
   - "git:repo:ERPNext_Rust"
-  - "version:bullseye-slim"
   - "ecosystem:docker"
   - "manifest:Dockerfile"
+  - "version:bullseye-slim"
 timestamp: "2026-07-25T14:29:56Z"
 concept_id: _dependencies/docker/debian
 language: manifest

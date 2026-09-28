@@ -11,7 +11,7 @@ tags:
   - "domain:frappe-meta"
   - "git:branch:main"
   - "git:repo:ERPNext_Rust"
-timestamp: "2026-09-27T18:47:39Z"
+timestamp: "2026-09-27T21:39:26Z"
 concept_id: crates/frappe-meta/src/rbac/check_permission
 language: rust
 ---
@@ -45,7 +45,7 @@ Evaluates whether a user with given roles is permitted to perform an operation.
 [must_use]
 
 ## Source
-Lines 98–114 in `crates/frappe-meta/src/rbac.rs`
+Lines 98–115 in `crates/frappe-meta/src/rbac.rs`
 
 ## Relationships
 

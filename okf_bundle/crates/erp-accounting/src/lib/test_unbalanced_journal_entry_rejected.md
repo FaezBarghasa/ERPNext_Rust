@@ -11,7 +11,7 @@ tags:
   - "domain:erp-accounting"
   - "git:branch:main"
   - "git:repo:ERPNext_Rust"
-timestamp: "2026-09-27T19:11:46Z"
+timestamp: "2026-09-27T21:41:52Z"
 concept_id: crates/erp-accounting/src/lib/test_unbalanced_journal_entry_rejected
 language: rust
 ---
@@ -35,7 +35,7 @@ fn test_unbalanced_journal_entry_rejected()
 [test]
 
 ## Source
-Lines 69–103 in `crates/erp-accounting/src/lib.rs`
+Lines 80–114 in `crates/erp-accounting/src/lib.rs`
 
 ## Relationships
 

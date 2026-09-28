@@ -11,7 +11,7 @@ tags:
   - "domain:erp-manufacturing"
   - "git:branch:main"
   - "git:repo:ERPNext_Rust"
-timestamp: "2026-09-27T19:27:07Z"
+timestamp: "2026-09-27T21:39:26Z"
 concept_id: crates/erp-manufacturing/src/bom/calculate_cost_rollup_1
 language: rust
 ---
@@ -40,7 +40,7 @@ Recursive Multi-Level BOM Cost Rollup Engine (Milestone 3.2).
 Sums raw material unit costs + workstation operating runtimes across all nesting depths.
 
 ## Source
-Lines 132–173 in `crates/erp-manufacturing/src/bom.rs`
+Lines 125–166 in `crates/erp-manufacturing/src/bom.rs`
 
 ## Relationships
 

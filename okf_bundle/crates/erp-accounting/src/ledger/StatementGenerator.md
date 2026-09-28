@@ -11,7 +11,7 @@ tags:
   - "domain:erp-accounting"
   - "git:branch:main"
   - "git:repo:ERPNext_Rust"
-timestamp: "2026-09-27T19:09:45Z"
+timestamp: "2026-09-27T21:39:26Z"
 concept_id: crates/erp-accounting/src/ledger/StatementGenerator
 language: rust
 ---
@@ -35,7 +35,7 @@ pub struct StatementGenerator
 Real-time Financial Statement Generator (Milestone 2.4).
 
 ## Source
-Lines 238–238 in `crates/erp-accounting/src/ledger.rs`
+Lines 242–242 in `crates/erp-accounting/src/ledger.rs`
 
 ## Relationships
 

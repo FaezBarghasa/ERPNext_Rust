@@ -11,7 +11,7 @@ tags:
   - "domain:erp-crm"
   - "git:branch:main"
   - "git:repo:ERPNext_Rust"
-timestamp: "2026-09-27T19:34:58Z"
+timestamp: "2026-09-27T21:56:26Z"
 concept_id: crates/erp-crm/src/pipeline/LeadStatus
 language: rust
 ---
@@ -40,7 +40,7 @@ Lead progression status.
 [derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 
 ## Source
-Lines 30–36 in `crates/erp-crm/src/pipeline.rs`
+Lines 22–28 in `crates/erp-crm/src/pipeline.rs`
 
 ## Relationships
 

@@ -11,7 +11,7 @@ tags:
   - "domain:frappe-net"
   - "git:branch:main"
   - "git:repo:ERPNext_Rust"
-timestamp: "2026-09-27T18:59:03Z"
+timestamp: "2026-09-27T21:45:06Z"
 concept_id: crates/frappe-net/src/tenant/new_1
 language: rust
 ---
@@ -40,7 +40,7 @@ Creates a new connection pool manager.
 [must_use]
 
 ## Source
-Lines 84–89 in `crates/frappe-net/src/tenant.rs`
+Lines 89–94 in `crates/frappe-net/src/tenant.rs`
 
 ## Relationships
 

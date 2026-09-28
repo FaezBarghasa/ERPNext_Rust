@@ -11,7 +11,7 @@ tags:
   - "domain:erp-accounting"
   - "git:branch:main"
   - "git:repo:ERPNext_Rust"
-timestamp: "2026-09-27T19:11:46Z"
+timestamp: "2026-09-27T21:41:52Z"
 concept_id: crates/erp-accounting/src/lib/test_balance_sheet_equation
 language: rust
 ---
@@ -35,7 +35,7 @@ fn test_balance_sheet_equation()
 [test]
 
 ## Source
-Lines 193–259 in `crates/erp-accounting/src/lib.rs`
+Lines 204–270 in `crates/erp-accounting/src/lib.rs`
 
 ## Relationships
 

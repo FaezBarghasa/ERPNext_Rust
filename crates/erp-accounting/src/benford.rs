@@ -39,8 +39,8 @@ impl BenfordGuard {
         }
 
         let mut chi_square = 0.0;
-        for i in 0..9 {
-            let observed = counts[i] as f64;
+        for (i, &count) in counts.iter().enumerate() {
+            let observed = count as f64;
             let expected = (total as f64) * Self::expected_probability((i + 1) as u8);
             if expected > 0.0 {
                 chi_square += (observed - expected).powi(2) / expected;
@@ -64,9 +64,9 @@ mod tests {
     #[test]
     fn test_benford_law_probabilities() {
         let p1 = BenfordGuard::expected_probability(1);
-        assert!((p1 - 0.3010).abs() < 1e-3);
+        assert!((p1 - std::f64::consts::LOG10_2).abs() < 1e-4);
         let p9 = BenfordGuard::expected_probability(9);
-        assert!((p9 - 0.0457).abs() < 1e-3);
+        assert!((p9 - (1.0 + 1.0 / 9.0_f64).log10()).abs() < 1e-4);
 
         // Natural distribution test (approximate Benford sample)
         let mut natural_amounts = Vec::new();

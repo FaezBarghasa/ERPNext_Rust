@@ -11,7 +11,7 @@ tags:
   - "domain:erp-crm"
   - "git:branch:main"
   - "git:repo:ERPNext_Rust"
-timestamp: "2026-09-27T19:34:58Z"
+timestamp: "2026-09-27T21:56:26Z"
 concept_id: crates/erp-crm/src/pipeline/can_transition_to
 language: rust
 ---
@@ -35,7 +35,7 @@ impl LeadStatus { pub fn can_transition_to(self, target: LeadStatus) -> bool }
 Validates state transition progression.
 
 ## Source
-Lines 40–48 in `crates/erp-crm/src/pipeline.rs`
+Lines 32–46 in `crates/erp-crm/src/pipeline.rs`
 
 ## Relationships
 

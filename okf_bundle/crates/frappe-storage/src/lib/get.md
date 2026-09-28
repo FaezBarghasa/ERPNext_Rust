@@ -11,7 +11,7 @@ tags:
   - "domain:frappe-storage"
   - "git:branch:main"
   - "git:repo:ERPNext_Rust"
-timestamp: "2026-09-27T18:51:42Z"
+timestamp: "2026-09-27T21:39:26Z"
 concept_id: crates/frappe-storage/src/lib/get
 language: rust
 ---
@@ -35,7 +35,7 @@ impl TenantRegistry { pub fn get(&self, site: &str) -> Option<TenantContext> }
 [must_use]
 
 ## Source
-Lines 58–60 in `crates/frappe-storage/src/lib.rs`
+Lines 61–63 in `crates/frappe-storage/src/lib.rs`
 
 ## Relationships
 

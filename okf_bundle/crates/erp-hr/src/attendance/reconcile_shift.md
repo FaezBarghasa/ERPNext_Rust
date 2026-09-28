@@ -11,7 +11,7 @@ tags:
   - "domain:erp-hr"
   - "git:branch:main"
   - "git:repo:ERPNext_Rust"
-timestamp: "2026-09-27T19:30:45Z"
+timestamp: "2026-09-27T21:39:26Z"
 concept_id: crates/erp-hr/src/attendance/reconcile_shift
 language: rust
 ---
@@ -40,7 +40,7 @@ Reconciles daily check-in and check-out against shift boundaries.
 [must_use]
 
 ## Source
-Lines 95–125 in `crates/erp-hr/src/attendance.rs`
+Lines 97–129 in `crates/erp-hr/src/attendance.rs`
 
 ## Relationships
 

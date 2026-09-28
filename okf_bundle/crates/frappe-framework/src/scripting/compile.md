@@ -11,7 +11,7 @@ tags:
   - "domain:frappe-framework"
   - "git:branch:main"
   - "git:repo:ERPNext_Rust"
-timestamp: "2026-09-27T18:56:51Z"
+timestamp: "2026-09-27T21:39:26Z"
 concept_id: crates/frappe-framework/src/scripting/compile
 language: rust
 ---
@@ -35,7 +35,7 @@ impl RhaiHookEngine { pub fn compile(&self, script: &str) -> Result<AST, ScriptE
 Compiles script string into an AST.
 
 ## Source
-Lines 86–90 in `crates/frappe-framework/src/scripting.rs`
+Lines 89–93 in `crates/frappe-framework/src/scripting.rs`
 
 ## Relationships
 

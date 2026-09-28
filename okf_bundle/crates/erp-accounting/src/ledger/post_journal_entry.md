@@ -11,7 +11,7 @@ tags:
   - "domain:erp-accounting"
   - "git:branch:main"
   - "git:repo:ERPNext_Rust"
-timestamp: "2026-09-27T19:09:45Z"
+timestamp: "2026-09-27T21:39:26Z"
 concept_id: crates/erp-accounting/src/ledger/post_journal_entry
 language: rust
 ---
@@ -39,7 +39,7 @@ impl LedgerPostingEngine { pub fn post_journal_entry(
 Posts a journal entry to the immutable general ledger.
 
 ## Source
-Lines 188–225 in `crates/erp-accounting/src/ledger.rs`
+Lines 192–229 in `crates/erp-accounting/src/ledger.rs`
 
 ## Relationships
 

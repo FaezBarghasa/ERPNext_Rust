@@ -30,16 +30,19 @@ pub enum LeadStatus {
 impl LeadStatus {
     /// Validates state transition progression.
     pub fn can_transition_to(self, target: LeadStatus) -> bool {
-        match (self, target) {
+        matches!(
+            (self, target),
             (
                 LeadStatus::Open,
                 LeadStatus::Replied | LeadStatus::Opportunity | LeadStatus::Lost,
-            ) => true,
-            (LeadStatus::Replied, LeadStatus::Opportunity | LeadStatus::Lost) => true,
-            (LeadStatus::Opportunity, LeadStatus::Converted | LeadStatus::Lost) => true,
-            (LeadStatus::Lost, LeadStatus::Open) => true,
-            _ => false,
-        }
+            ) | (
+                LeadStatus::Replied,
+                LeadStatus::Opportunity | LeadStatus::Lost
+            ) | (
+                LeadStatus::Opportunity,
+                LeadStatus::Converted | LeadStatus::Lost
+            ) | (LeadStatus::Lost, LeadStatus::Open)
+        )
     }
 }
 

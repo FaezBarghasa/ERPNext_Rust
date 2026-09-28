@@ -11,7 +11,7 @@ tags:
   - "domain:erp-hr"
   - "git:branch:main"
   - "git:repo:ERPNext_Rust"
-timestamp: "2026-09-27T19:30:45Z"
+timestamp: "2026-09-27T21:39:26Z"
 concept_id: crates/erp-hr/src/attendance/new
 language: rust
 ---
@@ -36,7 +36,7 @@ Creates a bounded 10,000 capacity ingestion gateway.
 [must_use]
 
 ## Source
-Lines 51–54 in `crates/erp-hr/src/attendance.rs`
+Lines 53–56 in `crates/erp-hr/src/attendance.rs`
 
 ## Relationships
 

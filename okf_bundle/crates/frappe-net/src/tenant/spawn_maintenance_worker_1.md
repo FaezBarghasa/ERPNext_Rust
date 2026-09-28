@@ -11,7 +11,7 @@ tags:
   - "domain:frappe-net"
   - "git:branch:main"
   - "git:repo:ERPNext_Rust"
-timestamp: "2026-09-27T18:59:03Z"
+timestamp: "2026-09-27T21:45:06Z"
 concept_id: crates/frappe-net/src/tenant/spawn_maintenance_worker_1
 language: rust
 ---
@@ -35,7 +35,7 @@ pub fn spawn_maintenance_worker(self: Arc<Self>, heartbeat: Duration)
 Starts a periodic background worker for evicting idle tenant connections.
 
 ## Source
-Lines 136–144 in `crates/frappe-net/src/tenant.rs`
+Lines 141–149 in `crates/frappe-net/src/tenant.rs`
 
 ## Relationships
 

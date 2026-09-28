@@ -11,7 +11,7 @@ tags:
   - "domain:frappe-meta"
   - "git:branch:main"
   - "git:repo:ERPNext_Rust"
-timestamp: "2026-09-27T18:48:45Z"
+timestamp: "2026-09-27T21:39:26Z"
 concept_id: crates/frappe-meta/tests/schema_compiler_tests/test_schema_migration_diff_and_rollback
 language: rust
 ---
@@ -35,7 +35,7 @@ fn test_schema_migration_diff_and_rollback()
 [test]
 
 ## Source
-Lines 126–157 in `crates/frappe-meta/tests/schema_compiler_tests.rs`
+Lines 134–169 in `crates/frappe-meta/tests/schema_compiler_tests.rs`
 
 ## Relationships
 

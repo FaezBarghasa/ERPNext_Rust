@@ -11,7 +11,7 @@ tags:
   - "domain:erp-trade"
   - "git:branch:main"
   - "git:repo:ERPNext_Rust"
-timestamp: "2026-09-27T19:24:28Z"
+timestamp: "2026-09-27T21:28:11Z"
 concept_id: crates/erp-trade/src/lib/test_compounding_multi_tier_taxes
 language: rust
 ---
@@ -35,7 +35,7 @@ fn test_compounding_multi_tier_taxes()
 [test]
 
 ## Source
-Lines 51–76 in `crates/erp-trade/src/lib.rs`
+Lines 61–86 in `crates/erp-trade/src/lib.rs`
 
 ## Relationships
 

@@ -19,7 +19,6 @@ pub use spc::{ControlLimits, SpcEngine, SpcRuleViolation, SpcSubgroup};
 #[cfg(test)]
 mod tests {
     use super::*;
-    use rust_decimal::Decimal;
     use rust_decimal_macros::dec;
     use std::collections::HashMap;
 

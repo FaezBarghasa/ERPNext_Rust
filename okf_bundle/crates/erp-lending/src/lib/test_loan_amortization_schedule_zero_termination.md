@@ -11,7 +11,7 @@ tags:
   - "domain:erp-lending"
   - "git:branch:main"
   - "git:repo:ERPNext_Rust"
-timestamp: "2026-09-27T19:48:42Z"
+timestamp: "2026-09-27T21:39:26Z"
 concept_id: crates/erp-lending/src/lib/test_loan_amortization_schedule_zero_termination
 language: rust
 ---
@@ -35,7 +35,7 @@ fn test_loan_amortization_schedule_zero_termination()
 [test]
 
 ## Source
-Lines 15–38 in `crates/erp-lending/src/lib.rs`
+Lines 13–32 in `crates/erp-lending/src/lib.rs`
 
 ## Relationships
 

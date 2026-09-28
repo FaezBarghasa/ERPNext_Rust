@@ -11,7 +11,7 @@ tags:
   - "domain:erp-hr"
   - "git:branch:main"
   - "git:repo:ERPNext_Rust"
-timestamp: "2026-09-27T19:30:45Z"
+timestamp: "2026-09-27T21:39:26Z"
 concept_id: crates/erp-hr/src/attendance/HrError
 language: rust
 ---
@@ -48,7 +48,7 @@ HR & Attendance errors.
 - `to_date`
 
 ## Source
-Lines 8–28 in `crates/erp-hr/src/attendance.rs`
+Lines 8–30 in `crates/erp-hr/src/attendance.rs`
 
 ## Relationships
 

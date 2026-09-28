@@ -11,7 +11,7 @@ tags:
   - "domain:frappe-net"
   - "git:branch:main"
   - "git:repo:ERPNext_Rust"
-timestamp: "2026-09-27T18:59:03Z"
+timestamp: "2026-09-27T21:45:06Z"
 concept_id: crates/frappe-net/src/tenant/TenantError
 language: rust
 ---
@@ -40,7 +40,7 @@ Multi-tenant pool and routing errors.
 [derive(Debug, Error, PartialEq, Eq)]
 
 ## Source
-Lines 23–42 in `crates/frappe-net/src/tenant.rs`
+Lines 23–44 in `crates/frappe-net/src/tenant.rs`
 
 ## Relationships
 

@@ -11,7 +11,7 @@ tags:
   - "domain:erp-manufacturing"
   - "git:branch:main"
   - "git:repo:ERPNext_Rust"
-timestamp: "2026-09-27T19:27:43Z"
+timestamp: "2026-09-27T21:39:26Z"
 concept_id: crates/erp-manufacturing/src/mrp/plan_order
 language: rust
 ---
@@ -44,7 +44,7 @@ Generates a planned replenishment order.
 [must_use]
 
 ## Source
-Lines 45–69 in `crates/erp-manufacturing/src/mrp.rs`
+Lines 45–70 in `crates/erp-manufacturing/src/mrp.rs`
 
 ## Relationships
 

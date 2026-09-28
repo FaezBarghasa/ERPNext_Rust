@@ -2,31 +2,31 @@
 okf_version: "0.2"
 type: Dependency
 title: serde
-description: Dependency from crates/frappe-net/Cargo.toml
-resource: crates/frappe-net/Cargo.toml
+description: Dependency from crates/erp-manufacturing/Cargo.toml
+resource: crates/erp-manufacturing/Cargo.toml
 tags:
   - "lang:manifest"
   - "type:Dependency"
   - "module:crates"
-  - "domain:frappe-net"
+  - "domain:erp-manufacturing"
   - "git:branch:main"
   - "git:repo:ERPNext_Rust"
-  - "manifest:Cargo.toml"
   - "version:1.0.229"
   - "ecosystem:cargo"
-timestamp: "2026-09-27T18:56:22Z"
+  - "manifest:Cargo.toml"
+timestamp: "2026-09-27T21:17:05Z"
 concept_id: _dependencies/cargo/serde_2
 language: manifest
 ---
 
 # serde
 
-Dependency from crates/frappe-net/Cargo.toml
+Dependency from crates/erp-manufacturing/Cargo.toml
 
 | Field | Value |
 |-------|-------|
 | Ecosystem | `cargo` |
 | Version constraint | `1.0.229` |
-| Source manifest | `crates/frappe-net/Cargo.toml` |
+| Source manifest | `crates/erp-manufacturing/Cargo.toml` |
 | Dev dependency | `no` |
 | Used by | 0 module(s) |

@@ -11,7 +11,7 @@ tags:
   - "domain:erp-crm"
   - "git:branch:main"
   - "git:repo:ERPNext_Rust"
-timestamp: "2026-09-27T19:34:58Z"
+timestamp: "2026-09-27T21:56:26Z"
 concept_id: crates/erp-crm/src/pipeline/Lead
 language: rust
 ---
@@ -47,7 +47,7 @@ CRM Lead record.
 - `status`
 
 ## Source
-Lines 53–58 in `crates/erp-crm/src/pipeline.rs`
+Lines 51–56 in `crates/erp-crm/src/pipeline.rs`
 
 ## Relationships
 

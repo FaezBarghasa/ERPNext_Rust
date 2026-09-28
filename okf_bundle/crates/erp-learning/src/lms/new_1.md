@@ -11,7 +11,7 @@ tags:
   - "domain:erp-learning"
   - "git:branch:main"
   - "git:repo:ERPNext_Rust"
-timestamp: "2026-09-27T19:51:14Z"
+timestamp: "2026-09-27T21:39:26Z"
 concept_id: crates/erp-learning/src/lms/new_1
 language: rust
 ---
@@ -40,7 +40,7 @@ Creates a new progress tracker.
 [must_use]
 
 ## Source
-Lines 74–76 in `crates/erp-learning/src/lms.rs`
+Lines 73–75 in `crates/erp-learning/src/lms.rs`
 
 ## Relationships
 

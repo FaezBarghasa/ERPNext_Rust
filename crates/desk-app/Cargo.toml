@@ -6,3 +6,6 @@ edition = "2021"
 [dependencies]
 frappe-meta = { path = "../frappe-meta" }
 desk-components = { path = "../desk-components" }
+chrono = { version = "0.4", default-features = false }
+rust_decimal = "1.36"
+rust_decimal_macros = "1.36"

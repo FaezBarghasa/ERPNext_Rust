@@ -11,7 +11,7 @@ tags:
   - "domain:erp-crm"
   - "git:branch:main"
   - "git:repo:ERPNext_Rust"
-timestamp: "2026-09-27T19:34:58Z"
+timestamp: "2026-09-27T21:56:26Z"
 concept_id: crates/erp-crm/src/pipeline/CrmPipeline
 language: rust
 ---
@@ -35,7 +35,7 @@ pub struct CrmPipeline
 CRM Pipeline Coordinator (Milestone 3.9).
 
 ## Source
-Lines 116–116 in `crates/erp-crm/src/pipeline.rs`
+Lines 114–114 in `crates/erp-crm/src/pipeline.rs`
 
 ## Relationships
 

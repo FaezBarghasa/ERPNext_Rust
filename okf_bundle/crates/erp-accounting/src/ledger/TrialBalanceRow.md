@@ -11,7 +11,7 @@ tags:
   - "domain:erp-accounting"
   - "git:branch:main"
   - "git:repo:ERPNext_Rust"
-timestamp: "2026-09-27T19:09:45Z"
+timestamp: "2026-09-27T21:39:26Z"
 concept_id: crates/erp-accounting/src/ledger/TrialBalanceRow
 language: rust
 ---
@@ -47,7 +47,7 @@ Trial Balance row summary.
 - `balance`
 
 ## Source
-Lines 230–235 in `crates/erp-accounting/src/ledger.rs`
+Lines 234–239 in `crates/erp-accounting/src/ledger.rs`
 
 ## Relationships
 

@@ -11,7 +11,7 @@ tags:
   - "domain:erp-manufacturing"
   - "git:branch:main"
   - "git:repo:ERPNext_Rust"
-timestamp: "2026-09-27T19:27:43Z"
+timestamp: "2026-09-27T21:39:26Z"
 concept_id: crates/erp-manufacturing/src/mrp/new_1
 language: rust
 ---
@@ -40,7 +40,7 @@ Creates a new scheduler instance.
 [must_use]
 
 ## Source
-Lines 93–95 in `crates/erp-manufacturing/src/mrp.rs`
+Lines 94–96 in `crates/erp-manufacturing/src/mrp.rs`
 
 ## Relationships
 

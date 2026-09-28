@@ -11,7 +11,7 @@ tags:
   - "domain:erp-learning"
   - "git:branch:main"
   - "git:repo:ERPNext_Rust"
-timestamp: "2026-09-27T19:51:49Z"
+timestamp: "2026-09-27T21:39:26Z"
 concept_id: crates/erp-learning/src/lib/test_lms_progress_and_certificate_issuance
 language: rust
 ---
@@ -35,7 +35,7 @@ fn test_lms_progress_and_certificate_issuance()
 [test]
 
 ## Source
-Lines 13–94 in `crates/erp-learning/src/lib.rs`
+Lines 11–95 in `crates/erp-learning/src/lib.rs`
 
 ## Relationships
 

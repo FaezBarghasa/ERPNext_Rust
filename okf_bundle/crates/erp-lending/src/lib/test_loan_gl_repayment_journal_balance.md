@@ -11,7 +11,7 @@ tags:
   - "domain:erp-lending"
   - "git:branch:main"
   - "git:repo:ERPNext_Rust"
-timestamp: "2026-09-27T19:48:42Z"
+timestamp: "2026-09-27T21:39:26Z"
 concept_id: crates/erp-lending/src/lib/test_loan_gl_repayment_journal_balance
 language: rust
 ---
@@ -35,7 +35,7 @@ fn test_loan_gl_repayment_journal_balance()
 [test]
 
 ## Source
-Lines 41–57 in `crates/erp-lending/src/lib.rs`
+Lines 35–56 in `crates/erp-lending/src/lib.rs`
 
 ## Relationships
 

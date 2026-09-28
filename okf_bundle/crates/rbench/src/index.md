@@ -6,4 +6,4 @@
 
 ## Modules
 
-- [src](main.md)
+- [src](main.md) — `rbench` — The Pure-Rust Site Orchestration & Enterprise Management CLI.

@@ -10,7 +10,7 @@ tags:
   - "domain:erp-lending"
   - "git:branch:main"
   - "git:repo:ERPNext_Rust"
-timestamp: "2026-09-27T19:48:02Z"
+timestamp: "2026-09-27T21:46:37Z"
 concept_id: crates/erp-lending/src/amortization
 language: rust
 ---

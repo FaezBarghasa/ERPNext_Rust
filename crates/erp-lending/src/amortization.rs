@@ -167,6 +167,7 @@ impl LoanGlEngine {
     /// - Credit: Loan Principal Receivable (Principal Portion)
     /// - Credit: Interest Receivable (Interest Portion)
     #[must_use]
+    #[allow(clippy::too_many_arguments)]
     pub fn create_repayment_gl_entries(
         bank_account: &str,
         loan_principal_account: &str,

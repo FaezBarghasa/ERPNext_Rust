@@ -11,7 +11,7 @@ tags:
   - "domain:erp-accounting"
   - "git:branch:main"
   - "git:repo:ERPNext_Rust"
-timestamp: "2026-09-27T15:20:48Z"
+timestamp: "2026-09-27T21:39:26Z"
 concept_id: crates/erp-accounting/src/decimal_ledger/DecLine
 language: rust
 ---
@@ -45,7 +45,7 @@ pub struct DecLine
 - `credit`
 
 ## Source
-Lines 2–2 in `crates/erp-accounting/src/decimal_ledger.rs`
+Lines 3–7 in `crates/erp-accounting/src/decimal_ledger.rs`
 
 ## Relationships
 

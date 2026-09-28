@@ -11,7 +11,7 @@ tags:
   - "domain:erp-learning"
   - "git:branch:main"
   - "git:repo:ERPNext_Rust"
-timestamp: "2026-09-27T19:51:14Z"
+timestamp: "2026-09-27T21:39:26Z"
 concept_id: crates/erp-learning/src/lms/Lesson
 language: rust
 ---
@@ -47,7 +47,7 @@ Educational lesson content node.
 - `video_url`
 
 ## Source
-Lines 22–27 in `crates/erp-learning/src/lms.rs`
+Lines 21–26 in `crates/erp-learning/src/lms.rs`
 
 ## Relationships
 

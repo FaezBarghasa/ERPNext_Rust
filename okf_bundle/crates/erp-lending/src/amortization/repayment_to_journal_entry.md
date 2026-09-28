@@ -11,7 +11,7 @@ tags:
   - "domain:erp-lending"
   - "git:branch:main"
   - "git:repo:ERPNext_Rust"
-timestamp: "2026-09-27T19:48:02Z"
+timestamp: "2026-09-27T21:46:37Z"
 concept_id: crates/erp-lending/src/amortization/repayment_to_journal_entry
 language: rust
 ---
@@ -41,7 +41,7 @@ Converts repayment entries into a validated JournalEntry document.
 [must_use]
 
 ## Source
-Lines 219–245 in `crates/erp-lending/src/amortization.rs`
+Lines 224–250 in `crates/erp-lending/src/amortization.rs`
 
 ## Relationships
 

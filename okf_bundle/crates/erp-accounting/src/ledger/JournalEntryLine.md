@@ -11,7 +11,7 @@ tags:
   - "domain:erp-accounting"
   - "git:branch:main"
   - "git:repo:ERPNext_Rust"
-timestamp: "2026-09-27T19:09:45Z"
+timestamp: "2026-09-27T21:39:26Z"
 concept_id: crates/erp-accounting/src/ledger/JournalEntryLine
 language: rust
 ---
@@ -51,7 +51,7 @@ An individual debit/credit line item in a Journal Entry.
 - `party`
 
 ## Source
-Lines 37–54 in `crates/erp-accounting/src/ledger.rs`
+Lines 41–58 in `crates/erp-accounting/src/ledger.rs`
 
 ## Relationships
 

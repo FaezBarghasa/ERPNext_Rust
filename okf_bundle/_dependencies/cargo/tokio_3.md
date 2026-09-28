@@ -11,10 +11,10 @@ tags:
   - "domain:frappe-storage"
   - "git:branch:main"
   - "git:repo:ERPNext_Rust"
-  - "manifest:Cargo.toml"
   - "version:1.53.1"
   - "ecosystem:cargo"
-timestamp: "2026-09-27T18:50:42Z"
+  - "manifest:Cargo.toml"
+timestamp: "2026-09-27T20:54:04Z"
 concept_id: _dependencies/cargo/tokio_3
 language: manifest
 ---

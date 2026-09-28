@@ -67,10 +67,13 @@ impl ResponseError for TenantError {
     }
 }
 
+type TenantPoolEntry = (Surreal<surrealdb::engine::local::Db>, Instant);
+type TenantPoolMap = Arc<RwLock<HashMap<TenantId, TenantPoolEntry>>>;
+
 /// Dynamic Connection Pool Manager for multi-tenant database handles.
 #[derive(Clone)]
 pub struct ConnectionPoolManager {
-    pools: Arc<RwLock<HashMap<TenantId, (Surreal<surrealdb::engine::local::Db>, Instant)>>>,
+    pools: TenantPoolMap,
     inactivity_threshold: Duration,
 }
 

@@ -2,31 +2,30 @@
 okf_version: "0.2"
 type: Dependency
 title: surrealdb
-description: Dependency from crates/frappe-net/Cargo.toml
-resource: crates/frappe-net/Cargo.toml
+description: Dependency from Cargo.lock
+resource: Cargo.lock
 tags:
   - "lang:manifest"
   - "type:Dependency"
-  - "module:crates"
-  - "domain:frappe-net"
+  - "module:Cargo.lock"
   - "git:branch:main"
   - "git:repo:ERPNext_Rust"
-  - "manifest:Cargo.toml"
-  - "version:3.3.0"
+  - "manifest:Cargo.lock"
   - "ecosystem:cargo"
-timestamp: "2026-09-27T18:56:22Z"
+  - "version:3.3.0"
+timestamp: "2026-09-27T21:56:00Z"
 concept_id: _dependencies/cargo/surrealdb_1
 language: manifest
 ---
 
 # surrealdb
 
-Dependency from crates/frappe-net/Cargo.toml
+Dependency from Cargo.lock
 
 | Field | Value |
 |-------|-------|
 | Ecosystem | `cargo` |
 | Version constraint | `3.3.0` |
-| Source manifest | `crates/frappe-net/Cargo.toml` |
+| Source manifest | `Cargo.lock` |
 | Dev dependency | `no` |
 | Used by | 0 module(s) |

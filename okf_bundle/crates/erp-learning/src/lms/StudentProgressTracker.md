@@ -11,7 +11,7 @@ tags:
   - "domain:erp-learning"
   - "git:branch:main"
   - "git:repo:ERPNext_Rust"
-timestamp: "2026-09-27T19:51:14Z"
+timestamp: "2026-09-27T21:39:26Z"
 concept_id: crates/erp-learning/src/lms/StudentProgressTracker
 language: rust
 ---
@@ -44,7 +44,7 @@ Student Progress Tracking & Certification Generator (Milestone 4.7).
 - `completed_lessons`
 
 ## Source
-Lines 67–69 in `crates/erp-learning/src/lms.rs`
+Lines 66–68 in `crates/erp-learning/src/lms.rs`
 
 ## Relationships
 

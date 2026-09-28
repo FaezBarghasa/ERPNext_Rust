@@ -11,8 +11,8 @@ tags:
   - "domain:erp-lending"
   - "git:branch:main"
   - "git:repo:ERPNext_Rust"
-  - "manifest:Cargo.toml"
   - "ecosystem:cargo"
+  - "manifest:Cargo.toml"
 timestamp: "2026-09-27T19:47:18Z"
 concept_id: _dependencies/cargo/erp-accounting_2
 language: manifest

@@ -11,7 +11,7 @@ tags:
   - "domain:erp-crm"
   - "git:branch:main"
   - "git:repo:ERPNext_Rust"
-timestamp: "2026-09-27T19:34:58Z"
+timestamp: "2026-09-27T21:56:26Z"
 concept_id: crates/erp-crm/src/pipeline/convert_to_sales_order_1
 language: rust
 ---
@@ -39,7 +39,7 @@ pub fn convert_to_sales_order(
 Converts an approved Quotation into a confirmed SalesOrder, preserving locked pricing.
 
 ## Source
-Lines 120–148 in `crates/erp-crm/src/pipeline.rs`
+Lines 118–146 in `crates/erp-crm/src/pipeline.rs`
 
 ## Relationships
 

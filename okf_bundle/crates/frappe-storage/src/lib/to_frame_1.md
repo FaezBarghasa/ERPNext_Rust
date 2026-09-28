@@ -11,7 +11,7 @@ tags:
   - "domain:frappe-storage"
   - "git:branch:main"
   - "git:repo:ERPNext_Rust"
-timestamp: "2026-09-27T18:51:42Z"
+timestamp: "2026-09-27T21:39:26Z"
 concept_id: crates/frappe-storage/src/lib/to_frame_1
 language: rust
 ---
@@ -39,7 +39,7 @@ pub fn to_frame(&self) -> String
 [must_use]
 
 ## Source
-Lines 105–107 in `crates/frappe-storage/src/lib.rs`
+Lines 108–113 in `crates/frappe-storage/src/lib.rs`
 
 ## Relationships
 

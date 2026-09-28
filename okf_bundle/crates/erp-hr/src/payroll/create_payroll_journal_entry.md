@@ -11,7 +11,7 @@ tags:
   - "domain:erp-hr"
   - "git:branch:main"
   - "git:repo:ERPNext_Rust"
-timestamp: "2026-09-27T20:27:26Z"
+timestamp: "2026-09-27T21:39:26Z"
 concept_id: crates/erp-hr/src/payroll/create_payroll_journal_entry
 language: rust
 ---
@@ -43,7 +43,7 @@ Generates batch General Ledger journal entry for submitted payroll.
 [must_use]
 
 ## Source
-Lines 168–216 in `crates/erp-hr/src/payroll.rs`
+Lines 169–220 in `crates/erp-hr/src/payroll.rs`
 
 ## Relationships
 

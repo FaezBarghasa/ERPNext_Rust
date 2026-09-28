@@ -11,8 +11,8 @@ tags:
   - "domain:erp-cms"
   - "git:branch:main"
   - "git:repo:ERPNext_Rust"
-  - "manifest:Cargo.toml"
   - "ecosystem:cargo"
+  - "manifest:Cargo.toml"
 timestamp: "2026-09-27T20:02:25Z"
 concept_id: _dependencies/cargo/frappe-storage_3
 language: manifest

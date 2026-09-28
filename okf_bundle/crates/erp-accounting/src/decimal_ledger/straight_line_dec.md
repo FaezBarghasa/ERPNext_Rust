@@ -11,7 +11,7 @@ tags:
   - "domain:erp-accounting"
   - "git:branch:main"
   - "git:repo:ERPNext_Rust"
-timestamp: "2026-09-27T15:20:48Z"
+timestamp: "2026-09-27T21:39:26Z"
 concept_id: crates/erp-accounting/src/decimal_ledger/straight_line_dec
 language: rust
 ---
@@ -35,7 +35,7 @@ pub fn straight_line_dec(cost: Decimal, salvage: Decimal, n: usize) -> Vec<Decim
 Straight-line depreciation in Decimal.
 
 ## Source
-Lines 8–14 in `crates/erp-accounting/src/decimal_ledger.rs`
+Lines 16–27 in `crates/erp-accounting/src/decimal_ledger.rs`
 
 ## Relationships
 

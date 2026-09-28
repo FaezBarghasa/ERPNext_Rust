@@ -11,7 +11,7 @@ tags:
   - "domain:erp-hr"
   - "git:branch:main"
   - "git:repo:ERPNext_Rust"
-timestamp: "2026-09-27T19:32:00Z"
+timestamp: "2026-09-27T21:56:26Z"
 concept_id: crates/erp-hr/src/lib/test_salary_calculation_and_concurrent_payroll
 language: rust
 ---
@@ -35,7 +35,7 @@ fn test_salary_calculation_and_concurrent_payroll()
 [tokio::test]
 
 ## Source
-Lines 67–117 in `crates/erp-hr/src/lib.rs`
+Lines 67–137 in `crates/erp-hr/src/lib.rs`
 
 ## Relationships
 

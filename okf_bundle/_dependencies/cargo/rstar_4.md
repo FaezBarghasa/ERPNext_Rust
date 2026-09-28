@@ -11,9 +11,9 @@ tags:
   - "git:branch:main"
   - "git:repo:ERPNext_Rust"
   - "manifest:Cargo.lock"
-  - "version:0.12.2"
   - "ecosystem:cargo"
-timestamp: "2026-09-27T20:02:31Z"
+  - "version:0.12.2"
+timestamp: "2026-09-27T21:56:00Z"
 concept_id: _dependencies/cargo/rstar_4
 language: manifest
 ---

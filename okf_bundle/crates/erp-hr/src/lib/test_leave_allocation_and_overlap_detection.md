@@ -11,7 +11,7 @@ tags:
   - "domain:erp-hr"
   - "git:branch:main"
   - "git:repo:ERPNext_Rust"
-timestamp: "2026-09-27T19:32:00Z"
+timestamp: "2026-09-27T21:56:26Z"
 concept_id: crates/erp-hr/src/lib/test_leave_allocation_and_overlap_detection
 language: rust
 ---
@@ -35,7 +35,7 @@ fn test_leave_allocation_and_overlap_detection()
 [test]
 
 ## Source
-Lines 120–155 in `crates/erp-hr/src/lib.rs`
+Lines 140–176 in `crates/erp-hr/src/lib.rs`
 
 ## Relationships
 

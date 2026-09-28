@@ -11,7 +11,7 @@ tags:
   - "domain:frappe-net"
   - "git:branch:main"
   - "git:repo:ERPNext_Rust"
-timestamp: "2026-09-27T18:59:03Z"
+timestamp: "2026-09-27T21:45:06Z"
 concept_id: crates/frappe-net/src/tenant/get_or_initialize_client
 language: rust
 ---
@@ -38,7 +38,7 @@ impl ConnectionPoolManager { pub fn get_or_initialize_client(
 Retrieves an active connection handle for the tenant, initializing if missing.
 
 ## Source
-Lines 92–122 in `crates/frappe-net/src/tenant.rs`
+Lines 97–127 in `crates/frappe-net/src/tenant.rs`
 
 ## Relationships
 

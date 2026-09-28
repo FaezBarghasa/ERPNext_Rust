@@ -10,7 +10,7 @@ tags:
   - "domain:erp-trade"
   - "git:branch:main"
   - "git:repo:ERPNext_Rust"
-timestamp: "2026-09-27T19:24:28Z"
+timestamp: "2026-09-27T21:28:11Z"
 concept_id: crates/erp-trade/src/lib
 language: rust
 ---

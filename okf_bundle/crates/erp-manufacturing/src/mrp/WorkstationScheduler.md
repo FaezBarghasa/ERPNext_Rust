@@ -11,7 +11,7 @@ tags:
   - "domain:erp-manufacturing"
   - "git:branch:main"
   - "git:repo:ERPNext_Rust"
-timestamp: "2026-09-27T19:27:43Z"
+timestamp: "2026-09-27T21:39:26Z"
 concept_id: crates/erp-manufacturing/src/mrp/WorkstationScheduler
 language: rust
 ---
@@ -44,7 +44,7 @@ Workstation Interval Scheduler with Conflict-Free Forward Sliding (Milestone 3.4
 - `bookings`
 
 ## Source
-Lines 85–88 in `crates/erp-manufacturing/src/mrp.rs`
+Lines 86–89 in `crates/erp-manufacturing/src/mrp.rs`
 
 ## Relationships
 

@@ -11,7 +11,7 @@ tags:
   - "domain:frappe-framework"
   - "git:branch:main"
   - "git:repo:ERPNext_Rust"
-timestamp: "2026-09-27T18:57:18Z"
+timestamp: "2026-09-27T21:39:26Z"
 concept_id: crates/frappe-framework/src/lifecycle/submit
 language: rust
 ---
@@ -40,7 +40,7 @@ impl DocumentController { pub fn submit(
 Submits a draft document, mutating docstatus to 1 and triggering submission hooks.
 
 ## Source
-Lines 167–190 in `crates/frappe-framework/src/lifecycle.rs`
+Lines 164–187 in `crates/frappe-framework/src/lifecycle.rs`
 
 ## Relationships
 

@@ -11,7 +11,7 @@ tags:
   - "domain:frappe-storage"
   - "git:branch:main"
   - "git:repo:ERPNext_Rust"
-timestamp: "2026-09-27T18:51:42Z"
+timestamp: "2026-09-27T21:39:26Z"
 concept_id: crates/frappe-storage/src/lib/QueueTask
 language: rust
 ---
@@ -45,7 +45,7 @@ pub struct QueueTask
 - `state`
 
 ## Source
-Lines 72–76 in `crates/frappe-storage/src/lib.rs`
+Lines 75–79 in `crates/frappe-storage/src/lib.rs`
 
 ## Relationships
 

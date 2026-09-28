@@ -2,7 +2,7 @@
 okf_version: "0.2"
 type: Function
 title: qs
-description: "[cfg(test)] mod t { #[test]"
+description: "[test]"
 resource: crates/frappe-net/src/queue.rs
 tags:
   - "lang:rust"
@@ -11,14 +11,14 @@ tags:
   - "domain:frappe-net"
   - "git:branch:main"
   - "git:repo:ERPNext_Rust"
-timestamp: "2026-09-27T14:03:17Z"
+timestamp: "2026-09-27T21:39:26Z"
 concept_id: crates/frappe-net/src/queue/qs
 language: rust
 ---
 
 # qs
 
-[cfg(test)] mod t { #[test]
+[test]
 
 ## Signature
 
@@ -32,10 +32,10 @@ fn qs()
 
 ## Docstring
 
-[cfg(test)] mod t { #[test]
+[test]
 
 ## Source
-Lines 3–3 in `crates/frappe-net/src/queue.rs`
+Lines 6–8 in `crates/frappe-net/src/queue.rs`
 
 ## Relationships
 

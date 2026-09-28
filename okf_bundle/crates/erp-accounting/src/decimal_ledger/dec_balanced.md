@@ -2,7 +2,7 @@
 okf_version: "0.2"
 type: Function
 title: dec_balanced
-description: "[cfg(test)] mod t { use super::*; use std::str::FromStr;"
+description: "[test]"
 resource: crates/erp-accounting/src/decimal_ledger.rs
 tags:
   - "lang:rust"
@@ -11,14 +11,14 @@ tags:
   - "domain:erp-accounting"
   - "git:branch:main"
   - "git:repo:ERPNext_Rust"
-timestamp: "2026-09-27T15:20:48Z"
+timestamp: "2026-09-27T21:39:26Z"
 concept_id: crates/erp-accounting/src/decimal_ledger/dec_balanced
 language: rust
 ---
 
 # dec_balanced
 
-[cfg(test)] mod t { use super::*; use std::str::FromStr;
+[test]
 
 ## Signature
 
@@ -32,11 +32,10 @@ fn dec_balanced()
 
 ## Docstring
 
-[cfg(test)] mod t { use super::*; use std::str::FromStr;
 [test]
 
 ## Source
-Lines 16–20 in `crates/erp-accounting/src/decimal_ledger.rs`
+Lines 33–48 in `crates/erp-accounting/src/decimal_ledger.rs`
 
 ## Relationships
 

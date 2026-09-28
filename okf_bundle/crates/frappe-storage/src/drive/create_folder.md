@@ -11,7 +11,7 @@ tags:
   - "domain:frappe-storage"
   - "git:branch:main"
   - "git:repo:ERPNext_Rust"
-timestamp: "2026-09-27T20:28:39Z"
+timestamp: "2026-09-27T21:39:26Z"
 concept_id: crates/frappe-storage/src/drive/create_folder
 language: rust
 ---
@@ -35,7 +35,7 @@ impl DeduplicatedStorage { pub fn create_folder(&self, folder: DriveFolder) -> R
 Creates a virtual drive folder.
 
 ## Source
-Lines 142–149 in `crates/frappe-storage/src/drive.rs`
+Lines 146–153 in `crates/frappe-storage/src/drive.rs`
 
 ## Relationships
 

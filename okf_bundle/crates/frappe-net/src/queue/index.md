@@ -2,4 +2,4 @@
 
 ## Functions
 
-- [qs](qs.md) — [cfg(test)] mod t { #[test]
+- [qs](qs.md) — [test]

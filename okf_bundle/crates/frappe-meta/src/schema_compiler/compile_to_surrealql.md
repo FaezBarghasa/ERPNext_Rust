@@ -44,3 +44,4 @@ Lines 4–47 in `crates/frappe-meta/src/schema_compiler.rs`
 | related | [schema_compiler](/crates/frappe-meta/src/schema_compiler.md) |
 | calls | [compile_field_ddl](/crates/frappe-meta/src/schema_compiler/compile_field_ddl.md) |
 | called_by | [test_schema_deserialization_and_compilation](/crates/frappe-meta/tests/schema_compiler_tests/test_schema_deserialization_and_compilation.md) |
+| called_by | [main](/crates/rbench/src/main/main.md) |

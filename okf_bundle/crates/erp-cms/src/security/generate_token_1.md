@@ -11,7 +11,7 @@ tags:
   - "domain:erp-cms"
   - "git:branch:main"
   - "git:repo:ERPNext_Rust"
-timestamp: "2026-09-27T20:25:54Z"
+timestamp: "2026-09-27T21:39:26Z"
 concept_id: crates/erp-cms/src/security/generate_token_1
 language: rust
 ---
@@ -35,7 +35,7 @@ pub fn generate_token(&self, media_id: &str, expiry_timestamp: u64) -> String
 Generates a signed token string: `hex(hmac(media_id || expiry))`.
 
 ## Source
-Lines 102–109 in `crates/erp-cms/src/security.rs`
+Lines 104–111 in `crates/erp-cms/src/security.rs`
 
 ## Relationships
 

@@ -11,7 +11,7 @@ tags:
   - "domain:erp-crm"
   - "git:branch:main"
   - "git:repo:ERPNext_Rust"
-timestamp: "2026-09-27T19:36:48Z"
+timestamp: "2026-09-27T21:39:26Z"
 concept_id: crates/erp-crm/src/lib/test_quotation_conversion_and_price_locking
 language: rust
 ---
@@ -35,7 +35,7 @@ fn test_quotation_conversion_and_price_locking()
 [test]
 
 ## Source
-Lines 42–78 in `crates/erp-crm/src/lib.rs`
+Lines 52–88 in `crates/erp-crm/src/lib.rs`
 
 ## Relationships
 

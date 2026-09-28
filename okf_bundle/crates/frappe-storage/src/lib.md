@@ -2,7 +2,6 @@
 okf_version: "0.2"
 type: Module
 title: lib
-description: "Tenant context, queue states, CAS deduplication, and SurrealDB storage backend."
 resource: crates/frappe-storage/src/lib.rs
 tags:
   - "lang:rust"
@@ -11,18 +10,12 @@ tags:
   - "domain:frappe-storage"
   - "git:branch:main"
   - "git:repo:ERPNext_Rust"
-timestamp: "2026-09-27T18:51:42Z"
+timestamp: "2026-09-27T21:39:26Z"
 concept_id: crates/frappe-storage/src/lib
 language: rust
 ---
 
 # lib
-
-Tenant context, queue states, CAS deduplication, and SurrealDB storage backend.
-
-## Docstring
-
-Tenant context, queue states, CAS deduplication, and SurrealDB storage backend.
 
 ## Relationships
 

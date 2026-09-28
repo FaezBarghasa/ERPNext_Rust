@@ -11,7 +11,7 @@ tags:
   - "domain:erp-inventory"
   - "git:branch:main"
   - "git:repo:ERPNext_Rust"
-timestamp: "2026-09-27T19:17:29Z"
+timestamp: "2026-09-27T21:39:26Z"
 concept_id: crates/erp-inventory/src/batches/validate_usable_1
 language: rust
 ---
@@ -35,7 +35,7 @@ pub fn validate_usable(&self, as_of: NaiveDate) -> Result<(), InventoryError>
 Validates whether the batch is active and unexpired as of a given posting date.
 
 ## Source
-Lines 66–76 in `crates/erp-inventory/src/batches.rs`
+Lines 63–73 in `crates/erp-inventory/src/batches.rs`
 
 ## Relationships
 

@@ -11,7 +11,7 @@ tags:
   - "domain:frappe-meta"
   - "git:branch:main"
   - "git:repo:ERPNext_Rust"
-timestamp: "2026-09-27T18:45:15Z"
+timestamp: "2026-09-27T21:40:46Z"
 concept_id: crates/frappe-meta/src/schema/table_name
 language: rust
 ---
@@ -36,7 +36,7 @@ Returns the database table name derived from the DocType name.
 [must_use]
 
 ## Source
-Lines 258–260 in `crates/frappe-meta/src/schema.rs`
+Lines 276–278 in `crates/frappe-meta/src/schema.rs`
 
 ## Relationships
 

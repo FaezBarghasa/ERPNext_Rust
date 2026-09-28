@@ -2,7 +2,7 @@
 okf_version: "0.2"
 type: Function
 title: slice
-description: "[cfg(test)] mod t { use super::*; #[test]"
+description: "[test]"
 resource: crates/desk-components/src/grid.rs
 tags:
   - "lang:rust"
@@ -11,14 +11,14 @@ tags:
   - "domain:desk-components"
   - "git:branch:main"
   - "git:repo:ERPNext_Rust"
-timestamp: "2026-09-27T14:03:17Z"
+timestamp: "2026-09-27T21:39:26Z"
 concept_id: crates/desk-components/src/grid/slice
 language: rust
 ---
 
 # slice
 
-[cfg(test)] mod t { use super::*; #[test]
+[test]
 
 ## Signature
 
@@ -32,10 +32,10 @@ fn slice()
 
 ## Docstring
 
-[cfg(test)] mod t { use super::*; #[test]
+[test]
 
 ## Source
-Lines 8–8 in `crates/desk-components/src/grid.rs`
+Lines 19–21 in `crates/desk-components/src/grid.rs`
 
 ## Relationships
 

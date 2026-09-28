@@ -11,9 +11,9 @@ tags:
   - "domain:frappe-net"
   - "git:branch:main"
   - "git:repo:ERPNext_Rust"
-  - "manifest:Cargo.toml"
   - "version:1.53.1"
   - "ecosystem:cargo"
+  - "manifest:Cargo.toml"
 timestamp: "2026-09-27T18:56:22Z"
 concept_id: _dependencies/cargo/tokio_1
 language: manifest
