@@ -24,6 +24,7 @@ erp-cms = { workspace = true }
 compact_str = { workspace = true }
 rust_decimal = { workspace = true }
 rust_decimal_macros = { workspace = true }
+desk-app = { workspace = true }
 desk-components = { workspace = true }
 tracing = { workspace = true }
 tracing-subscriber = { workspace = true }

@@ -88,8 +88,10 @@ pub struct WebhookOutboxEntry {
 
 impl WebhookOutboxEntry {
     /// Creates a new queued outbox entry.
-    #[must_use]
-    pub fn new(subscription: &WebhookSubscription, payload: &WebhookPayload) -> Result<Self, WebhookError> {
+    pub fn new(
+        subscription: &WebhookSubscription,
+        payload: &WebhookPayload,
+    ) -> Result<Self, WebhookError> {
         let payload_json = serde_json::to_string(payload)
             .map_err(|e| WebhookError::Serialization(e.to_string()))?;
         let now = Utc::now();
@@ -196,10 +198,10 @@ impl WebhookDispatcher {
                     body.to_vec()
                 };
 
-                if let Ok(expected_hex) = Self::compute_raw_hex(secret, &payload_to_hash) {
-                    if expected_hex.eq_ignore_ascii_case(v1_sig) {
-                        return true;
-                    }
+                if let Ok(expected_hex) = Self::compute_raw_hex(secret, &payload_to_hash)
+                    && expected_hex.eq_ignore_ascii_case(v1_sig)
+                {
+                    return true;
                 }
             }
         }
@@ -209,15 +211,16 @@ impl WebhookDispatcher {
             if clean_hdr.eq_ignore_ascii_case(&expected_sig) {
                 return true;
             }
-            if let Some(raw_expected) = expected_sig.strip_prefix("sha256=") {
-                if clean_hdr.eq_ignore_ascii_case(raw_expected) {
-                    return true;
-                }
-                if let Some(hdr_hex) = clean_hdr.strip_prefix("sha256=") {
-                    if raw_expected.eq_ignore_ascii_case(hdr_hex) {
-                        return true;
-                    }
-                }
+            if let Some(raw_expected) = expected_sig.strip_prefix("sha256=")
+                && clean_hdr.eq_ignore_ascii_case(raw_expected)
+            {
+                return true;
+            }
+            if let Some(hdr_hex) = clean_hdr.strip_prefix("sha256=")
+                && let Some(raw_expected) = expected_sig.strip_prefix("sha256=")
+                && raw_expected.eq_ignore_ascii_case(hdr_hex)
+            {
+                return true;
             }
         }
 

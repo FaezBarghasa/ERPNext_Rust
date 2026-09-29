@@ -1,0 +1,57 @@
+name: CI / CD Quality Gate & Verification
+
+on:
+  push:
+    branches: [ "main", "master" ]
+  pull_request:
+    branches: [ "main", "master" ]
+
+env:
+  CARGO_TERM_COLOR: always
+  RUSTFLAGS: "-D warnings"
+
+jobs:
+  fmt-and-clippy:
+    name: Formatting & Clippy Quality Gate
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          components: rustfmt, clippy
+      - uses: Swatinem/rust-cache@v2
+      - name: Cargo Format Check
+        run: cargo fmt --check
+      - name: Clippy Zero-Warning Check
+        run: cargo clippy --workspace --all-targets -- -D warnings
+
+  test:
+    name: Unit, Integration & Benchmark Suite
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+      - name: Run All Workspace Tests
+        run: cargo test --workspace --all-targets
+      - name: Benchmark SLA Verification
+        run: |
+          cargo run -p rbench -- benchmark --scenario ssr_ttfb --requests 1000
+          cargo run -p rbench -- benchmark --scenario monte_carlo --simulations 10000
+
+  sdk-and-dr:
+    name: SDK Generation & Disaster Recovery Roundtrip
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+      - name: Generate TypeScript SDK
+        run: cargo run -p rbench -- sdk generate --lang typescript --output sdk/typescript
+      - name: Verify DR Backup and Restore
+        run: |
+          mkdir -p sites/ci_test.localhost
+          echo '{"site":"ci_test"}' > sites/ci_test.localhost/site_config.json
+          cargo run -p rbench -- backup ci_test.localhost sites/ci_test.rn.zst
+          test -f sites/ci_test.rn.zst.sha256
+          cargo run -p rbench -- restore sites/ci_test.rn.zst

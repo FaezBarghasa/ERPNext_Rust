@@ -182,7 +182,10 @@ async fn approvals_handler(req: HttpRequest) -> impl Responder {
 
     HttpResponse::Ok()
         .content_type("text/html; charset=utf-8")
-        .body(render_desk_shell_html("Executive Approvals Hub", &user_name))
+        .body(render_desk_shell_html(
+            "Executive Approvals Hub",
+            &user_name,
+        ))
 }
 
 async fn admin_handler(req: HttpRequest) -> impl Responder {
@@ -690,6 +693,24 @@ async fn run_plugin_handler(
     }
 }
 
+async fn pwa_manifest_handler() -> impl Responder {
+    TOTAL_REQUESTS.fetch_add(1, Ordering::Relaxed);
+    let manifest = desk_app::PwaWebManifest::new("RustNext Enterprise", "#6366f1", "#0f172a");
+    HttpResponse::Ok()
+        .content_type("application/manifest+json")
+        .json(manifest)
+}
+
+async fn service_worker_handler() -> impl Responder {
+    TOTAL_REQUESTS.fetch_add(1, Ordering::Relaxed);
+    let sw_script =
+        desk_app::ServiceWorkerGenerator::generate_service_worker_js(env!("CARGO_PKG_VERSION"));
+    HttpResponse::Ok()
+        .content_type("application/javascript")
+        .insert_header(("Cache-Control", "public, max-age=0, must-revalidate"))
+        .body(sw_script)
+}
+
 /// Configures the Actix Web ERP API application.
 pub fn configure_app(
     cfg: &mut web::ServiceConfig,
@@ -713,6 +734,8 @@ pub fn configure_app(
         .route("/templates/{slug}", web::get().to(template_detail_handler))
         .route("/sitemap.xml", web::get().to(sitemap_xml_handler))
         .route("/robots.txt", web::get().to(robots_txt_handler))
+        .route("/manifest.json", web::get().to(pwa_manifest_handler))
+        .route("/sw.js", web::get().to(service_worker_handler))
         .route("/health", web::get().to(health_check))
         .route("/healthz/live", web::get().to(liveness_handler))
         .route("/healthz/ready", web::get().to(readiness_handler))

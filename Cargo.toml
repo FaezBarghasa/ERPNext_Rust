@@ -33,6 +33,7 @@ repository = "https://github.com/FaezBarghasa/ERPNext_Rust"
 
 [workspace.dependencies]
 # Internal workspace crates
+desk-app = { path = "crates/desk-app" }
 desk-components = { path = "crates/desk-components" }
 erp-accounting = { path = "crates/erp-accounting" }
 erp-asset = { path = "crates/erp-asset" }

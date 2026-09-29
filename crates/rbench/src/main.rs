@@ -159,9 +159,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                 }
             }
 
-            println!(
-                "[3/5] Setting up Default System Manager Account `{admin_email}`..."
-            );
+            println!("[3/5] Setting up Default System Manager Account `{admin_email}`...");
             let admin_init_query = format!(
                 "CREATE user:Administrator SET email = '{admin_email}', full_name = 'System Administrator', roles = ['System Manager', 'Administrator'];"
             );
@@ -406,9 +404,21 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             let sha256_hex = hex::encode(hasher.finalize());
 
             let sha_path = format!("{output_path}.sha256");
-            fs::write(&sha_path, format!("{sha256_hex}  {}\n", Path::new(&output_path).file_name().unwrap().to_string_lossy()))?;
+            fs::write(
+                &sha_path,
+                format!(
+                    "{sha256_hex}  {}\n",
+                    Path::new(&output_path)
+                        .file_name()
+                        .unwrap()
+                        .to_string_lossy()
+                ),
+            )?;
 
-            println!("  - Compressed Size: {} bytes (zstd level 9)", compressed.len());
+            println!(
+                "  - Compressed Size: {} bytes (zstd level 9)",
+                compressed.len()
+            );
             println!("  - SHA-256 Sidecar: {sha_path}");
             println!("  - Checksum:        {sha256_hex}");
             println!("  - Merkle Proof:    Validated");
@@ -441,7 +451,9 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                 if expected_sha.eq_ignore_ascii_case(&actual_sha) {
                     println!("  - SHA-256 Checksum: Verified ({actual_sha})");
                 } else {
-                    eprintln!("  - Warning: Checksum mismatch! (Expected {expected_sha}, got {actual_sha})");
+                    eprintln!(
+                        "  - Warning: Checksum mismatch! (Expected {expected_sha}, got {actual_sha})"
+                    );
                 }
             }
 
@@ -457,11 +469,9 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                 let mut out_dir = "./sdk/typescript".to_string();
                 let mut i = 3;
                 while i < args.len() {
-                    if args[i] == "--output" || args[i] == "-o" {
-                        if i + 1 < args.len() {
-                            out_dir = args[i + 1].clone();
-                            i += 1;
-                        }
+                    if (args[i] == "--output" || args[i] == "-o") && i + 1 < args.len() {
+                        out_dir = args[i + 1].clone();
+                        i += 1;
                     }
                     i += 1;
                 }
@@ -752,11 +762,15 @@ export class RustNextClient {
                 i += 1;
             }
 
-            println!("⚡ Running Synthetic Multi-Tenant Load Benchmark (Scenario: `{scenario}`)...");
+            println!(
+                "⚡ Running Synthetic Multi-Tenant Load Benchmark (Scenario: `{scenario}`)..."
+            );
 
             match scenario.as_str() {
                 "monte_carlo" => {
-                    println!("  Simulating Monte Carlo Schedule Risk (Iterations: {iterations})...");
+                    println!(
+                        "  Simulating Monte Carlo Schedule Risk (Iterations: {iterations})..."
+                    );
                     let tasks = vec![
                         erp_ppm::TaskRiskProfile {
                             task_id: 1,
@@ -804,7 +818,9 @@ export class RustNextClient {
                     println!("  Target Invariant:   < 10ms (Passed: {:.3?})", elapsed);
                 }
                 "ledger" => {
-                    println!("  Validating High-Frequency Ledger Drift Invariant ({rows} lines)...");
+                    println!(
+                        "  Validating High-Frequency Ledger Drift Invariant ({rows} lines)..."
+                    );
                     let start = Instant::now();
                     let elapsed = start.elapsed();
                     println!("  Ledger Postings:    {rows} entries validated");
@@ -910,7 +926,9 @@ export class RustNextClient {
             println!(
                 "  backup <site_name> [output]    Create streaming zstd backup snapshot with Merkle proofs"
             );
-            println!("  restore <file> [--partial]     Restore point-in-time snapshot with checksum verification");
+            println!(
+                "  restore <file> [--partial]     Restore point-in-time snapshot with checksum verification"
+            );
             println!(
                 "  sdk generate [OPTIONS]         Generate typed client SDKs (--lang typescript --output <dir>)"
             );
