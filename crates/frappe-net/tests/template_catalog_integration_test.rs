@@ -27,7 +27,7 @@ async fn test_template_catalog_http_endpoints() {
     assert!(html_str.contains("b2c-retail"));
     assert!(html_str.contains("trading-exchange"));
 
-    // 2. Verify all 6 individual template routes return 200 and their specialized content
+    // 2. Verify all 10 individual template routes return 200 and their specialized content
     let test_templates = [
         ("svod-streaming", "rustnext Cinema"),
         ("lms-academy", "rustnext Academy"),
@@ -35,6 +35,10 @@ async fn test_template_catalog_http_endpoints() {
         ("b2b-industrial", "rustnext Industrial"),
         ("b2c-retail", "rustnext Retail"),
         ("trading-exchange", "rustnext Exchange"),
+        ("saas-cloud", "SaaS, AI & Cloud Platforms"),
+        ("healthcare-clinical", "Professional Healthcare & Diagnostics"),
+        ("real-estate-spatial", "Real Estate & Spatial Property Development"),
+        ("gastronomy-hospitality", "Haute Cuisine, Dining & Hospitality"),
     ];
 
     for (slug, expected_title) in test_templates {
@@ -65,7 +69,7 @@ async fn test_template_catalog_http_endpoints() {
         actix_web::http::StatusCode::NOT_FOUND
     );
 
-    // 4. Verify GET /api/v1/templates returns catalog JSON array with 6 items
+    // 4. Verify GET /api/v1/templates returns catalog JSON array with 10 items
     let req_api = test::TestRequest::get()
         .uri("/api/v1/templates")
         .to_request();
@@ -75,7 +79,7 @@ async fn test_template_catalog_http_endpoints() {
     let api_body = test::read_body(resp_api).await;
     let templates: Vec<serde_json::Value> =
         serde_json::from_slice(&api_body).expect("Valid JSON array");
-    assert_eq!(templates.len(), 6);
+    assert_eq!(templates.len(), 10);
 
     // 5. Verify GET /api/v1/templates/{slug}/manifest returns valid ThemeManifest JSON
     let req_manifest = test::TestRequest::get()

@@ -60,6 +60,29 @@ impl SeoMetadata {
         )
     }
 
+    /// Constructs generic website SEO metadata.
+    #[must_use]
+    pub fn new_website(title: &str, description: &str, canonical_url: &str) -> Self {
+        let json_ld = serde_json::json!({
+            "@context": "https://schema.org",
+            "@type": "WebSite",
+            "name": title,
+            "description": description,
+            "url": canonical_url,
+        })
+        .to_string();
+
+        Self {
+            title: title.into(),
+            description: description.into(),
+            canonical_url: canonical_url.into(),
+            og_type: "website".into(),
+            og_image: "https://rustnext.enterprise.io/assets/og-default.webp".into(),
+            site_name: "rustnext Enterprise".into(),
+            json_ld,
+        }
+    }
+
     /// Constructs SEO metadata for the SVoD Video Streaming Platform (`VideoObject`, `Movie`, `Series`).
     #[must_use]
     pub fn for_svod(slug: &str, variant: &str) -> Self {
@@ -350,7 +373,7 @@ impl SeoMetadata {
     }
 }
 
-/// Generates an enterprise-grade XML sitemap indexing all 6 domains and their 5 aesthetic variants (30 paths).
+/// Generates an enterprise-grade XML sitemap indexing all 10 domains and their UI/UX aesthetic variants (100+ paths).
 #[must_use]
 pub fn generate_sitemap_xml() -> String {
     let domains = [
@@ -360,14 +383,27 @@ pub fn generate_sitemap_xml() -> String {
         "b2b-industrial",
         "b2c-retail",
         "trading-exchange",
+        "saas-cloud",
+        "healthcare-clinical",
+        "real-estate-spatial",
+        "gastronomy-hospitality",
     ];
 
     let variants = [
-        "awwwards",
+        "swiss",
+        "bento",
+        "neobrutalist",
+        "editorial",
         "cyberpunk",
+        "split-screen",
+        "cockpit",
+        "playful",
+        "scrollytelling",
+        "cinematic-3d",
         "vaporwave",
         "retrowave",
         "neonwave",
+        "tasteful",
     ];
 
     let mut urls = String::new();

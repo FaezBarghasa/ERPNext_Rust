@@ -260,6 +260,138 @@ pub fn list_template_suites() -> Vec<TemplateSuite> {
                 noise_opacity: 0.03,
             },
         },
+        TemplateSuite {
+            slug: "saas-cloud".into(),
+            title: "SaaS, AI & Cloud Platforms".into(),
+            subtitle: "API telemetry, rate limiting analytics, SDK generators & self-serve team billing".into(),
+            class_reference: "Linear / Vercel Class".into(),
+            work_type: WorkTypeClassification::DeveloperSaaS,
+            modules_used: vec![
+                "erp-software".into(),
+                "erp-accounting".into(),
+                "erp-support".into(),
+                "frappe-net".into(),
+                "frappe-framework".into(),
+            ],
+            key_capabilities: vec![
+                "Real-Time API Consumption Metering & QPS Gauges".into(),
+                "Self-Service Team Seat Provisioning & SAML/SSO".into(),
+                "Multi-Tier Subscription Invoicing (ASC 606)".into(),
+                "WASM Edge Function Sandboxed Execution Logs".into(),
+                "Automated Developer Portal & OpenAPI V3 Documentation".into(),
+            ],
+            default_tokens: DesignTokens {
+                color_primary: "#6366f1".into(),
+                color_secondary: "#4f46e5".into(),
+                color_background: "#030712".into(),
+                color_surface: "#0f172a".into(),
+                color_accent: "#38bdf8".into(),
+                font_heading: "'Inter', sans-serif".into(),
+                font_body: "'Inter', sans-serif".into(),
+                font_mono: "'JetBrains Mono', monospace".into(),
+                border_radius: "1.0rem".into(),
+                noise_opacity: 0.02,
+            },
+        },
+        TemplateSuite {
+            slug: "healthcare-clinical".into(),
+            title: "Professional Healthcare & Diagnostics".into(),
+            subtitle: "HIPAA-compliant EHR, real-time appointment triage, DICOM imaging links & HL7/FHIR".into(),
+            class_reference: "Epic / OneMedical Class".into(),
+            work_type: WorkTypeClassification::HealthcareClinical,
+            modules_used: vec![
+                "erp-support".into(),
+                "erp-crm".into(),
+                "erp-accounting".into(),
+                "frappe-storage".into(),
+                "frappe-meta".into(),
+            ],
+            key_capabilities: vec![
+                "HL7 / FHIR R4 Interoperable Diagnostic Records".into(),
+                "Zero-Knowledge Encrypted Clinical Note Storage".into(),
+                "Doctor On-Call Real-Time Rota & Shift Matrix".into(),
+                "Automated Insurance Pre-Authorization Claims".into(),
+                "Biometric Patient Identification & Telehealth Portal".into(),
+            ],
+            default_tokens: DesignTokens {
+                color_primary: "#06b6d4".into(),
+                color_secondary: "#0891b2".into(),
+                color_background: "#041014".into(),
+                color_surface: "#082026".into(),
+                color_accent: "#22d3ee".into(),
+                font_heading: "'Outfit', sans-serif".into(),
+                font_body: "'Plus Jakarta Sans', sans-serif".into(),
+                font_mono: "'Space Mono', monospace".into(),
+                border_radius: "1.25rem".into(),
+                noise_opacity: 0.02,
+            },
+        },
+        TemplateSuite {
+            slug: "real-estate-spatial".into(),
+            title: "Real Estate & Spatial Property Development".into(),
+            subtitle: "3D architectural walkthroughs, bitemporal lease contracts, escrow ledgers & IoT telemetry".into(),
+            class_reference: "Zillow / Sotheby's Realty Class".into(),
+            work_type: WorkTypeClassification::RealEstateSpatial,
+            modules_used: vec![
+                "erp-asset".into(),
+                "erp-accounting".into(),
+                "erp-crm".into(),
+                "erp-trade".into(),
+                "frappe-storage".into(),
+            ],
+            key_capabilities: vec![
+                "Interactive 3D Spatial Walkthroughs & Floorplans".into(),
+                "Bitemporal Commercial Lease Escrow Management".into(),
+                "Automated CAM (Common Area Maintenance) Split Runs".into(),
+                "IoT Smart Meter Telemetry & Utility Ledger Billing".into(),
+                "Investor Capital Call & Dividend Yield Distribution".into(),
+            ],
+            default_tokens: DesignTokens {
+                color_primary: "#f59e0b".into(),
+                color_secondary: "#b45309".into(),
+                color_background: "#09090b".into(),
+                color_surface: "#18181b".into(),
+                color_accent: "#fbbf24".into(),
+                font_heading: "'Playfair Display', serif".into(),
+                font_body: "'Outfit', sans-serif".into(),
+                font_mono: "'Space Mono', monospace".into(),
+                border_radius: "0.75rem".into(),
+                noise_opacity: 0.03,
+            },
+        },
+        TemplateSuite {
+            slug: "gastronomy-hospitality".into(),
+            title: "Haute Cuisine, Dining & Hospitality".into(),
+            subtitle: "Real-time kitchen display system (KDS), table reservation locking, recipe yield costing & multi-outlet inventory".into(),
+            class_reference: "Toast / Resy Class".into(),
+            work_type: WorkTypeClassification::GastronomyKitchen,
+            modules_used: vec![
+                "erp-inventory".into(),
+                "erp-trade".into(),
+                "erp-accounting".into(),
+                "desk-components".into(),
+                "frappe-net".into(),
+            ],
+            key_capabilities: vec![
+                "Zero-Latency Kitchen Display System (KDS) WebSockets".into(),
+                "Microsecond Table Reservation Distributed Locking".into(),
+                "Recipe Ingredient Yield & Wastage Accruals".into(),
+                "Multi-Outlet Central Commissary Stock Transfers".into(),
+                "Contactless QR Order & Apple Pay / Google Pay Flow".into(),
+            ],
+            default_tokens: DesignTokens {
+                color_primary: "#ef4444".into(),
+                color_secondary: "#dc2626".into(),
+                color_background: "#0c0a09".into(),
+                color_surface: "#1c1917".into(),
+                color_accent: "#f97316".into(),
+                font_heading: "'Syne', sans-serif".into(),
+                font_body: "'Plus Jakarta Sans', sans-serif".into(),
+                font_mono: "'Space Mono', monospace".into(),
+                border_radius: "1.0rem".into(),
+                noise_opacity: 0.03,
+            },
+        },
     ]
 }
 
@@ -276,7 +408,7 @@ pub fn get_template_suite(slug: &str) -> Option<TemplateSuite> {
 #[must_use]
 pub fn render_template_html_with_variant(slug: &str, variant_opt: Option<&str>) -> Option<String> {
     let suite = get_template_suite(slug)?;
-    let variant = variant_opt.map_or(ThemeVariant::AwwwardsEditorial, ThemeVariant::parse);
+    let variant = variant_opt.map_or(ThemeVariant::EditorialLuxury, ThemeVariant::parse);
     let tokens = variant.tokens();
     let css_tokens = tokens.to_css_variables();
     let variant_str = variant.slug();
@@ -288,6 +420,10 @@ pub fn render_template_html_with_variant(slug: &str, variant_opt: Option<&str>) 
         "b2b-industrial" => render_b2b_industrial_html(&suite, &css_tokens, variant_str),
         "b2c-retail" => render_b2c_retail_html(&suite, &css_tokens, variant_str),
         "trading-exchange" => render_trading_exchange_html(&suite, &css_tokens, variant_str),
+        "saas-cloud" => render_saas_cloud_html(&suite, &css_tokens, variant_str),
+        "healthcare-clinical" => render_healthcare_clinical_html(&suite, &css_tokens, variant_str),
+        "real-estate-spatial" => render_real_estate_spatial_html(&suite, &css_tokens, variant_str),
+        "gastronomy-hospitality" => render_gastronomy_hospitality_html(&suite, &css_tokens, variant_str),
         _ => return None,
     };
 
@@ -300,39 +436,59 @@ pub fn render_template_html(slug: &str) -> Option<String> {
     render_template_html_with_variant(slug, None)
 }
 
-/// Helper generating the floating theme switcher dock and aesthetic archetype switcher.
+/// Helper generating the floating theme switcher dock and aesthetic archetype switcher across the 10 Global UI/UX Archetypes.
 #[must_use]
 pub fn render_theme_switcher_dock(current_slug: &str, active_variant: &str) -> String {
     let variants = [
         (
-            "awwwards",
-            "🏆 Awwwards Editorial",
-            "Editorial typography, kinetic motion, film grain, gold accent",
+            "swiss",
+            "🇨🇭 01 Minimalist Swiss",
+            "Monochrome stark contrast, grotesque typography, ultra-high whitespace",
+        ),
+        (
+            "bento",
+            "🍱 02 Bento Grid Modern",
+            "Modular rounded cards, glow effects, micro-badges, dark-mode first",
+        ),
+        (
+            "neobrutalist",
+            "⚡ 03 Neo-Brutalist",
+            "Thick black borders, vivid pop colors, hard drop shadows, playful monospace",
+        ),
+        (
+            "editorial",
+            "👑 04 Editorial Luxury",
+            "Refined serif headings, prestige organic palettes, asymmetric layouts",
         ),
         (
             "cyberpunk",
-            "🤖 Cyberpunk HUD",
-            "Samurai Yellow, Arasaka Crimson, angled clips, glitch shaders",
+            "🤖 05 Cyberpunk HUD",
+            "Samurai yellow, frosted glass cards, HUD elements, high-tech telemetry",
         ),
         (
-            "vaporwave",
-            "🌸 Vaporwave Glass",
-            "Neon pastels, frosted glass blur, dreamland sunset",
+            "split-screen",
+            "🌗 06 Split-Screen Dual",
+            "50/50 dual pane layout, pinned narrative alongside scrollable visual feed",
         ),
         (
-            "retrowave",
-            "📼 80s Retro Wave",
-            "Outrun chrome text, LED VU meter, cassette buttons",
+            "cockpit",
+            "📊 07 Data Cockpit",
+            "Ultra-compact tables, live sparklines, instant filters, zero decorative padding",
         ),
         (
-            "neonwave",
-            "⚡ Neon Wave Horizon",
-            "Electric cyan laser, 3D perspective grid, audio sine waves",
+            "playful",
+            "🎨 08 Playful Pastel",
+            "Pastel color palettes, rounded pill tags, animated illustrations, spring curves",
         ),
         (
-            "tasteful",
-            "✨ Tasteful Minimal",
-            "Restrained obsidian, Emil Kowalski springs, clean typography",
+            "scrollytelling",
+            "📖 09 Scrollytelling",
+            "Fullscreen snap sections, interactive timeline, progressive step revelation",
+        ),
+        (
+            "cinematic-3d",
+            "🎬 10 3D Canvas Showroom",
+            "Full-bleed 3D WebGL viewers, ambient canvas lighting, immersive video backgrounds",
         ),
     ];
 
@@ -355,7 +511,7 @@ pub fn render_theme_switcher_dock(current_slug: &str, active_variant: &str) -> S
     format!(
         r##"<aside class="theme-switcher-dock" aria-label="Aesthetic Archetype Selector">
     <div class="dock-header">
-        <span class="dock-title">🎨 AESTHETIC ARCHETYPE (30 VARIANTS)</span>
+        <span class="dock-title">🎨 10 UI/UX ARCHETYPES (100 TOTAL PERMUTATIONS)</span>
         <span class="dock-domain">{slug}</span>
     </div>
     <div class="dock-btn-row">
@@ -1926,14 +2082,468 @@ fn render_trading_exchange_html(suite: &TemplateSuite, css_tokens: &str, variant
     )
 }
 
+/// Renders the SaaS, AI & Cloud Platforms flagship template HTML.
+#[must_use]
+pub fn render_saas_cloud_html(
+    suite: &TemplateSuite,
+    css_tokens: &str,
+    active_variant: &str,
+) -> String {
+    let seo = SeoMetadata::new_website(
+        &format!("{} | Developer Platform", suite.title),
+        &suite.subtitle,
+        "https://enterprise.rustnext.org/templates/saas-cloud",
+    );
+    let seo_head = seo.render_head_tags();
+    let dock_html = render_theme_switcher_dock(&suite.slug, active_variant);
+
+    format!(
+        r##"<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SaaS, AI & Cloud Platform</title>
+    {seo_head}
+    <style>
+        {css_tokens}
+        * {{ box-sizing: border-box; margin: 0; padding: 0; }}
+        body {{
+            background: var(--color-bg);
+            color: #fff;
+            font-family: var(--font-body);
+            min-height: 100vh;
+            padding-bottom: 5rem;
+        }}
+        .hero {{
+            padding: 4rem 2rem;
+            max-width: 1200px;
+            margin: 0 auto;
+            text-align: center;
+        }}
+        .badge {{
+            display: inline-block;
+            background: var(--color-surface);
+            border: 1px solid rgba(255,255,255,0.1);
+            color: var(--color-accent);
+            padding: 0.35rem 0.85rem;
+            border-radius: 9999px;
+            font-size: 0.8rem;
+            margin-bottom: 1.5rem;
+            font-family: var(--font-mono);
+        }}
+        .hero h1 {{
+            font-size: clamp(2.5rem, 5vw, 4rem);
+            font-family: var(--font-heading);
+            margin-bottom: 1rem;
+            color: var(--color-primary);
+        }}
+        .hero p {{
+            font-size: 1.15rem;
+            color: #94a3b8;
+            max-width: 700px;
+            margin: 0 auto 2rem auto;
+            line-height: 1.6;
+        }}
+        .grid {{
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+            gap: 1.5rem;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 2rem;
+        }}
+        .card {{
+            background: var(--color-surface);
+            border: 1px solid rgba(255,255,255,0.08);
+            border-radius: var(--border-radius);
+            padding: 1.75rem;
+            transition: transform 0.2s, border-color 0.2s;
+        }}
+        .card:hover {{
+            transform: translateY(-4px);
+            border-color: var(--color-accent);
+        }}
+        .card h3 {{ font-size: 1.2rem; margin-bottom: 0.5rem; color: #fff; }}
+        .card p {{ font-size: 0.9rem; color: #94a3b8; line-height: 1.5; }}
+        .metric-value {{ font-size: 2rem; font-weight: 800; color: var(--color-primary); margin: 0.5rem 0; }}
+    </style>
+</head>
+<body>
+    <header class="hero">
+        <span class="badge">⚡ WASM EDGE SERVERLESS • ZERO COLD STARTS</span>
+        <h1>Developer Cloud & AI Telemetry Engine</h1>
+        <p>Deploy sandboxed Rust components with sub-millisecond invocation, distributed bitemporal billing, and real-time observability.</p>
+    </header>
+
+    <main class="grid">
+        <article class="card">
+            <h3>API Telemetry & QPS</h3>
+            <div class="metric-value">48,250 QPS</div>
+            <p>Real-time edge telemetry with Prometheus scrapers, Tokio UDP stream collectors, and automatic tenant rate-limiting.</p>
+        </article>
+        <article class="card">
+            <h3>WASM Sandboxing</h3>
+            <div class="metric-value">&lt; 0.2ms</div>
+            <p>Wasmtime component model execution with strict instruction fuel budgets and isolated linear memory heaps.</p>
+        </article>
+        <article class="card">
+            <h3>ASC 606 Billing</h3>
+            <div class="metric-value">100% Drift-Free</div>
+            <p>Automated subscription revenue amortization, metered usage rating, and multi-currency Stripe/SEPA payouts.</p>
+        </article>
+    </main>
+
+    {dock_html}
+</body>
+</html>"##,
+        seo_head = seo_head,
+        css_tokens = css_tokens,
+        dock_html = dock_html
+    )
+}
+
+/// Renders the Professional Healthcare & Clinical Diagnostics flagship template HTML.
+#[must_use]
+pub fn render_healthcare_clinical_html(
+    suite: &TemplateSuite,
+    css_tokens: &str,
+    active_variant: &str,
+) -> String {
+    let seo = SeoMetadata::new_website(
+        &format!("{} | Healthcare System", suite.title),
+        &suite.subtitle,
+        "https://enterprise.rustnext.org/templates/healthcare-clinical",
+    );
+    let seo_head = seo.render_head_tags();
+    let dock_html = render_theme_switcher_dock(&suite.slug, active_variant);
+
+    format!(
+        r##"<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Healthcare & Clinical Diagnostics</title>
+    {seo_head}
+    <style>
+        {css_tokens}
+        * {{ box-sizing: border-box; margin: 0; padding: 0; }}
+        body {{
+            background: var(--color-bg);
+            color: #f1f5f9;
+            font-family: var(--font-body);
+            min-height: 100vh;
+            padding-bottom: 5rem;
+        }}
+        .header {{
+            background: var(--color-surface);
+            padding: 1.5rem 2rem;
+            border-bottom: 1px solid rgba(255,255,255,0.08);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }}
+        .container {{ max-width: 1200px; margin: 2rem auto; padding: 0 1.5rem; }}
+        .portal-grid {{
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 1.5rem;
+        }}
+        @media (max-width: 900px) {{ .portal-grid {{ grid-template-columns: 1fr; }} }}
+        .panel {{
+            background: var(--color-surface);
+            border: 1px solid rgba(255,255,255,0.08);
+            border-radius: var(--border-radius);
+            padding: 1.75rem;
+        }}
+        .badge-hipaa {{
+            background: rgba(6, 182, 212, 0.15);
+            color: var(--color-primary);
+            border: 1px solid var(--color-primary);
+            padding: 0.25rem 0.6rem;
+            border-radius: 9999px;
+            font-size: 0.75rem;
+            font-weight: 700;
+        }}
+        .patient-row {{
+            display: flex;
+            justify-content: space-between;
+            padding: 0.75rem 0;
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+        }}
+    </style>
+</head>
+<body>
+    <header class="header">
+        <div>
+            <h1 style="font-size: 1.25rem; font-family: var(--font-heading); color: var(--color-primary);">Apex Clinical Health & EHR</h1>
+            <span style="font-size: 0.8rem; color: #94a3b8;">FHIR R4 / HL7 Certified Healthcare Gateway</span>
+        </div>
+        <span class="badge-hipaa">🔒 HIPAA / GDPR ENCRYPTED</span>
+    </header>
+
+    <main class="container portal-grid">
+        <section class="panel">
+            <h2 style="font-size: 1.1rem; margin-bottom: 1rem; color: #fff;">Active Patient Triage & Diagnostics</h2>
+            <div class="patient-row">
+                <span>Jane Doe (DOB: 1984-06-12)</span>
+                <span style="color: var(--color-accent);">Vitals Stable • ECG Uploaded</span>
+            </div>
+            <div class="patient-row">
+                <span>Marcus Vance (DOB: 1972-11-03)</span>
+                <span style="color: var(--color-primary);">Lab Results Ready (HL7)</span>
+            </div>
+            <div class="patient-row">
+                <span>Elena Rostova (DOB: 1995-02-28)</span>
+                <span style="color: #10b981;">Discharge Approved</span>
+            </div>
+        </section>
+
+        <section class="panel">
+            <h2 style="font-size: 1.1rem; margin-bottom: 1rem; color: #fff;">On-Call Duty Matrix</h2>
+            <p style="font-size: 0.9rem; color: #94a3b8; line-height: 1.6;">
+                Emergency Ward: Dr. S. Chen<br>
+                Cardiology: Dr. R. Patel<br>
+                Radiology PACS: Dr. K. Al-Mansoor<br>
+                <br>
+                <strong style="color: var(--color-primary);">Zero-Knowledge Envelope Encrypted</strong>
+            </p>
+        </section>
+    </main>
+
+    {dock_html}
+</body>
+</html>"##,
+        seo_head = seo_head,
+        css_tokens = css_tokens,
+        dock_html = dock_html
+    )
+}
+
+/// Renders the Real Estate & Spatial Property Development flagship template HTML.
+#[must_use]
+pub fn render_real_estate_spatial_html(
+    suite: &TemplateSuite,
+    css_tokens: &str,
+    active_variant: &str,
+) -> String {
+    let seo = SeoMetadata::new_website(
+        &format!("{} | Spatial Architecture", suite.title),
+        &suite.subtitle,
+        "https://enterprise.rustnext.org/templates/real-estate-spatial",
+    );
+    let seo_head = seo.render_head_tags();
+    let dock_html = render_theme_switcher_dock(&suite.slug, active_variant);
+
+    format!(
+        r##"<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Real Estate & Spatial Property</title>
+    {seo_head}
+    <style>
+        {css_tokens}
+        * {{ box-sizing: border-box; margin: 0; padding: 0; }}
+        body {{
+            background: var(--color-bg);
+            color: #fff;
+            font-family: var(--font-body);
+            min-height: 100vh;
+            padding-bottom: 5rem;
+        }}
+        .hero {{
+            padding: 5rem 2rem;
+            text-align: center;
+            max-width: 1000px;
+            margin: 0 auto;
+        }}
+        .hero h1 {{
+            font-family: var(--font-heading);
+            font-size: clamp(2rem, 4vw, 3.5rem);
+            color: var(--color-primary);
+            margin-bottom: 1rem;
+        }}
+        .property-grid {{
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
+            gap: 2rem;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 1.5rem;
+        }}
+        .property-card {{
+            background: var(--color-surface);
+            border: 1px solid rgba(255,255,255,0.08);
+            border-radius: var(--border-radius);
+            overflow: hidden;
+        }}
+        .property-image {{
+            height: 220px;
+            background: rgba(255,255,255,0.04);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #64748b;
+            font-family: var(--font-mono);
+        }}
+        .property-body {{ padding: 1.5rem; }}
+        .property-price {{ font-size: 1.5rem; font-weight: 800; color: var(--color-primary); margin-top: 0.5rem; }}
+    </style>
+</head>
+<body>
+    <header class="hero">
+        <h1>Bespoke Spatial Residences & Commercial Portfolios</h1>
+        <p style="color: #94a3b8; font-size: 1.1rem; line-height: 1.6;">
+            Interactive 3D architectural floorplans, bitemporal lease escrow management, and automated utility split billing.
+        </p>
+    </header>
+
+    <main class="property-grid">
+        <article class="property-card">
+            <div class="property-image">[ 3D Spatial Walkthrough Engine ]</div>
+            <div class="property-body">
+                <h3>The Obsidian Penthouse</h3>
+                <p style="color: #94a3b8; font-size: 0.9rem;">Zurich Financial District • 4 Bed / 5 Bath</p>
+                <div class="property-price">$14,500,000 USD</div>
+            </div>
+        </article>
+
+        <article class="property-card">
+            <div class="property-image">[ CAD Architectural Blueprint ]</div>
+            <div class="property-body">
+                <h3>Aura Commercial Tech Plaza</h3>
+                <p style="color: #94a3b8; font-size: 0.9rem;">Silicon Valley Campus • 85,000 sq ft</p>
+                <div class="property-price">$62,000,000 USD</div>
+            </div>
+        </article>
+    </main>
+
+    {dock_html}
+</body>
+</html>"##,
+        seo_head = seo_head,
+        css_tokens = css_tokens,
+        dock_html = dock_html
+    )
+}
+
+/// Renders the Haute Cuisine, Dining & Hospitality flagship template HTML.
+#[must_use]
+pub fn render_gastronomy_hospitality_html(
+    suite: &TemplateSuite,
+    css_tokens: &str,
+    active_variant: &str,
+) -> String {
+    let seo = SeoMetadata::new_website(
+        &format!("{} | Culinary Experience", suite.title),
+        &suite.subtitle,
+        "https://enterprise.rustnext.org/templates/gastronomy-hospitality",
+    );
+    let seo_head = seo.render_head_tags();
+    let dock_html = render_theme_switcher_dock(&suite.slug, active_variant);
+
+    format!(
+        r##"<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Haute Cuisine & Dining</title>
+    {seo_head}
+    <style>
+        {css_tokens}
+        * {{ box-sizing: border-box; margin: 0; padding: 0; }}
+        body {{
+            background: var(--color-bg);
+            color: #fff;
+            font-family: var(--font-body);
+            min-height: 100vh;
+            padding-bottom: 5rem;
+        }}
+        .header {{
+            padding: 4rem 2rem;
+            text-align: center;
+            max-width: 900px;
+            margin: 0 auto;
+        }}
+        .header h1 {{
+            font-size: clamp(2.2rem, 4.5vw, 3.8rem);
+            font-family: var(--font-heading);
+            color: var(--color-primary);
+            margin-bottom: 0.75rem;
+        }}
+        .menu-grid {{
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+            gap: 1.5rem;
+            max-width: 1100px;
+            margin: 0 auto;
+            padding: 0 1.5rem;
+        }}
+        .menu-card {{
+            background: var(--color-surface);
+            border: 1px solid rgba(255,255,255,0.08);
+            border-radius: var(--border-radius);
+            padding: 1.5rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: baseline;
+        }}
+        .dish-price {{ font-size: 1.25rem; font-weight: 700; color: var(--color-accent); }}
+    </style>
+</head>
+<body>
+    <header class="header">
+        <h1>L'Étoile Gastronomie</h1>
+        <p style="color: #94a3b8; font-size: 1.1rem;">
+            Real-time kitchen display system (KDS), microsecond table reservation locking, and recipe yield costing.
+        </p>
+    </header>
+
+    <main class="menu-grid">
+        <article class="menu-card">
+            <div>
+                <h3>Wild Truffle Agnolotti</h3>
+                <p style="font-size: 0.85rem; color: #94a3b8;">Aged Parmigiano Reggiano, Brown Butter</p>
+            </div>
+            <div class="dish-price">$38.00</div>
+        </article>
+        <article class="menu-card">
+            <div>
+                <h3>Dry-Aged Wagyu A5 Ribeye</h3>
+                <p style="font-size: 0.85rem; color: #94a3b8;">Charred Allium, Bone Marrow Glaze</p>
+            </div>
+            <div class="dish-price">$115.00</div>
+        </article>
+        <article class="menu-card">
+            <div>
+                <h3>Smoked Madagascan Vanilla Soufflé</h3>
+                <p style="font-size: 0.85rem; color: #94a3b8;">Single-Origin Dark Chocolate Cremeux</p>
+            </div>
+            <div class="dish-price">$24.00</div>
+        </article>
+    </main>
+
+    {dock_html}
+</body>
+</html>"##,
+        seo_head = seo_head,
+        css_tokens = css_tokens,
+        dock_html = dock_html
+    )
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
 
     #[test]
-    fn test_list_all_6_template_suites() {
+    fn test_list_all_10_template_suites() {
         let suites = list_template_suites();
-        assert_eq!(suites.len(), 6);
+        assert_eq!(suites.len(), 10);
 
         let slugs: Vec<&str> = suites.iter().map(|s| s.slug.as_str()).collect();
         assert!(slugs.contains(&"svod-streaming"));
@@ -1942,10 +2552,14 @@ mod tests {
         assert!(slugs.contains(&"b2b-industrial"));
         assert!(slugs.contains(&"b2c-retail"));
         assert!(slugs.contains(&"trading-exchange"));
+        assert!(slugs.contains(&"saas-cloud"));
+        assert!(slugs.contains(&"healthcare-clinical"));
+        assert!(slugs.contains(&"real-estate-spatial"));
+        assert!(slugs.contains(&"gastronomy-hospitality"));
     }
 
     #[test]
-    fn test_render_all_6_template_suites_html() {
+    fn test_render_all_10_template_suites_html() {
         let suites = list_template_suites();
         for s in suites {
             let html = render_template_html(&s.slug).expect("Template rendering must succeed");
@@ -1960,21 +2574,16 @@ mod tests {
     }
 
     #[test]
-    fn test_render_30_aesthetic_permutations() {
+    fn test_render_100_aesthetic_permutations() {
         let suites = list_template_suites();
-        let variants = [
-            "awwwards",
-            "cyberpunk",
-            "vaporwave",
-            "retrowave",
-            "neonwave",
-            "tasteful",
-        ];
-        for s in suites {
-            for v in variants {
-                let html = render_template_html_with_variant(&s.slug, Some(v))
-                    .expect("Each domain and variant combination must render");
-                assert!(html.contains(v) || html.contains("theme-dock-btn"));
+        let archetypes = ThemeVariant::all_primary();
+        assert_eq!(archetypes.len(), 10);
+
+        for s in &suites {
+            for v in archetypes {
+                let html = render_template_html_with_variant(&s.slug, Some(v.slug()))
+                    .expect("Each domain and archetype combination must render");
+                assert!(html.contains("theme-dock-btn"));
                 assert!(html.contains("application/ld+json"));
             }
         }
@@ -1986,7 +2595,7 @@ mod tests {
         assert!(portal_html.contains("Universal Enterprise Template Suites"));
         assert!(portal_html.contains("svod-streaming"));
         assert!(portal_html.contains("trading-exchange"));
-        assert!(portal_html.contains("Cyberpunk"));
-        assert!(portal_html.contains("Vaporwave"));
+        assert!(portal_html.contains("saas-cloud"));
+        assert!(portal_html.contains("healthcare-clinical"));
     }
 }

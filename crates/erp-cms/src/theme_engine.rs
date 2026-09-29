@@ -103,11 +103,20 @@ impl DesignTokens {
     }
 }
 
-/// Aesthetic Theme Archetypes spanning the 5 design philosophies.
+/// Aesthetic Theme Archetypes spanning the 10 core UI/UX design philosophies.
 #[derive(Clone, Copy, Debug, Serialize, Deserialize, PartialEq, Eq, Hash)]
 pub enum ThemeVariant {
-    AwwwardsEditorial,
-    CyberpunkHud,
+    MinimalistSwiss,
+    BentoModern,
+    NeoBrutalist,
+    EditorialLuxury,
+    CyberpunkGlass,
+    SplitScreenInteractive,
+    HighDensityCockpit,
+    PlayfulMicroInteractive,
+    StorytellingScrollytelling,
+    Cinematic3dShowroom,
+    // Legacy & alternative aesthetic aliases
     VaporwaveGlass,
     RetroWave80s,
     NeonWave,
@@ -115,16 +124,42 @@ pub enum ThemeVariant {
 }
 
 impl ThemeVariant {
-    /// Parses a string query parameter into a `ThemeVariant`, defaulting to `AwwwardsEditorial`.
+    /// Returns the comprehensive list of the 10 primary UI/UX archetypes.
+    #[must_use]
+    pub fn all_primary() -> &'static [ThemeVariant] {
+        &[
+            Self::MinimalistSwiss,
+            Self::BentoModern,
+            Self::NeoBrutalist,
+            Self::EditorialLuxury,
+            Self::CyberpunkGlass,
+            Self::SplitScreenInteractive,
+            Self::HighDensityCockpit,
+            Self::PlayfulMicroInteractive,
+            Self::StorytellingScrollytelling,
+            Self::Cinematic3dShowroom,
+        ]
+    }
+
+    /// Parses a string query parameter into a `ThemeVariant`, defaulting to `EditorialLuxury`.
     #[must_use]
     pub fn parse(s: &str) -> Self {
         match s.to_lowercase().as_str() {
-            "cyberpunk" | "cyber" | "tactical" => Self::CyberpunkHud,
+            "swiss" | "minimalist-swiss" | "bauhaus" => Self::MinimalistSwiss,
+            "bento" | "bento-grid" | "linear" => Self::BentoModern,
+            "neobrutalist" | "brutalist" | "contrast" => Self::NeoBrutalist,
+            "editorial" | "luxury" | "awwwards" | "serif" => Self::EditorialLuxury,
+            "cyberpunk" | "cyber" | "tactical" | "hud" => Self::CyberpunkGlass,
+            "split-screen" | "splitscreen" | "dual" => Self::SplitScreenInteractive,
+            "cockpit" | "data-rich" | "dense" => Self::HighDensityCockpit,
+            "playful" | "pastel" | "soft" => Self::PlayfulMicroInteractive,
+            "scrollytelling" | "journey" | "timeline" => Self::StorytellingScrollytelling,
+            "cinematic-3d" | "canvas-3d" | "3d" => Self::Cinematic3dShowroom,
             "vaporwave" | "glass" | "glassmorphism" => Self::VaporwaveGlass,
             "retrowave" | "retro" | "outrun" | "80s" => Self::RetroWave80s,
             "neonwave" | "neon" | "synthwave" => Self::NeonWave,
             "tasteful" | "minimal" | "emil" => Self::TastefulMinimal,
-            _ => Self::AwwwardsEditorial,
+            _ => Self::EditorialLuxury,
         }
     }
 
@@ -132,8 +167,16 @@ impl ThemeVariant {
     #[must_use]
     pub fn slug(&self) -> &'static str {
         match self {
-            Self::AwwwardsEditorial => "awwwards",
-            Self::CyberpunkHud => "cyberpunk",
+            Self::MinimalistSwiss => "swiss",
+            Self::BentoModern => "bento",
+            Self::NeoBrutalist => "neobrutalist",
+            Self::EditorialLuxury => "editorial",
+            Self::CyberpunkGlass => "cyberpunk",
+            Self::SplitScreenInteractive => "split-screen",
+            Self::HighDensityCockpit => "cockpit",
+            Self::PlayfulMicroInteractive => "playful",
+            Self::StorytellingScrollytelling => "scrollytelling",
+            Self::Cinematic3dShowroom => "cinematic-3d",
             Self::VaporwaveGlass => "vaporwave",
             Self::RetroWave80s => "retrowave",
             Self::NeonWave => "neonwave",
@@ -145,8 +188,16 @@ impl ThemeVariant {
     #[must_use]
     pub fn label(&self) -> &'static str {
         match self {
-            Self::AwwwardsEditorial => "Awwwards Editorial",
-            Self::CyberpunkHud => "Cyberpunk Tactical HUD",
+            Self::MinimalistSwiss => "01 Minimalist Swiss / Bauhaus",
+            Self::BentoModern => "02 Bento Grid / Linear Modern",
+            Self::NeoBrutalist => "03 Neo-Brutalist / High-Contrast",
+            Self::EditorialLuxury => "04 Editorial Luxury / Classical Serif",
+            Self::CyberpunkGlass => "05 Cyberpunk / Dark Glassmorphism",
+            Self::SplitScreenInteractive => "06 Interactive Split-Screen",
+            Self::HighDensityCockpit => "07 High-Density Cockpit / Data-Rich",
+            Self::PlayfulMicroInteractive => "08 Playful / Soft Micro-Interactions",
+            Self::StorytellingScrollytelling => "09 Storytelling Scrollytelling Journey",
+            Self::Cinematic3dShowroom => "10 Cinematic Video & Canvas 3D Showroom",
             Self::VaporwaveGlass => "Vaporwave Glassmorphic",
             Self::RetroWave80s => "80s Retro Wave / Outrun",
             Self::NeonWave => "Neon Wave High-Luminance",
@@ -158,29 +209,125 @@ impl ThemeVariant {
     #[must_use]
     pub fn tokens(&self) -> DesignTokens {
         match self {
-            Self::AwwwardsEditorial => DesignTokens {
-                color_primary: "#ffffff".into(),
-                color_secondary: "#888888".into(),
+            Self::MinimalistSwiss => DesignTokens {
+                color_primary: "#111111".into(),
+                color_secondary: "#555555".into(),
+                color_background: "#fbfbfb".into(),
+                color_surface: "#ffffff".into(),
+                color_accent: "#e11d48".into(),
+                font_heading: "'Cabinet Grotesk', 'Helvetica Neue', sans-serif".into(),
+                font_body: "'Inter', sans-serif".into(),
+                font_mono: "'Space Mono', monospace".into(),
+                border_radius: "0px".into(),
+                noise_opacity: 0.0,
+            },
+            Self::BentoModern => DesignTokens {
+                color_primary: "#38bdf8".into(),
+                color_secondary: "#818cf8".into(),
+                color_background: "#030712".into(),
+                color_surface: "#0f172a".into(),
+                color_accent: "#c084fc".into(),
+                font_heading: "'Inter', sans-serif".into(),
+                font_body: "'Inter', sans-serif".into(),
+                font_mono: "'JetBrains Mono', monospace".into(),
+                border_radius: "1.25rem".into(),
+                noise_opacity: 0.02,
+            },
+            Self::NeoBrutalist => DesignTokens {
+                color_primary: "#ffe600".into(),
+                color_secondary: "#ff4365".into(),
+                color_background: "#f4f0ea".into(),
+                color_surface: "#ffffff".into(),
+                color_accent: "#00d26a".into(),
+                font_heading: "'Syne', 'Clash Display', sans-serif".into(),
+                font_body: "'Space Grotesk', sans-serif".into(),
+                font_mono: "'Space Mono', monospace".into(),
+                border_radius: "0.25rem".into(),
+                noise_opacity: 0.015,
+            },
+            Self::EditorialLuxury => DesignTokens {
+                color_primary: "#d4af37".into(),
+                color_secondary: "#a38b3c".into(),
                 color_background: "#08080a".into(),
                 color_surface: "#121215".into(),
-                color_accent: "#d4af37".into(),
-                font_heading: "'Syne', sans-serif".into(),
+                color_accent: "#ffffff".into(),
+                font_heading: "'Playfair Display', 'Cinzel', serif".into(),
                 font_body: "'Outfit', sans-serif".into(),
                 font_mono: "'Space Mono', monospace".into(),
-                border_radius: "1.25rem".into(),
+                border_radius: "0.5rem".into(),
                 noise_opacity: 0.035,
             },
-            Self::CyberpunkHud => DesignTokens {
+            Self::CyberpunkGlass => DesignTokens {
                 color_primary: "#fcee0a".into(),
                 color_secondary: "#ff003c".into(),
                 color_background: "#050508".into(),
-                color_surface: "#12131a".into(),
+                color_surface: "rgba(18, 19, 26, 0.75)".into(),
                 color_accent: "#00f0ff".into(),
-                font_heading: "'Oxanium', sans-serif".into(),
+                font_heading: "'Oxanium', 'Orbitron', sans-serif".into(),
                 font_body: "'Share Tech Mono', monospace".into(),
                 font_mono: "'Space Mono', monospace".into(),
                 border_radius: "0.25rem".into(),
                 noise_opacity: 0.05,
+            },
+            Self::SplitScreenInteractive => DesignTokens {
+                color_primary: "#6366f1".into(),
+                color_secondary: "#4f46e5".into(),
+                color_background: "#0a0a0f".into(),
+                color_surface: "#16161f".into(),
+                color_accent: "#10b981".into(),
+                font_heading: "'Syne', sans-serif".into(),
+                font_body: "'Plus Jakarta Sans', sans-serif".into(),
+                font_mono: "'JetBrains Mono', monospace".into(),
+                border_radius: "1.0rem".into(),
+                noise_opacity: 0.025,
+            },
+            Self::HighDensityCockpit => DesignTokens {
+                color_primary: "#22c55e".into(),
+                color_secondary: "#16a34a".into(),
+                color_background: "#06090e".into(),
+                color_surface: "#0d131d".into(),
+                color_accent: "#eab308".into(),
+                font_heading: "'JetBrains Mono', monospace".into(),
+                font_body: "'Inter', sans-serif".into(),
+                font_mono: "'JetBrains Mono', monospace".into(),
+                border_radius: "0.15rem".into(),
+                noise_opacity: 0.01,
+            },
+            Self::PlayfulMicroInteractive => DesignTokens {
+                color_primary: "#f472b6".into(),
+                color_secondary: "#fb923c".into(),
+                color_background: "#faf5ff".into(),
+                color_surface: "#ffffff".into(),
+                color_accent: "#a78bfa".into(),
+                font_heading: "'Fredoka', 'Quicksand', sans-serif".into(),
+                font_body: "'Nunito', sans-serif".into(),
+                font_mono: "'Space Mono', monospace".into(),
+                border_radius: "2.0rem".into(),
+                noise_opacity: 0.01,
+            },
+            Self::StorytellingScrollytelling => DesignTokens {
+                color_primary: "#fbbf24".into(),
+                color_secondary: "#d97706".into(),
+                color_background: "#0b0c10".into(),
+                color_surface: "#1f2833".into(),
+                color_accent: "#45a29e".into(),
+                font_heading: "'Cabinet Grotesk', 'Syne', sans-serif".into(),
+                font_body: "'Inter', sans-serif".into(),
+                font_mono: "'Space Mono', monospace".into(),
+                border_radius: "1.0rem".into(),
+                noise_opacity: 0.03,
+            },
+            Self::Cinematic3dShowroom => DesignTokens {
+                color_primary: "#00f0ff".into(),
+                color_secondary: "#7000ff".into(),
+                color_background: "#020204".into(),
+                color_surface: "#08090f".into(),
+                color_accent: "#ff007f".into(),
+                font_heading: "'Syncopate', 'Syne', sans-serif".into(),
+                font_body: "'Outfit', sans-serif".into(),
+                font_mono: "'JetBrains Mono', monospace".into(),
+                border_radius: "0.75rem".into(),
+                noise_opacity: 0.04,
             },
             Self::VaporwaveGlass => DesignTokens {
                 color_primary: "#ffafef".into(),
