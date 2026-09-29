@@ -20,6 +20,8 @@ members = [
     "crates/desk-app",
     "crates/desk-components",
     "crates/erp-software",
+    "crates/erpnext-plugin-sdk",
+    "crates/erp-stealth-scraper",
     "crates/rbench",
 ]
 resolver = "3"
@@ -46,9 +48,11 @@ erp-lending = { path = "crates/erp-lending" }
 erp-manufacturing = { path = "crates/erp-manufacturing" }
 erp-ppm = { path = "crates/erp-ppm" }
 erp-software = { path = "crates/erp-software" }
+erp-stealth-scraper = { path = "crates/erp-stealth-scraper" }
 erp-support = { path = "crates/erp-support" }
 erp-trade = { path = "crates/erp-trade" }
 erp-wms = { path = "crates/erp-wms" }
+erpnext-plugin-sdk = { path = "crates/erpnext-plugin-sdk" }
 frappe-framework = { path = "crates/frappe-framework" }
 frappe-meta = { path = "crates/frappe-meta" }
 frappe-net = { path = "crates/frappe-net" }

@@ -1905,6 +1905,21 @@ dependencies = [
 ]
 
 [[package]]
+name = "erp-stealth-scraper"
+version = "0.2.0"
+dependencies = [
+ "chrono",
+ "compact_str",
+ "regex",
+ "reqwest",
+ "serde",
+ "serde_json",
+ "thiserror 2.0.21",
+ "tokio",
+ "tracing",
+]
+
+[[package]]
 name = "erp-support"
 version = "0.2.0"
 dependencies = [
@@ -1944,6 +1959,17 @@ dependencies = [
  "frappe-meta",
  "rust_decimal",
  "rust_decimal_macros",
+ "serde",
+ "serde_json",
+ "thiserror 2.0.21",
+]
+
+[[package]]
+name = "erpnext-plugin-sdk"
+version = "0.2.0"
+dependencies = [
+ "chrono",
+ "compact_str",
  "serde",
  "serde_json",
  "thiserror 2.0.21",

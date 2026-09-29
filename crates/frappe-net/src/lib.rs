@@ -1,3 +1,4 @@
+pub mod ai_oauth;
 pub mod cache;
 pub mod cli;
 pub mod live;
@@ -10,6 +11,9 @@ pub mod server;
 pub mod tenant;
 pub mod v2_routes;
 
+pub use ai_oauth::{
+    AiOAuthService, Claims, OAuthError, TokenRequest, TokenResponse, oauth_token_handler,
+};
 pub use cache::{CachedFiscalYear, CachedPricingRule, TenantMemoryCache};
 pub use cli::{BenchmarkArgs, Cli, Commands, MigrateArgs, StartArgs, TenantArgs, TenantCommands};
 pub use live::{live_query, live_ws_handler};

@@ -775,6 +775,15 @@ pub fn configure_app(
             "/api/v1/analytics/summary",
             web::get().to(get_analytics_summary_handler),
         )
+        // Universal AI Agent OAuth 2.0 Token Server
+        .route(
+            "/api/v1/oauth/token",
+            web::post().to(crate::ai_oauth::oauth_token_handler),
+        )
+        .route(
+            "/oauth/token",
+            web::post().to(crate::ai_oauth::oauth_token_handler),
+        )
         // V2 Authentication, RPC System Methods, Webhooks & Storage
         .route("/api/v2/method/login", web::post().to(login_handler))
         .route("/api/v2/method/logout", web::post().to(logout_handler))

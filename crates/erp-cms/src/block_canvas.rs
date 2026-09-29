@@ -209,6 +209,75 @@ fn html_escape(input: &str) -> String {
     escaped
 }
 
+/// Dioxus / WASM Canvas Visual Node Tree element for zero-JS interactive builders.
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+pub struct VisualNode {
+    pub id: CompactString,
+    pub tag: CompactString,
+    pub classes: CompactString,
+    pub content: CompactString,
+    pub children: Vec<VisualNode>,
+    pub binding: Option<CompactString>,
+}
+
+impl VisualNode {
+    /// Constructs a container node.
+    #[must_use]
+    pub fn container(id: &str, classes: &str, children: Vec<VisualNode>) -> Self {
+        Self {
+            id: id.into(),
+            tag: "div".into(),
+            classes: classes.into(),
+            content: "".into(),
+            children,
+            binding: None,
+        }
+    }
+
+    /// Constructs a leaf text node with optional data binding.
+    #[must_use]
+    pub fn text(id: &str, tag: &str, content: &str, classes: &str, binding: Option<&str>) -> Self {
+        Self {
+            id: id.into(),
+            tag: tag.into(),
+            classes: classes.into(),
+            content: content.into(),
+            children: vec![],
+            binding: binding.map(Into::into),
+        }
+    }
+
+    /// Renders HTML representation of the node tree.
+    #[must_use]
+    pub fn render_html(&self) -> String {
+        let mut out = String::new();
+        out.push('<');
+        out.push_str(&self.tag);
+        if !self.classes.is_empty() {
+            out.push_str(" class=\"");
+            out.push_str(&html_escape(&self.classes));
+            out.push('"');
+        }
+        out.push_str(" id=\"");
+        out.push_str(&html_escape(&self.id));
+        out.push('"');
+        out.push('>');
+
+        if !self.content.is_empty() {
+            out.push_str(&html_escape(&self.content));
+        }
+
+        for child in &self.children {
+            out.push_str(&child.render_html());
+        }
+
+        out.push_str("</");
+        out.push_str(&self.tag);
+        out.push('>');
+        out
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
