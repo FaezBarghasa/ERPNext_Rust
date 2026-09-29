@@ -1,0 +1,22 @@
+{
+  "name": "@rustnext/sdk",
+  "version": "0.2.0",
+  "description": "Official TypeScript SDK for RustNext / Frappe-Rust Enterprise ERP",
+  "main": "dist/client.js",
+  "types": "dist/client.d.ts",
+  "scripts": {
+    "build": "tsc"
+  },
+  "keywords": [
+    "rustnext",
+    "frappe",
+    "erpnext",
+    "sdk",
+    "typescript"
+  ],
+  "author": "Faez Barghasa",
+  "license": "MIT",
+  "devDependencies": {
+    "typescript": "^5.0.0"
+  }
+}
