@@ -2097,6 +2097,7 @@ dependencies = [
  "frappe-storage",
  "hex",
  "hmac 0.13.0",
+ "reqwest",
  "rhai",
  "rust_decimal",
  "serde",
@@ -4373,15 +4374,21 @@ name = "rbench"
 version = "0.2.0"
 dependencies = [
  "chrono",
+ "erp-accounting",
+ "erp-cms",
+ "erp-ppm",
  "frappe-framework",
  "frappe-meta",
  "frappe-net",
  "frappe-storage",
  "futures-util",
+ "hex",
  "serde",
  "serde_json",
+ "sha2 0.11.0",
  "surrealdb",
  "tokio",
+ "zstd",
 ]
 
 [[package]]

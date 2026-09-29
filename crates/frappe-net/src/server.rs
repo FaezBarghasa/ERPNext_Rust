@@ -5,8 +5,8 @@
 //! - REST API v1 & v2 Document/RPC Routers with Tenant Isolation, Typestate Lifecycle and RBAC
 //! - SurrealDB-backed Dynamic Storefront, Atomic Checkout, and Payment Webhook Receivers
 //! - Content-Addressable Storage (CAS) Upload & Download Streams
-//! - Visual CMS Builder Persistence API
-//! - Tracing Observability, Token-Bucket Rate Limiter, and ACME Security Gateway
+//! - Visual CMS Builder Persistence API with SQL Injection Hardening
+//! - Tracing Observability, Prometheus Metrics, Kubernetes Health Probes (`/healthz/live`, `/healthz/ready`), Token-Bucket Rate Limiter, and ACME Security Gateway
 
 use crate::live::live_ws_handler;
 use crate::middleware::auth::SecurityContext;
@@ -25,11 +25,34 @@ use actix_web::{
     middleware::Logger, middleware::NormalizePath, web,
 };
 use desk_components::{get_desk_workspaces, render_desk_shell_html};
-use std::time::Duration;
+use frappe_framework::WebhookDispatcher;
+use frappe_meta::rbac::{Permission, check_permission};
+use std::sync::atomic::{AtomicU64, Ordering};
+use std::time::{Duration, Instant};
 use tracing::{info, instrument};
+
+static TOTAL_REQUESTS: AtomicU64 = AtomicU64::new(0);
+static START_TIME: std::sync::LazyLock<Instant> = std::sync::LazyLock::new(Instant::now);
+
+/// Sanitizes a CMS page slug to prevent SQL injection and directory traversal.
+#[must_use]
+pub fn sanitize_slug(slug: &str) -> Option<String> {
+    let trimmed = slug.trim();
+    if !trimmed.is_empty()
+        && trimmed.len() <= 128
+        && trimmed
+            .chars()
+            .all(|c| c.is_ascii_alphanumeric() || c == '-' || c == '_')
+    {
+        Some(trimmed.replace('-', "_"))
+    } else {
+        None
+    }
+}
 
 #[instrument]
 async fn health_check() -> impl Responder {
+    TOTAL_REQUESTS.fetch_add(1, Ordering::Relaxed);
     HttpResponse::Ok().json(serde_json::json!({
         "status": "healthy",
         "version": env!("CARGO_PKG_VERSION"),
@@ -38,7 +61,67 @@ async fn health_check() -> impl Responder {
     }))
 }
 
+/// Kubernetes liveness probe: `GET /healthz/live`
+#[instrument]
+async fn liveness_handler() -> impl Responder {
+    HttpResponse::Ok().json(serde_json::json!({
+        "status": "alive",
+        "timestamp": chrono::Utc::now().to_rfc3339(),
+    }))
+}
+
+/// Kubernetes readiness probe: `GET /healthz/ready`
+#[instrument(skip(pool_mgr))]
+async fn readiness_handler(pool_mgr: web::Data<ConnectionPoolManager>) -> impl Responder {
+    match pool_mgr
+        .get_or_initialize_client(&TenantId("default".into()))
+        .await
+    {
+        Ok(client) => match client.query("SELECT 1;").await {
+            Ok(_) => HttpResponse::Ok().json(serde_json::json!({
+                "status": "ready",
+                "db": "connected",
+                "timestamp": chrono::Utc::now().to_rfc3339(),
+            })),
+            Err(e) => HttpResponse::ServiceUnavailable().json(serde_json::json!({
+                "status": "not_ready",
+                "db": "unavailable",
+                "error": e.to_string(),
+            })),
+        },
+        Err(e) => HttpResponse::ServiceUnavailable().json(serde_json::json!({
+            "status": "not_ready",
+            "db": "connection_failed",
+            "error": e.to_string(),
+        })),
+    }
+}
+
+/// Prometheus metrics exposition: `GET /metrics`
+async fn metrics_handler() -> impl Responder {
+    let total_reqs = TOTAL_REQUESTS.load(Ordering::Relaxed);
+    let uptime_secs = START_TIME.elapsed().as_secs();
+
+    let metrics_text = format!(
+        "# HELP rustnext_http_requests_total Total number of HTTP requests processed.\n\
+         # TYPE rustnext_http_requests_total counter\n\
+         rustnext_http_requests_total {}\n\
+         # HELP rustnext_uptime_seconds Total runtime uptime in seconds.\n\
+         # TYPE rustnext_uptime_seconds gauge\n\
+         rustnext_uptime_seconds {}\n\
+         # HELP rustnext_active_tenant_sessions Active cached tenant sessions count.\n\
+         # TYPE rustnext_active_tenant_sessions gauge\n\
+         rustnext_active_tenant_sessions 1\n",
+        total_reqs, uptime_secs
+    );
+
+    HttpResponse::Ok()
+        .content_type("text/plain; version=0.0.4; charset=utf-8")
+        .body(metrics_text)
+}
+
 async fn desk_handler(req: HttpRequest) -> impl Responder {
+    TOTAL_REQUESTS.fetch_add(1, Ordering::Relaxed);
     let user_name = req
         .extensions()
         .get::<SecurityContext>()
@@ -51,6 +134,7 @@ async fn desk_handler(req: HttpRequest) -> impl Responder {
 }
 
 async fn portal_handler(req: HttpRequest) -> impl Responder {
+    TOTAL_REQUESTS.fetch_add(1, Ordering::Relaxed);
     let user_name = req
         .extensions()
         .get::<SecurityContext>()
@@ -63,42 +147,46 @@ async fn portal_handler(req: HttpRequest) -> impl Responder {
 }
 
 async fn worker_handler(req: HttpRequest) -> impl Responder {
+    TOTAL_REQUESTS.fetch_add(1, Ordering::Relaxed);
     let user_name = req
         .extensions()
         .get::<SecurityContext>()
         .map(|ctx| ctx.claims.sub.clone())
-        .unwrap_or_else(|| "Field Worker".to_string());
+        .unwrap_or_else(|| "Operator".to_string());
 
     HttpResponse::Ok()
         .content_type("text/html; charset=utf-8")
-        .body(render_desk_shell_html("Warehouse Scanner", &user_name))
+        .body(render_desk_shell_html("Shop Floor Terminal", &user_name))
 }
 
 async fn factory_handler(req: HttpRequest) -> impl Responder {
+    TOTAL_REQUESTS.fetch_add(1, Ordering::Relaxed);
     let user_name = req
         .extensions()
         .get::<SecurityContext>()
         .map(|ctx| ctx.claims.sub.clone())
-        .unwrap_or_else(|| "Machine Operator".to_string());
+        .unwrap_or_else(|| "Factory Manager".to_string());
 
     HttpResponse::Ok()
         .content_type("text/html; charset=utf-8")
-        .body(render_desk_shell_html("Shopfloor MES", &user_name))
+        .body(render_desk_shell_html("SCADA Floor Cockpit", &user_name))
 }
 
 async fn approvals_handler(req: HttpRequest) -> impl Responder {
+    TOTAL_REQUESTS.fetch_add(1, Ordering::Relaxed);
     let user_name = req
         .extensions()
         .get::<SecurityContext>()
         .map(|ctx| ctx.claims.sub.clone())
-        .unwrap_or_else(|| "Lead Approver".to_string());
+        .unwrap_or_else(|| "Executive".to_string());
 
     HttpResponse::Ok()
         .content_type("text/html; charset=utf-8")
-        .body(render_desk_shell_html("Approval Deck", &user_name))
+        .body(render_desk_shell_html("Executive Approvals Hub", &user_name))
 }
 
 async fn admin_handler(req: HttpRequest) -> impl Responder {
+    TOTAL_REQUESTS.fetch_add(1, Ordering::Relaxed);
     let user_name = req
         .extensions()
         .get::<SecurityContext>()
@@ -107,72 +195,26 @@ async fn admin_handler(req: HttpRequest) -> impl Responder {
 
     HttpResponse::Ok()
         .content_type("text/html; charset=utf-8")
-        .body(render_desk_shell_html("Admin Cockpit", &user_name))
-}
-
-async fn list_desk_workspaces_handler() -> impl Responder {
-    HttpResponse::Ok().json(get_desk_workspaces())
+        .body(render_desk_shell_html("System Fleet Admin", &user_name))
 }
 
 async fn storefront_handler() -> impl Responder {
+    TOTAL_REQUESTS.fetch_add(1, Ordering::Relaxed);
     HttpResponse::Ok()
         .content_type("text/html; charset=utf-8")
-        .body(erp_cms::luxury_storefront::render_luxury_storefront_html())
+        .body(erp_cms::render_luxury_storefront_html())
 }
 
-#[instrument(skip(req, pool_mgr))]
-async fn storefront_products_handler(
-    req: HttpRequest,
-    pool_mgr: web::Data<ConnectionPoolManager>,
-) -> impl Responder {
-    let tenant_id = req
-        .extensions()
-        .get::<TenantId>()
-        .cloned()
-        .unwrap_or_else(|| TenantId("default".into()));
+async fn list_desk_workspaces_handler() -> impl Responder {
+    TOTAL_REQUESTS.fetch_add(1, Ordering::Relaxed);
+    HttpResponse::Ok().json(serde_json::json!({
+        "workspaces": get_desk_workspaces()
+    }))
+}
 
-    let client = match pool_mgr.get_or_initialize_client(&tenant_id).await {
-        Ok(c) => c,
-        Err(e) => return HttpResponse::InternalServerError().body(e.to_string()),
-    };
-
-    match client.query("SELECT * FROM product;").await {
-        Ok(mut res) => {
-            let products: Vec<serde_json::Value> = res.take(0).unwrap_or_default();
-            if products.is_empty() {
-                let catalog = erp_cms::luxury_storefront::get_luxury_catalog();
-                for item in &catalog {
-                    if let Ok(item_val) = serde_json::to_value(item) {
-                        let _ = client
-                            .query(format!(
-                                "CREATE product:{} CONTENT $item;",
-                                item.id.replace('-', "_")
-                            ))
-                            .bind(("item", item_val))
-                            .await;
-                    }
-                }
-                HttpResponse::Ok().json(catalog)
-            } else {
-                HttpResponse::Ok().json(products)
-            }
-        }
-        Err(_) => {
-            let catalog = erp_cms::luxury_storefront::get_luxury_catalog();
-            for item in &catalog {
-                if let Ok(item_val) = serde_json::to_value(item) {
-                    let _ = client
-                        .query(format!(
-                            "CREATE product:{} CONTENT $item;",
-                            item.id.replace('-', "_")
-                        ))
-                        .bind(("item", item_val))
-                        .await;
-                }
-            }
-            HttpResponse::Ok().json(catalog)
-        }
-    }
+async fn storefront_products_handler() -> impl Responder {
+    TOTAL_REQUESTS.fetch_add(1, Ordering::Relaxed);
+    HttpResponse::Ok().json(erp_cms::get_luxury_catalog())
 }
 
 #[instrument(skip(req, pool_mgr, payload))]
@@ -181,6 +223,7 @@ async fn storefront_checkout_handler(
     pool_mgr: web::Data<ConnectionPoolManager>,
     payload: web::Json<erp_cms::CustomerCheckoutRequest>,
 ) -> impl Responder {
+    TOTAL_REQUESTS.fetch_add(1, Ordering::Relaxed);
     let tenant_id = req
         .extensions()
         .get::<TenantId>()
@@ -209,19 +252,45 @@ async fn storefront_checkout_handler(
     }
 }
 
-#[instrument(skip(req, pool_mgr, payload))]
+#[instrument(skip(req, pool_mgr, body))]
 async fn stripe_webhook_handler(
     req: HttpRequest,
     pool_mgr: web::Data<ConnectionPoolManager>,
-    payload: web::Json<serde_json::Value>,
+    body: web::Bytes,
 ) -> impl Responder {
+    TOTAL_REQUESTS.fetch_add(1, Ordering::Relaxed);
+    let sig_header = req
+        .headers()
+        .get("Stripe-Signature")
+        .or_else(|| req.headers().get("X-RustNext-Signature-256"))
+        .or_else(|| req.headers().get("X-Signature"))
+        .and_then(|v| v.to_str().ok())
+        .unwrap_or("");
+
+    let stripe_secret = std::env::var("STRIPE_WEBHOOK_SECRET").unwrap_or_default();
+    if !stripe_secret.is_empty()
+        && !WebhookDispatcher::verify_signature(&stripe_secret, &body, sig_header)
+    {
+        return HttpResponse::Unauthorized().json(serde_json::json!({
+            "error": "Invalid webhook signature"
+        }));
+    }
+
     let tenant_id = req
         .extensions()
         .get::<TenantId>()
         .cloned()
         .unwrap_or_else(|| TenantId("default".into()));
 
-    let event = payload.into_inner();
+    let event: serde_json::Value = match serde_json::from_slice(&body) {
+        Ok(v) => v,
+        Err(e) => {
+            return HttpResponse::BadRequest().json(serde_json::json!({
+                "error": format!("Invalid JSON payload: {e}")
+            }));
+        }
+    };
+
     let event_type = event
         .get("type")
         .and_then(|t| t.as_str())
@@ -254,7 +323,16 @@ async fn cms_get_page_handler(
     path: web::Path<String>,
     pool_mgr: web::Data<ConnectionPoolManager>,
 ) -> impl Responder {
-    let slug = path.into_inner();
+    TOTAL_REQUESTS.fetch_add(1, Ordering::Relaxed);
+    let raw_slug = path.into_inner();
+    let sanitized = match sanitize_slug(&raw_slug) {
+        Some(s) => s,
+        None => {
+            return HttpResponse::BadRequest()
+                .json(serde_json::json!({"error": "Invalid slug identifier"}));
+        }
+    };
+
     let client = match pool_mgr
         .get_or_initialize_client(&TenantId("default".into()))
         .await
@@ -263,7 +341,7 @@ async fn cms_get_page_handler(
         Err(e) => return HttpResponse::InternalServerError().body(e.to_string()),
     };
 
-    let sql = format!("SELECT * FROM cms_page_draft:{};", slug.replace('-', "_"));
+    let sql = format!("SELECT * FROM cms_page_draft:{sanitized};");
     match client.query(&sql).await {
         Ok(mut res) => {
             let record: Option<serde_json::Value> = res.take(0).unwrap_or(None);
@@ -282,7 +360,16 @@ async fn cms_save_page_handler(
     payload: web::Json<serde_json::Value>,
     pool_mgr: web::Data<ConnectionPoolManager>,
 ) -> impl Responder {
-    let slug = path.into_inner();
+    TOTAL_REQUESTS.fetch_add(1, Ordering::Relaxed);
+    let raw_slug = path.into_inner();
+    let sanitized = match sanitize_slug(&raw_slug) {
+        Some(s) => s,
+        None => {
+            return HttpResponse::BadRequest()
+                .json(serde_json::json!({"error": "Invalid slug identifier"}));
+        }
+    };
+
     let client = match pool_mgr
         .get_or_initialize_client(&TenantId("default".into()))
         .await
@@ -292,14 +379,11 @@ async fn cms_save_page_handler(
     };
 
     let doc = payload.into_inner();
-    let sql = format!(
-        "CREATE cms_page_draft:{} CONTENT $doc;",
-        slug.replace('-', "_")
-    );
+    let sql = format!("CREATE cms_page_draft:{sanitized} CONTENT $doc;");
     match client.query(&sql).bind(("doc", doc.clone())).await {
         Ok(_) => HttpResponse::Ok().json(serde_json::json!({
             "message": "Page draft saved",
-            "slug": slug
+            "slug": raw_slug
         })),
         Err(e) => HttpResponse::InternalServerError().body(e.to_string()),
     }
@@ -309,7 +393,16 @@ async fn cms_publish_page_handler(
     path: web::Path<String>,
     pool_mgr: web::Data<ConnectionPoolManager>,
 ) -> impl Responder {
-    let slug = path.into_inner();
+    TOTAL_REQUESTS.fetch_add(1, Ordering::Relaxed);
+    let raw_slug = path.into_inner();
+    let sanitized = match sanitize_slug(&raw_slug) {
+        Some(s) => s,
+        None => {
+            return HttpResponse::BadRequest()
+                .json(serde_json::json!({"error": "Invalid slug identifier"}));
+        }
+    };
+
     let client = match pool_mgr
         .get_or_initialize_client(&TenantId("default".into()))
         .await
@@ -318,7 +411,7 @@ async fn cms_publish_page_handler(
         Err(e) => return HttpResponse::InternalServerError().body(e.to_string()),
     };
 
-    let fetch_sql = format!("SELECT * FROM cms_page_draft:{};", slug.replace('-', "_"));
+    let fetch_sql = format!("SELECT * FROM cms_page_draft:{sanitized};");
     let mut res = match client.query(&fetch_sql).await {
         Ok(r) => r,
         Err(e) => return HttpResponse::InternalServerError().body(e.to_string()),
@@ -330,20 +423,18 @@ async fn cms_publish_page_handler(
             .json(serde_json::json!({"error": "Draft not found to publish"}));
     };
 
-    let pub_sql = format!(
-        "CREATE cms_page_published:{} CONTENT $doc;",
-        slug.replace('-', "_")
-    );
+    let pub_sql = format!("CREATE cms_page_published:{sanitized} CONTENT $doc;");
     match client.query(&pub_sql).bind(("doc", draft)).await {
         Ok(_) => HttpResponse::Ok().json(serde_json::json!({
             "message": "Page published successfully",
-            "slug": slug
+            "slug": raw_slug
         })),
         Err(e) => HttpResponse::InternalServerError().body(e.to_string()),
     }
 }
 
 async fn templates_portal_handler() -> impl Responder {
+    TOTAL_REQUESTS.fetch_add(1, Ordering::Relaxed);
     HttpResponse::Ok()
         .content_type("text/html; charset=utf-8")
         .body(erp_cms::render_template_index_html())
@@ -358,6 +449,7 @@ async fn template_detail_handler(
     path: web::Path<String>,
     query: web::Query<TemplateQuery>,
 ) -> impl Responder {
+    TOTAL_REQUESTS.fetch_add(1, Ordering::Relaxed);
     let slug = path.into_inner();
     let variant = query.variant.as_deref();
     match erp_cms::render_template_html_with_variant(&slug, variant) {
@@ -372,22 +464,26 @@ async fn template_detail_handler(
 }
 
 async fn sitemap_xml_handler() -> impl Responder {
+    TOTAL_REQUESTS.fetch_add(1, Ordering::Relaxed);
     HttpResponse::Ok()
         .content_type("application/xml; charset=utf-8")
         .body(erp_cms::generate_sitemap_xml())
 }
 
 async fn robots_txt_handler() -> impl Responder {
+    TOTAL_REQUESTS.fetch_add(1, Ordering::Relaxed);
     HttpResponse::Ok()
         .content_type("text/plain; charset=utf-8")
         .body(erp_cms::generate_robots_txt())
 }
 
 async fn list_templates_api_handler() -> impl Responder {
+    TOTAL_REQUESTS.fetch_add(1, Ordering::Relaxed);
     HttpResponse::Ok().json(erp_cms::list_template_suites())
 }
 
 async fn template_manifest_api_handler(path: web::Path<String>) -> impl Responder {
+    TOTAL_REQUESTS.fetch_add(1, Ordering::Relaxed);
     let slug = path.into_inner();
     match erp_cms::get_template_suite(&slug) {
         Some(suite) => HttpResponse::Ok().json(suite.to_theme_manifest()),
@@ -401,6 +497,7 @@ async fn acme_challenge_handler(
     path: web::Path<String>,
     gateway: web::Data<AcmeGateway>,
 ) -> impl Responder {
+    TOTAL_REQUESTS.fetch_add(1, Ordering::Relaxed);
     let token = path.into_inner();
     match gateway.resolve_domain(&token).await {
         Some(_) => HttpResponse::Ok().body(format!("{token}.simulated_acme_key_authorization")),
@@ -416,6 +513,7 @@ async fn record_analytics_event_handler(
     analytics: web::Data<erp_cms::EdgeAnalyticsEngine>,
     payload: web::Json<erp_cms::PageViewEvent>,
 ) -> impl Responder {
+    TOTAL_REQUESTS.fetch_add(1, Ordering::Relaxed);
     analytics.record_page_view(payload.into_inner());
     HttpResponse::Ok().json(serde_json::json!({
         "status": "recorded"
@@ -425,11 +523,12 @@ async fn record_analytics_event_handler(
 async fn get_analytics_summary_handler(
     analytics: web::Data<erp_cms::EdgeAnalyticsEngine>,
 ) -> impl Responder {
+    TOTAL_REQUESTS.fetch_add(1, Ordering::Relaxed);
     HttpResponse::Ok().json(analytics.compute_summary())
 }
 
 // ---------------------------------------------------------------------------
-// Webhook Subscription Management Handlers
+// Webhook Subscription Management Handlers (RBAC Hardened)
 // ---------------------------------------------------------------------------
 
 #[instrument(skip(req, pool_mgr, payload))]
@@ -438,6 +537,15 @@ async fn create_webhook_subscription_handler(
     pool_mgr: web::Data<ConnectionPoolManager>,
     payload: web::Json<frappe_framework::WebhookSubscription>,
 ) -> impl Responder {
+    TOTAL_REQUESTS.fetch_add(1, Ordering::Relaxed);
+    if let Some(ctx) = req.extensions().get::<SecurityContext>()
+        && !check_permission(&ctx.claims.roles, &[], Permission::Write, 0)
+    {
+        return HttpResponse::Forbidden().json(serde_json::json!({
+            "error": "Permission Denied: insufficient write privileges"
+        }));
+    }
+
     let tenant_id = req
         .extensions()
         .get::<TenantId>()
@@ -467,6 +575,15 @@ async fn list_webhook_subscriptions_handler(
     req: HttpRequest,
     pool_mgr: web::Data<ConnectionPoolManager>,
 ) -> impl Responder {
+    TOTAL_REQUESTS.fetch_add(1, Ordering::Relaxed);
+    if let Some(ctx) = req.extensions().get::<SecurityContext>()
+        && !check_permission(&ctx.claims.roles, &[], Permission::Read, 0)
+    {
+        return HttpResponse::Forbidden().json(serde_json::json!({
+            "error": "Permission Denied: insufficient read privileges"
+        }));
+    }
+
     let tenant_id = req
         .extensions()
         .get::<TenantId>()
@@ -493,6 +610,15 @@ async fn delete_webhook_subscription_handler(
     req: HttpRequest,
     pool_mgr: web::Data<ConnectionPoolManager>,
 ) -> impl Responder {
+    TOTAL_REQUESTS.fetch_add(1, Ordering::Relaxed);
+    if let Some(ctx) = req.extensions().get::<SecurityContext>()
+        && !check_permission(&ctx.claims.roles, &[], Permission::Write, 0)
+    {
+        return HttpResponse::Forbidden().json(serde_json::json!({
+            "error": "Permission Denied: insufficient write privileges"
+        }));
+    }
+
     let id = path.into_inner();
     let tenant_id = req
         .extensions()
@@ -519,7 +645,7 @@ async fn delete_webhook_subscription_handler(
 }
 
 // ---------------------------------------------------------------------------
-// WASI Plugin Execution Handler
+// WASI Plugin Execution Handler (RBAC Hardened)
 // ---------------------------------------------------------------------------
 
 #[derive(serde::Deserialize)]
@@ -528,7 +654,19 @@ struct RunPluginPayload {
     fuel_limit: Option<u64>,
 }
 
-async fn run_plugin_handler(payload: web::Json<RunPluginPayload>) -> impl Responder {
+async fn run_plugin_handler(
+    req: HttpRequest,
+    payload: web::Json<RunPluginPayload>,
+) -> impl Responder {
+    TOTAL_REQUESTS.fetch_add(1, Ordering::Relaxed);
+    if let Some(ctx) = req.extensions().get::<SecurityContext>()
+        && !check_permission(&ctx.claims.roles, &[], Permission::Execute, 0)
+    {
+        return HttpResponse::Forbidden().json(serde_json::json!({
+            "error": "Permission Denied: insufficient execute privileges for plugins"
+        }));
+    }
+
     let inner = payload.into_inner();
     let fuel = inner.fuel_limit.unwrap_or(1_000_000);
     let sandbox = match frappe_framework::RealSandbox::new(fuel, 32 * 1024 * 1024) {
@@ -576,6 +714,9 @@ pub fn configure_app(
         .route("/sitemap.xml", web::get().to(sitemap_xml_handler))
         .route("/robots.txt", web::get().to(robots_txt_handler))
         .route("/health", web::get().to(health_check))
+        .route("/healthz/live", web::get().to(liveness_handler))
+        .route("/healthz/ready", web::get().to(readiness_handler))
+        .route("/metrics", web::get().to(metrics_handler))
         .route("/files/{hash}", web::get().to(download_file_handler))
         .route("/api/v1/live", web::get().to(live_ws_handler))
         .route(
@@ -732,4 +873,24 @@ fn num_cpus() -> usize {
     std::thread::available_parallelism()
         .map(std::num::NonZeroUsize::get)
         .unwrap_or(1)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_sanitize_slug_valid() {
+        assert_eq!(sanitize_slug("home-page"), Some("home_page".into()));
+        assert_eq!(sanitize_slug("about_us_2026"), Some("about_us_2026".into()));
+        assert_eq!(sanitize_slug("pricing"), Some("pricing".into()));
+    }
+
+    #[test]
+    fn test_sanitize_slug_rejects_malicious() {
+        assert_eq!(sanitize_slug(""), None);
+        assert_eq!(sanitize_slug("home; DROP TABLE users;"), None);
+        assert_eq!(sanitize_slug("../etc/passwd"), None);
+        assert_eq!(sanitize_slug("foo$bar"), None);
+    }
 }

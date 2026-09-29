@@ -16,3 +16,9 @@ serde_json = { workspace = true }
 surrealdb = { workspace = true }
 futures-util = { workspace = true }
 chrono = { workspace = true }
+sha2 = { workspace = true }
+hex = { workspace = true }
+zstd = { workspace = true }
+erp-accounting = { workspace = true }
+erp-cms = { workspace = true }
+erp-ppm = { workspace = true }

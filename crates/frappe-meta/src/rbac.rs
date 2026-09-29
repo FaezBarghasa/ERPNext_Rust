@@ -39,6 +39,8 @@ pub enum Permission {
     Report,
     /// Export dataset to CSV/Excel.
     Export,
+    /// Execute sandboxed plugins / server methods.
+    Execute,
 }
 
 /// Graph edge definition: User -> Role
@@ -89,6 +91,7 @@ impl HasPermissionEdge {
             Permission::Amend => self.p_amend,
             Permission::Report => self.p_read,
             Permission::Export => self.p_read,
+            Permission::Execute => self.p_write,
         }
     }
 }

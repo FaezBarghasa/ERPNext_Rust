@@ -1,23 +1,60 @@
 version: '3.8'
 
 services:
-  surrealdb:
-    image: surrealdb/surrealdb:latest
-    ports:
-      - "8000:8000"
-    command: start --log trace --user root --pass root memory
-
-  frappe-gateway:
-    build: 
+  rustnext:
+    build:
       context: .
       dockerfile: Dockerfile
+    image: rustnext:latest
+    container_name: rustnext_app
+    restart: unless-stopped
     ports:
       - "8080:8080"
       - "4433:4433/udp" # HTTP/3 QUIC
-    depends_on:
-      - surrealdb
     environment:
       - RUST_LOG=info
-      - DB_HOST=surrealdb:8000
+      - RUSTNEXT_MASTER_TOKEN_SECRET=rustnext_enterprise_paseto_master_secret_key_2026_offline_first_32bytes_min
+      - STRIPE_WEBHOOK_SECRET=whsec_local_dev_secret
+      - MICRO_MODE=false
     volumes:
-      - ./frappe-desk-ui/dist:/app/dist # Serve WASM bundle statically
+      - rustnext_data:/app/data
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/healthz/ready"]
+      interval: 10s
+      timeout: 3s
+      retries: 3
+      start_period: 5s
+
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: rustnext_prometheus
+    restart: unless-stopped
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus_data:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+    depends_on:
+      - rustnext
+
+  grafana:
+    image: grafana/grafana:latest
+    container_name: rustnext_grafana
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    volumes:
+      - grafana_data:/var/lib/grafana
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+      - GF_USERS_ALLOW_SIGN_UP=false
+    depends_on:
+      - prometheus
+
+volumes:
+  rustnext_data:
+  prometheus_data:
+  grafana_data:

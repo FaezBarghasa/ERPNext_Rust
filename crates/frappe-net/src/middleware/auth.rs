@@ -24,11 +24,20 @@ pub const MASTER_JWT_SECRET: &[u8] =
 /// Retrieves the active master token secret key from environment or fallback default.
 #[must_use]
 pub fn get_master_token_secret() -> Vec<u8> {
-    if let Ok(key) =
-        std::env::var("RUSTNEXT_SECRET_KEY").or_else(|_| std::env::var("FRAPPE_SECRET_KEY"))
-        && !key.trim().is_empty()
+    if let Ok(key) = std::env::var("RUSTNEXT_MASTER_TOKEN_SECRET")
+        .or_else(|_| std::env::var("RUSTNEXT_SECRET_KEY"))
+        .or_else(|_| std::env::var("FRAPPE_SECRET_KEY"))
     {
-        return key.into_bytes();
+        let trimmed = key.trim();
+        if !trimmed.is_empty() {
+            if trimmed.len() < 32 {
+                panic!(
+                    "Security violation: RUSTNEXT_MASTER_TOKEN_SECRET must be at least 32 bytes (got {})",
+                    trimmed.len()
+                );
+            }
+            return trimmed.as_bytes().to_vec();
+        }
     }
     MASTER_JWT_SECRET.to_vec()
 }

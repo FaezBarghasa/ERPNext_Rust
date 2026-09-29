@@ -86,6 +86,8 @@ tokio = { version = "1.53.1", features = [
     "io-util",
 ] }
 argon2 = "0.6.0"
+reqwest = { version = "0.12", default-features = false, features = ["json", "rustls-tls"] }
+zstd = "0.13"
 tracing = "0.1"
 tracing-subscriber = { version = "0.3", features = ["env-filter", "fmt"] }
 wasmtime = "49.0.1"
