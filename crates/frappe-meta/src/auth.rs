@@ -18,8 +18,11 @@ use thiserror::Error;
 
 type HmacSha256 = Hmac<Sha256>;
 
-/// Default session duration in seconds (24 hours).
-pub const DEFAULT_SESSION_EXPIRY_SECS: i64 = 86_400;
+/// Default session duration in seconds (1 hour for access token).
+pub const DEFAULT_SESSION_EXPIRY_SECS: i64 = 3_600;
+
+/// Default refresh token duration in seconds (30 days).
+pub const DEFAULT_REFRESH_EXPIRY_SECS: i64 = 30 * 86_400;
 
 /// Authentication & Token Errors.
 #[derive(Debug, Error, PartialEq, Eq)]
@@ -34,10 +37,32 @@ pub enum AuthError {
     InvalidSignature,
     #[error("Token has expired")]
     TokenExpired,
+    #[error("Refresh token has been revoked")]
+    TokenRevoked,
     #[error("Missing authorization header")]
     MissingAuthHeader,
     #[error("Permission denied: insufficient privileges for action {0:?}")]
     PermissionDenied(crate::rbac::Permission),
+}
+
+/// Refresh token record stored in persistent repository.
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+pub struct RefreshTokenRecord {
+    pub token_id: String,
+    pub user_id: String,
+    pub tenant_id: String,
+    pub roles: Vec<String>,
+    pub token_hash: String,
+    pub issued_at: i64,
+    pub expires_at: i64,
+    pub revoked: bool,
+}
+
+impl RefreshTokenRecord {
+    #[must_use]
+    pub fn is_valid(&self) -> bool {
+        !self.revoked && Utc::now().timestamp() <= self.expires_at
+    }
 }
 
 /// Hashes a plaintext password using Argon2id.
@@ -241,6 +266,46 @@ pub fn verify_token(token_str: &str, secret_key: &[u8]) -> Result<SessionClaims,
     }
 }
 
+/// Generates a cryptographically secure, opaque refresh token and its matching storage record.
+#[must_use]
+pub fn issue_refresh_token(
+    user_id: &str,
+    tenant_id: &str,
+    roles: Vec<String>,
+) -> (String, RefreshTokenRecord) {
+    let mut raw_bytes = [0u8; 32];
+    rng().fill_bytes(&mut raw_bytes);
+    let token_secret_hex = hex::encode(raw_bytes);
+    let token_id = format!("rft_{}_{}", user_id, Utc::now().timestamp_millis());
+    let refresh_token = format!("{token_id}.{token_secret_hex}");
+
+    let mut hasher = Sha256::new();
+    hasher.update(refresh_token.as_bytes());
+    let token_hash = hex::encode(hasher.finalize());
+
+    let now = Utc::now().timestamp();
+    let record = RefreshTokenRecord {
+        token_id,
+        user_id: user_id.to_string(),
+        tenant_id: tenant_id.to_string(),
+        roles,
+        token_hash,
+        issued_at: now,
+        expires_at: now + DEFAULT_REFRESH_EXPIRY_SECS,
+        revoked: false,
+    };
+
+    (refresh_token, record)
+}
+
+/// Hashes a plaintext refresh token string to match the stored hash.
+#[must_use]
+pub fn hash_refresh_token(refresh_token: &str) -> String {
+    let mut hasher = Sha256::new();
+    hasher.update(refresh_token.as_bytes());
+    hex::encode(hasher.finalize())
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -287,5 +352,18 @@ mod tests {
             verify_token(&token, wrong_secret),
             Err(AuthError::InvalidSignature)
         );
+    }
+
+    #[test]
+    fn test_refresh_token_issuance_and_hash() {
+        let (raw_token, record) = issue_refresh_token(
+            "Administrator",
+            "tenant_main",
+            vec!["System Manager".to_string()],
+        );
+        assert!(record.is_valid());
+        assert_eq!(record.user_id, "Administrator");
+        assert_eq!(record.tenant_id, "tenant_main");
+        assert_eq!(hash_refresh_token(&raw_token), record.token_hash);
     }
 }

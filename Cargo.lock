@@ -2156,6 +2156,7 @@ dependencies = [
  "reqwest",
  "rhai",
  "rust_decimal",
+ "rust_decimal_macros",
  "serde",
  "serde_json",
  "sha2 0.11.0",

@@ -4,6 +4,7 @@ pub mod drive;
 pub mod encryption;
 pub mod merkle;
 pub mod replication;
+pub mod repository;
 pub mod surreal;
 
 pub use bitemporal::{BiTemporalQuery, BiTemporalRecord, TimeInterval};
@@ -15,6 +16,7 @@ pub use replication::{
     CloudRegion, MultiRegionReplicationOrchestrator, ReconciliationOutcome, ReplicationConflict,
     ReplicationEnvelope, ReplicationScope,
 };
+pub use repository::SurrealRepository;
 pub use surreal::open_tenant;
 
 use std::collections::HashMap;
