@@ -242,6 +242,12 @@ impl TaxonomyRegistry {
         }
         crumbs
     }
+
+    /// Returns all registered taxonomy terms.
+    #[must_use]
+    pub fn all_terms(&self) -> Vec<&TaxonomyTerm> {
+        self.terms.values().collect()
+    }
 }
 
 #[cfg(test)]

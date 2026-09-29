@@ -16,6 +16,28 @@ use crate::rate_limit::LoginGuard;
 use crate::tenant::{ConnectionPoolManager, TenantId};
 use actix_web::{HttpMessage, HttpRequest, HttpResponse, Responder, web};
 use chrono::Utc;
+use erp_cms::media_library::{MediaAsset, MediaLibraryRegistry};
+use erp_cms::seo_engine::SeoMetadata;
+use erp_cms::taxonomy::{TaxonomyRegistry, TaxonomyTerm};
+use erp_trade::coupon::{CartItemLine, CouponCode, CouponDiscountType, CouponEngine};
+use erp_trade::order_lifecycle::{
+    OrderState, OrderStateMachine, OrderTransitionEvent, RmaItemLine, RmaRecord,
+};
+use erp_trade::reviews::{ProductReview, ReviewManager, ReviewStatus};
+use erp_trade::shipping::{ShippingCalculator, ShippingMethod, ShippingZone};
+use erp_trade::wishlist::{Wishlist, WishlistItem};
+use frappe_framework::export_engine::{DocumentExporter, ExportColumn, ExportFormat};
+use frappe_framework::notification::{
+    NotificationChannel, NotificationDispatcher, NotificationInboxRegistry, NotificationMessage,
+    NotificationPriority, UserNotificationPreferences,
+};
+use frappe_framework::report_engine::{PivotAggregate, ReportEngine};
+use frappe_framework::webhook::{
+    WebhookDispatcher, WebhookOutboxEntry, WebhookPayload, WebhookSubscription,
+};
+use frappe_framework::workflow_approval::{
+    ApprovalWorkflow, DocumentVersioningEngine, WorkflowStateNode, WorkflowTransitionRule,
+};
 use frappe_meta::audit::{AuditAction, AuditEntry, AuditQueryFilter, AuditTrailRegistry};
 use frappe_meta::auth::{SessionClaims, hash_password, issue_token, verify_password};
 use frappe_meta::mfa::{MfaRecord, TotpConfig, generate_otpauth_uri};
@@ -29,6 +51,8 @@ use frappe_meta::security_rules::{
     validate_password_complexity, verify_password_reset_token,
 };
 use regex::Regex;
+use rust_decimal::Decimal;
+use rust_decimal_macros::dec;
 use serde::{Deserialize, Serialize};
 use sha2::{Digest, Sha256};
 use std::collections::HashMap;
@@ -1225,7 +1249,7 @@ pub async fn h3_stream_telemetry_handler(payload: web::Json<serde_json::Value>) 
     }
 }
 
-/// In-memory dynamic RBAC registry state shared across worker threads.
+/// In-memory dynamic RBAC and enterprise service state shared across worker threads.
 #[derive(Clone)]
 pub struct DynamicRbacState {
     pub users: Arc<RwLock<Vec<UserRecord>>>,
@@ -1234,6 +1258,15 @@ pub struct DynamicRbacState {
     pub audit_trail: Arc<AuditTrailRegistry>,
     pub login_guard: Arc<LoginGuard>,
     pub ip_registry: Arc<IpRuleRegistry>,
+    pub coupons: Arc<RwLock<HashMap<String, CouponCode>>>,
+    pub reviews: Arc<RwLock<Vec<ProductReview>>>,
+    pub wishlists: Arc<RwLock<HashMap<String, Wishlist>>>,
+    pub shipping_zones: Arc<RwLock<Vec<ShippingZone>>>,
+    pub taxonomies: Arc<RwLock<TaxonomyRegistry>>,
+    pub media_catalog: Arc<RwLock<MediaLibraryRegistry>>,
+    pub versioning_engine: Arc<RwLock<DocumentVersioningEngine>>,
+    pub notifications_inbox: Arc<NotificationInboxRegistry>,
+    pub rma_records: Arc<RwLock<HashMap<String, RmaRecord>>>,
 }
 
 impl Default for DynamicRbacState {
@@ -1305,6 +1338,55 @@ impl Default for DynamicRbacState {
             },
         ];
 
+        let mut coupons = HashMap::new();
+        let mut welcome_coupon =
+            CouponCode::new("WELCOME10", CouponDiscountType::Percentage(dec!(10.0)));
+        welcome_coupon.min_subtotal = Some(dec!(50.00));
+        welcome_coupon.description = Some("10% off orders over $50".into());
+        coupons.insert("WELCOME10".into(), welcome_coupon);
+
+        let mut freeship_coupon = CouponCode::new("FREESHIP", CouponDiscountType::FreeShipping);
+        freeship_coupon.description = Some("Free shipping on all orders".into());
+        coupons.insert("FREESHIP".into(), freeship_coupon);
+
+        let default_zone = ShippingZone::new("zone_global", "Global Standard Delivery")
+            .with_methods(vec![
+                ShippingMethod::flat_rate("std_flat", "Standard Flat Rate", dec!(15.00), (3, 5)),
+                ShippingMethod::free_shipping(
+                    "free_threshold",
+                    "Free Shipping",
+                    dec!(100.00),
+                    (4, 7),
+                ),
+                ShippingMethod::weight_based(
+                    "express_weight",
+                    "Express Air",
+                    dec!(25.00),
+                    dec!(5.00),
+                    (1, 2),
+                ),
+            ]);
+
+        let mut taxonomies = TaxonomyRegistry::new();
+        let _ = taxonomies.register_term(TaxonomyTerm::new(
+            "cat_electronics",
+            "category",
+            "Electronics",
+            "electronics",
+        ));
+        let _ = taxonomies.register_term(TaxonomyTerm::new(
+            "cat_clothing",
+            "category",
+            "Clothing & Apparel",
+            "clothing-apparel",
+        ));
+        let _ = taxonomies.register_term(TaxonomyTerm::new(
+            "tag_featured",
+            "tag",
+            "Featured Products",
+            "featured-products",
+        ));
+
         Self {
             users: Arc::new(RwLock::new(default_users)),
             registry: Arc::new(RwLock::new(registry)),
@@ -1312,6 +1394,15 @@ impl Default for DynamicRbacState {
             audit_trail: Arc::new(AuditTrailRegistry::default()),
             login_guard: Arc::new(LoginGuard::default()),
             ip_registry: Arc::new(IpRuleRegistry::new()),
+            coupons: Arc::new(RwLock::new(coupons)),
+            reviews: Arc::new(RwLock::new(Vec::new())),
+            wishlists: Arc::new(RwLock::new(HashMap::new())),
+            shipping_zones: Arc::new(RwLock::new(vec![default_zone])),
+            taxonomies: Arc::new(RwLock::new(taxonomies)),
+            media_catalog: Arc::new(RwLock::new(MediaLibraryRegistry::new())),
+            versioning_engine: Arc::new(RwLock::new(DocumentVersioningEngine::new())),
+            notifications_inbox: Arc::new(NotificationInboxRegistry::new(100)),
+            rma_records: Arc::new(RwLock::new(HashMap::new())),
         }
     }
 }
@@ -2071,6 +2162,1059 @@ pub async fn admin_unlock_target_handler(
         "target": target,
         "message": format!("Target '{target}' unlocked successfully"),
     }))
+}
+
+// =========================================================================
+// Commerce & Trade Endpoints (Coupons, Reviews, Wishlist, Shipping, Orders, RMA)
+// =========================================================================
+
+/// DTO for applying a coupon to cart
+#[derive(Debug, Deserialize)]
+pub struct ApplyCouponPayload {
+    pub code: String,
+    pub subtotal: Decimal,
+    pub user_id: Option<String>,
+    pub items: Option<Vec<CartItemLine>>,
+}
+
+/// DTO for creating a new promotional coupon
+#[derive(Debug, Deserialize)]
+pub struct CreateCouponPayload {
+    pub code: String,
+    pub discount_type: String, // "percentage", "fixed", "free_shipping"
+    pub value: Option<Decimal>,
+    pub min_spend: Option<Decimal>,
+    pub description: Option<String>,
+}
+
+/// Handler: List all coupons: `GET /api/v2/trade/coupons`
+pub async fn trade_list_coupons_handler(state: web::Data<DynamicRbacState>) -> impl Responder {
+    let coupons = state
+        .coupons
+        .read()
+        .map(|c| c.values().cloned().collect::<Vec<_>>())
+        .unwrap_or_default();
+    HttpResponse::Ok().json(serde_json::json!({
+        "status": "OK",
+        "count": coupons.len(),
+        "coupons": coupons,
+    }))
+}
+
+/// Handler: Create coupon: `POST /api/v2/trade/coupons`
+pub async fn trade_create_coupon_handler(
+    state: web::Data<DynamicRbacState>,
+    payload: web::Json<CreateCouponPayload>,
+) -> impl Responder {
+    let p = payload.into_inner();
+    let dtype = match p.discount_type.to_lowercase().as_str() {
+        "percentage" => CouponDiscountType::Percentage(p.value.unwrap_or(dec!(10.0))),
+        "fixed" => CouponDiscountType::FixedAmount(p.value.unwrap_or(dec!(5.00))),
+        "free_shipping" | "freeshipping" => CouponDiscountType::FreeShipping,
+        _ => {
+            return HttpResponse::BadRequest().json(serde_json::json!({
+                "status": "ERROR",
+                "message": "Invalid discount_type. Use percentage, fixed, or free_shipping",
+            }));
+        }
+    };
+
+    let mut coupon = CouponCode::new(p.code.clone(), dtype);
+    coupon.min_subtotal = p.min_spend;
+    coupon.description = p.description;
+
+    if let Ok(mut lock) = state.coupons.write() {
+        lock.insert(coupon.code.clone(), coupon.clone());
+    }
+
+    HttpResponse::Created().json(serde_json::json!({
+        "status": "CREATED",
+        "coupon": coupon,
+    }))
+}
+
+/// Handler: Apply and calculate coupon against cart: `POST /api/v2/trade/coupons/apply`
+pub async fn trade_apply_coupon_handler(
+    state: web::Data<DynamicRbacState>,
+    payload: web::Json<ApplyCouponPayload>,
+) -> impl Responder {
+    let p = payload.into_inner();
+    let lock = match state.coupons.read() {
+        Ok(l) => l,
+        Err(_) => {
+            return HttpResponse::InternalServerError()
+                .json(serde_json::json!({"error": "Lock error"}));
+        }
+    };
+
+    let coupon = match lock.get(&p.code.to_uppercase()) {
+        Some(c) => c,
+        None => {
+            return HttpResponse::NotFound().json(serde_json::json!({
+                "status": "INVALID",
+                "message": format!("Coupon '{}' not found", p.code),
+            }));
+        }
+    };
+
+    let items = p.items.unwrap_or_default();
+    let now = Utc::now();
+    match CouponEngine::validate_coupon(coupon, p.user_id.as_deref(), p.subtotal, &items, now) {
+        Ok(()) => {
+            let calculation = CouponEngine::calculate_discount(coupon, p.subtotal, &items);
+            HttpResponse::Ok().json(serde_json::json!({
+                "status": "VALID",
+                "calculation": calculation,
+            }))
+        }
+        Err(e) => HttpResponse::BadRequest().json(serde_json::json!({
+            "status": "REJECTED",
+            "reason": e.to_string(),
+        })),
+    }
+}
+
+/// DTO for submitting a product review
+#[derive(Debug, Deserialize)]
+pub struct SubmitReviewPayload {
+    pub item_code: String,
+    pub user_id: String,
+    pub user_display_name: String,
+    pub rating: u8,
+    pub title: String,
+    pub content: String,
+    pub verified_purchase: Option<bool>,
+}
+
+/// Query for listing product reviews
+#[derive(Debug, Deserialize)]
+pub struct ListReviewsQuery {
+    pub item_code: Option<String>,
+    pub status: Option<String>,
+}
+
+/// Handler: List reviews: `GET /api/v2/trade/reviews`
+pub async fn trade_list_reviews_handler(
+    state: web::Data<DynamicRbacState>,
+    query: web::Query<ListReviewsQuery>,
+) -> impl Responder {
+    let reviews = state.reviews.read().map(|r| r.clone()).unwrap_or_default();
+    let filtered: Vec<ProductReview> = reviews
+        .into_iter()
+        .filter(|r| {
+            if let Some(ref item) = query.item_code
+                && !r.item_code.eq_ignore_ascii_case(item)
+            {
+                return false;
+            }
+            if let Some(ref st) = query.status {
+                match st.to_lowercase().as_str() {
+                    "approved" => r.status == ReviewStatus::Approved,
+                    "pending" => r.status == ReviewStatus::Pending,
+                    "rejected" => r.status == ReviewStatus::Rejected,
+                    "flagged" => r.status == ReviewStatus::Flagged,
+                    _ => true,
+                }
+            } else {
+                true
+            }
+        })
+        .collect();
+
+    let summary = query
+        .item_code
+        .as_ref()
+        .map(|code| ReviewManager::calculate_summary(code, &filtered));
+
+    HttpResponse::Ok().json(serde_json::json!({
+        "status": "OK",
+        "count": filtered.len(),
+        "summary": summary,
+        "reviews": filtered,
+    }))
+}
+
+/// Handler: Submit review: `POST /api/v2/trade/reviews`
+pub async fn trade_submit_review_handler(
+    state: web::Data<DynamicRbacState>,
+    payload: web::Json<SubmitReviewPayload>,
+) -> impl Responder {
+    let p = payload.into_inner();
+    let review_id = format!("rev_{}_{}", p.item_code, Utc::now().timestamp_millis());
+    let review = match ProductReview::new(
+        review_id,
+        p.item_code,
+        p.user_id,
+        p.user_display_name,
+        p.rating,
+        p.title,
+        p.content,
+        p.verified_purchase.unwrap_or(false),
+    ) {
+        Ok(r) => r,
+        Err(e) => {
+            return HttpResponse::BadRequest().json(serde_json::json!({
+                "status": "ERROR",
+                "message": e.to_string(),
+            }));
+        }
+    };
+
+    if let Ok(mut lock) = state.reviews.write() {
+        lock.push(review.clone());
+    }
+
+    HttpResponse::Created().json(serde_json::json!({
+        "status": "SUBMITTED",
+        "review": review,
+    }))
+}
+
+/// DTO for moderating a review
+#[derive(Debug, Deserialize)]
+pub struct ModerateReviewPayload {
+    pub review_id: String,
+    pub status: String, // "approve", "reject", "flag"
+    pub admin_reply: Option<String>,
+}
+
+/// Handler: Moderate review: `POST /api/v2/trade/reviews/moderate`
+pub async fn trade_moderate_review_handler(
+    state: web::Data<DynamicRbacState>,
+    payload: web::Json<ModerateReviewPayload>,
+) -> impl Responder {
+    let p = payload.into_inner();
+    let mut lock = match state.reviews.write() {
+        Ok(l) => l,
+        Err(_) => return HttpResponse::InternalServerError().body("Lock error"),
+    };
+
+    if let Some(rev) = lock.iter_mut().find(|r| r.id == p.review_id) {
+        match p.status.to_lowercase().as_str() {
+            "approve" | "approved" => rev.status = ReviewStatus::Approved,
+            "reject" | "rejected" => rev.status = ReviewStatus::Rejected,
+            "flag" | "flagged" => rev.status = ReviewStatus::Flagged,
+            _ => {
+                return HttpResponse::BadRequest()
+                    .json(serde_json::json!({"error": "Invalid status"}));
+            }
+        }
+        if let Some(reply) = p.admin_reply {
+            rev.admin_reply = Some(reply);
+            rev.admin_reply_at = Some(Utc::now());
+        }
+        HttpResponse::Ok().json(serde_json::json!({
+            "status": "UPDATED",
+            "review": rev,
+        }))
+    } else {
+        HttpResponse::NotFound().json(serde_json::json!({
+            "status": "NOT_FOUND",
+            "message": format!("Review '{}' not found", p.review_id),
+        }))
+    }
+}
+
+/// DTO for wishlist item
+#[derive(Debug, Deserialize)]
+pub struct AddWishlistItemPayload {
+    pub item_code: String,
+    pub priority: Option<u8>,
+    pub desired_price: Option<Decimal>,
+    pub notes: Option<String>,
+}
+
+/// Handler: Get user wishlist: `GET /api/v2/trade/wishlists/{user_id}`
+pub async fn trade_get_wishlist_handler(
+    state: web::Data<DynamicRbacState>,
+    user_id: web::Path<String>,
+) -> impl Responder {
+    let uid = user_id.into_inner();
+    let wishlist = state
+        .wishlists
+        .read()
+        .ok()
+        .and_then(|w| w.get(&uid).cloned())
+        .unwrap_or_else(|| Wishlist::new(format!("wl_{uid}"), uid.clone(), "Default Wishlist"));
+
+    HttpResponse::Ok().json(serde_json::json!({
+        "status": "OK",
+        "wishlist": wishlist,
+    }))
+}
+
+/// Handler: Add item to wishlist: `POST /api/v2/trade/wishlists/{user_id}/items`
+pub async fn trade_add_wishlist_item_handler(
+    state: web::Data<DynamicRbacState>,
+    user_id: web::Path<String>,
+    payload: web::Json<AddWishlistItemPayload>,
+) -> impl Responder {
+    let uid = user_id.into_inner();
+    let p = payload.into_inner();
+    let mut item = WishlistItem::new(p.item_code);
+    if let Some(prio) = p.priority {
+        item = item.with_priority(prio);
+    }
+    if let Some(price) = p.desired_price {
+        item = item.with_desired_price(price);
+    }
+    if let Some(notes) = p.notes {
+        item = item.with_notes(notes);
+    }
+
+    let mut lock = match state.wishlists.write() {
+        Ok(l) => l,
+        Err(_) => return HttpResponse::InternalServerError().body("Lock error"),
+    };
+
+    let wl = lock
+        .entry(uid.clone())
+        .or_insert_with(|| Wishlist::new(format!("wl_{uid}"), uid.clone(), "Default Wishlist"));
+    match wl.add_item(item) {
+        Ok(()) => HttpResponse::Ok().json(serde_json::json!({
+            "status": "ADDED",
+            "wishlist": wl,
+        })),
+        Err(e) => HttpResponse::BadRequest().json(serde_json::json!({
+            "status": "ERROR",
+            "message": e.to_string(),
+        })),
+    }
+}
+
+/// Handler: Remove item from wishlist: `DELETE /api/v2/trade/wishlists/{user_id}/items/{item_code}`
+pub async fn trade_remove_wishlist_item_handler(
+    state: web::Data<DynamicRbacState>,
+    path: web::Path<(String, String)>,
+) -> impl Responder {
+    let (uid, item_code) = path.into_inner();
+    let mut lock = match state.wishlists.write() {
+        Ok(l) => l,
+        Err(_) => return HttpResponse::InternalServerError().body("Lock error"),
+    };
+
+    if let Some(wl) = lock.get_mut(&uid) {
+        match wl.remove_item(&item_code) {
+            Ok(_) => HttpResponse::Ok().json(serde_json::json!({
+                "status": "REMOVED",
+                "wishlist": wl,
+            })),
+            Err(e) => HttpResponse::NotFound().json(serde_json::json!({
+                "status": "NOT_FOUND",
+                "message": e.to_string(),
+            })),
+        }
+    } else {
+        HttpResponse::NotFound().json(serde_json::json!({
+            "status": "NOT_FOUND",
+            "message": "Wishlist not found",
+        }))
+    }
+}
+
+/// DTO for calculating shipping rates
+#[derive(Debug, Deserialize)]
+pub struct CalculateShippingPayload {
+    pub country: String,
+    pub state: Option<String>,
+    pub postal_code: Option<String>,
+    pub subtotal: Decimal,
+    pub weight_kg: Option<Decimal>,
+}
+
+/// Handler: List shipping zones: `GET /api/v2/trade/shipping/zones`
+pub async fn trade_list_shipping_zones_handler(
+    state: web::Data<DynamicRbacState>,
+) -> impl Responder {
+    let zones = state
+        .shipping_zones
+        .read()
+        .map(|z| z.clone())
+        .unwrap_or_default();
+    HttpResponse::Ok().json(serde_json::json!({
+        "status": "OK",
+        "zones": zones,
+    }))
+}
+
+/// Handler: Calculate shipping options: `POST /api/v2/trade/shipping/calculate`
+pub async fn trade_calculate_shipping_handler(
+    state: web::Data<DynamicRbacState>,
+    payload: web::Json<CalculateShippingPayload>,
+) -> impl Responder {
+    let p = payload.into_inner();
+    let zones = state
+        .shipping_zones
+        .read()
+        .map(|z| z.clone())
+        .unwrap_or_default();
+    let matched_zone = ShippingCalculator::match_zone(
+        &p.country,
+        p.state.as_deref(),
+        p.postal_code.as_deref(),
+        &zones,
+    );
+
+    match matched_zone {
+        Some(zone) => {
+            let rates = ShippingCalculator::calculate_rates(
+                zone,
+                p.subtotal,
+                p.weight_kg.unwrap_or(dec!(1.0)),
+            );
+            HttpResponse::Ok().json(serde_json::json!({
+                "status": "OK",
+                "matched_zone": zone.name,
+                "options": rates,
+            }))
+        }
+        None => HttpResponse::NotFound().json(serde_json::json!({
+            "status": "NO_ZONE_MATCHED",
+            "message": format!("No shipping zone configured for destination '{}'", p.country),
+        })),
+    }
+}
+
+/// DTO for triggering an order lifecycle transition
+#[derive(Debug, Deserialize)]
+pub struct OrderTransitionPayload {
+    pub current_state: OrderState,
+    pub event: String,
+}
+
+/// Handler: Order state transition: `POST /api/v2/trade/orders/transition`
+pub async fn trade_order_transition_handler(
+    payload: web::Json<OrderTransitionPayload>,
+) -> impl Responder {
+    let p = payload.into_inner();
+    let event = match p.event.to_lowercase().as_str() {
+        "place_order" => OrderTransitionEvent::PlaceOrder,
+        "confirm_payment" => OrderTransitionEvent::ConfirmPayment {
+            payment_ref: "PAY_AUTO".into(),
+        },
+        "start_processing" => OrderTransitionEvent::StartProcessing,
+        "dispatch_shipment" => OrderTransitionEvent::DispatchShipment {
+            tracking_number: "TRK_AUTO".into(),
+            carrier: "Standard".into(),
+        },
+        "confirm_delivery" => OrderTransitionEvent::ConfirmDelivery,
+        "cancel_order" => OrderTransitionEvent::CancelOrder {
+            reason: "Customer requested".into(),
+        },
+        "request_return" => OrderTransitionEvent::RequestReturn {
+            rma_id: "RMA_AUTO".into(),
+        },
+        "approve_return" => OrderTransitionEvent::ApproveReturn,
+        "receive_returned_goods" => OrderTransitionEvent::ReceiveReturnedGoods,
+        "execute_refund" => OrderTransitionEvent::ExecuteRefund {
+            amount: dec!(0.0),
+            refund_ref: "REF_AUTO".into(),
+        },
+        "open_dispute" => OrderTransitionEvent::OpenDispute {
+            reason: "Chargeback".into(),
+        },
+        _ => {
+            return HttpResponse::BadRequest().json(serde_json::json!({
+                "status": "ERROR",
+                "message": format!("Unrecognized event '{}'", p.event),
+            }));
+        }
+    };
+
+    match OrderStateMachine::transition(p.current_state, event) {
+        Ok(next_state) => HttpResponse::Ok().json(serde_json::json!({
+            "status": "SUCCESS",
+            "from_state": p.current_state,
+            "to_state": next_state,
+        })),
+        Err(e) => HttpResponse::BadRequest().json(serde_json::json!({
+            "status": "INVALID_TRANSITION",
+            "message": e.to_string(),
+        })),
+    }
+}
+
+/// DTO for submitting an RMA request
+#[derive(Debug, Deserialize)]
+pub struct SubmitRmaPayload {
+    pub order_id: String,
+    pub customer_id: String,
+    pub items: Vec<RmaItemLine>,
+    pub reason: String,
+}
+
+/// Handler: Submit RMA: `POST /api/v2/trade/rma`
+pub async fn trade_rma_submit_handler(
+    state: web::Data<DynamicRbacState>,
+    payload: web::Json<SubmitRmaPayload>,
+) -> impl Responder {
+    let p = payload.into_inner();
+    let rma_id = format!("rma_{}_{}", p.order_id, Utc::now().timestamp_millis());
+    let req = RmaRecord::new(rma_id, p.order_id, p.customer_id, p.items, p.reason);
+
+    if let Ok(mut lock) = state.rma_records.write() {
+        lock.insert(req.rma_id.clone(), req.clone());
+    }
+
+    HttpResponse::Created().json(serde_json::json!({
+        "status": "CREATED",
+        "rma": req,
+    }))
+}
+
+// =========================================================================
+// CMS, Media Library & SEO Endpoints
+// =========================================================================
+
+/// DTO for creating a taxonomy term
+#[derive(Debug, Deserialize)]
+pub struct CreateTaxonomyPayload {
+    pub taxonomy: String, // "category", "tag", "brand"
+    pub name: String,
+    pub slug: Option<String>,
+    pub parent_id: Option<String>,
+    pub description: Option<String>,
+}
+
+/// Handler: List categories and taxonomy terms: `GET /api/v2/cms/taxonomy`
+pub async fn cms_list_taxonomies_handler(state: web::Data<DynamicRbacState>) -> impl Responder {
+    let terms = state
+        .taxonomies
+        .read()
+        .map(|t| t.all_terms().into_iter().cloned().collect::<Vec<_>>())
+        .unwrap_or_default();
+    HttpResponse::Ok().json(serde_json::json!({
+        "status": "OK",
+        "terms": terms,
+    }))
+}
+
+/// Handler: Create category/term: `POST /api/v2/cms/taxonomy`
+pub async fn cms_create_taxonomy_handler(
+    state: web::Data<DynamicRbacState>,
+    payload: web::Json<CreateTaxonomyPayload>,
+) -> impl Responder {
+    let p = payload.into_inner();
+    let slug = p.slug.unwrap_or_else(|| TaxonomyRegistry::slugify(&p.name));
+    let id = format!("tax_{}_{}", p.taxonomy, slug);
+    let mut term = TaxonomyTerm::new(id, p.taxonomy, p.name, slug);
+    if let Some(pid) = p.parent_id {
+        term = term.with_parent(pid);
+    }
+    if let Some(desc) = p.description {
+        term = term.with_description(desc);
+    }
+
+    let mut lock = match state.taxonomies.write() {
+        Ok(l) => l,
+        Err(_) => return HttpResponse::InternalServerError().body("Lock error"),
+    };
+
+    match lock.register_term(term.clone()) {
+        Ok(()) => HttpResponse::Created().json(serde_json::json!({
+            "status": "CREATED",
+            "term": term,
+        })),
+        Err(e) => HttpResponse::BadRequest().json(serde_json::json!({
+            "status": "ERROR",
+            "message": e.to_string(),
+        })),
+    }
+}
+
+/// DTO for media listing query
+#[derive(Debug, Deserialize)]
+pub struct ListMediaQuery {
+    pub mime_prefix: Option<String>,
+    pub query: Option<String>,
+    pub limit: Option<usize>,
+    pub offset: Option<usize>,
+}
+
+/// Handler: List media library assets: `GET /api/v2/cms/media`
+pub async fn cms_list_media_handler(
+    state: web::Data<DynamicRbacState>,
+    query: web::Query<ListMediaQuery>,
+) -> impl Responder {
+    let limit = query.limit.unwrap_or(20);
+    let offset = query.offset.unwrap_or(0);
+    let lock = match state.media_catalog.read() {
+        Ok(l) => l,
+        Err(_) => return HttpResponse::InternalServerError().body("Lock error"),
+    };
+
+    let (assets, total) = lock.query_assets(
+        query.mime_prefix.as_deref(),
+        query.query.as_deref(),
+        limit,
+        offset,
+    );
+    HttpResponse::Ok().json(serde_json::json!({
+        "status": "OK",
+        "total": total,
+        "assets": assets,
+    }))
+}
+
+/// DTO for uploading and cataloging media
+#[derive(Debug, Deserialize)]
+pub struct RegisterMediaPayload {
+    pub filename: String,
+    pub content_hash: String,
+    pub mime_type: String,
+    pub size_bytes: u64,
+    pub uploaded_by: Option<String>,
+    pub alt_text: Option<String>,
+    pub focal_x: Option<f32>,
+    pub focal_y: Option<f32>,
+}
+
+/// Handler: Register media in library: `POST /api/v2/cms/media`
+pub async fn cms_upload_media_handler(
+    state: web::Data<DynamicRbacState>,
+    payload: web::Json<RegisterMediaPayload>,
+) -> impl Responder {
+    let p = payload.into_inner();
+    let id = format!("med_{}", Utc::now().timestamp_millis());
+    let mut asset = match MediaAsset::new(
+        id,
+        "default",
+        p.filename,
+        p.content_hash,
+        p.mime_type,
+        p.size_bytes,
+        p.uploaded_by.unwrap_or_else(|| "Administrator".into()),
+    ) {
+        Ok(a) => a,
+        Err(e) => {
+            return HttpResponse::BadRequest().json(serde_json::json!({"error": e.to_string()}));
+        }
+    };
+
+    if let Some(alt) = p.alt_text {
+        asset = asset.with_alt_text(alt);
+    }
+    if let (Some(x), Some(y)) = (p.focal_x, p.focal_y) {
+        let _ = asset.set_focal_point(x, y);
+    }
+
+    if let Ok(mut lock) = state.media_catalog.write() {
+        lock.save_asset(asset.clone());
+    }
+
+    HttpResponse::Created().json(serde_json::json!({
+        "status": "CREATED",
+        "asset": asset,
+    }))
+}
+
+/// DTO for generating SEO meta
+#[derive(Debug, Deserialize)]
+pub struct GenerateSeoPayload {
+    pub title: String,
+    pub description: String,
+    pub canonical_url: String,
+    pub og_type: Option<String>,
+    pub og_image: Option<String>,
+    pub site_name: Option<String>,
+    pub json_ld: Option<String>,
+}
+
+/// Handler: Generate SEO OpenGraph & JSON-LD: `POST /api/v2/cms/seo/generate`
+pub async fn cms_generate_seo_handler(payload: web::Json<GenerateSeoPayload>) -> impl Responder {
+    let p = payload.into_inner();
+    let meta = SeoMetadata {
+        title: p.title.into(),
+        description: p.description.into(),
+        canonical_url: p.canonical_url.into(),
+        og_type: p.og_type.unwrap_or_else(|| "website".into()).into(),
+        og_image: p
+            .og_image
+            .unwrap_or_else(|| "https://rustnext.rs/og.png".into())
+            .into(),
+        site_name: p.site_name.unwrap_or_else(|| "RustNext ERP".into()).into(),
+        json_ld: p.json_ld.unwrap_or_else(|| "{}".into()),
+    };
+
+    let tags = meta.render_head_tags();
+    HttpResponse::Ok().json(serde_json::json!({
+        "status": "OK",
+        "html_head_tags": tags,
+        "metadata": meta,
+    }))
+}
+
+// =========================================================================
+// Enterprise Workflows & Document Time-Travel Versioning Endpoints
+// =========================================================================
+
+/// DTO for evaluating a workflow transition
+#[derive(Debug, Deserialize)]
+pub struct WorkflowEvaluatePayload {
+    pub doctype: String,
+    pub doc_name: String,
+    pub current_state: String,
+    pub action: String,
+    pub user_id: String,
+    pub user_roles: Vec<String>,
+    pub comment: Option<String>,
+    pub doc_data: serde_json::Value,
+}
+
+/// Handler: Evaluate workflow transition: `POST /api/v2/workflow/evaluate`
+pub async fn workflow_evaluate_handler(
+    state: web::Data<DynamicRbacState>,
+    payload: web::Json<WorkflowEvaluatePayload>,
+) -> impl Responder {
+    let p = payload.into_inner();
+    let workflow = ApprovalWorkflow::new("Purchase Order", "PO Approval Pipeline", "Draft")
+        .with_states(vec![
+            WorkflowStateNode::new("Draft", 0),
+            WorkflowStateNode::new("Pending Approval", 0),
+            WorkflowStateNode::new("Approved", 1).as_final_approval(),
+            WorkflowStateNode::new("Rejected", 2).as_rejection(),
+        ])
+        .with_transitions(vec![
+            WorkflowTransitionRule::new(
+                "Draft",
+                "submit_for_approval",
+                "Pending Approval",
+                vec!["Purchase User".into(), "System Manager".into()],
+            ),
+            WorkflowTransitionRule::new(
+                "Pending Approval",
+                "approve",
+                "Approved",
+                vec!["Purchase Manager".into(), "System Manager".into()],
+            ),
+            WorkflowTransitionRule::new(
+                "Pending Approval",
+                "reject",
+                "Rejected",
+                vec!["Purchase Manager".into(), "System Manager".into()],
+            ),
+        ]);
+
+    match workflow.evaluate_transition(
+        &p.doc_name,
+        &p.current_state,
+        &p.action,
+        &p.user_id,
+        &p.user_roles,
+        p.comment.as_deref(),
+        &p.doc_data,
+    ) {
+        Ok(outcome) => {
+            // Capture snapshot in versioning engine
+            if let Ok(mut vlock) = state.versioning_engine.write() {
+                vlock.capture_version(
+                    &p.doctype,
+                    &p.doc_name,
+                    &p.user_id,
+                    p.doc_data.clone(),
+                    serde_json::json!({"action": &p.action, "to_state": &outcome.new_state}),
+                    p.comment,
+                );
+            }
+            HttpResponse::Ok().json(serde_json::json!({
+                "status": "APPROVED",
+                "next_state": outcome.new_state,
+                "docstatus": outcome.new_docstatus,
+                "log": outcome.log_entry,
+            }))
+        }
+        Err(e) => HttpResponse::BadRequest().json(serde_json::json!({
+            "status": "TRANSITION_REJECTED",
+            "reason": e.to_string(),
+        })),
+    }
+}
+
+/// Handler: Get document version history: `GET /api/v2/workflow/versions/{doctype}/{docname}`
+pub async fn workflow_version_history_handler(
+    state: web::Data<DynamicRbacState>,
+    path: web::Path<(String, String)>,
+) -> impl Responder {
+    let (doctype, docname) = path.into_inner();
+    let versions = state
+        .versioning_engine
+        .read()
+        .map(|v| v.get_history(&doctype, &docname))
+        .unwrap_or_default();
+    HttpResponse::Ok().json(serde_json::json!({
+        "status": "OK",
+        "doctype": doctype,
+        "docname": docname,
+        "count": versions.len(),
+        "versions": versions,
+    }))
+}
+
+/// DTO for rollback
+#[derive(Debug, Deserialize)]
+pub struct VersionRollbackPayload {
+    pub doctype: String,
+    pub docname: String,
+    pub target_version: u32,
+    pub rolled_back_by: String,
+}
+
+/// Handler: Rollback document version: `POST /api/v2/workflow/versions/rollback`
+pub async fn workflow_version_rollback_handler(
+    state: web::Data<DynamicRbacState>,
+    payload: web::Json<VersionRollbackPayload>,
+) -> impl Responder {
+    let p = payload.into_inner();
+    let mut lock = match state.versioning_engine.write() {
+        Ok(l) => l,
+        Err(_) => return HttpResponse::InternalServerError().body("Lock error"),
+    };
+
+    match lock.get_version(&p.doctype, &p.docname, p.target_version) {
+        Ok(snapshot) => {
+            let rollback_entry = lock.capture_version(
+                &p.doctype,
+                &p.docname,
+                &p.rolled_back_by,
+                snapshot.clone(),
+                serde_json::json!({"rolled_back_to": p.target_version}),
+                Some(format!("Rollback to version {}", p.target_version)),
+            );
+            HttpResponse::Ok().json(serde_json::json!({
+                "status": "ROLLED_BACK",
+                "version": rollback_entry,
+                "restored_snapshot": snapshot,
+            }))
+        }
+        Err(e) => HttpResponse::NotFound().json(serde_json::json!({
+            "status": "NOT_FOUND",
+            "message": e.to_string(),
+        })),
+    }
+}
+
+// =========================================================================
+// Universal Export & Reporting Engine Endpoints
+// =========================================================================
+
+/// DTO for exporting dataset
+#[derive(Debug, Deserialize)]
+pub struct ExportDataPayload {
+    pub format: String, // "csv", "tsv", "json", "jsonl", "html"
+    pub columns: Option<Vec<ExportColumn>>,
+    pub rows: Vec<serde_json::Value>,
+}
+
+/// Handler: Export dataset: `POST /api/v2/export/data`
+pub async fn export_dataset_handler(payload: web::Json<ExportDataPayload>) -> impl Responder {
+    let p = payload.into_inner();
+    let format = match p.format.to_lowercase().as_str() {
+        "csv" => ExportFormat::Csv,
+        "tsv" => ExportFormat::Tsv,
+        "json" => ExportFormat::Json,
+        "jsonl" => ExportFormat::JsonLines,
+        "html" => ExportFormat::HtmlTable,
+        _ => ExportFormat::Csv,
+    };
+
+    let columns = p.columns.unwrap_or_else(|| {
+        if let Some(first) = p.rows.first().and_then(|r| r.as_object()) {
+            first.keys().map(|k| ExportColumn::new(k, k)).collect()
+        } else {
+            vec![ExportColumn::new("id", "ID")]
+        }
+    });
+
+    match DocumentExporter::export_to_string(format, &columns, &p.rows) {
+        Ok(output) => {
+            let content_type = match format {
+                ExportFormat::Csv => "text/csv; charset=utf-8",
+                ExportFormat::Tsv => "text/tab-separated-values; charset=utf-8",
+                ExportFormat::Json => "application/json",
+                ExportFormat::JsonLines => "application/x-ndjson",
+                ExportFormat::HtmlTable => "text/html; charset=utf-8",
+            };
+            HttpResponse::Ok().content_type(content_type).body(output)
+        }
+        Err(e) => HttpResponse::BadRequest().json(serde_json::json!({
+            "status": "ERROR",
+            "message": e.to_string(),
+        })),
+    }
+}
+
+/// DTO for generating dynamic pivot table
+#[derive(Debug, Deserialize)]
+pub struct PivotReportPayload {
+    pub row_field: String,
+    pub column_field: String,
+    pub value_field: String,
+    pub aggregation: String, // "sum", "avg", "count", "min", "max"
+    pub rows: Vec<serde_json::Value>,
+}
+
+/// Handler: Dynamic Pivot Table: `POST /api/v2/reports/pivot`
+pub async fn report_pivot_table_handler(payload: web::Json<PivotReportPayload>) -> impl Responder {
+    let p = payload.into_inner();
+    let agg = match p.aggregation.to_lowercase().as_str() {
+        "sum" => PivotAggregate::Sum,
+        "avg" | "average" => PivotAggregate::Average,
+        "count" => PivotAggregate::Count,
+        "min" => PivotAggregate::Min,
+        "max" => PivotAggregate::Max,
+        _ => PivotAggregate::Sum,
+    };
+
+    let result =
+        ReportEngine::compute_pivot(&p.rows, &p.row_field, &p.column_field, &p.value_field, agg);
+    HttpResponse::Ok().json(serde_json::json!({
+        "status": "OK",
+        "pivot_table": result,
+    }))
+}
+
+// =========================================================================
+// Omni-Channel Notifications & Webhooks Endpoints
+// =========================================================================
+
+/// Handler: Get in-app notification inbox: `GET /api/v2/notifications/inbox/{user_id}`
+pub async fn notifications_get_inbox_handler(
+    state: web::Data<DynamicRbacState>,
+    user_id: web::Path<String>,
+) -> impl Responder {
+    let uid = user_id.into_inner();
+    let msgs = state.notifications_inbox.get_user_notifications(&uid);
+    let unread = state.notifications_inbox.unread_count(&uid);
+
+    HttpResponse::Ok().json(serde_json::json!({
+        "status": "OK",
+        "user_id": uid,
+        "unread_count": unread,
+        "notifications": msgs,
+    }))
+}
+
+/// DTO for dispatching notification
+#[derive(Debug, Deserialize)]
+pub struct DispatchNotificationPayload {
+    pub recipient_id: String,
+    pub title: String,
+    pub message: String,
+    pub channel: Option<String>,
+    pub priority: Option<String>,
+    pub event_name: Option<String>,
+}
+
+/// Handler: Dispatch omni-channel notification: `POST /api/v2/notifications/dispatch`
+pub async fn notifications_dispatch_handler(
+    state: web::Data<DynamicRbacState>,
+    payload: web::Json<DispatchNotificationPayload>,
+) -> impl Responder {
+    let p = payload.into_inner();
+    let channel = match p
+        .channel
+        .as_deref()
+        .unwrap_or("inapp")
+        .to_lowercase()
+        .as_str()
+    {
+        "email" => NotificationChannel::Email,
+        "sms" => NotificationChannel::Sms,
+        "webhook" => NotificationChannel::Webhook,
+        "push" => NotificationChannel::Push,
+        _ => NotificationChannel::InApp,
+    };
+
+    let priority = match p
+        .priority
+        .as_deref()
+        .unwrap_or("medium")
+        .to_lowercase()
+        .as_str()
+    {
+        "low" => NotificationPriority::Low,
+        "high" => NotificationPriority::High,
+        "urgent" => NotificationPriority::Urgent,
+        _ => NotificationPriority::Medium,
+    };
+
+    let id = format!("ntf_{}", Utc::now().timestamp_millis());
+    let msg = NotificationMessage::new(id, "default", &p.recipient_id, &p.title, &p.message)
+        .with_channel(channel)
+        .with_priority(priority);
+
+    let prefs = UserNotificationPreferences::default_for(&p.recipient_id);
+    let event = p.event_name.unwrap_or_else(|| "general".into());
+
+    match NotificationDispatcher::dispatch(
+        &state.notifications_inbox,
+        &prefs,
+        &event,
+        msg,
+        Utc::now(),
+    ) {
+        Ok(delivered) => HttpResponse::Ok().json(serde_json::json!({
+            "status": "DELIVERED",
+            "delivered_channels": delivered,
+        })),
+        Err(e) => HttpResponse::BadRequest().json(serde_json::json!({
+            "status": "OPTED_OUT",
+            "reason": e.to_string(),
+        })),
+    }
+}
+
+/// DTO for testing outbound webhook signing
+#[derive(Debug, Deserialize)]
+pub struct WebhookTestPayload {
+    pub target_url: String,
+    pub secret: String,
+    pub event: String,
+    pub doctype: String,
+    pub docname: String,
+    pub data: serde_json::Value,
+}
+
+/// Handler: Test Webhook Signing and Dispatch: `POST /api/v2/webhooks/test`
+pub async fn webhooks_dispatch_test_handler(
+    payload: web::Json<WebhookTestPayload>,
+) -> impl Responder {
+    let p = payload.into_inner();
+    let sub = WebhookSubscription {
+        id: "sub_test_01".into(),
+        event: p.event.clone().into(),
+        target_url: p.target_url.clone().into(),
+        secret: p.secret.clone().into(),
+        is_active: true,
+        created_at: Utc::now(),
+    };
+
+    let wh_payload = WebhookPayload {
+        event: p.event.into(),
+        doctype: p.doctype.into(),
+        doc_name: p.docname.into(),
+        timestamp: Utc::now(),
+        data: p.data,
+    };
+
+    match WebhookOutboxEntry::new(&sub, &wh_payload) {
+        Ok(entry) => {
+            let signature =
+                WebhookDispatcher::compute_signature(&p.secret, entry.payload_json.as_bytes())
+                    .unwrap_or_default();
+            HttpResponse::Ok().json(serde_json::json!({
+                "status": "QUEUED",
+                "outbox_id": entry.id,
+                "target_url": entry.target_url,
+                "computed_hmac_sha256": signature,
+                "payload": wh_payload,
+            }))
+        }
+        Err(e) => HttpResponse::BadRequest().json(serde_json::json!({
+            "status": "ERROR",
+            "message": e.to_string(),
+        })),
+    }
 }
 
 #[cfg(test)]

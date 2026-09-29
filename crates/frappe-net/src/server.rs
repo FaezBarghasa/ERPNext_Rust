@@ -24,10 +24,19 @@ use crate::v2_routes::{
     admin_query_handler, admin_status_handler, admin_unlock_target_handler,
     admin_update_permission_handler, admin_update_user_roles_handler, auth_forgot_password_handler,
     auth_mfa_activate_handler, auth_mfa_disable_handler, auth_mfa_enroll_handler,
-    auth_reset_password_handler, download_file_handler, h3_stream_file_handler,
-    h3_stream_telemetry_handler, login_handler, logout_handler, ping_handler, quic_status_handler,
-    upload_file_handler, v2_amend_document, v2_cancel_document, v2_create_document,
-    v2_delete_document, v2_get_document, v2_list_document, v2_submit_document, v2_update_document,
+    auth_reset_password_handler, cms_create_taxonomy_handler, cms_generate_seo_handler,
+    cms_list_media_handler, cms_list_taxonomies_handler, cms_upload_media_handler,
+    download_file_handler, export_dataset_handler, h3_stream_file_handler,
+    h3_stream_telemetry_handler, login_handler, logout_handler, notifications_dispatch_handler,
+    notifications_get_inbox_handler, ping_handler, quic_status_handler, report_pivot_table_handler,
+    trade_add_wishlist_item_handler, trade_apply_coupon_handler, trade_calculate_shipping_handler,
+    trade_create_coupon_handler, trade_get_wishlist_handler, trade_list_coupons_handler,
+    trade_list_reviews_handler, trade_list_shipping_zones_handler, trade_moderate_review_handler,
+    trade_order_transition_handler, trade_remove_wishlist_item_handler, trade_rma_submit_handler,
+    trade_submit_review_handler, upload_file_handler, v2_amend_document, v2_cancel_document,
+    v2_create_document, v2_delete_document, v2_get_document, v2_list_document, v2_submit_document,
+    v2_update_document, webhooks_dispatch_test_handler, workflow_evaluate_handler,
+    workflow_version_history_handler, workflow_version_rollback_handler,
 };
 use actix_web::{
     App, HttpMessage, HttpRequest, HttpResponse, HttpServer, Responder, middleware::Compress,
@@ -928,6 +937,112 @@ pub fn configure_app(
         .route(
             "/api/v2/cms/page/{slug}/publish",
             web::post().to(cms_publish_page_handler),
+        )
+        // V2 Commerce & Promotion Endpoints
+        .route(
+            "/api/v2/trade/coupons",
+            web::get().to(trade_list_coupons_handler),
+        )
+        .route(
+            "/api/v2/trade/coupons",
+            web::post().to(trade_create_coupon_handler),
+        )
+        .route(
+            "/api/v2/trade/coupons/apply",
+            web::post().to(trade_apply_coupon_handler),
+        )
+        .route(
+            "/api/v2/trade/reviews",
+            web::get().to(trade_list_reviews_handler),
+        )
+        .route(
+            "/api/v2/trade/reviews",
+            web::post().to(trade_submit_review_handler),
+        )
+        .route(
+            "/api/v2/trade/reviews/moderate",
+            web::post().to(trade_moderate_review_handler),
+        )
+        .route(
+            "/api/v2/trade/wishlists/{user_id}",
+            web::get().to(trade_get_wishlist_handler),
+        )
+        .route(
+            "/api/v2/trade/wishlists/{user_id}/items",
+            web::post().to(trade_add_wishlist_item_handler),
+        )
+        .route(
+            "/api/v2/trade/wishlists/{user_id}/items/{item_code}",
+            web::delete().to(trade_remove_wishlist_item_handler),
+        )
+        .route(
+            "/api/v2/trade/shipping/zones",
+            web::get().to(trade_list_shipping_zones_handler),
+        )
+        .route(
+            "/api/v2/trade/shipping/calculate",
+            web::post().to(trade_calculate_shipping_handler),
+        )
+        .route(
+            "/api/v2/trade/orders/transition",
+            web::post().to(trade_order_transition_handler),
+        )
+        .route(
+            "/api/v2/trade/rma",
+            web::post().to(trade_rma_submit_handler),
+        )
+        // V2 CMS Taxonomy, Media & SEO Endpoints
+        .route(
+            "/api/v2/cms/taxonomy",
+            web::get().to(cms_list_taxonomies_handler),
+        )
+        .route(
+            "/api/v2/cms/taxonomy",
+            web::post().to(cms_create_taxonomy_handler),
+        )
+        .route("/api/v2/cms/media", web::get().to(cms_list_media_handler))
+        .route(
+            "/api/v2/cms/media",
+            web::post().to(cms_upload_media_handler),
+        )
+        .route(
+            "/api/v2/cms/seo/generate",
+            web::post().to(cms_generate_seo_handler),
+        )
+        // V2 Approval Workflow & Versioning Endpoints
+        .route(
+            "/api/v2/workflow/evaluate",
+            web::post().to(workflow_evaluate_handler),
+        )
+        .route(
+            "/api/v2/workflow/versions/{doctype}/{docname}",
+            web::get().to(workflow_version_history_handler),
+        )
+        .route(
+            "/api/v2/workflow/versions/rollback",
+            web::post().to(workflow_version_rollback_handler),
+        )
+        // V2 Universal Export & Pivot Reporting Endpoints
+        .route(
+            "/api/v2/export/data",
+            web::post().to(export_dataset_handler),
+        )
+        .route(
+            "/api/v2/reports/pivot",
+            web::post().to(report_pivot_table_handler),
+        )
+        // V2 Omni-Channel Notifications & Webhooks Endpoints
+        .route(
+            "/api/v2/notifications/inbox/{user_id}",
+            web::get().to(notifications_get_inbox_handler),
+        )
+        .route(
+            "/api/v2/notifications/dispatch",
+            web::post().to(notifications_dispatch_handler),
+        )
+        .route(
+            "/api/v2/webhooks/test",
+            web::post().to(webhooks_dispatch_test_handler),
         )
         // Protected V1 REST Resource API Scope
         .service(
