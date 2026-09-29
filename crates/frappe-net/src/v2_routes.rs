@@ -976,13 +976,15 @@ pub async fn h3_stream_telemetry_handler(payload: web::Json<serde_json::Value>) 
     let mut engine = crate::quic_h3_stream::QuicH3StreamingEngine::new(peer_addr);
     let push_stream_id = engine.create_unidirectional_push_stream();
 
-    let topic = payload
+    let val = payload.into_inner();
+    let topic = val
         .get("topic")
         .and_then(|t| t.as_str())
-        .unwrap_or("live_telemetry");
-    let payload_bytes = serde_json::to_vec(&payload.into_inner()).unwrap_or_default();
+        .unwrap_or("live_telemetry")
+        .to_string();
+    let payload_bytes = serde_json::to_vec(&val).unwrap_or_default();
 
-    match engine.push_live_event_h3(push_stream_id, topic, &payload_bytes) {
+    match engine.push_live_event_h3(push_stream_id, &topic, &payload_bytes) {
         Ok(frame_bytes) => HttpResponse::Ok()
             .insert_header(("Content-Type", "application/octet-stream"))
             .insert_header(("X-H3-Push-ID", push_stream_id.to_string()))

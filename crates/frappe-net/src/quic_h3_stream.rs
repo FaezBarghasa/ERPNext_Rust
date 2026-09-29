@@ -264,6 +264,36 @@ impl H3Settings {
         }
         buf
     }
+
+    /// Decodes an HTTP/3 SETTINGS frame payload into an `H3Settings` instance.
+    #[must_use]
+    pub fn decode_payload(payload: &[u8]) -> Self {
+        let mut settings = Self::default();
+        let mut offset = 0;
+
+        while offset < payload.len() {
+            if let Some((param_id, id_len)) = VarInt::decode(&payload[offset..]) {
+                offset += id_len;
+                if let Some((param_val, val_len)) = VarInt::decode(&payload[offset..]) {
+                    offset += val_len;
+                    match param_id {
+                        0x01 => settings.qpack_max_table_capacity = param_val,
+                        0x06 => settings.max_field_section_size = param_val,
+                        0x07 => settings.qpack_blocked_streams = param_val,
+                        0x08 => settings.enable_connect_protocol = param_val == 1,
+                        0x33 => settings.enable_h3_datagrams = param_val == 1,
+                        _ => {}
+                    }
+                } else {
+                    break;
+                }
+            } else {
+                break;
+            }
+        }
+
+        settings
+    }
 }
 
 /// HTTP/3 Protocol Frame Representation.
@@ -332,6 +362,7 @@ impl H3Frame {
         let frame = match frame_type {
             H3FrameType::Data => Self::Data(payload_slice.to_vec()),
             H3FrameType::Headers => Self::Headers(payload_slice.to_vec()),
+            H3FrameType::Settings => Self::Settings(H3Settings::decode_payload(payload_slice)),
             H3FrameType::GoAway => {
                 let (stream_id, _) =
                     VarInt::decode(payload_slice).ok_or(QuicH3Error::BufferUnderflow)?;
@@ -551,7 +582,7 @@ impl QuicH3StreamingEngine {
     /// Encodes and frames an HTTP/3 response header section with QPACK compression.
     pub fn send_h3_headers(
         &mut self,
-        stream_id: u64,
+        _stream_id: u64,
         status_code: u16,
         headers: &[(&str, &str)],
     ) -> Result<Vec<u8>, QuicH3Error> {
@@ -610,7 +641,7 @@ impl QuicH3StreamingEngine {
     /// Emits a live real-time mutation or telemetry push event over HTTP/3 Server Push.
     pub fn push_live_event_h3(
         &mut self,
-        stream_id: u64,
+        _stream_id: u64,
         topic: &str,
         payload_json: &[u8],
     ) -> Result<Vec<u8>, QuicH3Error> {

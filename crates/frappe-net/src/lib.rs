@@ -36,7 +36,8 @@ pub use tenant::{
 };
 pub use v2_routes::{
     LoginPayload, PingResponse, UploadFilePayload, V2ListQuery, compile_filters_to_surrealql,
-    download_file_handler, login_handler, logout_handler, ping_handler, upload_file_handler,
-    v2_amend_document, v2_cancel_document, v2_create_document, v2_delete_document, v2_get_document,
-    v2_list_document, v2_submit_document, v2_update_document,
+    download_file_handler, h3_stream_file_handler, h3_stream_telemetry_handler, login_handler,
+    logout_handler, ping_handler, quic_status_handler, upload_file_handler, v2_amend_document,
+    v2_cancel_document, v2_create_document, v2_delete_document, v2_get_document, v2_list_document,
+    v2_submit_document, v2_update_document,
 };

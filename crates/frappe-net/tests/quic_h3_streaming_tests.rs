@@ -2,14 +2,14 @@
 
 use actix_web::{App, test, web};
 use frappe_net::quic_h3_stream::{
-    H3Frame, H3Settings, QpackCodec, QpackField, QuicConnectionId, QuicH3StreamingEngine,
-    QuicStreamType, VarInt,
+    H3Frame, H3Settings, QpackCodec, QpackField, QuicH3StreamingEngine, QuicStreamType, VarInt,
 };
 use frappe_net::tenant::{ConnectionPoolManager, MicroTopologyConfig};
 use frappe_net::{configure_app, quic_status_handler};
 use std::net::SocketAddr;
+use std::time::Duration;
 
-#[actix_rt::test]
+#[actix_web::test]
 async fn test_quic_status_http_endpoint() {
     let app = test::init_service(
         App::new().route("/api/v2/quic/status", web::get().to(quic_status_handler)),
@@ -30,8 +30,8 @@ async fn test_quic_status_http_endpoint() {
     assert_eq!(json["alt_svc_advertised_port"], 4433);
 }
 
-#[test]
-fn test_quic_varint_boundary_encodings() {
+#[actix_web::test]
+async fn test_quic_varint_boundary_encodings() {
     // RFC 9000 1-byte, 2-byte, 4-byte, 8-byte boundaries
     let boundaries = [
         (0u64, 1),
@@ -59,8 +59,8 @@ fn test_quic_varint_boundary_encodings() {
     }
 }
 
-#[test]
-fn test_h3_settings_and_qpack_compression_roundtrip() {
+#[actix_web::test]
+async fn test_h3_settings_and_qpack_compression_roundtrip() {
     let settings = H3Settings {
         max_field_section_size: 131072,
         qpack_max_table_capacity: 8192,
@@ -75,9 +75,8 @@ fn test_h3_settings_and_qpack_compression_roundtrip() {
     let (deserialized, consumed) =
         H3Frame::deserialize(&serialized).expect("Deserialization succeeds");
     assert_eq!(consumed, serialized.len());
-    match deserialized {
-        H3Frame::Data(_) => panic!("Expected H3Frame::Settings"),
-        _ => {}
+    if let H3Frame::Data(_) = deserialized {
+        panic!("Expected H3Frame::Settings");
     }
 
     // QPACK Header Section with custom & static fields
@@ -101,8 +100,8 @@ fn test_h3_settings_and_qpack_compression_roundtrip() {
     assert_eq!(decoded[4].value, "high");
 }
 
-#[test]
-fn test_quic_h3_streaming_chunked_video_and_event_push() {
+#[actix_web::test]
+async fn test_quic_h3_streaming_chunked_video_and_event_push() {
     let addr: SocketAddr = "192.168.1.150:4433".parse().unwrap();
     let mut engine = QuicH3StreamingEngine::new(addr);
 
@@ -151,9 +150,9 @@ fn test_quic_h3_streaming_chunked_video_and_event_push() {
     assert_eq!(engine.peer_addr, mobile_wifi_addr);
 }
 
-#[actix_rt::test]
+#[actix_web::test]
 async fn test_full_app_alt_svc_and_h3_stream_routes() {
-    let pool_mgr = ConnectionPoolManager::new();
+    let pool_mgr = ConnectionPoolManager::in_memory(Duration::from_secs(300));
     let topology = MicroTopologyConfig::default();
 
     let app = test::init_service(
