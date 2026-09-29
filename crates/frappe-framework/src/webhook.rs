@@ -9,7 +9,6 @@ use hmac::{Hmac, KeyInit, Mac};
 use serde::{Deserialize, Serialize};
 use sha2::Sha256;
 use thiserror::Error;
-
 type HmacSha256 = Hmac<Sha256>;
 
 /// Webhook errors.
