@@ -16,9 +16,11 @@ use crate::tenant::{
     AcmeGateway, ConnectionPoolManager, MicroTopologyConfig, TenantId, TenantResolver,
 };
 use crate::v2_routes::{
-    download_file_handler, login_handler, logout_handler, ping_handler, upload_file_handler,
-    v2_amend_document, v2_cancel_document, v2_create_document, v2_delete_document, v2_get_document,
-    v2_list_document, v2_submit_document, v2_update_document,
+    admin_action_handler, admin_query_handler, admin_status_handler, download_file_handler,
+    h3_stream_file_handler, h3_stream_telemetry_handler, login_handler, logout_handler,
+    ping_handler, quic_status_handler, upload_file_handler, v2_amend_document, v2_cancel_document,
+    v2_create_document, v2_delete_document, v2_get_document, v2_list_document, v2_submit_document,
+    v2_update_document,
 };
 use actix_web::{
     App, HttpMessage, HttpRequest, HttpResponse, HttpServer, Responder, middleware::Compress,
@@ -198,7 +200,7 @@ async fn admin_handler(req: HttpRequest) -> impl Responder {
 
     HttpResponse::Ok()
         .content_type("text/html; charset=utf-8")
-        .body(render_desk_shell_html("System Fleet Admin", &user_name))
+        .body(desk_app::render_admin_cockpit_html(&user_name))
 }
 
 async fn storefront_handler() -> impl Responder {
@@ -785,6 +787,21 @@ pub fn configure_app(
             web::post().to(crate::ai_oauth::oauth_token_handler),
         )
         // V2 Authentication, RPC System Methods, Webhooks & Storage
+        .route("/api/v2/quic/status", web::get().to(quic_status_handler))
+        .route(
+            "/api/v2/stream/h3/file/{hash}",
+            web::get().to(h3_stream_file_handler),
+        )
+        .route(
+            "/api/v2/stream/h3/telemetry",
+            web::post().to(h3_stream_telemetry_handler),
+        )
+        .route("/api/v2/admin/status", web::get().to(admin_status_handler))
+        .route(
+            "/api/v2/admin/action/{action_id}",
+            web::post().to(admin_action_handler),
+        )
+        .route("/api/v2/admin/query", web::post().to(admin_query_handler))
         .route("/api/v2/method/login", web::post().to(login_handler))
         .route("/api/v2/method/logout", web::post().to(logout_handler))
         .route("/api/v2/method/ping", web::get().to(ping_handler))

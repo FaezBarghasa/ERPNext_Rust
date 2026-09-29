@@ -5,6 +5,7 @@ pub mod live;
 pub mod mail_queue;
 pub mod middleware;
 pub mod queue;
+pub mod quic_h3_stream;
 pub mod rate_limit;
 pub mod routes;
 pub mod server;
@@ -21,6 +22,10 @@ pub use mail_queue::{EmailMessage, MailQueueError, MailQueueManager};
 pub use queue::{
     BackgroundJob, PriorityLevel, PriorityTaskDispatcher, QueueError, ReportDownloadJob,
     StaggeredMaintenanceScheduler,
+};
+pub use quic_h3_stream::{
+    H3Frame, H3FrameType, H3Settings, QpackCodec, QpackField, QuicConnectionId, QuicH3Error,
+    QuicH3StreamingEngine, QuicStreamType, VarInt,
 };
 pub use rate_limit::{RateLimitMiddleware, TokenBucketRateLimiter};
 pub use routes::{create_resource, delete_resource, get_resource, list_resource};
