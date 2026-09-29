@@ -16,7 +16,11 @@ use crate::tenant::{
     AcmeGateway, ConnectionPoolManager, MicroTopologyConfig, TenantId, TenantResolver,
 };
 use crate::v2_routes::{
-    admin_action_handler, admin_query_handler, admin_status_handler, download_file_handler,
+    DynamicRbacState, admin_action_handler, admin_create_role_handler, admin_create_user_handler,
+    admin_delete_user_handler, admin_get_permissions_handler,
+    admin_get_user_effective_permissions_handler, admin_list_roles_handler,
+    admin_list_users_handler, admin_query_handler, admin_status_handler,
+    admin_update_permission_handler, admin_update_user_roles_handler, download_file_handler,
     h3_stream_file_handler, h3_stream_telemetry_handler, login_handler, logout_handler,
     ping_handler, quic_status_handler, upload_file_handler, v2_amend_document, v2_cancel_document,
     v2_create_document, v2_delete_document, v2_get_document, v2_list_document, v2_submit_document,
@@ -721,6 +725,7 @@ pub fn configure_app(
     acme_gateway: Option<AcmeGateway>,
 ) {
     cfg.app_data(web::Data::new(pool_mgr))
+        .app_data(web::Data::new(DynamicRbacState::default()))
         .app_data(web::Data::new(erp_cms::EdgeAnalyticsEngine::new()))
         .app_data(web::PayloadConfig::new(topology.max_payload_bytes))
         // Root storefront & Multi-Persona Shells
@@ -802,6 +807,43 @@ pub fn configure_app(
             web::post().to(admin_action_handler),
         )
         .route("/api/v2/admin/query", web::post().to(admin_query_handler))
+        // Dynamic User & Role Permission Management
+        .route(
+            "/api/v2/admin/users",
+            web::get().to(admin_list_users_handler),
+        )
+        .route(
+            "/api/v2/admin/users",
+            web::post().to(admin_create_user_handler),
+        )
+        .route(
+            "/api/v2/admin/users/{user_id}/roles",
+            web::put().to(admin_update_user_roles_handler),
+        )
+        .route(
+            "/api/v2/admin/users/{user_id}",
+            web::delete().to(admin_delete_user_handler),
+        )
+        .route(
+            "/api/v2/admin/users/{user_id}/effective-permissions",
+            web::get().to(admin_get_user_effective_permissions_handler),
+        )
+        .route(
+            "/api/v2/admin/roles",
+            web::get().to(admin_list_roles_handler),
+        )
+        .route(
+            "/api/v2/admin/roles",
+            web::post().to(admin_create_role_handler),
+        )
+        .route(
+            "/api/v2/admin/permissions",
+            web::get().to(admin_get_permissions_handler),
+        )
+        .route(
+            "/api/v2/admin/permissions",
+            web::post().to(admin_update_permission_handler),
+        )
         .route("/api/v2/method/login", web::post().to(login_handler))
         .route("/api/v2/method/logout", web::post().to(logout_handler))
         .route("/api/v2/method/ping", web::get().to(ping_handler))

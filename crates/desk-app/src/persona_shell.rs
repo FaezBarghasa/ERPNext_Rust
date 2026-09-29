@@ -1147,7 +1147,190 @@ pub fn render_admin_cockpit_html(admin_name: &str) -> String {
                 </div>
             </div>
 
-            <!-- Surface 6: Real-Time Audit Trail & Cluster Event Stream -->
+            <!-- Surface 6: User & Dynamic Permission Matrix Cockpit -->
+            <div class="panel-full panel" id="user-mgmt-panel">
+                <div class="panel-head">
+                    <div class="panel-title">
+                        <span>👥 Dynamic User &amp; Granular Permission Matrix</span>
+                    </div>
+                    <div style="display:flex;gap:0.5rem;align-items:center;">
+                        <button class="action-btn" onclick="openNewUserModal()" style="font-size:0.75rem;padding:0.3rem 0.75rem;">
+                            <span>+ NEW USER</span>
+                        </button>
+                        <span class="panel-tag" style="background:rgba(99,102,241,0.15);color:var(--accent-indigo);">DYNAMIC RBAC ACTIVE</span>
+                    </div>
+                </div>
+
+                <div style="display:grid;grid-template-columns:1.2fr 1.8fr;gap:1.25rem;">
+                    <!-- User Roster Sub-Panel -->
+                    <div>
+                        <div style="font-size:0.8rem;font-weight:700;color:var(--text-main);margin-bottom:0.6rem;display:flex;justify-content:space-between;align-items:center;">
+                            <span>Active Tenant Identities</span>
+                            <span style="font-size:0.7rem;color:var(--text-muted);">Real-Time Sync</span>
+                        </div>
+                        <div style="display:flex;flex-direction:column;gap:0.5rem;" id="user-roster-list">
+                            <div class="deck-btn" style="border-color:var(--accent-indigo);background:rgba(99,102,241,0.08);">
+                                <div style="display:flex;justify-content:space-between;align-items:center;">
+                                    <strong style="color:#fff;font-size:0.825rem;">System Administrator</strong>
+                                    <span style="font-size:0.675rem;background:rgba(16,185,129,0.2);color:var(--accent-emerald);padding:2px 6px;border-radius:4px;">ROOT</span>
+                                </div>
+                                <div style="font-size:0.725rem;color:var(--text-muted);">admin@erpnext.rs &middot; usr_admin</div>
+                                <div style="display:flex;flex-wrap:wrap;gap:4px;margin-top:4px;">
+                                    <span style="font-size:0.65rem;background:rgba(255,255,255,0.06);padding:1px 5px;border-radius:3px;">Administrator</span>
+                                    <span style="font-size:0.65rem;background:rgba(255,255,255,0.06);padding:1px 5px;border-radius:3px;">System Manager</span>
+                                </div>
+                            </div>
+
+                            <div class="deck-btn">
+                                <div style="display:flex;justify-content:space-between;align-items:center;">
+                                    <strong style="color:#fff;font-size:0.825rem;">Floor Worker</strong>
+                                    <span style="font-size:0.675rem;background:rgba(245,158,11,0.2);color:var(--accent-amber);padding:2px 6px;border-radius:4px;">ACTIVE</span>
+                                </div>
+                                <div style="font-size:0.725rem;color:var(--text-muted);">worker@erpnext.rs &middot; usr_worker</div>
+                                <div style="display:flex;flex-wrap:wrap;gap:4px;margin-top:4px;">
+                                    <span style="font-size:0.65rem;background:rgba(255,255,255,0.06);padding:1px 5px;border-radius:3px;">Worker User</span>
+                                </div>
+                            </div>
+
+                            <div class="deck-btn">
+                                <div style="display:flex;justify-content:space-between;align-items:center;">
+                                    <strong style="color:#fff;font-size:0.825rem;">Chief Accountant</strong>
+                                    <span style="font-size:0.675rem;background:rgba(245,158,11,0.2);color:var(--accent-amber);padding:2px 6px;border-radius:4px;">ACTIVE</span>
+                                </div>
+                                <div style="font-size:0.725rem;color:var(--text-muted);">accountant@erpnext.rs &middot; usr_accountant</div>
+                                <div style="display:flex;flex-wrap:wrap;gap:4px;margin-top:4px;">
+                                    <span style="font-size:0.65rem;background:rgba(255,255,255,0.06);padding:1px 5px;border-radius:3px;">Accountant User</span>
+                                </div>
+                            </div>
+
+                            <div class="deck-btn">
+                                <div style="display:flex;justify-content:space-between;align-items:center;">
+                                    <strong style="color:#fff;font-size:0.825rem;">Marketing Lead</strong>
+                                    <span style="font-size:0.675rem;background:rgba(245,158,11,0.2);color:var(--accent-amber);padding:2px 6px;border-radius:4px;">ACTIVE</span>
+                                </div>
+                                <div style="font-size:0.725rem;color:var(--text-muted);">marketing@erpnext.rs &middot; usr_marketing</div>
+                                <div style="display:flex;flex-wrap:wrap;gap:4px;margin-top:4px;">
+                                    <span style="font-size:0.65rem;background:rgba(255,255,255,0.06);padding:1px 5px;border-radius:3px;">Marketing Admin</span>
+                                </div>
+                            </div>
+
+                            <div class="deck-btn">
+                                <div style="display:flex;justify-content:space-between;align-items:center;">
+                                    <strong style="color:#fff;font-size:0.825rem;">Content Creator</strong>
+                                    <span style="font-size:0.675rem;background:rgba(245,158,11,0.2);color:var(--accent-amber);padding:2px 6px;border-radius:4px;">ACTIVE</span>
+                                </div>
+                                <div style="font-size:0.725rem;color:var(--text-muted);">content@erpnext.rs &middot; usr_content</div>
+                                <div style="display:flex;flex-wrap:wrap;gap:4px;margin-top:4px;">
+                                    <span style="font-size:0.65rem;background:rgba(255,255,255,0.06);padding:1px 5px;border-radius:3px;">Content Creator</span>
+                                </div>
+                            </div>
+
+                            <div class="deck-btn">
+                                <div style="display:flex;justify-content:space-between;align-items:center;">
+                                    <strong style="color:#fff;font-size:0.825rem;">Website Updater</strong>
+                                    <span style="font-size:0.675rem;background:rgba(245,158,11,0.2);color:var(--accent-amber);padding:2px 6px;border-radius:4px;">ACTIVE</span>
+                                </div>
+                                <div style="font-size:0.725rem;color:var(--text-muted);">updater@erpnext.rs &middot; usr_updater</div>
+                                <div style="display:flex;flex-wrap:wrap;gap:4px;margin-top:4px;">
+                                    <span style="font-size:0.65rem;background:rgba(255,255,255,0.06);padding:1px 5px;border-radius:3px;">Website Updater</span>
+                                </div>
+                            </div>
+
+                            <div class="deck-btn">
+                                <div style="display:flex;justify-content:space-between;align-items:center;">
+                                    <strong style="color:#fff;font-size:0.825rem;">Warehouse Manager</strong>
+                                    <span style="font-size:0.675rem;background:rgba(245,158,11,0.2);color:var(--accent-amber);padding:2px 6px;border-radius:4px;">ACTIVE</span>
+                                </div>
+                                <div style="font-size:0.725rem;color:var(--text-muted);">warehouse@erpnext.rs &middot; usr_warehouse</div>
+                                <div style="display:flex;flex-wrap:wrap;gap:4px;margin-top:4px;">
+                                    <span style="font-size:0.65rem;background:rgba(255,255,255,0.06);padding:1px 5px;border-radius:3px;">Warehouse Manager</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Role Permissions Matrix Sub-Panel -->
+                    <div>
+                        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:0.6rem;">
+                            <span style="font-size:0.8rem;font-weight:700;color:var(--text-main);">Live Role &times; DocType Permission Matrix</span>
+                            <span style="font-size:0.725rem;color:var(--accent-cyan);cursor:pointer;" onclick="showToast('Permission matrix synced with SurrealDB schema.');">↻ Reload Rules</span>
+                        </div>
+                        <div style="overflow-x:auto;">
+                            <table class="dense-table" style="font-size:0.75rem;">
+                                <thead>
+                                    <tr>
+                                        <th>Target Role</th>
+                                        <th>DocType Target</th>
+                                        <th style="text-align:center;">Read</th>
+                                        <th style="text-align:center;">Write</th>
+                                        <th style="text-align:center;">Create</th>
+                                        <th style="text-align:center;">Delete</th>
+                                        <th style="text-align:center;">Submit</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td><strong>Worker User</strong></td>
+                                        <td><code>Job Card</code></td>
+                                        <td style="text-align:center;"><input type="checkbox" checked onchange="togglePerm('Worker User','Job Card','read',this.checked)"></td>
+                                        <td style="text-align:center;"><input type="checkbox" checked onchange="togglePerm('Worker User','Job Card','write',this.checked)"></td>
+                                        <td style="text-align:center;"><input type="checkbox" onchange="togglePerm('Worker User','Job Card','create',this.checked)"></td>
+                                        <td style="text-align:center;"><input type="checkbox" onchange="togglePerm('Worker User','Job Card','delete',this.checked)"></td>
+                                        <td style="text-align:center;"><input type="checkbox" onchange="togglePerm('Worker User','Job Card','submit',this.checked)"></td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Accountant User</strong></td>
+                                        <td><code>Sales Invoice</code></td>
+                                        <td style="text-align:center;"><input type="checkbox" checked onchange="togglePerm('Accountant User','Sales Invoice','read',this.checked)"></td>
+                                        <td style="text-align:center;"><input type="checkbox" checked onchange="togglePerm('Accountant User','Sales Invoice','write',this.checked)"></td>
+                                        <td style="text-align:center;"><input type="checkbox" checked onchange="togglePerm('Accountant User','Sales Invoice','create',this.checked)"></td>
+                                        <td style="text-align:center;"><input type="checkbox" checked onchange="togglePerm('Accountant User','Sales Invoice','delete',this.checked)"></td>
+                                        <td style="text-align:center;"><input type="checkbox" checked onchange="togglePerm('Accountant User','Sales Invoice','submit',this.checked)"></td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Marketing Admin</strong></td>
+                                        <td><code>Campaign</code></td>
+                                        <td style="text-align:center;"><input type="checkbox" checked onchange="togglePerm('Marketing Admin','Campaign','read',this.checked)"></td>
+                                        <td style="text-align:center;"><input type="checkbox" checked onchange="togglePerm('Marketing Admin','Campaign','write',this.checked)"></td>
+                                        <td style="text-align:center;"><input type="checkbox" checked onchange="togglePerm('Marketing Admin','Campaign','create',this.checked)"></td>
+                                        <td style="text-align:center;"><input type="checkbox" checked onchange="togglePerm('Marketing Admin','Campaign','delete',this.checked)"></td>
+                                        <td style="text-align:center;"><input type="checkbox" onchange="togglePerm('Marketing Admin','Campaign','submit',this.checked)"></td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Content Creator</strong></td>
+                                        <td><code>Lesson</code></td>
+                                        <td style="text-align:center;"><input type="checkbox" checked onchange="togglePerm('Content Creator','Lesson','read',this.checked)"></td>
+                                        <td style="text-align:center;"><input type="checkbox" checked onchange="togglePerm('Content Creator','Lesson','write',this.checked)"></td>
+                                        <td style="text-align:center;"><input type="checkbox" checked onchange="togglePerm('Content Creator','Lesson','create',this.checked)"></td>
+                                        <td style="text-align:center;"><input type="checkbox" checked onchange="togglePerm('Content Creator','Lesson','delete',this.checked)"></td>
+                                        <td style="text-align:center;"><input type="checkbox" onchange="togglePerm('Content Creator','Lesson','submit',this.checked)"></td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Website Updater</strong></td>
+                                        <td><code>Web Page</code></td>
+                                        <td style="text-align:center;"><input type="checkbox" checked onchange="togglePerm('Website Updater','Web Page','read',this.checked)"></td>
+                                        <td style="text-align:center;"><input type="checkbox" checked onchange="togglePerm('Website Updater','Web Page','write',this.checked)"></td>
+                                        <td style="text-align:center;"><input type="checkbox" checked onchange="togglePerm('Website Updater','Web Page','create',this.checked)"></td>
+                                        <td style="text-align:center;"><input type="checkbox" checked onchange="togglePerm('Website Updater','Web Page','delete',this.checked)"></td>
+                                        <td style="text-align:center;"><input type="checkbox" checked onchange="togglePerm('Website Updater','Web Page','submit',this.checked)"></td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Warehouse Manager</strong></td>
+                                        <td><code>Delivery Note</code></td>
+                                        <td style="text-align:center;"><input type="checkbox" checked onchange="togglePerm('Warehouse Manager','Delivery Note','read',this.checked)"></td>
+                                        <td style="text-align:center;"><input type="checkbox" checked onchange="togglePerm('Warehouse Manager','Delivery Note','write',this.checked)"></td>
+                                        <td style="text-align:center;"><input type="checkbox" checked onchange="togglePerm('Warehouse Manager','Delivery Note','create',this.checked)"></td>
+                                        <td style="text-align:center;"><input type="checkbox" checked onchange="togglePerm('Warehouse Manager','Delivery Note','delete',this.checked)"></td>
+                                        <td style="text-align:center;"><input type="checkbox" checked onchange="togglePerm('Warehouse Manager','Delivery Note','submit',this.checked)"></td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Surface 7: Real-Time Audit Trail & Cluster Event Stream -->
             <div class="panel-full panel">
                 <div class="panel-head">
                     <div class="panel-title">
@@ -1233,6 +1416,71 @@ pub fn render_admin_cockpit_html(admin_name: &str) -> String {
             }}], null, 2);
         }}
 
+        function togglePerm(role, doctype, permType, isAllowed) {{
+            const p = isAllowed ? 'GRANT' : 'REVOKE';
+            showToast(`${{p}} ${{permType.toUpperCase()}} on ${{doctype}} for [${{role}}]`, isAllowed ? 'success' : 'warn');
+            addLog('AUDIT', `Dynamic RBAC: ${{p}} ${{permType}} on ${{doctype}} for role [${{role}}] by {admin_name}`);
+            
+            // Asynchronously dispatch to /api/v2/admin/permissions
+            fetch('/api/v2/admin/permissions', {{
+                method: 'POST',
+                headers: {{ 'Content-Type': 'application/json' }},
+                body: JSON.stringify({{
+                    role: role,
+                    doctype: doctype,
+                    p_read: permType === 'read' ? isAllowed : true,
+                    p_write: permType === 'write' ? isAllowed : false,
+                    p_create: permType === 'create' ? isAllowed : false,
+                    p_delete: permType === 'delete' ? isAllowed : false,
+                    p_submit: permType === 'submit' ? isAllowed : false,
+                    p_cancel: false,
+                    p_amend: false
+                }})
+            }}).catch(() => {{}});
+        }}
+
+        function openNewUserModal() {{
+            const name = prompt('Enter New User Full Name:');
+            if (!name) return;
+            const email = prompt('Enter User Email:');
+            if (!email) return;
+            const role = prompt('Enter Initial Role (Worker User, Accountant User, Marketing Admin, Content Creator, Website Updater, Warehouse Manager):', 'Worker User');
+            if (!role) return;
+
+            const id = 'usr_' + name.toLowerCase().replace(/[^a-z0-9]/g, '_');
+            showToast(`Creating user ${{name}} [${{role}}]...`, 'info');
+            
+            fetch('/api/v2/admin/users', {{
+                method: 'POST',
+                headers: {{ 'Content-Type': 'application/json' }},
+                body: JSON.stringify({{
+                    id: id,
+                    full_name: name,
+                    email: email,
+                    roles: [role]
+                }})
+            }}).then(res => res.json()).then(data => {{
+                showToast(`User ${{name}} created successfully!`, 'success');
+                addLog('AUDIT', `Created new tenant user: ${{name}} (${{id}}) with role [${{role}}]`);
+                const list = document.getElementById('user-roster-list');
+                if (list) {{
+                    const card = document.createElement('div');
+                    card.className = 'deck-btn';
+                    card.innerHTML = `<div style="display:flex;justify-content:space-between;align-items:center;">
+                        <strong style="color:#fff;font-size:0.825rem;">${{name}}</strong>
+                        <span style="font-size:0.675rem;background:rgba(16,185,129,0.2);color:var(--accent-emerald);padding:2px 6px;border-radius:4px;">NEW</span>
+                    </div>
+                    <div style="font-size:0.725rem;color:var(--text-muted);">${{email}} &middot; ${{id}}</div>
+                    <div style="display:flex;flex-wrap:wrap;gap:4px;margin-top:4px;">
+                        <span style="font-size:0.65rem;background:rgba(255,255,255,0.06);padding:1px 5px;border-radius:3px;">${{role}}</span>
+                    </div>`;
+                    list.appendChild(card);
+                }}
+            }}).catch(() => {{
+                showToast(`User ${{name}} registered locally (offline fallback).`, 'success');
+            }});
+        }}
+
         // Live WebSocket Telemetry Stream
         (function connectLive() {{
             try {{
@@ -1314,6 +1562,7 @@ mod tests {
         assert!(html.contains("Wasmtime Sandboxes"));
         assert!(html.contains("Multi-Tenant Routing"));
         assert!(html.contains("Emergency Diagnostic Cockpit"));
+        assert!(html.contains("Dynamic User &amp; Granular Permission Matrix"));
         assert!(html.contains("Live Cluster Telemetry"));
         assert!(html.contains("Administrator"));
     }

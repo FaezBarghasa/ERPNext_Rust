@@ -15,11 +15,15 @@ use crate::tenant::{ConnectionPoolManager, TenantId};
 use actix_web::{HttpMessage, HttpRequest, HttpResponse, Responder, web};
 use chrono::Utc;
 use frappe_meta::auth::{SessionClaims, hash_password, issue_token, verify_password};
-use frappe_meta::rbac::{Permission, check_permission};
+use frappe_meta::rbac::{
+    DynamicRolePermissionRegistry, Permission, ROLE_ACCOUNTANT_USER, ROLE_ADMINISTRATOR,
+    ROLE_CONTENT_CREATOR, ROLE_MARKETING_ADMIN, ROLE_SYSTEM_MANAGER, ROLE_WAREHOUSE_MANAGER,
+    ROLE_WEBSITE_UPDATER, ROLE_WORKER_USER, STANDARD_ROLES, UserRecord, check_permission,
+};
 use regex::Regex;
 use serde::{Deserialize, Serialize};
 use sha2::{Digest, Sha256};
-use std::sync::LazyLock;
+use std::sync::{Arc, LazyLock, RwLock};
 
 static SAFE_FIELD_REGEX: LazyLock<Regex> =
     LazyLock::new(|| Regex::new(r"^[a-zA-Z_][a-zA-Z0-9_.]*$").expect("Regex compile"));
@@ -997,9 +1001,400 @@ pub async fn h3_stream_telemetry_handler(payload: web::Json<serde_json::Value>) 
     }
 }
 
+/// In-memory dynamic RBAC registry state shared across worker threads.
+#[derive(Clone)]
+pub struct DynamicRbacState {
+    pub users: Arc<RwLock<Vec<UserRecord>>>,
+    pub registry: Arc<RwLock<DynamicRolePermissionRegistry>>,
+}
+
+impl Default for DynamicRbacState {
+    fn default() -> Self {
+        let registry = DynamicRolePermissionRegistry::with_defaults();
+        let default_users = vec![
+            UserRecord {
+                id: "usr_admin".into(),
+                full_name: "System Administrator".into(),
+                email: "admin@erpnext.rs".into(),
+                enabled: true,
+                roles: vec![ROLE_ADMINISTRATOR.into(), ROLE_SYSTEM_MANAGER.into()],
+                allowed_companies: vec!["default".into()],
+                created_at: Utc::now().to_rfc3339(),
+            },
+            UserRecord {
+                id: "usr_worker".into(),
+                full_name: "Floor Worker".into(),
+                email: "worker@erpnext.rs".into(),
+                enabled: true,
+                roles: vec![ROLE_WORKER_USER.into()],
+                allowed_companies: vec!["default".into()],
+                created_at: Utc::now().to_rfc3339(),
+            },
+            UserRecord {
+                id: "usr_accountant".into(),
+                full_name: "Chief Accountant".into(),
+                email: "accountant@erpnext.rs".into(),
+                enabled: true,
+                roles: vec![ROLE_ACCOUNTANT_USER.into()],
+                allowed_companies: vec!["default".into()],
+                created_at: Utc::now().to_rfc3339(),
+            },
+            UserRecord {
+                id: "usr_marketing".into(),
+                full_name: "Marketing Lead".into(),
+                email: "marketing@erpnext.rs".into(),
+                enabled: true,
+                roles: vec![ROLE_MARKETING_ADMIN.into()],
+                allowed_companies: vec!["default".into()],
+                created_at: Utc::now().to_rfc3339(),
+            },
+            UserRecord {
+                id: "usr_content".into(),
+                full_name: "Content Creator".into(),
+                email: "content@erpnext.rs".into(),
+                enabled: true,
+                roles: vec![ROLE_CONTENT_CREATOR.into()],
+                allowed_companies: vec!["default".into()],
+                created_at: Utc::now().to_rfc3339(),
+            },
+            UserRecord {
+                id: "usr_updater".into(),
+                full_name: "Website Updater".into(),
+                email: "updater@erpnext.rs".into(),
+                enabled: true,
+                roles: vec![ROLE_WEBSITE_UPDATER.into()],
+                allowed_companies: vec!["default".into()],
+                created_at: Utc::now().to_rfc3339(),
+            },
+            UserRecord {
+                id: "usr_warehouse".into(),
+                full_name: "Warehouse Manager".into(),
+                email: "warehouse@erpnext.rs".into(),
+                enabled: true,
+                roles: vec![ROLE_WAREHOUSE_MANAGER.into()],
+                allowed_companies: vec!["default".into()],
+                created_at: Utc::now().to_rfc3339(),
+            },
+        ];
+
+        Self {
+            users: Arc::new(RwLock::new(default_users)),
+            registry: Arc::new(RwLock::new(registry)),
+        }
+    }
+}
+
+/// DTO for creating a new user.
+#[derive(Debug, Deserialize)]
+pub struct CreateUserPayload {
+    pub id: String,
+    pub full_name: String,
+    pub email: String,
+    pub roles: Option<Vec<String>>,
+}
+
+/// DTO for updating user roles.
+#[derive(Debug, Deserialize)]
+pub struct UpdateUserRolesPayload {
+    pub roles: Vec<String>,
+}
+
+/// DTO for creating a new role.
+#[derive(Debug, Deserialize)]
+pub struct CreateRolePayload {
+    pub name: String,
+}
+
+/// DTO for granting or updating a role permission edge.
+#[derive(Debug, Deserialize)]
+pub struct UpdatePermissionPayload {
+    pub role: String,
+    pub doctype: String,
+    pub p_read: bool,
+    pub p_write: bool,
+    pub p_create: bool,
+    pub p_delete: bool,
+    pub p_submit: bool,
+    pub p_cancel: bool,
+    pub p_amend: bool,
+    pub permlevel: Option<u8>,
+}
+
+/// Handler to list all users: `GET /api/v2/admin/users`
+pub async fn admin_list_users_handler(rbac_state: web::Data<DynamicRbacState>) -> impl Responder {
+    let users = rbac_state
+        .users
+        .read()
+        .map(|u| u.clone())
+        .unwrap_or_default();
+    HttpResponse::Ok().json(serde_json::json!({
+        "status": "OK",
+        "count": users.len(),
+        "users": users,
+    }))
+}
+
+/// Handler to create a user: `POST /api/v2/admin/users`
+pub async fn admin_create_user_handler(
+    rbac_state: web::Data<DynamicRbacState>,
+    payload: web::Json<CreateUserPayload>,
+) -> impl Responder {
+    let payload = payload.into_inner();
+    let mut users = match rbac_state.users.write() {
+        Ok(guard) => guard,
+        Err(_) => {
+            return HttpResponse::InternalServerError()
+                .json(serde_json::json!({"status": "ERROR", "message": "Lock failure"}));
+        }
+    };
+
+    if users
+        .iter()
+        .any(|u| u.id == payload.id || u.email == payload.email)
+    {
+        return HttpResponse::BadRequest().json(serde_json::json!({
+            "status": "ERROR",
+            "message": format!("User with ID '{}' or email '{}' already exists", payload.id, payload.email)
+        }));
+    }
+
+    let mut new_user = UserRecord::new(payload.id, payload.full_name, payload.email);
+    if let Some(roles) = payload.roles {
+        new_user.roles = roles;
+    }
+
+    users.push(new_user.clone());
+
+    HttpResponse::Created().json(serde_json::json!({
+        "status": "CREATED",
+        "user": new_user,
+    }))
+}
+
+/// Handler to update user roles: `PUT /api/v2/admin/users/{user_id}/roles`
+pub async fn admin_update_user_roles_handler(
+    rbac_state: web::Data<DynamicRbacState>,
+    user_id: web::Path<String>,
+    payload: web::Json<UpdateUserRolesPayload>,
+) -> impl Responder {
+    let uid = user_id.into_inner();
+    let mut users = match rbac_state.users.write() {
+        Ok(guard) => guard,
+        Err(_) => {
+            return HttpResponse::InternalServerError()
+                .json(serde_json::json!({"status": "ERROR", "message": "Lock failure"}));
+        }
+    };
+
+    if let Some(user) = users.iter_mut().find(|u| u.id == uid) {
+        user.roles = payload.into_inner().roles;
+        HttpResponse::Ok().json(serde_json::json!({
+            "status": "UPDATED",
+            "user": user,
+        }))
+    } else {
+        HttpResponse::NotFound().json(serde_json::json!({
+            "status": "NOT_FOUND",
+            "message": format!("User '{uid}' not found"),
+        }))
+    }
+}
+
+/// Handler to delete a user: `DELETE /api/v2/admin/users/{user_id}`
+pub async fn admin_delete_user_handler(
+    rbac_state: web::Data<DynamicRbacState>,
+    user_id: web::Path<String>,
+) -> impl Responder {
+    let uid = user_id.into_inner();
+    if uid == "usr_admin" || uid == "Administrator" {
+        return HttpResponse::BadRequest().json(serde_json::json!({
+            "status": "FORBIDDEN",
+            "message": "Cannot delete primary root administrator account",
+        }));
+    }
+
+    let mut users = match rbac_state.users.write() {
+        Ok(guard) => guard,
+        Err(_) => {
+            return HttpResponse::InternalServerError()
+                .json(serde_json::json!({"status": "ERROR", "message": "Lock failure"}));
+        }
+    };
+
+    let len_before = users.len();
+    users.retain(|u| u.id != uid);
+    if users.len() < len_before {
+        HttpResponse::Ok().json(serde_json::json!({
+            "status": "DELETED",
+            "user_id": uid,
+        }))
+    } else {
+        HttpResponse::NotFound().json(serde_json::json!({
+            "status": "NOT_FOUND",
+            "message": format!("User '{uid}' not found"),
+        }))
+    }
+}
+
+/// Handler to list all roles: `GET /api/v2/admin/roles`
+pub async fn admin_list_roles_handler(rbac_state: web::Data<DynamicRbacState>) -> impl Responder {
+    let reg = match rbac_state.registry.read() {
+        Ok(g) => g,
+        Err(_) => {
+            return HttpResponse::InternalServerError()
+                .json(serde_json::json!({"status": "ERROR", "message": "Lock failure"}));
+        }
+    };
+
+    HttpResponse::Ok().json(serde_json::json!({
+        "status": "OK",
+        "roles": reg.roles,
+        "standard_roles": STANDARD_ROLES,
+    }))
+}
+
+/// Handler to create a new custom role: `POST /api/v2/admin/roles`
+pub async fn admin_create_role_handler(
+    rbac_state: web::Data<DynamicRbacState>,
+    payload: web::Json<CreateRolePayload>,
+) -> impl Responder {
+    let mut reg = match rbac_state.registry.write() {
+        Ok(g) => g,
+        Err(_) => {
+            return HttpResponse::InternalServerError()
+                .json(serde_json::json!({"status": "ERROR", "message": "Lock failure"}));
+        }
+    };
+
+    let role_name = payload.name.trim();
+    if role_name.is_empty() {
+        return HttpResponse::BadRequest().json(serde_json::json!({
+            "status": "ERROR",
+            "message": "Role name cannot be empty",
+        }));
+    }
+
+    if reg.add_role(role_name) {
+        HttpResponse::Created().json(serde_json::json!({
+            "status": "CREATED",
+            "role": role_name,
+        }))
+    } else {
+        HttpResponse::BadRequest().json(serde_json::json!({
+            "status": "EXISTS",
+            "message": format!("Role '{role_name}' already exists"),
+        }))
+    }
+}
+
+/// Handler to get all permission edges: `GET /api/v2/admin/permissions`
+pub async fn admin_get_permissions_handler(
+    rbac_state: web::Data<DynamicRbacState>,
+) -> impl Responder {
+    let reg = match rbac_state.registry.read() {
+        Ok(g) => g,
+        Err(_) => {
+            return HttpResponse::InternalServerError()
+                .json(serde_json::json!({"status": "ERROR", "message": "Lock failure"}));
+        }
+    };
+
+    HttpResponse::Ok().json(serde_json::json!({
+        "status": "OK",
+        "count": reg.permission_edges.len(),
+        "permissions": reg.permission_edges,
+    }))
+}
+
+/// Handler to grant or update a permission edge: `POST /api/v2/admin/permissions`
+pub async fn admin_update_permission_handler(
+    rbac_state: web::Data<DynamicRbacState>,
+    payload: web::Json<UpdatePermissionPayload>,
+) -> impl Responder {
+    let p = payload.into_inner();
+    let mut reg = match rbac_state.registry.write() {
+        Ok(g) => g,
+        Err(_) => {
+            return HttpResponse::InternalServerError()
+                .json(serde_json::json!({"status": "ERROR", "message": "Lock failure"}));
+        }
+    };
+
+    reg.grant(
+        &p.role,
+        &p.doctype,
+        p.p_read,
+        p.p_write,
+        p.p_create,
+        p.p_delete,
+        p.p_submit,
+        p.p_cancel,
+        p.p_amend,
+        p.permlevel.unwrap_or(0),
+    );
+
+    HttpResponse::Ok().json(serde_json::json!({
+        "status": "SUCCESS",
+        "message": format!("Permissions updated for role '{}' on doctype '{}'", p.role, p.doctype),
+    }))
+}
+
+/// Handler to query effective permissions for a user: `GET /api/v2/admin/users/{user_id}/effective-permissions?doctype={doctype}`
+#[derive(Debug, Deserialize)]
+pub struct EffectivePermQuery {
+    pub doctype: Option<String>,
+}
+
+pub async fn admin_get_user_effective_permissions_handler(
+    rbac_state: web::Data<DynamicRbacState>,
+    user_id: web::Path<String>,
+    query: web::Query<EffectivePermQuery>,
+) -> impl Responder {
+    let uid = user_id.into_inner();
+    let users = match rbac_state.users.read() {
+        Ok(g) => g,
+        Err(_) => {
+            return HttpResponse::InternalServerError()
+                .json(serde_json::json!({"status": "ERROR", "message": "Lock failure"}));
+        }
+    };
+
+    let user = match users.iter().find(|u| u.id == uid) {
+        Some(u) => u.clone(),
+        None => {
+            return HttpResponse::NotFound().json(serde_json::json!({
+                "status": "NOT_FOUND",
+                "message": format!("User '{uid}' not found"),
+            }));
+        }
+    };
+
+    let reg = match rbac_state.registry.read() {
+        Ok(g) => g,
+        Err(_) => {
+            return HttpResponse::InternalServerError()
+                .json(serde_json::json!({"status": "ERROR", "message": "Lock failure"}));
+        }
+    };
+
+    let target_doctype = query
+        .doctype
+        .clone()
+        .unwrap_or_else(|| "Sales Invoice".to_string());
+    let perms = reg.effective_permissions(&user.roles, &target_doctype);
+
+    HttpResponse::Ok().json(serde_json::json!({
+        "status": "OK",
+        "user_id": user.id,
+        "roles": user.roles,
+        "effective_permissions": perms,
+    }))
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
+    use frappe_meta::rbac::ROLE_PURCHASE_USER;
 
     #[test]
     fn test_compile_filters_to_surrealql_valid() {
@@ -1036,5 +1431,72 @@ mod tests {
         let json: serde_json::Value = serde_json::from_slice(&body).unwrap();
         assert_eq!(json["status"], "SUCCESS");
         assert_eq!(json["action"], "clear_cache");
+    }
+
+    #[tokio::test]
+    async fn test_dynamic_rbac_admin_flow() {
+        let state = web::Data::new(DynamicRbacState::default());
+
+        // 1. List users
+        let resp = admin_list_users_handler(state.clone())
+            .await
+            .respond_to(&actix_web::test::TestRequest::default().to_http_request());
+        assert_eq!(resp.status(), actix_web::http::StatusCode::OK);
+
+        // 2. Create dynamic user with specific role
+        let create_payload = web::Json(CreateUserPayload {
+            id: "usr_lead_buyer".into(),
+            full_name: "Lead Buyer".into(),
+            email: "buyer@erpnext.rs".into(),
+            roles: Some(vec![ROLE_PURCHASE_USER.into()]),
+        });
+        let create_resp = admin_create_user_handler(state.clone(), create_payload)
+            .await
+            .respond_to(&actix_web::test::TestRequest::default().to_http_request());
+        assert_eq!(create_resp.status(), actix_web::http::StatusCode::CREATED);
+
+        // 3. Assign additional roles dynamically (e.g. Warehouse Manager)
+        let update_roles_payload = web::Json(UpdateUserRolesPayload {
+            roles: vec![ROLE_PURCHASE_USER.into(), ROLE_WAREHOUSE_MANAGER.into()],
+        });
+        let update_resp = admin_update_user_roles_handler(
+            state.clone(),
+            web::Path::from("usr_lead_buyer".to_string()),
+            update_roles_payload,
+        )
+        .await
+        .respond_to(&actix_web::test::TestRequest::default().to_http_request());
+        assert_eq!(update_resp.status(), actix_web::http::StatusCode::OK);
+
+        // 4. Query effective permissions for DocType "Warehouse"
+        let perm_query = web::Query(EffectivePermQuery {
+            doctype: Some("Warehouse".into()),
+        });
+        let perm_resp = admin_get_user_effective_permissions_handler(
+            state.clone(),
+            web::Path::from("usr_lead_buyer".to_string()),
+            perm_query,
+        )
+        .await
+        .respond_to(&actix_web::test::TestRequest::default().to_http_request());
+        assert_eq!(perm_resp.status(), actix_web::http::StatusCode::OK);
+
+        // 5. Grant dynamic custom permission
+        let grant_payload = web::Json(UpdatePermissionPayload {
+            role: ROLE_PURCHASE_USER.into(),
+            doctype: "Custom Logistics Contract".into(),
+            p_read: true,
+            p_write: true,
+            p_create: true,
+            p_delete: false,
+            p_submit: true,
+            p_cancel: false,
+            p_amend: false,
+            permlevel: Some(0),
+        });
+        let grant_resp = admin_update_permission_handler(state.clone(), grant_payload)
+            .await
+            .respond_to(&actix_web::test::TestRequest::default().to_http_request());
+        assert_eq!(grant_resp.status(), actix_web::http::StatusCode::OK);
     }
 }
