@@ -1800,6 +1800,7 @@ name = "erp-hr"
 version = "0.2.0"
 dependencies = [
  "chrono",
+ "compact_str",
  "erp-accounting",
  "frappe-framework",
  "frappe-meta",
@@ -1809,6 +1810,19 @@ dependencies = [
  "serde_json",
  "thiserror 2.0.21",
  "tokio",
+]
+
+[[package]]
+name = "erp-importer"
+version = "0.2.0"
+dependencies = [
+ "chrono",
+ "compact_str",
+ "regex",
+ "serde",
+ "serde_json",
+ "thiserror 2.0.21",
+ "tracing",
 ]
 
 [[package]]
@@ -1888,6 +1902,19 @@ dependencies = [
 ]
 
 [[package]]
+name = "erp-scanner"
+version = "0.2.0"
+dependencies = [
+ "chrono",
+ "compact_str",
+ "regex",
+ "serde",
+ "serde_json",
+ "thiserror 2.0.21",
+ "tracing",
+]
+
+[[package]]
 name = "erp-software"
 version = "0.2.0"
 dependencies = [
@@ -1910,10 +1937,12 @@ version = "0.2.0"
 dependencies = [
  "chrono",
  "compact_str",
+ "hex",
  "regex",
  "reqwest",
  "serde",
  "serde_json",
+ "sha2 0.11.0",
  "thiserror 2.0.21",
  "tokio",
  "tracing",

@@ -156,7 +156,7 @@ async fn worker_handler(req: HttpRequest) -> impl Responder {
 
     HttpResponse::Ok()
         .content_type("text/html; charset=utf-8")
-        .body(render_desk_shell_html("Shop Floor Terminal", &user_name))
+        .body(desk_app::render_worker_kiosk_html(&user_name))
 }
 
 async fn factory_handler(req: HttpRequest) -> impl Responder {

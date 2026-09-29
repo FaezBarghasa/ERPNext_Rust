@@ -1,20 +1,16 @@
 [package]
-name = "erp-stealth-scraper"
+name = "erp-scanner"
 version.workspace = true
 edition.workspace = true
 authors.workspace = true
 license.workspace = true
-description = "Stealth anti-detection market intelligence and price scraper for RustNext ERP"
+description = "Native high-velocity QR, Barcode, and Laser Scanner intelligence engine for RustNext ERP"
 
 [dependencies]
 serde = { workspace = true }
 serde_json = { workspace = true }
 thiserror = { workspace = true }
 compact_str = { workspace = true }
-tokio = { workspace = true }
-reqwest = { workspace = true }
+chrono = { workspace = true }
 tracing = { workspace = true }
 regex = { workspace = true }
-chrono = { workspace = true }
-sha2 = { workspace = true }
-hex = { workspace = true }

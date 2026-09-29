@@ -2,6 +2,7 @@ pub mod advances;
 pub mod arrears;
 pub mod attendance;
 pub mod benefits;
+pub mod dynamic_compensation;
 pub mod overtime;
 pub mod payroll;
 
@@ -12,6 +13,10 @@ pub use attendance::{
     ShiftType,
 };
 pub use benefits::{FlexBenefitCategory, FlexBenefitLedger, HolidayList};
+pub use dynamic_compensation::{
+    CompensationModelType, DynamicCompensationEngine, DynamicCompensationResult,
+    JobCardPieceworkLog, MilestoneBonusLog, ShiftHoursBreakdown,
+};
 pub use overtime::{OvertimeEngine, OvertimeMultiplier, OvertimeSlip};
 pub use payroll::{
     EnterprisePayrollCoordinator, LeaveApplication, LeaveEngine, PayrollGlAccounts,

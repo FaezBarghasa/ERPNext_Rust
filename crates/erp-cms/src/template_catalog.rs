@@ -423,7 +423,9 @@ pub fn render_template_html_with_variant(slug: &str, variant_opt: Option<&str>) 
         "saas-cloud" => render_saas_cloud_html(&suite, &css_tokens, variant_str),
         "healthcare-clinical" => render_healthcare_clinical_html(&suite, &css_tokens, variant_str),
         "real-estate-spatial" => render_real_estate_spatial_html(&suite, &css_tokens, variant_str),
-        "gastronomy-hospitality" => render_gastronomy_hospitality_html(&suite, &css_tokens, variant_str),
+        "gastronomy-hospitality" => {
+            render_gastronomy_hospitality_html(&suite, &css_tokens, variant_str)
+        }
         _ => return None,
     };
 

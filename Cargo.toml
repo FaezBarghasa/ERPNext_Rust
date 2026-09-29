@@ -22,6 +22,8 @@ members = [
     "crates/erp-software",
     "crates/erpnext-plugin-sdk",
     "crates/erp-stealth-scraper",
+    "crates/erp-scanner",
+    "crates/erp-importer",
     "crates/rbench",
 ]
 resolver = "3"
@@ -42,11 +44,13 @@ erp-asset = { path = "crates/erp-asset" }
 erp-cms = { path = "crates/erp-cms" }
 erp-crm = { path = "crates/erp-crm" }
 erp-hr = { path = "crates/erp-hr" }
+erp-importer = { path = "crates/erp-importer" }
 erp-inventory = { path = "crates/erp-inventory" }
 erp-learning = { path = "crates/erp-learning" }
 erp-lending = { path = "crates/erp-lending" }
 erp-manufacturing = { path = "crates/erp-manufacturing" }
 erp-ppm = { path = "crates/erp-ppm" }
+erp-scanner = { path = "crates/erp-scanner" }
 erp-software = { path = "crates/erp-software" }
 erp-stealth-scraper = { path = "crates/erp-stealth-scraper" }
 erp-support = { path = "crates/erp-support" }

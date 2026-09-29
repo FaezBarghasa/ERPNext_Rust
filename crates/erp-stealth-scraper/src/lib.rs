@@ -1,7 +1,19 @@
-//! Stealth Anti-Detection ERP Scraper Engine (`erp-stealth-scraper`).
-//!
-//! Provides browser-exact TLS ClientHello / JA4 emulation and HTTP/2 header choreography
-//! for real-time market intelligence, competitor price tracking, and supplier catalog syncing.
+pub mod fingerprint;
+pub mod headless_hardening;
+pub mod http2_frame;
+pub mod pipelines;
+pub mod proxy_ring;
+pub mod turnstile_solver;
+
+pub use fingerprint::{BrowserPreset, Ja4Fingerprint, TlsCamouflageProfile};
+pub use headless_hardening::{HardwareSpoofConfig, HeadlessHardeningEngine};
+pub use http2_frame::{Http2Choreography, Http2SettingsFrame};
+pub use pipelines::{
+    ErpItemPriceUpdate, ErpSupplierQuotationDraft, PriceAlertEvent, PriceAlertSeverity,
+    ScraperPipelineProcessor,
+};
+pub use proxy_ring::{ProxyNode, ProxyRotationRing};
+pub use turnstile_solver::{ChallengeContext, ChallengeSolution, ChallengeSolverHook};
 
 use compact_str::CompactString;
 use reqwest::Client;

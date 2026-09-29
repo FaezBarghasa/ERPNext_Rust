@@ -36,9 +36,18 @@ async fn test_template_catalog_http_endpoints() {
         ("b2c-retail", "rustnext Retail"),
         ("trading-exchange", "rustnext Exchange"),
         ("saas-cloud", "SaaS, AI & Cloud Platforms"),
-        ("healthcare-clinical", "Professional Healthcare & Diagnostics"),
-        ("real-estate-spatial", "Real Estate & Spatial Property Development"),
-        ("gastronomy-hospitality", "Haute Cuisine, Dining & Hospitality"),
+        (
+            "healthcare-clinical",
+            "Professional Healthcare & Diagnostics",
+        ),
+        (
+            "real-estate-spatial",
+            "Real Estate & Spatial Property Development",
+        ),
+        (
+            "gastronomy-hospitality",
+            "Haute Cuisine, Dining & Hospitality",
+        ),
     ];
 
     for (slug, expected_title) in test_templates {

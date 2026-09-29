@@ -19,4 +19,6 @@ pub use hal::{
     ScanResult, WebApisHalAdapter,
 };
 pub use mobile_pwa::{AndroidNdkBuildConfig, ManifestIcon, PwaWebManifest, ServiceWorkerGenerator};
-pub use persona_shell::{PersonaRole, PersonaSessionState, PersonaShellConfig};
+pub use persona_shell::{
+    render_worker_kiosk_html, PersonaRole, PersonaSessionState, PersonaShellConfig,
+};
