@@ -16,15 +16,18 @@ use crate::tenant::{
     AcmeGateway, ConnectionPoolManager, MicroTopologyConfig, TenantId, TenantResolver,
 };
 use crate::v2_routes::{
-    DynamicRbacState, admin_action_handler, admin_create_role_handler, admin_create_user_handler,
-    admin_delete_user_handler, admin_get_permissions_handler,
-    admin_get_user_effective_permissions_handler, admin_list_roles_handler,
-    admin_list_users_handler, admin_query_handler, admin_status_handler,
-    admin_update_permission_handler, admin_update_user_roles_handler, download_file_handler,
-    h3_stream_file_handler, h3_stream_telemetry_handler, login_handler, logout_handler,
-    ping_handler, quic_status_handler, upload_file_handler, v2_amend_document, v2_cancel_document,
-    v2_create_document, v2_delete_document, v2_get_document, v2_list_document, v2_submit_document,
-    v2_update_document,
+    DynamicRbacState, admin_action_handler, admin_create_ip_rule_handler,
+    admin_create_role_handler, admin_create_user_handler, admin_delete_ip_rule_handler,
+    admin_delete_user_handler, admin_get_audit_logs_handler, admin_get_permissions_handler,
+    admin_get_user_effective_permissions_handler, admin_list_ip_rules_handler,
+    admin_list_lockouts_handler, admin_list_roles_handler, admin_list_users_handler,
+    admin_query_handler, admin_status_handler, admin_unlock_target_handler,
+    admin_update_permission_handler, admin_update_user_roles_handler, auth_forgot_password_handler,
+    auth_mfa_activate_handler, auth_mfa_disable_handler, auth_mfa_enroll_handler,
+    auth_reset_password_handler, download_file_handler, h3_stream_file_handler,
+    h3_stream_telemetry_handler, login_handler, logout_handler, ping_handler, quic_status_handler,
+    upload_file_handler, v2_amend_document, v2_cancel_document, v2_create_document,
+    v2_delete_document, v2_get_document, v2_list_document, v2_submit_document, v2_update_document,
 };
 use actix_web::{
     App, HttpMessage, HttpRequest, HttpResponse, HttpServer, Responder, middleware::Compress,
@@ -847,6 +850,52 @@ pub fn configure_app(
         .route("/api/v2/method/login", web::post().to(login_handler))
         .route("/api/v2/method/logout", web::post().to(logout_handler))
         .route("/api/v2/method/ping", web::get().to(ping_handler))
+        // Wave 1 MFA & Password Security Endpoints
+        .route(
+            "/api/v2/auth/mfa/enroll",
+            web::post().to(auth_mfa_enroll_handler),
+        )
+        .route(
+            "/api/v2/auth/mfa/activate",
+            web::post().to(auth_mfa_activate_handler),
+        )
+        .route(
+            "/api/v2/auth/mfa/disable",
+            web::post().to(auth_mfa_disable_handler),
+        )
+        .route(
+            "/api/v2/auth/forgot-password",
+            web::post().to(auth_forgot_password_handler),
+        )
+        .route(
+            "/api/v2/auth/reset-password",
+            web::post().to(auth_reset_password_handler),
+        )
+        // Wave 1 Enterprise Audit Logging & IP Security Governance
+        .route(
+            "/api/v2/admin/audit-logs",
+            web::get().to(admin_get_audit_logs_handler),
+        )
+        .route(
+            "/api/v2/admin/security/ip-rules",
+            web::get().to(admin_list_ip_rules_handler),
+        )
+        .route(
+            "/api/v2/admin/security/ip-rules",
+            web::post().to(admin_create_ip_rule_handler),
+        )
+        .route(
+            "/api/v2/admin/security/ip-rules/{rule_id}",
+            web::delete().to(admin_delete_ip_rule_handler),
+        )
+        .route(
+            "/api/v2/admin/security/lockouts",
+            web::get().to(admin_list_lockouts_handler),
+        )
+        .route(
+            "/api/v2/admin/security/unlock",
+            web::post().to(admin_unlock_target_handler),
+        )
         .route(
             "/api/v2/method/upload_file",
             web::post().to(upload_file_handler),
@@ -941,6 +990,7 @@ pub async fn run_server_with_config(
             .wrap(Logger::default())
             .wrap(Compress::default())
             .wrap(NormalizePath::trim())
+            .wrap(crate::middleware::SecurityHeaders::new())
             .wrap(RateLimitMiddleware::new(300.0, 50.0))
             .configure(|cfg| configure_app(cfg, pool_mgr_data.clone(), topo, gw))
     });

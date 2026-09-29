@@ -165,6 +165,127 @@ where
     }
 }
 
+/// Brute-force Login Protection & Lockout Guard.
+/// Tuple tracking: (failure_count, first_failure_instant, optional_lockout_until)
+pub type LockoutAttemptRecord = (u32, Instant, Option<Instant>);
+
+/// Sliding-window brute-force lockout guard.
+pub struct LoginGuard {
+    max_failures: u32,
+    failure_window: std::time::Duration,
+    lockout_duration: std::time::Duration,
+    attempts: RwLock<HashMap<String, LockoutAttemptRecord>>,
+}
+
+impl Default for LoginGuard {
+    fn default() -> Self {
+        Self::new(5, 900, 1800) // 5 failures in 15 mins -> 30 min lockout
+    }
+}
+
+impl LoginGuard {
+    /// Creates a new login guard instance.
+    #[must_use]
+    pub fn new(max_failures: u32, window_secs: u64, lockout_secs: u64) -> Self {
+        Self {
+            max_failures,
+            failure_window: std::time::Duration::from_secs(window_secs),
+            lockout_duration: std::time::Duration::from_secs(lockout_secs),
+            attempts: RwLock::new(HashMap::new()),
+        }
+    }
+
+    /// Checks if a client IP or username is currently locked out.
+    /// Returns `Ok(())` if allowed, or `Err(remaining_seconds)` if locked out.
+    pub fn check_allowed(&self, ip: &str, username: &str) -> Result<(), u64> {
+        let now = Instant::now();
+        let attempts = match self.attempts.read() {
+            Ok(a) => a,
+            Err(_) => return Ok(()),
+        };
+
+        for key in &[format!("ip:{ip}"), format!("user:{username}")] {
+            if let Some((_, _, Some(locked_until))) = attempts.get(key)
+                && now < *locked_until
+            {
+                let remaining = locked_until.duration_since(now).as_secs().max(1);
+                return Err(remaining);
+            }
+        }
+
+        Ok(())
+    }
+
+    /// Records a failed login attempt for both IP and username.
+    /// Returns (max_attempt_count, is_now_locked).
+    pub fn record_failure(&self, ip: &str, username: &str) -> (u32, bool) {
+        let now = Instant::now();
+        let mut attempts = match self.attempts.write() {
+            Ok(a) => a,
+            Err(_) => return (1, false),
+        };
+
+        let mut max_count = 0;
+        let mut locked = false;
+
+        for key in &[format!("ip:{ip}"), format!("user:{username}")] {
+            let entry = attempts.entry(key.clone()).or_insert((0, now, None));
+
+            // Reset count if window has expired
+            if now.duration_since(entry.1) > self.failure_window && entry.2.is_none() {
+                entry.0 = 0;
+                entry.1 = now;
+            }
+
+            entry.0 += 1;
+            entry.1 = now;
+            max_count = max_count.max(entry.0);
+
+            if entry.0 >= self.max_failures {
+                entry.2 = Some(now + self.lockout_duration);
+                locked = true;
+            }
+        }
+
+        (max_count, locked)
+    }
+
+    /// Resets failed attempt counters upon successful login.
+    pub fn record_success(&self, ip: &str, username: &str) {
+        if let Ok(mut attempts) = self.attempts.write() {
+            attempts.remove(&format!("ip:{ip}"));
+            attempts.remove(&format!("user:{username}"));
+        }
+    }
+
+    /// Explicitly unlocks a target key (e.g. administrative override).
+    pub fn unlock_target(&self, target: &str) {
+        if let Ok(mut attempts) = self.attempts.write() {
+            attempts.remove(&format!("ip:{target}"));
+            attempts.remove(&format!("user:{target}"));
+            attempts.remove(target);
+        }
+    }
+
+    /// Lists all currently active lockouts with remaining seconds.
+    #[must_use]
+    pub fn list_locked_targets(&self) -> Vec<(String, u64)> {
+        let now = Instant::now();
+        let mut locked = Vec::new();
+        if let Ok(attempts) = self.attempts.read() {
+            for (key, (_, _, lockout)) in attempts.iter() {
+                if let Some(locked_until) = *lockout
+                    && now < locked_until
+                {
+                    let remaining = locked_until.duration_since(now).as_secs().max(1);
+                    locked.push((key.clone(), remaining));
+                }
+            }
+        }
+        locked
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -181,5 +302,38 @@ mod tests {
 
         // 4th request must be rejected
         assert!(!limiter.allow(client_ip, 1.0));
+    }
+
+    #[test]
+    fn test_login_guard_lockout_and_reset() {
+        let guard = LoginGuard::new(3, 10, 60);
+        let ip = "10.0.0.5";
+        let user = "admin@example.com";
+
+        // Initially allowed
+        assert!(guard.check_allowed(ip, user).is_ok());
+
+        // 1st failure
+        let (count, locked) = guard.record_failure(ip, user);
+        assert_eq!(count, 1);
+        assert!(!locked);
+        assert!(guard.check_allowed(ip, user).is_ok());
+
+        // 2nd failure
+        let (count, locked) = guard.record_failure(ip, user);
+        assert_eq!(count, 2);
+        assert!(!locked);
+
+        // 3rd failure triggers lockout
+        let (count, locked) = guard.record_failure(ip, user);
+        assert_eq!(count, 3);
+        assert!(locked);
+
+        // Now blocked
+        assert!(guard.check_allowed(ip, user).is_err());
+
+        // Successful login or admin unlock resets
+        guard.record_success(ip, user);
+        assert!(guard.check_allowed(ip, user).is_ok());
     }
 }

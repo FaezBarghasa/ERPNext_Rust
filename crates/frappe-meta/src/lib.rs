@@ -1,8 +1,10 @@
 pub mod ai_schema;
+pub mod audit;
 pub mod auth;
 pub mod class_inheritance;
 pub mod dynamic_doc;
 pub mod lazy_doc;
+pub mod mfa;
 pub mod migration;
 pub mod naming;
 pub mod profiles;
@@ -10,11 +12,22 @@ pub mod rbac;
 pub mod role_tools;
 pub mod schema;
 pub mod schema_compiler;
+pub mod security_rules;
 pub mod tree;
 
+pub use audit::{AuditAction, AuditEntry, AuditQueryFilter, AuditTrailRegistry, compute_json_diff};
 pub use auth::{
     AuthError, DEFAULT_SESSION_EXPIRY_SECS, SessionClaims, hash_password, issue_token,
     verify_password, verify_token,
+};
+pub use mfa::{
+    MfaError, MfaRecord, TotpConfig, base32_decode, base32_encode, compute_totp,
+    generate_backup_codes, generate_otpauth_uri, generate_totp_secret,
+};
+pub use security_rules::{
+    DetectedFileType, SecurityRuleError, detect_file_magic, generate_password_reset_token,
+    matches_ip_rule, sanitize_svg, validate_file_upload, validate_password_complexity,
+    verify_password_reset_token,
 };
 
 pub use ai_schema::{AiSchemaSynthesizer, SynthesisResult, SynthesizedEntity, SynthesizedField};

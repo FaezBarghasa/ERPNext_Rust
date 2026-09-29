@@ -1971,6 +1971,7 @@ dependencies = [
  "erp-inventory",
  "frappe-framework",
  "frappe-meta",
+ "hex",
  "rust_decimal",
  "rust_decimal_macros",
  "serde",

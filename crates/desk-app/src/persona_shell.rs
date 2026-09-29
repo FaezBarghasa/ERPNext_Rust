@@ -1330,7 +1330,175 @@ pub fn render_admin_cockpit_html(admin_name: &str) -> String {
                 </div>
             </div>
 
-            <!-- Surface 7: Real-Time Audit Trail & Cluster Event Stream -->
+            <!-- Surface 7: Security Edge, MFA & Brute-Force Lockout Defense -->
+            <div class="panel">
+                <div class="panel-head">
+                    <div class="panel-title">
+                        <span>🛡️ Edge Security, MFA &amp; Zero-Trust Rules</span>
+                    </div>
+                    <span class="panel-tag" style="background:rgba(16,185,129,0.15);color:var(--accent-emerald);">LOGIN GUARD ACTIVE</span>
+                </div>
+                <div style="display:flex;flex-direction:column;gap:0.75rem;">
+                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.5rem;font-size:0.75rem;">
+                        <div class="stat-card" style="padding:0.75rem;">
+                            <div class="stat-title">MFA ENROLLMENT</div>
+                            <div class="stat-num" style="font-size:1.2rem;color:var(--accent-emerald);">100%</div>
+                            <div class="stat-sub">RFC 6238 TOTP Active</div>
+                        </div>
+                        <div class="stat-card" style="padding:0.75rem;">
+                            <div class="stat-title">ACTIVE LOCKOUTS</div>
+                            <div class="stat-num" style="font-size:1.2rem;color:var(--accent-cyan);" id="lockout-count">0</div>
+                            <div class="stat-sub">Sliding-Window Guard</div>
+                        </div>
+                    </div>
+                    <table class="dense-table" style="font-size:0.725rem;">
+                        <thead>
+                            <tr>
+                                <th>Rule Type</th>
+                                <th>CIDR Pattern</th>
+                                <th>Tenant</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><span style="color:var(--accent-emerald);">ALLOW</span></td>
+                                <td><code>10.0.0.0/8</code></td>
+                                <td>tenant_default</td>
+                                <td>Active</td>
+                            </tr>
+                            <tr>
+                                <td><span style="color:var(--accent-emerald);">ALLOW</span></td>
+                                <td><code>192.168.1.*</code></td>
+                                <td>tenant_default</td>
+                                <td>Active</td>
+                            </tr>
+                            <tr>
+                                <td><span style="color:var(--accent-rose);">BLOCK</span></td>
+                                <td><code>198.51.100.*</code></td>
+                                <td>tenant_mfg_corp</td>
+                                <td>Enforced</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Surface 8: E-Commerce Promotions & Shipping Zone Matrix -->
+            <div class="panel">
+                <div class="panel-head">
+                    <div class="panel-title">
+                        <span>🏷️ Commerce Promotions &amp; Shipping Zones</span>
+                    </div>
+                    <span class="panel-tag">WOO &amp; ODOO PARITY</span>
+                </div>
+                <div style="display:flex;flex-direction:column;gap:0.75rem;">
+                    <table class="dense-table" style="font-size:0.725rem;">
+                        <thead>
+                            <tr>
+                                <th>Coupon Code</th>
+                                <th>Discount</th>
+                                <th>Min Spend</th>
+                                <th>Usage</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><strong>SUMMER20</strong></td>
+                                <td>20.0% Off</td>
+                                <td>$100.00</td>
+                                <td>42 / 100</td>
+                                <td><span style="color:var(--accent-emerald);">Active</span></td>
+                            </tr>
+                            <tr>
+                                <td><strong>FREESHIP</strong></td>
+                                <td>Free Shipping</td>
+                                <td>$50.00</td>
+                                <td>189 / &infin;</td>
+                                <td><span style="color:var(--accent-emerald);">Active</span></td>
+                            </tr>
+                            <tr>
+                                <td><strong>BOGO-COFFEE</strong></td>
+                                <td>Buy 1 Get 1 Free</td>
+                                <td>$0.00</td>
+                                <td>15 / 50</td>
+                                <td><span style="color:var(--accent-emerald);">Active</span></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                    <div style="font-size:0.725rem;color:var(--text-muted);display:flex;justify-content:space-between;">
+                        <span>Shipping Zones: <strong>3 Active</strong> (US-West, EU-Central, Domestic)</span>
+                        <span style="color:var(--accent-cyan);cursor:pointer;" onclick="showToast('Promotion engine synced.')">Configure Rules &rarr;</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Surface 9: Multi-Tier Approval Workflows & Document Versioning -->
+            <div class="panel">
+                <div class="panel-head">
+                    <div class="panel-title">
+                        <span>⚖️ Multi-Tier Approval Workflows &amp; Versioning</span>
+                    </div>
+                    <span class="panel-tag">TIME-TRAVEL AUDIT</span>
+                </div>
+                <table class="dense-table" style="font-size:0.725rem;">
+                    <thead>
+                        <tr>
+                            <th>DocType</th>
+                            <th>Active State</th>
+                            <th>Pending Approver</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><strong>Sales Order</strong></td>
+                            <td><span style="background:rgba(245,158,11,0.2);color:var(--accent-amber);padding:1px 5px;border-radius:3px;">Pending CFO</span></td>
+                            <td>Chief Financial Officer</td>
+                            <td><button class="action-btn" style="padding:2px 6px;font-size:0.65rem;" onclick="showToast('Approval modal opened','info')">Review</button></td>
+                        </tr>
+                        <tr>
+                            <td><strong>Purchase Order</strong></td>
+                            <td><span style="background:rgba(6,182,212,0.2);color:var(--accent-cyan);padding:1px 5px;border-radius:3px;">Pending Mgr</span></td>
+                            <td>Sales Manager</td>
+                            <td><button class="action-btn" style="padding:2px 6px;font-size:0.65rem;" onclick="showToast('Approval modal opened','info')">Review</button></td>
+                        </tr>
+                        <tr>
+                            <td><strong>Material Request</strong></td>
+                            <td><span style="background:rgba(16,185,129,0.2);color:var(--accent-emerald);padding:1px 5px;border-radius:3px;">Approved</span></td>
+                            <td>Auto-Processed</td>
+                            <td><span style="color:var(--text-muted);">v3 Archived</span></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Surface 10: Omni-Channel Notifications & Outbound Webhook DLQ -->
+            <div class="panel">
+                <div class="panel-head">
+                    <div class="panel-title">
+                        <span>🔔 Notification Channels &amp; Webhook Outbox</span>
+                    </div>
+                    <span class="panel-tag">HMAC-SHA256 SIGNED</span>
+                </div>
+                <div style="display:flex;flex-direction:column;gap:0.5rem;font-size:0.75rem;">
+                    <div style="display:flex;justify-content:space-between;align-items:center;padding:0.4rem;background:rgba(255,255,255,0.02);border-radius:4px;">
+                        <span>In-App Real-Time Inbox</span>
+                        <span style="color:var(--accent-emerald);font-weight:700;">100% Delivered</span>
+                    </div>
+                    <div style="display:flex;justify-content:space-between;align-items:center;padding:0.4rem;background:rgba(255,255,255,0.02);border-radius:4px;">
+                        <span>Transactional Email Queue</span>
+                        <span style="color:var(--accent-cyan);font-weight:700;">0 Pending / 1.2k Sent</span>
+                    </div>
+                    <div style="display:flex;justify-content:space-between;align-items:center;padding:0.4rem;background:rgba(255,255,255,0.02);border-radius:4px;">
+                        <span>Outbound Webhook Dispatcher</span>
+                        <span style="color:var(--accent-emerald);font-weight:700;">0 Dead Letters (DLQ Clean)</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Surface 11: Real-Time Audit Trail & Cluster Event Stream -->
             <div class="panel-full panel">
                 <div class="panel-head">
                     <div class="panel-title">
@@ -1563,6 +1731,10 @@ mod tests {
         assert!(html.contains("Multi-Tenant Routing"));
         assert!(html.contains("Emergency Diagnostic Cockpit"));
         assert!(html.contains("Dynamic User &amp; Granular Permission Matrix"));
+        assert!(html.contains("Edge Security, MFA &amp; Zero-Trust Rules"));
+        assert!(html.contains("Commerce Promotions &amp; Shipping Zones"));
+        assert!(html.contains("Multi-Tier Approval Workflows &amp; Versioning"));
+        assert!(html.contains("Notification Channels &amp; Webhook Outbox"));
         assert!(html.contains("Live Cluster Telemetry"));
         assert!(html.contains("Administrator"));
     }

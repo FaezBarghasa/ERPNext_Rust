@@ -2,14 +2,19 @@ pub mod analytics;
 pub mod block_canvas;
 pub mod builder_core;
 pub mod luxury_storefront;
+pub mod media_library;
 pub mod print;
 pub mod security;
 pub mod seo_engine;
 pub mod storefront;
 pub mod subtitles;
+pub mod taxonomy;
 pub mod template_catalog;
 pub mod theme_engine;
 pub mod transcoder;
+
+pub use media_library::{MediaAsset, MediaError, MediaLibraryRegistry};
+pub use taxonomy::{TaxonomyError, TaxonomyRegistry, TaxonomyTerm, TaxonomyType};
 
 pub use analytics::{AnalyticsSummary, EdgeAnalyticsEngine, PageViewEvent};
 pub use block_canvas::{CmsPage, FeatureItem, PageBlock, SsrEngine};

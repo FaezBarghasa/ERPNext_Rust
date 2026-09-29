@@ -1,14 +1,32 @@
 pub mod ai_tools;
 pub mod bpmn;
 pub mod dmn;
+pub mod export_engine;
 pub mod jalali;
 pub mod lifecycle;
 pub mod localization;
+pub mod notification;
+pub mod report_engine;
 pub mod saga;
 pub mod scripting;
 pub mod typestate;
 pub mod wasmtime_sandbox;
 pub mod webhook;
+pub mod workflow_approval;
+
+pub use export_engine::{DocumentExporter, ExportColumn, ExportError, ExportFormat};
+pub use notification::{
+    NotificationChannel, NotificationDispatcher, NotificationError, NotificationInboxRegistry,
+    NotificationMessage, NotificationPriority, UserNotificationPreferences,
+};
+pub use report_engine::{
+    PivotAggregate, PivotTableResult, ReportColumn, ReportEngine, ReportError, ReportResult,
+    ReportSummaryCard,
+};
+pub use workflow_approval::{
+    ApprovalWorkflow, DocumentVersionRecord, DocumentVersioningEngine, WorkflowApprovalLog,
+    WorkflowError, WorkflowStateNode, WorkflowTransitionOutcome, WorkflowTransitionRule,
+};
 
 pub use ai_tools::{
     ErpToolCall, ErpToolDispatcher, QuotationItemDto, ToolExecutionError, ToolExecutionResult,

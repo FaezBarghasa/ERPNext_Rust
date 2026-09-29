@@ -1,17 +1,36 @@
 pub mod atp_ctp;
+pub mod coupon;
 pub mod dom;
 pub mod einvoice;
 pub mod invoice_matching;
 pub mod landed_cost;
 pub mod metered;
+pub mod order_lifecycle;
 pub mod order_tools;
 pub mod partner_reference;
 pub mod pricing;
+pub mod reviews;
 pub mod sanctions;
+pub mod shipping;
 pub mod subcontracting;
 pub mod taxes;
+pub mod wishlist;
 pub mod woocommerce_ingest;
 pub mod zatca;
+
+pub use coupon::{
+    BogoPromotionRule, CartItemLine, CouponCalculationResult, CouponCode, CouponDiscountType,
+    CouponEngine, CouponValidationError,
+};
+pub use order_lifecycle::{
+    OrderLifecycleError, OrderState, OrderStateMachine, OrderTransitionEvent, RmaItemLine,
+    RmaRecord, RmaStatus,
+};
+pub use reviews::{ProductReview, ReviewError, ReviewManager, ReviewStatus, ReviewSummary};
+pub use shipping::{
+    ShippingCalculator, ShippingMethod, ShippingMethodType, ShippingRateOption, ShippingZone,
+};
+pub use wishlist::{Wishlist, WishlistError, WishlistItem};
 
 pub use atp_ctp::{AtpCtpEngine, InventoryPosition, PromiseAvailability};
 pub use dom::{DomRouter, FulfillmentNode, ShippingRateEstimate};
