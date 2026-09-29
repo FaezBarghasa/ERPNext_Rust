@@ -72,7 +72,10 @@ impl JalaliDate {
         let mut jy;
 
         let gy2 = if gm > 2 { gy } else { gy - 1 };
-        let mut days = 355666 + (365 * gy) + ((gy2 + 3) / 4) - ((gy2 + 99) / 100) + ((gy2 + 399) / 400) + gd + g_d_m[(gm - 1) as usize];
+        let mut days = 355666 + (365 * gy) + ((gy2 + 3) / 4) - ((gy2 + 99) / 100)
+            + ((gy2 + 399) / 400)
+            + gd
+            + g_d_m[(gm - 1) as usize];
         jy = -1595 + (33 * (days / 12053));
         days %= 12053;
         jy += 4 * (days / 1461);
@@ -104,7 +107,9 @@ impl JalaliDate {
         let jd = self.day as i32;
 
         let gy = jy + 1595;
-        let mut days = -355668 + (365 * gy) + ((gy + 3) / 4) - ((gy + 99) / 100) + ((gy + 399) / 400) + jd
+        let mut days = -355668 + (365 * gy) + ((gy + 3) / 4) - ((gy + 99) / 100)
+            + ((gy + 399) / 400)
+            + jd
             + if jm < 7 {
                 (jm - 1) * 31
             } else {
@@ -193,7 +198,11 @@ impl JalaliDate {
         let start = JalaliDate::new(jalali_year, 1, 1)
             .expect("Valid start date")
             .to_gregorian();
-        let end_day = if Self::is_leap_year(jalali_year) { 30 } else { 29 };
+        let end_day = if Self::is_leap_year(jalali_year) {
+            30
+        } else {
+            29
+        };
         let end = JalaliDate::new(jalali_year, 12, end_day)
             .expect("Valid end date")
             .to_gregorian();
@@ -202,8 +211,15 @@ impl JalaliDate {
 
     /// Allocates asset annual depreciation across all 12 Jalali months proportionally to day counts.
     #[must_use]
-    pub fn compute_jalali_monthly_depreciation(annual_depreciation: f64, jalali_year: i32) -> Vec<f64> {
-        let total_days = if Self::is_leap_year(jalali_year) { 366.0 } else { 365.0 };
+    pub fn compute_jalali_monthly_depreciation(
+        annual_depreciation: f64,
+        jalali_year: i32,
+    ) -> Vec<f64> {
+        let total_days = if Self::is_leap_year(jalali_year) {
+            366.0
+        } else {
+            365.0
+        };
         let daily_rate = annual_depreciation / total_days;
 
         (1..=12)

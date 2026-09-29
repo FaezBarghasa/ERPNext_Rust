@@ -61,7 +61,11 @@ mod tests {
 
     #[test]
     fn test_frame_buffer_validation() {
-        assert!(CameraWasmScanner::is_frame_processable(640, 480, 640 * 480 * 4));
+        assert!(CameraWasmScanner::is_frame_processable(
+            640,
+            480,
+            640 * 480 * 4
+        ));
         assert!(!CameraWasmScanner::is_frame_processable(640, 480, 100));
     }
 

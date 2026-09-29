@@ -128,10 +128,10 @@ pub struct JapanTaxBreakdown {
 /// Chinese Fapiao (发票) Taxonomy and Category Handler.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 pub enum ChineseFapiaoType {
-    SpecialVatInvoice,  // 增值税专用发票
-    GeneralVatInvoice,  // 增值税普通发票
-    ElectronicGeneral,  // 增值税电子普通发票
-    FullyDigitalized,   // 数电票 (All-in-one digital)
+    SpecialVatInvoice, // 增值税专用发票
+    GeneralVatInvoice, // 增值税普通发票
+    ElectronicGeneral, // 增值税电子普通发票
+    FullyDigitalized,  // 数电票 (All-in-one digital)
 }
 
 impl ChineseFapiaoType {
@@ -140,9 +140,14 @@ impl ChineseFapiaoType {
     pub fn validate_uscc(uscc: &str) -> bool {
         let trimmed = uscc.trim();
         trimmed.len() == 18
-            && trimmed
-                .chars()
-                .all(|c| c.is_ascii_alphanumeric() && c != 'I' && c != 'O' && c != 'Z' && c != 'S' && c != 'V')
+            && trimmed.chars().all(|c| {
+                c.is_ascii_alphanumeric()
+                    && c != 'I'
+                    && c != 'O'
+                    && c != 'Z'
+                    && c != 'S'
+                    && c != 'V'
+            })
     }
 }
 
@@ -189,7 +194,10 @@ mod tests {
         assert_eq!(normalized, "شرکت بازرگانی و خدماتی");
 
         // Persian digits conversion
-        assert_eq!(PersianNormalizer::to_persian_digits("1405/07/07"), "۱۴۰۵/۰۷/۰۷");
+        assert_eq!(
+            PersianNormalizer::to_persian_digits("1405/07/07"),
+            "۱۴۰۵/۰۷/۰۷"
+        );
 
         // Toman currency formatter
         let toman_str = PersianNormalizer::format_toman_currency(2500000.0);

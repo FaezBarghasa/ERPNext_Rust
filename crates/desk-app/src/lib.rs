@@ -20,5 +20,5 @@ pub use hal::{
 };
 pub use mobile_pwa::{AndroidNdkBuildConfig, ManifestIcon, PwaWebManifest, ServiceWorkerGenerator};
 pub use persona_shell::{
-    render_worker_kiosk_html, PersonaRole, PersonaSessionState, PersonaShellConfig,
+    PersonaRole, PersonaSessionState, PersonaShellConfig, render_worker_kiosk_html,
 };

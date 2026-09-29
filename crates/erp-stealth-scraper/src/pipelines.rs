@@ -157,7 +157,8 @@ mod tests {
         };
 
         // Internal price 100.0, competitor 70.0 (-30%) -> CriticalUnderpricing
-        let alert = ScraperPipelineProcessor::evaluate_price_alert("ITEM-001", 100.0, &record, 10.0);
+        let alert =
+            ScraperPipelineProcessor::evaluate_price_alert("ITEM-001", 100.0, &record, 10.0);
         assert!(alert.is_some());
         let a = alert.unwrap();
         assert_eq!(a.alert_level, PriceAlertSeverity::CriticalUnderpricing);

@@ -159,8 +159,14 @@ mod tests {
 
     #[test]
     fn test_levenshtein_distance() {
-        assert_eq!(FuzzyMatcher::levenshtein_distance("item_code", "item_code"), 0);
-        assert_eq!(FuzzyMatcher::levenshtein_distance("item_code", "item_codx"), 1);
+        assert_eq!(
+            FuzzyMatcher::levenshtein_distance("item_code", "item_code"),
+            0
+        );
+        assert_eq!(
+            FuzzyMatcher::levenshtein_distance("item_code", "item_codx"),
+            1
+        );
         assert_eq!(FuzzyMatcher::levenshtein_distance("کالا", "کالاها"), 2);
     }
 

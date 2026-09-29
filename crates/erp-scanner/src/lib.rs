@@ -40,7 +40,11 @@ impl ErpScannerFacade {
 
     /// Processes an incoming raw string payload from any capture modality into a typed `ScanIntent`.
     #[must_use]
-    pub fn process_raw_scan(&self, raw_payload: &str, source: ScanSource) -> (RawScanSignal, ScanIntent) {
+    pub fn process_raw_scan(
+        &self,
+        raw_payload: &str,
+        source: ScanSource,
+    ) -> (RawScanSignal, ScanIntent) {
         let symbology = ScanClassifier::classify_symbology(raw_payload);
         let intent = IntentRouter::parse_intent(raw_payload);
 
@@ -55,7 +59,11 @@ impl ErpScannerFacade {
     }
 
     /// Feeds hardware keyboard keystrokes to detect laser scan bursts.
-    pub fn feed_keystroke(&mut self, ch: char, timestamp_ms: u64) -> Option<(RawScanSignal, ScanIntent)> {
+    pub fn feed_keystroke(
+        &mut self,
+        ch: char,
+        timestamp_ms: u64,
+    ) -> Option<(RawScanSignal, ScanIntent)> {
         self.interceptor
             .feed_char(ch, timestamp_ms)
             .map(|decoded| self.process_raw_scan(&decoded, ScanSource::HardwareLaserWedge))
@@ -69,7 +77,8 @@ mod tests {
     #[test]
     fn test_scanner_facade_end_to_end() {
         let facade = ErpScannerFacade::default();
-        let (signal, intent) = facade.process_raw_scan("ITEM:WIDGET-2026", ScanSource::CameraWasmStream);
+        let (signal, intent) =
+            facade.process_raw_scan("ITEM:WIDGET-2026", ScanSource::CameraWasmStream);
 
         assert_eq!(signal.symbology, Symbology::QrCode);
         assert_eq!(signal.source, ScanSource::CameraWasmStream);

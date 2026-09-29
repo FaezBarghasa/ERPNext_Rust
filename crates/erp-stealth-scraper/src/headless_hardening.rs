@@ -17,7 +17,8 @@ impl Default for HardwareSpoofConfig {
     fn default() -> Self {
         Self {
             unmasked_vendor: "Google Inc. (NVIDIA)".into(),
-            unmasked_renderer: "ANGLE (NVIDIA, NVIDIA GeForce RTX 4080 Direct3D11 vs_5_0 ps_5_0, D3D11)".into(),
+            unmasked_renderer:
+                "ANGLE (NVIDIA, NVIDIA GeForce RTX 4080 Direct3D11 vs_5_0 ps_5_0, D3D11)".into(),
             hardware_concurrency: 16,
             device_memory_gb: 32,
             canvas_noise_seed: 1337420,

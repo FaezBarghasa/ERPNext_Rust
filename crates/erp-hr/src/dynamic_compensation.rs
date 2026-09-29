@@ -160,16 +160,14 @@ mod tests {
 
     #[test]
     fn test_piece_rate_with_scrap_penalty() {
-        let logs = vec![
-            JobCardPieceworkLog {
-                job_card_id: "JC-01".into(),
-                operation: "CNC Milling".into(),
-                qty_accepted: dec!(100),
-                rate_per_unit: dec!(5.00),
-                qty_scrap: dec!(4),
-                scrap_penalty_rate: dec!(10.00),
-            },
-        ];
+        let logs = vec![JobCardPieceworkLog {
+            job_card_id: "JC-01".into(),
+            operation: "CNC Milling".into(),
+            qty_accepted: dec!(100),
+            rate_per_unit: dec!(5.00),
+            qty_scrap: dec!(4),
+            scrap_penalty_rate: dec!(10.00),
+        }];
 
         // 100*5 = 500, penalty = 4*10 = 40 -> 460.00
         let piece = DynamicCompensationEngine::compute_piece_earnings(&logs);
@@ -178,16 +176,14 @@ mod tests {
 
     #[test]
     fn test_hybrid_floor_guarantee() {
-        let logs = vec![
-            JobCardPieceworkLog {
-                job_card_id: "JC-02".into(),
-                operation: "Assembly".into(),
-                qty_accepted: dec!(30),
-                rate_per_unit: dec!(10.00),
-                qty_scrap: dec!(0),
-                scrap_penalty_rate: dec!(0),
-            },
-        ];
+        let logs = vec![JobCardPieceworkLog {
+            job_card_id: "JC-02".into(),
+            operation: "Assembly".into(),
+            qty_accepted: dec!(30),
+            rate_per_unit: dec!(10.00),
+            qty_scrap: dec!(0),
+            scrap_penalty_rate: dec!(0),
+        }];
 
         // Earned $300, Guaranteed minimum $500 -> Payout is $500
         let payout = DynamicCompensationEngine::calculate_worker_payout(

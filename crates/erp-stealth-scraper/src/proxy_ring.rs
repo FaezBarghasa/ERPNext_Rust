@@ -1,7 +1,7 @@
 use compact_str::CompactString;
 use serde::{Deserialize, Serialize};
-use std::sync::atomic::{AtomicUsize, Ordering};
 use std::sync::RwLock;
+use std::sync::atomic::{AtomicUsize, Ordering};
 use std::time::Duration;
 
 /// Proxy health status and backoff metrics.
@@ -111,10 +111,7 @@ mod tests {
     #[test]
     fn test_proxy_rotation_and_quarantine() {
         let ring = ProxyRotationRing::new(
-            vec![
-                "http://p1.node:8080".into(),
-                "http://p2.node:8080".into(),
-            ],
+            vec!["http://p1.node:8080".into(), "http://p2.node:8080".into()],
             60,
         );
 

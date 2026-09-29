@@ -86,7 +86,8 @@ impl StreamingPipelineProcessor {
                         row_index: row_idx,
                         column_name: target.field_name.clone(),
                         raw_value: "".into(),
-                        error_message: format!("Required field '{}' is missing", target.field_name).into(),
+                        error_message: format!("Required field '{}' is missing", target.field_name)
+                            .into(),
                     });
                 }
             }

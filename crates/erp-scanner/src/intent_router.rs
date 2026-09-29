@@ -7,9 +7,7 @@ use serde::{Deserialize, Serialize};
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub enum ScanIntent {
     /// Item Master lookup or Rapid Setup wizard.
-    ItemSetup {
-        item_code: CompactString,
-    },
+    ItemSetup { item_code: CompactString },
     /// Serial and Batch Bundle (SABB) parsing with GS1 AI segmentation.
     SerialAndBatchBundle {
         gtin: CompactString,
@@ -23,22 +21,16 @@ pub enum ScanIntent {
         bin_code: CompactString,
     },
     /// Shop-Floor Manufacturing Job Card timer control.
-    JobCard {
-        job_card_id: CompactString,
-    },
+    JobCard { job_card_id: CompactString },
     /// Fixed Asset physical audit verification and geolocation update.
-    FixedAsset {
-        asset_id: CompactString,
-    },
+    FixedAsset { asset_id: CompactString },
     /// Worker Badge authentication for floor kiosk / clock-in.
     WorkerBadge {
         worker_uuid: CompactString,
         auth_token: CompactString,
     },
     /// Generic / Unmapped barcode text.
-    GenericText {
-        raw_text: CompactString,
-    },
+    GenericText { raw_text: CompactString },
 }
 
 /// Intent Router parsing formatted raw strings into actionable domain intents.

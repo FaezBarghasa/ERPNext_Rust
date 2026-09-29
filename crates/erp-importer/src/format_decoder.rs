@@ -104,6 +104,9 @@ mod tests {
     #[test]
     fn test_encoding_detection() {
         let utf8_bytes = "کد کالا,نام کالا".as_bytes();
-        assert_eq!(FormatDecoder::detect_encoding(utf8_bytes), CharacterEncoding::Utf8);
+        assert_eq!(
+            FormatDecoder::detect_encoding(utf8_bytes),
+            CharacterEncoding::Utf8
+        );
     }
 }

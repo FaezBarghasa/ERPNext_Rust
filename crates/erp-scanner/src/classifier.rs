@@ -70,7 +70,10 @@ impl ScanClassifier {
             return Symbology::QrCode;
         }
 
-        if trimmed.chars().all(|c| c.is_ascii_alphanumeric() || c == '-' || c == '.') {
+        if trimmed
+            .chars()
+            .all(|c| c.is_ascii_alphanumeric() || c == '-' || c == '.')
+        {
             return Symbology::Code128;
         }
 
