@@ -474,4 +474,248 @@ async fn test_enterprise_hardening_routes() {
     assert!(receipt_text.contains("RustNext Central Store"));
     assert!(receipt_text.contains("Coffee-Dark"));
     assert!(receipt_text.contains("33.00"));
+
+    // =========================================================================
+    // 13. Accounting Double-Entry Journal Entry & Real-Time Trial Balance
+    // =========================================================================
+    // A. Post balanced Journal Entry
+    let jv_payload = serde_json::json!({
+        "posting_date": "2026-09-30",
+        "company": "RustNext Enterprise Corp",
+        "lines": [
+            {
+                "account": "1110 - Bank Account",
+                "debit": "1000.00",
+                "credit": "0.00",
+                "debit_in_account_currency": "1000.00",
+                "credit_in_account_currency": "0.00",
+                "exchange_rate": "1.0",
+                "party_type": null,
+                "party": null
+            },
+            {
+                "account": "4100 - Sales Revenue",
+                "debit": "0.00",
+                "credit": "1000.00",
+                "debit_in_account_currency": "0.00",
+                "credit_in_account_currency": "1000.00",
+                "exchange_rate": "1.0",
+                "party_type": null,
+                "party": null
+            }
+        ],
+        "remarks": "Direct sales customer settlement"
+    });
+
+    let req = test::TestRequest::post()
+        .uri("/api/v2/accounting/journal_entry")
+        .set_json(&jv_payload)
+        .to_request();
+    let resp = test::call_service(&app, req).await;
+    assert_eq!(resp.status(), actix_web::http::StatusCode::CREATED);
+    let body = test::read_body(resp).await;
+    let jv_res: serde_json::Value = serde_json::from_slice(&body).unwrap();
+    assert_eq!(jv_res["status"], "SUCCESS");
+    assert_eq!(jv_res["total_lines"], 2);
+
+    // B. Post unbalanced Journal Entry -> 400 Bad Request
+    let unbalanced_payload = serde_json::json!({
+        "posting_date": "2026-09-30",
+        "company": "RustNext Enterprise Corp",
+        "lines": [
+            {
+                "account": "1110 - Bank Account",
+                "debit": "1000.00",
+                "credit": "0.00",
+                "debit_in_account_currency": "1000.00",
+                "credit_in_account_currency": "0.00",
+                "exchange_rate": "1.0",
+                "party_type": null,
+                "party": null
+            },
+            {
+                "account": "4100 - Sales Revenue",
+                "debit": "0.00",
+                "credit": "900.00",
+                "debit_in_account_currency": "0.00",
+                "credit_in_account_currency": "900.00",
+                "exchange_rate": "1.0",
+                "party_type": null,
+                "party": null
+            }
+        ],
+        "remarks": "Unbalanced entry attempt"
+    });
+    let req = test::TestRequest::post()
+        .uri("/api/v2/accounting/journal_entry")
+        .set_json(&unbalanced_payload)
+        .to_request();
+    let resp = test::call_service(&app, req).await;
+    assert_eq!(resp.status(), actix_web::http::StatusCode::BAD_REQUEST);
+
+    // C. Query Trial Balance
+    let req = test::TestRequest::get()
+        .uri("/api/v2/accounting/trial_balance?company=RustNext%20Enterprise%20Corp")
+        .to_request();
+    let resp = test::call_service(&app, req).await;
+    assert!(resp.status().is_success());
+
+    // =========================================================================
+    // 14. Inventory FIFO Stock Movement & Exact Valuation
+    // =========================================================================
+    // A. Layer 1: 10 units @ $10.00
+    let stock_in_1 = serde_json::json!({
+        "item_code": "SKU-RUST-01",
+        "warehouse": "Stores - Main",
+        "qty": "10.00",
+        "rate": "10.00",
+        "is_incoming": true,
+        "voucher_type": "Purchase Receipt",
+        "voucher_no": "PR-2026-001"
+    });
+    let req = test::TestRequest::post()
+        .uri("/api/v2/inventory/stock_entry")
+        .set_json(&stock_in_1)
+        .to_request();
+    let resp = test::call_service(&app, req).await;
+    assert_eq!(resp.status(), actix_web::http::StatusCode::CREATED);
+
+    // B. Layer 2: 10 units @ $20.00
+    let stock_in_2 = serde_json::json!({
+        "item_code": "SKU-RUST-01",
+        "warehouse": "Stores - Main",
+        "qty": "10.00",
+        "rate": "20.00",
+        "is_incoming": true,
+        "voucher_type": "Purchase Receipt",
+        "voucher_no": "PR-2026-002"
+    });
+    let req = test::TestRequest::post()
+        .uri("/api/v2/inventory/stock_entry")
+        .set_json(&stock_in_2)
+        .to_request();
+    let resp = test::call_service(&app, req).await;
+    assert_eq!(resp.status(), actix_web::http::StatusCode::CREATED);
+
+    // C. Check Balance -> 20 units total, value $300, avg rate $15
+    let req = test::TestRequest::get()
+        .uri("/api/v2/inventory/balance/Stores%20-%20Main/SKU-RUST-01")
+        .to_request();
+    let resp = test::call_service(&app, req).await;
+    assert!(resp.status().is_success());
+    let body = test::read_body(resp).await;
+    let bal_res: serde_json::Value = serde_json::from_slice(&body).unwrap();
+    assert_eq!(bal_res["total_qty"], "20.00");
+    assert_eq!(bal_res["total_value"], "300.0000");
+
+    // D. Outgoing: Consume 15 units -> Consumes 10 @ 10 + 5 @ 20 = $200 COGS
+    let stock_out_1 = serde_json::json!({
+        "item_code": "SKU-RUST-01",
+        "warehouse": "Stores - Main",
+        "qty": "15.00",
+        "rate": "0.00",
+        "is_incoming": false,
+        "voucher_type": "Delivery Note",
+        "voucher_no": "DN-2026-001"
+    });
+    let req = test::TestRequest::post()
+        .uri("/api/v2/inventory/stock_entry")
+        .set_json(&stock_out_1)
+        .to_request();
+    let resp = test::call_service(&app, req).await;
+    assert_eq!(resp.status(), actix_web::http::StatusCode::CREATED);
+    let body = test::read_body(resp).await;
+    let sle_out: serde_json::Value = serde_json::from_slice(&body).unwrap();
+    assert_eq!(sle_out["consumed_cogs"], "200.0000");
+    assert_eq!(sle_out["remaining_qty"], "5.00");
+
+    // E. Attempt consuming 6 units (only 5 left) -> 400 Bad Request Insufficient Stock
+    let stock_out_excess = serde_json::json!({
+        "item_code": "SKU-RUST-01",
+        "warehouse": "Stores - Main",
+        "qty": "6.00",
+        "rate": "0.00",
+        "is_incoming": false,
+        "voucher_type": "Delivery Note",
+        "voucher_no": "DN-2026-002"
+    });
+    let req = test::TestRequest::post()
+        .uri("/api/v2/inventory/stock_entry")
+        .set_json(&stock_out_excess)
+        .to_request();
+    let resp = test::call_service(&app, req).await;
+    assert_eq!(resp.status(), actix_web::http::StatusCode::BAD_REQUEST);
+
+    // =========================================================================
+    // 15. CRM Quotation Conversion Pipeline to Sales Order
+    // =========================================================================
+    let quotation_payload = serde_json::json!({
+        "quotation": {
+            "name": "QUOT-2026-00042",
+            "party_name": "Global Aerospace Corp",
+            "valid_till": "2026-12-31",
+            "items": [
+                {
+                    "item_code": "AVIONICS-MODULE-X1",
+                    "qty": "5",
+                    "rate": "1200.00",
+                    "amount": "6000.00"
+                }
+            ],
+            "net_total": "6000.00",
+            "status": "Submitted"
+        },
+        "as_of_date": "2026-09-30",
+        "sales_order_id": "SO-2026-00042"
+    });
+
+    let req = test::TestRequest::post()
+        .uri("/api/v2/crm/quotations/convert")
+        .set_json(&quotation_payload)
+        .to_request();
+    let resp = test::call_service(&app, req).await;
+    assert_eq!(resp.status(), actix_web::http::StatusCode::OK);
+    let body = test::read_body(resp).await;
+    let so_res: serde_json::Value = serde_json::from_slice(&body).unwrap();
+    assert_eq!(so_res["status"], "SUCCESS");
+    assert_eq!(so_res["sales_order"]["name"], "SO-2026-00042");
+    assert_eq!(so_res["sales_order"]["customer"], "Global Aerospace Corp");
+    assert_eq!(so_res["sales_order"]["net_total"], "6000.00");
+    assert_eq!(so_res["updated_quotation_status"], "Ordered");
+
+    // =========================================================================
+    // 16. HR Automated Salary Slip Processing
+    // =========================================================================
+    let payroll_payload = serde_json::json!({
+        "employee_id": "EMP-00109",
+        "structure": {
+            "base_salary": "6000.00",
+            "hra_percentage": "20.0",
+            "standard_deduction": "200.00",
+            "tax_withholding_rate": "10.0"
+        },
+        "attended_days": "20.0",
+        "total_working_days": "20.0",
+        "overtime_hours": "8.0",
+        "posting_date": "2026-09-30",
+        "slip_id": "SLIP-2026-09-00109"
+    });
+
+    let req = test::TestRequest::post()
+        .uri("/api/v2/hr/payroll/process")
+        .set_json(&payroll_payload)
+        .to_request();
+    let resp = test::call_service(&app, req).await;
+    assert_eq!(resp.status(), actix_web::http::StatusCode::OK);
+    let body = test::read_body(resp).await;
+    let slip_res: serde_json::Value = serde_json::from_slice(&body).unwrap();
+    assert_eq!(slip_res["status"], "SUCCESS");
+    let slip = &slip_res["salary_slip"];
+    assert_eq!(slip["employee_id"], "EMP-00109");
+    assert_eq!(slip["earned_basic"], "6000.00");
+    assert_eq!(slip["earned_hra"], "1200.000");
+    // Hourly: 6000 / 20 / 8 = 37.5. Overtime: 8 * 37.5 * 1.5 = 450.00
+    assert_eq!(slip["overtime_amount"], "450.000");
+    // Gross: 6000 + 1200 + 450 = 7650.00
+    assert_eq!(slip["gross_salary"], "7650.000");
 }

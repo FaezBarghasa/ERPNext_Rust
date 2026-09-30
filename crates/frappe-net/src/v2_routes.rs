@@ -16,19 +16,13 @@ use crate::rate_limit::LoginGuard;
 use crate::tenant::{ConnectionPoolManager, TenantId};
 use actix_web::{HttpMessage, HttpRequest, HttpResponse, Responder, web};
 use chrono::Utc;
-use erp_accounting::{
-    AccountingError, GlEntry, JournalEntry, JournalEntryLine, StatementGenerator, TrialBalanceRow,
-};
+use erp_accounting::{GlEntry, JournalEntry, JournalEntryLine, StatementGenerator};
 use erp_cms::media_library::{MediaAsset, MediaLibraryRegistry};
 use erp_cms::seo_engine::SeoMetadata;
 use erp_cms::taxonomy::{TaxonomyRegistry, TaxonomyTerm};
-use erp_crm::{
-    CrmError, CrmPipeline, Lead, LeadStatus, Quotation, QuotationItem, QuotationStatus, SalesOrder,
-};
-use erp_hr::{HrError, SalaryCalculator, SalarySlip, SalaryStructure};
-use erp_inventory::{
-    FifoBatchItem, InventoryError, StockLedgerEntry, add_fifo_layer, consume_fifo,
-};
+use erp_crm::{CrmPipeline, Quotation};
+use erp_hr::{SalaryCalculator, SalaryStructure};
+use erp_inventory::{FifoBatchItem, StockLedgerEntry, add_fifo_layer, consume_fifo};
 use erp_trade::coupon::{CartItemLine, CouponCode, CouponDiscountType, CouponEngine};
 use erp_trade::order_lifecycle::{
     OrderState, OrderStateMachine, OrderTransitionEvent, RmaItemLine, RmaRecord,
@@ -3378,8 +3372,8 @@ pub async fn accounting_journal_entry_handler(
         });
     }
 
-    if let Ok(pool) = pool_mgr.get_pool(&tenant_id.0) {
-        let repo = frappe_storage::SurrealRepository::new(pool);
+    if let Ok(client) = pool_mgr.get_or_initialize_client(&tenant_id).await {
+        let repo = frappe_storage::SurrealRepository::new(client.clone());
         let _ = repo.upsert("journal_entry", &voucher_no, &entry).await;
         for gl in &gl_entries {
             let _ = repo.upsert("gl_entry", &gl.name, gl).await;
@@ -3411,8 +3405,8 @@ pub async fn accounting_trial_balance_handler(
     let as_of = query.as_of.unwrap_or_else(|| Utc::now().date_naive());
 
     let mut gl_entries: Vec<GlEntry> = Vec::new();
-    if let Ok(pool) = pool_mgr.get_pool(&tenant_id.0) {
-        let repo = frappe_storage::SurrealRepository::new(pool);
+    if let Ok(client) = pool_mgr.get_or_initialize_client(&tenant_id).await {
+        let repo = frappe_storage::SurrealRepository::new(client.clone());
         if let Ok(records) = repo.select_all::<GlEntry>("gl_entry").await {
             gl_entries = records;
         }
@@ -3458,38 +3452,56 @@ pub async fn inventory_stock_entry_handler(
         .unwrap_or_else(|| TenantId("default".into()));
 
     let key = format!("{}:{}", payload.warehouse, payload.item_code);
-    let mut fifo_guard = match rbac_state.fifo_layers.write() {
-        Ok(g) => g,
-        Err(_) => return HttpResponse::InternalServerError().body("FIFO State Lock Failed"),
+    let posting_date = payload
+        .posting_date
+        .unwrap_or_else(|| Utc::now().date_naive());
+
+    let (valuation_rate, consumed_cogs, remaining_qty, total_inventory_value) = {
+        let mut fifo_guard = match rbac_state.fifo_layers.write() {
+            Ok(g) => g,
+            Err(_) => return HttpResponse::InternalServerError().body("FIFO State Lock Failed"),
+        };
+
+        let queue = fifo_guard.entry(key.clone()).or_default();
+
+        let (valuation_rate, consumed_cogs) = if payload.is_incoming {
+            add_fifo_layer(queue, payload.qty, payload.rate);
+            (payload.rate, Decimal::ZERO)
+        } else {
+            match consume_fifo(queue, payload.qty) {
+                Ok(cogs) => {
+                    let unit_rate = if payload.qty.is_zero() {
+                        Decimal::ZERO
+                    } else {
+                        cogs / payload.qty
+                    };
+                    (unit_rate, cogs)
+                }
+                Err(e) => {
+                    return HttpResponse::BadRequest().json(serde_json::json!({
+                        "status": "ERROR",
+                        "error": e.to_string(),
+                    }));
+                }
+            }
+        };
+
+        let remaining_qty: Decimal = queue.iter().map(|item| item.qty).sum();
+        let total_inventory_value: Decimal = queue.iter().map(|item| item.qty * item.rate).sum();
+
+        (
+            valuation_rate,
+            consumed_cogs,
+            remaining_qty,
+            total_inventory_value,
+        )
     };
 
-    let queue = fifo_guard.entry(key.clone()).or_default();
-    let posting_date = payload.posting_date.unwrap_or_else(|| Utc::now().date_naive());
-
-    let (valuation_rate, consumed_cogs) = if payload.is_incoming {
-        add_fifo_layer(queue, payload.qty, payload.rate);
-        (payload.rate, Decimal::ZERO)
+    let stock_value_diff = if payload.is_incoming {
+        payload.qty * payload.rate
     } else {
-        match consume_fifo(queue, payload.qty) {
-            Ok(cogs) => {
-                let unit_rate = if payload.qty.is_zero() {
-                    Decimal::ZERO
-                } else {
-                    cogs / payload.qty
-                };
-                (unit_rate, cogs)
-            }
-            Err(e) => {
-                return HttpResponse::BadRequest().json(serde_json::json!({
-                    "status": "ERROR",
-                    "error": e.to_string(),
-                }));
-            }
-        }
+        -consumed_cogs
     };
-
-    let remaining_qty: Decimal = queue.iter().map(|item| item.qty).sum();
-    let total_inventory_value: Decimal = queue.iter().map(|item| item.qty * item.rate).sum();
 
     let sle = StockLedgerEntry {
         name: format!("SLE-{}", Utc::now().timestamp_millis()),
@@ -3501,22 +3513,19 @@ pub async fn inventory_stock_entry_handler(
         } else {
             -payload.qty
         },
-        qty_after_transaction: remaining_qty,
         incoming_rate: if payload.is_incoming {
             payload.rate
         } else {
             Decimal::ZERO
         },
         valuation_rate,
-        stock_value: total_inventory_value,
+        stock_value_difference: stock_value_diff,
         voucher_type: payload.voucher_type.clone(),
         voucher_no: payload.voucher_no.clone(),
-        batch_no: None,
-        serial_no: None,
     };
 
-    if let Ok(pool) = pool_mgr.get_pool(&tenant_id.0) {
-        let repo = frappe_storage::SurrealRepository::new(pool);
+    if let Ok(client) = pool_mgr.get_or_initialize_client(&tenant_id).await {
+        let repo = frappe_storage::SurrealRepository::new(client.clone());
         let _ = repo.upsert("stock_ledger_entry", &sle.name, &sle).await;
     }
 
@@ -3598,10 +3607,12 @@ pub async fn crm_convert_quotation_handler(
         &payload.sales_order_id,
     ) {
         Ok(sales_order) => {
-            if let Ok(pool) = pool_mgr.get_pool(&tenant_id.0) {
-                let repo = frappe_storage::SurrealRepository::new(pool);
+            if let Ok(client) = pool_mgr.get_or_initialize_client(&tenant_id).await {
+                let repo = frappe_storage::SurrealRepository::new(client.clone());
                 let _ = repo.upsert("quotation", &quotation.name, &quotation).await;
-                let _ = repo.upsert("sales_order", &sales_order.name, &sales_order).await;
+                let _ = repo
+                    .upsert("sales_order", &sales_order.name, &sales_order)
+                    .await;
             }
 
             HttpResponse::Ok().json(serde_json::json!({
@@ -3651,8 +3662,8 @@ pub async fn hr_process_payroll_handler(
         &payload.slip_id,
     ) {
         Ok(slip) => {
-            if let Ok(pool) = pool_mgr.get_pool(&tenant_id.0) {
-                let repo = frappe_storage::SurrealRepository::new(pool);
+            if let Ok(client) = pool_mgr.get_or_initialize_client(&tenant_id).await {
+                let repo = frappe_storage::SurrealRepository::new(client.clone());
                 let _ = repo.upsert("salary_slip", &slip.name, &slip).await;
             }
 
