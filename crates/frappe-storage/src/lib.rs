@@ -3,6 +3,7 @@ pub mod crdt;
 pub mod drive;
 pub mod encryption;
 pub mod merkle;
+pub mod migration_runner;
 pub mod replication;
 pub mod repository;
 pub mod surreal;
@@ -12,6 +13,9 @@ pub use crdt::{LwwDocumentState, OfflineOutboxManager, PnCounter, SyncQueueEntry
 pub use drive::{DeduplicatedStorage, DriveFile, DriveFolder, StorageError};
 pub use encryption::{EncryptionError, EnvelopeEncryption};
 pub use merkle::{MerkleHasher, MerkleProof, MerkleProofStep};
+pub use migration_runner::{
+    MigrationDefinition, MigrationError, MigrationRunner, STANDARD_MIGRATIONS,
+};
 pub use replication::{
     CloudRegion, MultiRegionReplicationOrchestrator, ReconciliationOutcome, ReplicationConflict,
     ReplicationEnvelope, ReplicationScope,

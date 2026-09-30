@@ -267,6 +267,12 @@ impl ConnectionPoolManager {
             .await
             .map_err(|e| TenantError::NamespaceInitializationFailed(e.to_string()))?;
 
+        // Automatically run pending standard ERPNext v16 migrations for the tenant
+        let migration_runner = frappe_storage::MigrationRunner::new(db.clone());
+        if let Err(e) = migration_runner.run_pending_migrations().await {
+            tracing::warn!("Auto-migration warning for tenant {}: {}", tenant.0, e);
+        }
+
         write_guard.insert(tenant.clone(), (db.clone(), Instant::now()));
         Ok(db)
     }

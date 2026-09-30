@@ -16,31 +16,36 @@ use crate::tenant::{
     AcmeGateway, ConnectionPoolManager, MicroTopologyConfig, TenantId, TenantResolver,
 };
 use crate::v2_routes::{
-    DynamicRbacState, accounting_journal_entry_handler, accounting_trial_balance_handler,
-    admin_action_handler, admin_create_ip_rule_handler, admin_create_role_handler,
-    admin_create_user_handler, admin_delete_ip_rule_handler, admin_delete_user_handler,
-    admin_get_audit_logs_handler, admin_get_permissions_handler,
-    admin_get_user_effective_permissions_handler, admin_list_ip_rules_handler,
-    admin_list_lockouts_handler, admin_list_roles_handler, admin_list_users_handler,
-    admin_query_handler, admin_status_handler, admin_unlock_target_handler,
-    admin_update_permission_handler, admin_update_user_roles_handler, auth_forgot_password_handler,
-    auth_mfa_activate_handler, auth_mfa_disable_handler, auth_mfa_enroll_handler,
-    auth_refresh_token_handler, auth_reset_password_handler, cms_create_taxonomy_handler,
-    cms_generate_seo_handler, cms_list_media_handler, cms_list_taxonomies_handler,
-    cms_upload_media_handler, crm_convert_quotation_handler, download_file_handler,
-    export_dataset_handler, h3_stream_file_handler, h3_stream_telemetry_handler,
-    hr_process_payroll_handler, inventory_stock_balance_handler, inventory_stock_entry_handler,
-    login_handler, logout_handler, notifications_dispatch_handler, notifications_get_inbox_handler,
-    ping_handler, quic_status_handler, render_invoice_handler, render_receipt_handler,
-    report_pivot_table_handler, trade_add_wishlist_item_handler, trade_apply_coupon_handler,
-    trade_calculate_shipping_handler, trade_create_coupon_handler, trade_get_wishlist_handler,
-    trade_list_coupons_handler, trade_list_reviews_handler, trade_list_shipping_zones_handler,
-    trade_moderate_review_handler, trade_order_transition_handler,
-    trade_remove_wishlist_item_handler, trade_rma_submit_handler, trade_submit_review_handler,
-    upload_file_handler, v2_amend_document, v2_cancel_document, v2_create_document,
-    v2_delete_document, v2_get_document, v2_list_document, v2_submit_document, v2_update_document,
-    webhooks_dispatch_test_handler, workflow_evaluate_handler, workflow_version_history_handler,
-    workflow_version_rollback_handler,
+    DynamicRbacState, accounting_balance_sheet_handler, accounting_journal_entry_handler,
+    accounting_payment_entry_handler, accounting_period_close_handler,
+    accounting_profit_loss_handler, accounting_trial_balance_handler, admin_action_handler,
+    admin_create_ip_rule_handler, admin_create_role_handler, admin_create_user_handler,
+    admin_delete_ip_rule_handler, admin_delete_user_handler, admin_get_audit_logs_handler,
+    admin_get_permissions_handler, admin_get_user_effective_permissions_handler,
+    admin_list_ip_rules_handler, admin_list_lockouts_handler, admin_list_roles_handler,
+    admin_list_users_handler, admin_query_handler, admin_status_handler,
+    admin_unlock_target_handler, admin_update_permission_handler, admin_update_user_roles_handler,
+    auth_forgot_password_handler, auth_mfa_activate_handler, auth_mfa_disable_handler,
+    auth_mfa_enroll_handler, auth_refresh_token_handler, auth_reset_password_handler,
+    buying_purchase_invoice_handler, buying_purchase_order_handler,
+    buying_purchase_receipt_handler, cms_create_taxonomy_handler, cms_generate_seo_handler,
+    cms_list_media_handler, cms_list_taxonomies_handler, cms_upload_media_handler,
+    crm_convert_quotation_handler, download_file_handler, email_list_queue_handler,
+    email_send_handler, export_dataset_handler, h3_stream_file_handler,
+    h3_stream_telemetry_handler, hr_process_payroll_handler, inventory_stock_balance_handler,
+    inventory_stock_entry_handler, login_handler, logout_handler,
+    manufacturing_complete_work_order_handler, manufacturing_work_order_handler,
+    notifications_dispatch_handler, notifications_get_inbox_handler, ping_handler,
+    print_document_handler, quic_status_handler, render_invoice_handler, render_receipt_handler,
+    report_pivot_table_handler, selling_delivery_note_handler, selling_sales_invoice_handler,
+    trade_add_wishlist_item_handler, trade_apply_coupon_handler, trade_calculate_shipping_handler,
+    trade_create_coupon_handler, trade_get_wishlist_handler, trade_list_coupons_handler,
+    trade_list_reviews_handler, trade_list_shipping_zones_handler, trade_moderate_review_handler,
+    trade_order_transition_handler, trade_remove_wishlist_item_handler, trade_rma_submit_handler,
+    trade_submit_review_handler, upload_file_handler, v2_amend_document, v2_cancel_document,
+    v2_create_document, v2_delete_document, v2_get_document, v2_list_document, v2_submit_document,
+    v2_update_document, webhooks_dispatch_test_handler, workflow_evaluate_handler,
+    workflow_version_history_handler, workflow_version_rollback_handler,
 };
 use actix_web::{
     App, HttpMessage, HttpRequest, HttpResponse, HttpServer, Responder, middleware::Compress,
@@ -1084,6 +1089,64 @@ pub fn configure_app(
         .route(
             "/api/v2/webhooks/test",
             web::post().to(webhooks_dispatch_test_handler),
+        )
+        // V2 Buying (Procure-to-Pay) Endpoints
+        .route(
+            "/api/v2/buying/purchase_order",
+            web::post().to(buying_purchase_order_handler),
+        )
+        .route(
+            "/api/v2/buying/purchase_receipt",
+            web::post().to(buying_purchase_receipt_handler),
+        )
+        .route(
+            "/api/v2/buying/purchase_invoice",
+            web::post().to(buying_purchase_invoice_handler),
+        )
+        // V2 Selling (Order-to-Cash) Endpoints
+        .route(
+            "/api/v2/selling/delivery_note",
+            web::post().to(selling_delivery_note_handler),
+        )
+        .route(
+            "/api/v2/selling/sales_invoice",
+            web::post().to(selling_sales_invoice_handler),
+        )
+        // V2 Accounting Settlement & Financial Reporting Endpoints
+        .route(
+            "/api/v2/accounting/payment_entry",
+            web::post().to(accounting_payment_entry_handler),
+        )
+        .route(
+            "/api/v2/accounting/profit_loss",
+            web::get().to(accounting_profit_loss_handler),
+        )
+        .route(
+            "/api/v2/accounting/balance_sheet",
+            web::get().to(accounting_balance_sheet_handler),
+        )
+        .route(
+            "/api/v2/accounting/period_close",
+            web::post().to(accounting_period_close_handler),
+        )
+        // V2 Manufacturing Work Order Endpoints
+        .route(
+            "/api/v2/manufacturing/work_order",
+            web::post().to(manufacturing_work_order_handler),
+        )
+        .route(
+            "/api/v2/manufacturing/work_order/complete",
+            web::post().to(manufacturing_complete_work_order_handler),
+        )
+        // V2 Universal Print Format & Email Engine Endpoints
+        .route(
+            "/api/v2/print/document",
+            web::post().to(print_document_handler),
+        )
+        .route("/api/v2/email/send", web::post().to(email_send_handler))
+        .route(
+            "/api/v2/email/queue",
+            web::get().to(email_list_queue_handler),
         )
         // Protected V1 REST Resource API Scope
         .service(

@@ -26,6 +26,7 @@ erp-accounting = { workspace = true }
 erp-inventory = { workspace = true }
 erp-crm = { workspace = true }
 erp-hr = { workspace = true }
+erp-manufacturing = { workspace = true }
 compact_str = { workspace = true }
 rust_decimal = { workspace = true }
 rust_decimal_macros = { workspace = true }
