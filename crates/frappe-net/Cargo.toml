@@ -22,6 +22,10 @@ surrealdb = { workspace = true }
 clap = { workspace = true }
 erp-cms = { workspace = true }
 erp-trade = { workspace = true }
+erp-accounting = { workspace = true }
+erp-inventory = { workspace = true }
+erp-crm = { workspace = true }
+erp-hr = { workspace = true }
 compact_str = { workspace = true }
 rust_decimal = { workspace = true }
 rust_decimal_macros = { workspace = true }

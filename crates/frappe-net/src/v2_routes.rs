@@ -16,9 +16,17 @@ use crate::rate_limit::LoginGuard;
 use crate::tenant::{ConnectionPoolManager, TenantId};
 use actix_web::{HttpMessage, HttpRequest, HttpResponse, Responder, web};
 use chrono::Utc;
+use erp_accounting::{AccountingError, JournalEntry, JournalEntryLine};
 use erp_cms::media_library::{MediaAsset, MediaLibraryRegistry};
 use erp_cms::seo_engine::SeoMetadata;
 use erp_cms::taxonomy::{TaxonomyRegistry, TaxonomyTerm};
+use erp_crm::{
+    CrmError, CrmPipeline, Lead, LeadStatus, Quotation, QuotationItem, QuotationStatus, SalesOrder,
+};
+use erp_hr::{HrError, SalaryCalculator, SalarySlip, SalaryStructure};
+use erp_inventory::{
+    FifoBatchItem, InventoryError, StockLedgerEntry, add_fifo_layer, consume_fifo,
+};
 use erp_trade::coupon::{CartItemLine, CouponCode, CouponDiscountType, CouponEngine};
 use erp_trade::order_lifecycle::{
     OrderState, OrderStateMachine, OrderTransitionEvent, RmaItemLine, RmaRecord,
