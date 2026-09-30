@@ -332,4 +332,146 @@ async fn test_enterprise_hardening_routes() {
             .unwrap()
             .starts_with("sha256=")
     );
+
+    // =========================================================================
+    // 11. Security Hardening: Token Authentication & Refresh Token Rotation Flow
+    // =========================================================================
+    let login_payload = serde_json::json!({
+        "usr": "usr_admin",
+        "pwd": "admin"
+    });
+    let req = test::TestRequest::post()
+        .uri("/api/v2/method/login")
+        .set_json(&login_payload)
+        .to_request();
+    let resp = test::call_service(&app, req).await;
+    assert!(resp.status().is_success());
+    let body = test::read_body(resp).await;
+    let login_res: serde_json::Value = serde_json::from_slice(&body).unwrap();
+    assert_eq!(login_res["message"], "Logged In");
+    let access_token = login_res["access_token"].as_str().unwrap();
+    let refresh_token = login_res["refresh_token"].as_str().unwrap();
+    assert!(access_token.starts_with("v4.local."));
+    assert!(refresh_token.starts_with("rft_usr_admin"));
+
+    // Rotate Refresh Token
+    let refresh_payload = serde_json::json!({
+        "refresh_token": refresh_token
+    });
+    let req = test::TestRequest::post()
+        .uri("/api/v2/auth/refresh")
+        .set_json(&refresh_payload)
+        .to_request();
+    let resp = test::call_service(&app, req).await;
+    assert!(resp.status().is_success());
+    let body = test::read_body(resp).await;
+    let refresh_res: serde_json::Value = serde_json::from_slice(&body).unwrap();
+    let new_access = refresh_res["access_token"].as_str().unwrap();
+    let new_refresh = refresh_res["refresh_token"].as_str().unwrap();
+    assert!(new_access.starts_with("v4.local."));
+    assert!(new_refresh.starts_with("rft_usr_admin"));
+    assert_ne!(refresh_token, new_refresh); // Verify rotated token is distinct
+
+    // Old Refresh Token must now be rejected (single-use rotation policy)
+    let req = test::TestRequest::post()
+        .uri("/api/v2/auth/refresh")
+        .set_json(&refresh_payload)
+        .to_request();
+    let resp = test::call_service(&app, req).await;
+    assert_eq!(resp.status(), actix_web::http::StatusCode::UNAUTHORIZED);
+
+    // =========================================================================
+    // 12. Enterprise Print Format & POS Thermal Receipt Generation
+    // =========================================================================
+    let invoice_print_payload = serde_json::json!({
+        "document_title": "Tax Invoice",
+        "document_number": "ACC-INV-2026-00099",
+        "posting_date": "2026-09-30T12:00:00Z",
+        "due_date": "2026-10-30",
+        "company_name": "RustNext Enterprise Corp",
+        "company_tax_id": "VAT-987654321",
+        "company_address": "42 Innovation Park, Tehran, Iran",
+        "customer_name": "Faez Barghasa",
+        "customer_tax_id": "CUST-VAT-1122",
+        "customer_address": "Tech District, Tehran",
+        "currency": "USD",
+        "items": [
+            {
+                "item_code": "RUST-CORE-SERVER",
+                "description": "High-Performance Bare-Metal Rust Server",
+                "qty": "2",
+                "unit_price": "2500.00",
+                "discount_pct": "10",
+                "tax_rate_pct": "15",
+                "line_total": "4500.00"
+            }
+        ],
+        "net_total": "5000.00",
+        "total_discount": "500.00",
+        "total_tax": "675.00",
+        "grand_total": "5175.00",
+        "qr_data": "ZATCA_SIMULATED_TAG_LENGTH_VALUE_992288",
+        "terms_and_conditions": "Net 30 days payment term. Zero tolerance for security vulnerabilities."
+    });
+
+    let req = test::TestRequest::post()
+        .uri("/api/v2/method/render_invoice")
+        .set_json(&invoice_print_payload)
+        .to_request();
+    let resp = test::call_service(&app, req).await;
+    assert!(resp.status().is_success());
+    assert_eq!(
+        resp.headers()
+            .get("content-type")
+            .unwrap()
+            .to_str()
+            .unwrap(),
+        "text/html; charset=utf-8"
+    );
+    let body = test::read_body(resp).await;
+    let html = String::from_utf8(body.to_vec()).unwrap();
+    assert!(html.contains("Tax Invoice"));
+    assert!(html.contains("ACC-INV-2026-00099"));
+    assert!(html.contains("RustNext Enterprise Corp"));
+    assert!(html.contains("RUST-CORE-SERVER"));
+    assert!(html.contains("5175.00"));
+    assert!(html.contains("Jalali:"));
+
+    // POS Thermal Receipt
+    let receipt_payload = serde_json::json!({
+        "store_name": "RustNext Central Store",
+        "terminal_id": "POS-01",
+        "cashier_name": "Admin",
+        "receipt_number": "RCP-998811",
+        "timestamp": "2026-09-30 14:00",
+        "items": [
+            {
+                "item_code": "Coffee-Dark",
+                "description": "Artisan Dark Roast 1kg",
+                "qty": "1",
+                "unit_price": "30.00",
+                "discount_pct": "0",
+                "tax_rate_pct": "0",
+                "line_total": "30.00"
+            }
+        ],
+        "subtotal": "30.00",
+        "discount": "0.00",
+        "tax": "3.00",
+        "total": "33.00",
+        "payment_method": "Contactless NFC",
+        "change_due": "0.00"
+    });
+
+    let req = test::TestRequest::post()
+        .uri("/api/v2/method/render_receipt")
+        .set_json(&receipt_payload)
+        .to_request();
+    let resp = test::call_service(&app, req).await;
+    assert!(resp.status().is_success());
+    let body = test::read_body(resp).await;
+    let receipt_text = String::from_utf8(body.to_vec()).unwrap();
+    assert!(receipt_text.contains("RustNext Central Store"));
+    assert!(receipt_text.contains("Coffee-Dark"));
+    assert!(receipt_text.contains("33.00"));
 }

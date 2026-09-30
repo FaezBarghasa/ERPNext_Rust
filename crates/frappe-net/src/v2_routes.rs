@@ -31,6 +31,7 @@ use frappe_framework::notification::{
     NotificationChannel, NotificationDispatcher, NotificationInboxRegistry, NotificationMessage,
     NotificationPriority, UserNotificationPreferences,
 };
+use frappe_framework::print_format::{InvoicePrintContext, PrintEngine, ReceiptPrintContext};
 use frappe_framework::report_engine::{PivotAggregate, ReportEngine};
 use frappe_framework::webhook::{
     WebhookDispatcher, WebhookOutboxEntry, WebhookPayload, WebhookSubscription,
@@ -39,7 +40,10 @@ use frappe_framework::workflow_approval::{
     ApprovalWorkflow, DocumentVersioningEngine, WorkflowStateNode, WorkflowTransitionRule,
 };
 use frappe_meta::audit::{AuditAction, AuditEntry, AuditQueryFilter, AuditTrailRegistry};
-use frappe_meta::auth::{SessionClaims, hash_password, issue_token, verify_password};
+use frappe_meta::auth::{
+    DEFAULT_SESSION_EXPIRY_SECS, RefreshTokenRecord, SessionClaims, hash_password,
+    hash_refresh_token, issue_refresh_token, issue_token, verify_password,
+};
 use frappe_meta::mfa::{MfaRecord, TotpConfig, generate_otpauth_uri};
 use frappe_meta::rbac::{
     DynamicRolePermissionRegistry, Permission, ROLE_ACCOUNTANT_USER, ROLE_ADMINISTRATOR,
@@ -95,6 +99,11 @@ pub struct LoginPayload {
     pub usr: String,
     pub pwd: String,
     pub mfa_code: Option<String>,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct RefreshTokenPayload {
+    pub refresh_token: String,
 }
 
 #[derive(Debug, Deserialize)]
@@ -1039,15 +1048,90 @@ pub async fn login_handler(
         Err(e) => return HttpResponse::InternalServerError().body(e.to_string()),
     };
 
+    let (raw_refresh, refresh_record) = issue_refresh_token(user_id, &tenant_id.0, roles.clone());
+    if let Ok(mut rft_guard) = rbac_state.refresh_tokens.write() {
+        rft_guard.insert(refresh_record.token_hash.clone(), refresh_record);
+    }
+
     HttpResponse::Ok().json(serde_json::json!({
         "message": "Logged In",
         "home_page": "/desk",
         "full_name": full_name,
         "user_id": user_id,
         "token": token,
+        "access_token": token,
+        "refresh_token": raw_refresh,
+        "token_type": "Bearer",
         "roles": roles,
         "expires_at": claims.exp,
+        "expires_in": DEFAULT_SESSION_EXPIRY_SECS,
     }))
+}
+
+/// Handler for Refreshing Access Tokens: `POST /api/v2/auth/refresh`
+pub async fn auth_refresh_token_handler(
+    payload: web::Json<RefreshTokenPayload>,
+    rbac_state: web::Data<DynamicRbacState>,
+) -> impl Responder {
+    let token_hash = hash_refresh_token(&payload.refresh_token);
+    let mut rft_guard = match rbac_state.refresh_tokens.write() {
+        Ok(g) => g,
+        Err(_) => return HttpResponse::InternalServerError().body("State Lock Failed"),
+    };
+
+    let Some(record) = rft_guard.get_mut(&token_hash) else {
+        return HttpResponse::Unauthorized().json(serde_json::json!({
+            "error": "Invalid or unknown refresh token"
+        }));
+    };
+
+    if !record.is_valid() {
+        return HttpResponse::Unauthorized().json(serde_json::json!({
+            "error": "Refresh token expired or revoked"
+        }));
+    }
+
+    // Revoke old refresh token (sliding rotation)
+    record.revoked = true;
+    let user_id = record.user_id.clone();
+    let tenant_id = record.tenant_id.clone();
+    let roles = record.roles.clone();
+
+    // Issue new access token and new rotated refresh token
+    let claims = SessionClaims::new(&user_id, &tenant_id, roles.clone());
+    let secret = get_master_token_secret();
+    let access_token = match issue_token(&claims, &secret) {
+        Ok(t) => t,
+        Err(e) => return HttpResponse::InternalServerError().body(e.to_string()),
+    };
+
+    let (new_raw_refresh, new_refresh_rec) = issue_refresh_token(&user_id, &tenant_id, roles);
+    rft_guard.insert(new_refresh_rec.token_hash.clone(), new_refresh_rec);
+
+    HttpResponse::Ok().json(serde_json::json!({
+        "access_token": access_token,
+        "token": access_token,
+        "refresh_token": new_raw_refresh,
+        "token_type": "Bearer",
+        "expires_at": claims.exp,
+        "expires_in": DEFAULT_SESSION_EXPIRY_SECS,
+    }))
+}
+
+/// Handler for Rendering Printable Invoices: `POST /api/v2/method/render_invoice`
+pub async fn render_invoice_handler(payload: web::Json<InvoicePrintContext>) -> impl Responder {
+    let html = PrintEngine::render_html_invoice(&payload);
+    HttpResponse::Ok()
+        .content_type("text/html; charset=utf-8")
+        .body(html)
+}
+
+/// Handler for Rendering Thermal POS Receipts: `POST /api/v2/method/render_receipt`
+pub async fn render_receipt_handler(payload: web::Json<ReceiptPrintContext>) -> impl Responder {
+    let text = PrintEngine::render_thermal_receipt(&payload);
+    HttpResponse::Ok()
+        .content_type("text/plain; charset=utf-8")
+        .body(text)
 }
 
 /// Handler for user logout: `POST /api/v2/method/logout`
@@ -1267,6 +1351,7 @@ pub struct DynamicRbacState {
     pub versioning_engine: Arc<RwLock<DocumentVersioningEngine>>,
     pub notifications_inbox: Arc<NotificationInboxRegistry>,
     pub rma_records: Arc<RwLock<HashMap<String, RmaRecord>>>,
+    pub refresh_tokens: Arc<RwLock<HashMap<String, RefreshTokenRecord>>>,
 }
 
 impl Default for DynamicRbacState {
@@ -1403,6 +1488,7 @@ impl Default for DynamicRbacState {
             versioning_engine: Arc::new(RwLock::new(DocumentVersioningEngine::new())),
             notifications_inbox: Arc::new(NotificationInboxRegistry::new(100)),
             rma_records: Arc::new(RwLock::new(HashMap::new())),
+            refresh_tokens: Arc::new(RwLock::new(HashMap::new())),
         }
     }
 }

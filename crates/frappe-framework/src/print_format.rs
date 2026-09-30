@@ -105,7 +105,10 @@ impl PrintEngine {
             String::new()
         };
 
-        let terms = ctx.terms_and_conditions.as_deref().unwrap_or("Payment due within 30 days. Thank you for your business.");
+        let terms = ctx
+            .terms_and_conditions
+            .as_deref()
+            .unwrap_or("Payment due within 30 days. Thank you for your business.");
 
         format!(
             r#"<!DOCTYPE html>
@@ -232,14 +235,17 @@ impl PrintEngine {
     #[must_use]
     pub fn render_thermal_receipt(ctx: &ReceiptPrintContext) -> String {
         let mut lines = String::new();
-        lines.push_str(&format!("================================\n"));
+        lines.push_str("================================\n");
         lines.push_str(&format!("{:^32}\n", ctx.store_name));
-        lines.push_str(&format!("{:^32}\n", format!("Term: {} | Cashier: {}", ctx.terminal_id, ctx.cashier_name)));
+        lines.push_str(&format!(
+            "{:^32}\n",
+            format!("Term: {} | Cashier: {}", ctx.terminal_id, ctx.cashier_name)
+        ));
         lines.push_str(&format!("{:^32}\n", ctx.receipt_number));
         lines.push_str(&format!("{:^32}\n", ctx.timestamp));
-        lines.push_str(&format!("--------------------------------\n"));
+        lines.push_str("--------------------------------\n");
         lines.push_str(&format!("{:<16} {:>4} {:>10}\n", "Item", "Qty", "Price"));
-        lines.push_str(&format!("--------------------------------\n"));
+        lines.push_str("--------------------------------\n");
 
         for item in &ctx.items {
             let item_name = if item.item_code.len() > 16 {
@@ -247,19 +253,25 @@ impl PrintEngine {
             } else {
                 &item.item_code
             };
-            lines.push_str(&format!("{:<16} {:>4} {:>10.2}\n", item_name, item.qty, item.line_total));
+            lines.push_str(&format!(
+                "{:<16} {:>4} {:>10.2}\n",
+                item_name, item.qty, item.line_total
+            ));
         }
 
-        lines.push_str(&format!("--------------------------------\n"));
+        lines.push_str("--------------------------------\n");
         lines.push_str(&format!("{:<20} {:>11.2}\n", "Subtotal:", ctx.subtotal));
         lines.push_str(&format!("{:<20} {:>11.2}\n", "Tax:", ctx.tax));
         lines.push_str(&format!("{:<20} {:>11.2}\n", "TOTAL:", ctx.total));
-        lines.push_str(&format!("--------------------------------\n"));
-        lines.push_str(&format!("{:<20} {:>11}\n", "Paid with:", ctx.payment_method));
+        lines.push_str("--------------------------------\n");
+        lines.push_str(&format!(
+            "{:<20} {:>11}\n",
+            "Paid with:", ctx.payment_method
+        ));
         lines.push_str(&format!("{:<20} {:>11.2}\n", "Change Due:", ctx.change_due));
-        lines.push_str(&format!("================================\n"));
+        lines.push_str("================================\n");
         lines.push_str(&format!("{:^32}\n", "Thank you for visiting!"));
-        lines.push_str(&format!("================================\n"));
+        lines.push_str("================================\n");
 
         lines
     }

@@ -20,9 +20,7 @@ pub use notification::{
     NotificationChannel, NotificationDispatcher, NotificationError, NotificationInboxRegistry,
     NotificationMessage, NotificationPriority, UserNotificationPreferences,
 };
-pub use print_format::{
-    InvoicePrintContext, PrintEngine, PrintLineItem, ReceiptPrintContext,
-};
+pub use print_format::{InvoicePrintContext, PrintEngine, PrintLineItem, ReceiptPrintContext};
 pub use report_engine::{
     PivotAggregate, PivotTableResult, ReportColumn, ReportEngine, ReportError, ReportResult,
     ReportSummaryCard,

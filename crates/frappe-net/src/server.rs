@@ -24,19 +24,21 @@ use crate::v2_routes::{
     admin_query_handler, admin_status_handler, admin_unlock_target_handler,
     admin_update_permission_handler, admin_update_user_roles_handler, auth_forgot_password_handler,
     auth_mfa_activate_handler, auth_mfa_disable_handler, auth_mfa_enroll_handler,
-    auth_reset_password_handler, cms_create_taxonomy_handler, cms_generate_seo_handler,
-    cms_list_media_handler, cms_list_taxonomies_handler, cms_upload_media_handler,
-    download_file_handler, export_dataset_handler, h3_stream_file_handler,
-    h3_stream_telemetry_handler, login_handler, logout_handler, notifications_dispatch_handler,
-    notifications_get_inbox_handler, ping_handler, quic_status_handler, report_pivot_table_handler,
-    trade_add_wishlist_item_handler, trade_apply_coupon_handler, trade_calculate_shipping_handler,
-    trade_create_coupon_handler, trade_get_wishlist_handler, trade_list_coupons_handler,
-    trade_list_reviews_handler, trade_list_shipping_zones_handler, trade_moderate_review_handler,
-    trade_order_transition_handler, trade_remove_wishlist_item_handler, trade_rma_submit_handler,
-    trade_submit_review_handler, upload_file_handler, v2_amend_document, v2_cancel_document,
-    v2_create_document, v2_delete_document, v2_get_document, v2_list_document, v2_submit_document,
-    v2_update_document, webhooks_dispatch_test_handler, workflow_evaluate_handler,
-    workflow_version_history_handler, workflow_version_rollback_handler,
+    auth_refresh_token_handler, auth_reset_password_handler, cms_create_taxonomy_handler,
+    cms_generate_seo_handler, cms_list_media_handler, cms_list_taxonomies_handler,
+    cms_upload_media_handler, download_file_handler, export_dataset_handler,
+    h3_stream_file_handler, h3_stream_telemetry_handler, login_handler, logout_handler,
+    notifications_dispatch_handler, notifications_get_inbox_handler, ping_handler,
+    quic_status_handler, render_invoice_handler, render_receipt_handler,
+    report_pivot_table_handler, trade_add_wishlist_item_handler, trade_apply_coupon_handler,
+    trade_calculate_shipping_handler, trade_create_coupon_handler, trade_get_wishlist_handler,
+    trade_list_coupons_handler, trade_list_reviews_handler, trade_list_shipping_zones_handler,
+    trade_moderate_review_handler, trade_order_transition_handler,
+    trade_remove_wishlist_item_handler, trade_rma_submit_handler, trade_submit_review_handler,
+    upload_file_handler, v2_amend_document, v2_cancel_document, v2_create_document,
+    v2_delete_document, v2_get_document, v2_list_document, v2_submit_document, v2_update_document,
+    webhooks_dispatch_test_handler, workflow_evaluate_handler, workflow_version_history_handler,
+    workflow_version_rollback_handler,
 };
 use actix_web::{
     App, HttpMessage, HttpRequest, HttpResponse, HttpServer, Responder, middleware::Compress,
@@ -859,6 +861,18 @@ pub fn configure_app(
         .route("/api/v2/method/login", web::post().to(login_handler))
         .route("/api/v2/method/logout", web::post().to(logout_handler))
         .route("/api/v2/method/ping", web::get().to(ping_handler))
+        .route(
+            "/api/v2/auth/refresh",
+            web::post().to(auth_refresh_token_handler),
+        )
+        .route(
+            "/api/v2/method/render_invoice",
+            web::post().to(render_invoice_handler),
+        )
+        .route(
+            "/api/v2/method/render_receipt",
+            web::post().to(render_receipt_handler),
+        )
         // Wave 1 MFA & Password Security Endpoints
         .route(
             "/api/v2/auth/mfa/enroll",
@@ -1102,6 +1116,8 @@ pub async fn run_server_with_config(
         let topo = topology_clone.clone();
         let gw = gateway_clone.clone();
         App::new()
+            .wrap(crate::middleware::RequestIdMiddleware::new())
+            .wrap(crate::middleware::CorsMiddleware::new())
             .wrap(Logger::default())
             .wrap(Compress::default())
             .wrap(NormalizePath::trim())

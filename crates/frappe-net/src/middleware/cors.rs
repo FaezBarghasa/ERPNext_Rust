@@ -24,8 +24,12 @@ impl Default for CorsMiddleware {
     fn default() -> Self {
         Self {
             allowed_methods: "GET, POST, PUT, DELETE, PATCH, OPTIONS, HEAD".to_string(),
-            allowed_headers: "Authorization, Content-Type, Accept, X-Tenant-Id, X-Requested-With, X-Request-Id".to_string(),
-            exposed_headers: "X-Request-Id, Content-Length, Content-Type, Content-Disposition, Alt-Svc".to_string(),
+            allowed_headers:
+                "Authorization, Content-Type, Accept, X-Tenant-Id, X-Requested-With, X-Request-Id"
+                    .to_string(),
+            exposed_headers:
+                "X-Request-Id, Content-Length, Content-Type, Content-Disposition, Alt-Svc"
+                    .to_string(),
             max_age_secs: 86400,
             allow_credentials: true,
         }
@@ -138,7 +142,10 @@ where
                 headers.insert(HeaderName::from_static("access-control-allow-origin"), val);
             }
             if let Ok(val) = HeaderValue::from_str(&config.exposed_headers) {
-                headers.insert(HeaderName::from_static("access-control-expose-headers"), val);
+                headers.insert(
+                    HeaderName::from_static("access-control-expose-headers"),
+                    val,
+                );
             }
             if config.allow_credentials && origin != "*" {
                 headers.insert(

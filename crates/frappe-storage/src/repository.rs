@@ -3,8 +3,8 @@
 //! Provides transactional, type-safe entity persistence, query builders,
 //! and schema-agnostic CRUD operations for all enterprise domain models.
 
-use serde::de::DeserializeOwned;
 use serde::Serialize;
+use serde::de::DeserializeOwned;
 use surrealdb::{Connection, Surreal};
 use thiserror::Error;
 
@@ -118,10 +118,10 @@ impl<C: Connection> SurrealRepository<C> {
         let sql = format!("SELECT count() FROM {table} GROUP ALL;");
         let mut response = self.db.query(sql).await?.check()?;
         let res: Option<serde_json::Value> = response.take(0)?;
-        if let Some(val) = res {
-            if let Some(count) = val.get("count").and_then(serde_json::Value::as_u64) {
-                return Ok(count);
-            }
+        if let Some(val) = res
+            && let Some(count) = val.get("count").and_then(serde_json::Value::as_u64)
+        {
+            return Ok(count);
         }
         Ok(0)
     }
