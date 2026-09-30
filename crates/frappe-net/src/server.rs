@@ -16,9 +16,10 @@ use crate::tenant::{
     AcmeGateway, ConnectionPoolManager, MicroTopologyConfig, TenantId, TenantResolver,
 };
 use crate::v2_routes::{
-    DynamicRbacState, admin_action_handler, admin_create_ip_rule_handler,
-    admin_create_role_handler, admin_create_user_handler, admin_delete_ip_rule_handler,
-    admin_delete_user_handler, admin_get_audit_logs_handler, admin_get_permissions_handler,
+    DynamicRbacState, accounting_journal_entry_handler, accounting_trial_balance_handler,
+    admin_action_handler, admin_create_ip_rule_handler, admin_create_role_handler,
+    admin_create_user_handler, admin_delete_ip_rule_handler, admin_delete_user_handler,
+    admin_get_audit_logs_handler, admin_get_permissions_handler,
     admin_get_user_effective_permissions_handler, admin_list_ip_rules_handler,
     admin_list_lockouts_handler, admin_list_roles_handler, admin_list_users_handler,
     admin_query_handler, admin_status_handler, admin_unlock_target_handler,
@@ -26,9 +27,10 @@ use crate::v2_routes::{
     auth_mfa_activate_handler, auth_mfa_disable_handler, auth_mfa_enroll_handler,
     auth_refresh_token_handler, auth_reset_password_handler, cms_create_taxonomy_handler,
     cms_generate_seo_handler, cms_list_media_handler, cms_list_taxonomies_handler,
-    cms_upload_media_handler, download_file_handler, export_dataset_handler,
-    h3_stream_file_handler, h3_stream_telemetry_handler, login_handler, logout_handler,
-    notifications_dispatch_handler, notifications_get_inbox_handler, ping_handler,
+    cms_upload_media_handler, crm_convert_quotation_handler, download_file_handler,
+    export_dataset_handler, h3_stream_file_handler, h3_stream_telemetry_handler,
+    hr_process_payroll_handler, inventory_stock_balance_handler, inventory_stock_entry_handler,
+    login_handler, logout_handler, notifications_dispatch_handler, notifications_get_inbox_handler, ping_handler,
     quic_status_handler, render_invoice_handler, render_receipt_handler,
     report_pivot_table_handler, trade_add_wishlist_item_handler, trade_apply_coupon_handler,
     trade_calculate_shipping_handler, trade_create_coupon_handler, trade_get_wishlist_handler,
@@ -872,6 +874,31 @@ pub fn configure_app(
         .route(
             "/api/v2/method/render_receipt",
             web::post().to(render_receipt_handler),
+        )
+        // Enterprise Domain Modules: Accounting, Inventory, CRM, HR
+        .route(
+            "/api/v2/accounting/journal_entry",
+            web::post().to(accounting_journal_entry_handler),
+        )
+        .route(
+            "/api/v2/accounting/trial_balance",
+            web::get().to(accounting_trial_balance_handler),
+        )
+        .route(
+            "/api/v2/inventory/stock_entry",
+            web::post().to(inventory_stock_entry_handler),
+        )
+        .route(
+            "/api/v2/inventory/balance/{warehouse}/{item_code}",
+            web::get().to(inventory_stock_balance_handler),
+        )
+        .route(
+            "/api/v2/crm/quotations/convert",
+            web::post().to(crm_convert_quotation_handler),
+        )
+        .route(
+            "/api/v2/hr/payroll/process",
+            web::post().to(hr_process_payroll_handler),
         )
         // Wave 1 MFA & Password Security Endpoints
         .route(

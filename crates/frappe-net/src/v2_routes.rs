@@ -16,7 +16,9 @@ use crate::rate_limit::LoginGuard;
 use crate::tenant::{ConnectionPoolManager, TenantId};
 use actix_web::{HttpMessage, HttpRequest, HttpResponse, Responder, web};
 use chrono::Utc;
-use erp_accounting::{AccountingError, JournalEntry, JournalEntryLine};
+use erp_accounting::{
+    AccountingError, GlEntry, JournalEntry, JournalEntryLine, StatementGenerator, TrialBalanceRow,
+};
 use erp_cms::media_library::{MediaAsset, MediaLibraryRegistry};
 use erp_cms::seo_engine::SeoMetadata;
 use erp_cms::taxonomy::{TaxonomyRegistry, TaxonomyTerm};
@@ -1360,6 +1362,7 @@ pub struct DynamicRbacState {
     pub notifications_inbox: Arc<NotificationInboxRegistry>,
     pub rma_records: Arc<RwLock<HashMap<String, RmaRecord>>>,
     pub refresh_tokens: Arc<RwLock<HashMap<String, RefreshTokenRecord>>>,
+    pub fifo_layers: Arc<RwLock<HashMap<String, Vec<FifoBatchItem>>>>,
 }
 
 impl Default for DynamicRbacState {
@@ -1497,6 +1500,7 @@ impl Default for DynamicRbacState {
             notifications_inbox: Arc::new(NotificationInboxRegistry::new(100)),
             rma_records: Arc::new(RwLock::new(HashMap::new())),
             refresh_tokens: Arc::new(RwLock::new(HashMap::new())),
+            fifo_layers: Arc::new(RwLock::new(HashMap::new())),
         }
     }
 }
@@ -3307,6 +3311,359 @@ pub async fn webhooks_dispatch_test_handler(
         Err(e) => HttpResponse::BadRequest().json(serde_json::json!({
             "status": "ERROR",
             "message": e.to_string(),
+        })),
+    }
+}
+
+// =========================================================================
+// Domain Module Handlers: Accounting, Inventory, CRM, HR
+// =========================================================================
+
+/// DTO for creating a General Ledger Journal Entry.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct JournalEntryPayload {
+    pub posting_date: chrono::NaiveDate,
+    pub company: String,
+    pub lines: Vec<JournalEntryLine>,
+    pub remarks: String,
+}
+
+/// Query parameters for Trial Balance generation.
+#[derive(Debug, Clone, Deserialize)]
+pub struct TrialBalanceQuery {
+    pub as_of: Option<chrono::NaiveDate>,
+    pub company: Option<String>,
+}
+
+/// Handler for posting a balanced Journal Entry: `POST /api/v2/accounting/journal_entry`
+pub async fn accounting_journal_entry_handler(
+    req: HttpRequest,
+    pool_mgr: web::Data<ConnectionPoolManager>,
+    payload: web::Json<JournalEntryPayload>,
+) -> impl Responder {
+    let tenant_id = req
+        .extensions()
+        .get::<TenantId>()
+        .cloned()
+        .unwrap_or_else(|| TenantId("default".into()));
+
+    let entry = JournalEntry {
+        posting_date: payload.posting_date,
+        company: payload.company.clone(),
+        lines: payload.lines.clone(),
+        remarks: payload.remarks.clone(),
+    };
+
+    if let Err(e) = entry.validate_balance() {
+        return HttpResponse::BadRequest().json(serde_json::json!({
+            "status": "ERROR",
+            "error": e.to_string(),
+        }));
+    }
+
+    let voucher_no = format!("JV-{}", Utc::now().timestamp_millis());
+    let mut gl_entries = Vec::new();
+    for (i, line) in entry.lines.iter().enumerate() {
+        gl_entries.push(GlEntry {
+            name: format!("{voucher_no}-{i}"),
+            posting_date: entry.posting_date,
+            account: line.account.clone(),
+            debit: line.debit,
+            credit: line.credit,
+            voucher_type: "Journal Entry".to_string(),
+            voucher_no: voucher_no.clone(),
+            party_type: line.party_type.clone(),
+            party: line.party.clone(),
+            company: entry.company.clone(),
+        });
+    }
+
+    if let Ok(pool) = pool_mgr.get_pool(&tenant_id.0) {
+        let repo = frappe_storage::SurrealRepository::new(pool);
+        let _ = repo.upsert("journal_entry", &voucher_no, &entry).await;
+        for gl in &gl_entries {
+            let _ = repo.upsert("gl_entry", &gl.name, gl).await;
+        }
+    }
+
+    HttpResponse::Created().json(serde_json::json!({
+        "status": "SUCCESS",
+        "voucher_no": voucher_no,
+        "posting_date": entry.posting_date,
+        "company": entry.company,
+        "total_lines": gl_entries.len(),
+        "gl_entries": gl_entries,
+    }))
+}
+
+/// Handler for fetching real-time Trial Balance: `GET /api/v2/accounting/trial_balance`
+pub async fn accounting_trial_balance_handler(
+    req: HttpRequest,
+    pool_mgr: web::Data<ConnectionPoolManager>,
+    query: web::Query<TrialBalanceQuery>,
+) -> impl Responder {
+    let tenant_id = req
+        .extensions()
+        .get::<TenantId>()
+        .cloned()
+        .unwrap_or_else(|| TenantId("default".into()));
+
+    let as_of = query.as_of.unwrap_or_else(|| Utc::now().date_naive());
+
+    let mut gl_entries: Vec<GlEntry> = Vec::new();
+    if let Ok(pool) = pool_mgr.get_pool(&tenant_id.0) {
+        let repo = frappe_storage::SurrealRepository::new(pool);
+        if let Ok(records) = repo.select_all::<GlEntry>("gl_entry").await {
+            gl_entries = records;
+        }
+    }
+
+    if let Some(ref comp) = query.company {
+        gl_entries.retain(|e| &e.company == comp);
+    }
+
+    let trial_balance = StatementGenerator::generate_trial_balance(&gl_entries, as_of);
+
+    HttpResponse::Ok().json(serde_json::json!({
+        "as_of": as_of,
+        "company": query.company,
+        "rows": trial_balance,
+    }))
+}
+
+/// DTO for posting a stock ledger entry.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct StockEntryPayload {
+    pub item_code: String,
+    pub warehouse: String,
+    pub qty: Decimal,
+    pub rate: Decimal,
+    pub is_incoming: bool,
+    pub voucher_type: String,
+    pub voucher_no: String,
+    pub posting_date: Option<chrono::NaiveDate>,
+}
+
+/// Handler for posting Stock Entries with FIFO valuation: `POST /api/v2/inventory/stock_entry`
+pub async fn inventory_stock_entry_handler(
+    req: HttpRequest,
+    rbac_state: web::Data<DynamicRbacState>,
+    pool_mgr: web::Data<ConnectionPoolManager>,
+    payload: web::Json<StockEntryPayload>,
+) -> impl Responder {
+    let tenant_id = req
+        .extensions()
+        .get::<TenantId>()
+        .cloned()
+        .unwrap_or_else(|| TenantId("default".into()));
+
+    let key = format!("{}:{}", payload.warehouse, payload.item_code);
+    let mut fifo_guard = match rbac_state.fifo_layers.write() {
+        Ok(g) => g,
+        Err(_) => return HttpResponse::InternalServerError().body("FIFO State Lock Failed"),
+    };
+
+    let queue = fifo_guard.entry(key.clone()).or_default();
+    let posting_date = payload.posting_date.unwrap_or_else(|| Utc::now().date_naive());
+
+    let (valuation_rate, consumed_cogs) = if payload.is_incoming {
+        add_fifo_layer(queue, payload.qty, payload.rate);
+        (payload.rate, Decimal::ZERO)
+    } else {
+        match consume_fifo(queue, payload.qty) {
+            Ok(cogs) => {
+                let unit_rate = if payload.qty.is_zero() {
+                    Decimal::ZERO
+                } else {
+                    cogs / payload.qty
+                };
+                (unit_rate, cogs)
+            }
+            Err(e) => {
+                return HttpResponse::BadRequest().json(serde_json::json!({
+                    "status": "ERROR",
+                    "error": e.to_string(),
+                }));
+            }
+        }
+    };
+
+    let remaining_qty: Decimal = queue.iter().map(|item| item.qty).sum();
+    let total_inventory_value: Decimal = queue.iter().map(|item| item.qty * item.rate).sum();
+
+    let sle = StockLedgerEntry {
+        name: format!("SLE-{}", Utc::now().timestamp_millis()),
+        posting_date,
+        item_code: payload.item_code.clone(),
+        warehouse: payload.warehouse.clone(),
+        actual_qty: if payload.is_incoming {
+            payload.qty
+        } else {
+            -payload.qty
+        },
+        qty_after_transaction: remaining_qty,
+        incoming_rate: if payload.is_incoming {
+            payload.rate
+        } else {
+            Decimal::ZERO
+        },
+        valuation_rate,
+        stock_value: total_inventory_value,
+        voucher_type: payload.voucher_type.clone(),
+        voucher_no: payload.voucher_no.clone(),
+        batch_no: None,
+        serial_no: None,
+    };
+
+    if let Ok(pool) = pool_mgr.get_pool(&tenant_id.0) {
+        let repo = frappe_storage::SurrealRepository::new(pool);
+        let _ = repo.upsert("stock_ledger_entry", &sle.name, &sle).await;
+    }
+
+    HttpResponse::Created().json(serde_json::json!({
+        "status": "SUCCESS",
+        "sle_id": sle.name,
+        "item_code": payload.item_code,
+        "warehouse": payload.warehouse,
+        "is_incoming": payload.is_incoming,
+        "qty": payload.qty,
+        "valuation_rate": valuation_rate,
+        "consumed_cogs": consumed_cogs,
+        "remaining_qty": remaining_qty,
+        "total_inventory_value": total_inventory_value,
+    }))
+}
+
+/// Handler for querying current stock balance and FIFO valuation: `GET /api/v2/inventory/balance/{warehouse}/{item_code}`
+pub async fn inventory_stock_balance_handler(
+    rbac_state: web::Data<DynamicRbacState>,
+    path: web::Path<(String, String)>,
+) -> impl Responder {
+    let (warehouse, item_code) = path.into_inner();
+    let key = format!("{warehouse}:{item_code}");
+
+    let fifo_guard = match rbac_state.fifo_layers.read() {
+        Ok(g) => g,
+        Err(_) => return HttpResponse::InternalServerError().body("FIFO State Lock Failed"),
+    };
+
+    let (total_qty, total_value, layers) = if let Some(queue) = fifo_guard.get(&key) {
+        let qty: Decimal = queue.iter().map(|i| i.qty).sum();
+        let val: Decimal = queue.iter().map(|i| i.qty * i.rate).sum();
+        (qty, val, queue.clone())
+    } else {
+        (Decimal::ZERO, Decimal::ZERO, Vec::new())
+    };
+
+    let avg_valuation_rate = if total_qty.is_zero() {
+        Decimal::ZERO
+    } else {
+        total_value / total_qty
+    };
+
+    HttpResponse::Ok().json(serde_json::json!({
+        "warehouse": warehouse,
+        "item_code": item_code,
+        "total_qty": total_qty,
+        "total_value": total_value,
+        "average_valuation_rate": avg_valuation_rate,
+        "fifo_layers": layers,
+    }))
+}
+
+/// DTO for converting a Quotation into a Sales Order.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct CrmConvertQuotationPayload {
+    pub quotation: Quotation,
+    pub as_of_date: chrono::NaiveDate,
+    pub sales_order_id: String,
+}
+
+/// Handler for converting an approved Quotation to Sales Order: `POST /api/v2/crm/quotations/convert`
+pub async fn crm_convert_quotation_handler(
+    req: HttpRequest,
+    pool_mgr: web::Data<ConnectionPoolManager>,
+    payload: web::Json<CrmConvertQuotationPayload>,
+) -> impl Responder {
+    let tenant_id = req
+        .extensions()
+        .get::<TenantId>()
+        .cloned()
+        .unwrap_or_else(|| TenantId("default".into()));
+
+    let mut quotation = payload.quotation.clone();
+    match CrmPipeline::convert_to_sales_order(
+        &mut quotation,
+        payload.as_of_date,
+        &payload.sales_order_id,
+    ) {
+        Ok(sales_order) => {
+            if let Ok(pool) = pool_mgr.get_pool(&tenant_id.0) {
+                let repo = frappe_storage::SurrealRepository::new(pool);
+                let _ = repo.upsert("quotation", &quotation.name, &quotation).await;
+                let _ = repo.upsert("sales_order", &sales_order.name, &sales_order).await;
+            }
+
+            HttpResponse::Ok().json(serde_json::json!({
+                "status": "SUCCESS",
+                "sales_order": sales_order,
+                "updated_quotation_status": quotation.status,
+            }))
+        }
+        Err(e) => HttpResponse::BadRequest().json(serde_json::json!({
+            "status": "ERROR",
+            "error": e.to_string(),
+        })),
+    }
+}
+
+/// DTO for processing employee payroll.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ProcessPayrollPayload {
+    pub employee_id: String,
+    pub structure: SalaryStructure,
+    pub attended_days: Decimal,
+    pub total_working_days: Decimal,
+    pub overtime_hours: Decimal,
+    pub posting_date: chrono::NaiveDate,
+    pub slip_id: String,
+}
+
+/// Handler for calculating and processing Employee Salary Slip: `POST /api/v2/hr/payroll/process`
+pub async fn hr_process_payroll_handler(
+    req: HttpRequest,
+    pool_mgr: web::Data<ConnectionPoolManager>,
+    payload: web::Json<ProcessPayrollPayload>,
+) -> impl Responder {
+    let tenant_id = req
+        .extensions()
+        .get::<TenantId>()
+        .cloned()
+        .unwrap_or_else(|| TenantId("default".into()));
+
+    match SalaryCalculator::calculate_slip(
+        &payload.employee_id,
+        &payload.structure,
+        payload.attended_days,
+        payload.total_working_days,
+        payload.overtime_hours,
+        payload.posting_date,
+        &payload.slip_id,
+    ) {
+        Ok(slip) => {
+            if let Ok(pool) = pool_mgr.get_pool(&tenant_id.0) {
+                let repo = frappe_storage::SurrealRepository::new(pool);
+                let _ = repo.upsert("salary_slip", &slip.name, &slip).await;
+            }
+
+            HttpResponse::Ok().json(serde_json::json!({
+                "status": "SUCCESS",
+                "salary_slip": slip,
+            }))
+        }
+        Err(e) => HttpResponse::BadRequest().json(serde_json::json!({
+            "status": "ERROR",
+            "error": e.to_string(),
         })),
     }
 }
