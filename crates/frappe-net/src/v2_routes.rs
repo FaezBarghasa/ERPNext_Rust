@@ -15,7 +15,7 @@ use crate::middleware::ip_filter::{IpFilterRule, IpRuleRegistry};
 use crate::rate_limit::LoginGuard;
 use crate::tenant::{ConnectionPoolManager, TenantId};
 use actix_web::{HttpMessage, HttpRequest, HttpResponse, Responder, web};
-use chrono::Utc;
+use chrono::{NaiveDate, Utc};
 use erp_accounting::{GlEntry, JournalEntry, JournalEntryLine, StatementGenerator};
 use erp_cms::media_library::{MediaAsset, MediaLibraryRegistry};
 use erp_cms::seo_engine::SeoMetadata;
@@ -64,6 +64,7 @@ use rust_decimal_macros::dec;
 use serde::{Deserialize, Serialize};
 use sha2::{Digest, Sha256};
 use std::collections::HashMap;
+use std::str::FromStr;
 use std::sync::{Arc, LazyLock, RwLock};
 
 static SAFE_FIELD_REGEX: LazyLock<Regex> =
@@ -4786,6 +4787,634 @@ pub async fn email_list_queue_handler(
     HttpResponse::Ok().json(serde_json::json!({
         "queue_count": emails.len(),
         "emails": emails,
+    }))
+}
+
+// --- 7. Operational & Financial Reporting Engine ---
+
+#[derive(Debug, Clone, Deserialize)]
+pub struct AgingReportQuery {
+    pub as_of_date: Option<NaiveDate>,
+}
+
+/// Handler for Accounts Receivable (AR) Aging: `GET /api/v2/accounting/ar_aging`
+pub async fn accounting_ar_aging_handler(
+    req: HttpRequest,
+    pool_mgr: web::Data<ConnectionPoolManager>,
+    query: web::Query<AgingReportQuery>,
+) -> impl Responder {
+    let tenant_id = resolve_tenant_id(&req);
+    let as_of = query.as_of_date.unwrap_or_else(|| Utc::now().date_naive());
+
+    let mut bucket_0_30 = Decimal::ZERO;
+    let mut bucket_31_60 = Decimal::ZERO;
+    let mut bucket_61_90 = Decimal::ZERO;
+    let mut bucket_90_plus = Decimal::ZERO;
+    let mut customer_breakdown: HashMap<String, Decimal> = HashMap::new();
+
+    if let Ok(client) = pool_mgr.get_or_initialize_client(&tenant_id).await {
+        let repo = frappe_storage::SurrealRepository::new(client.clone());
+        if let Ok(invoices) = repo.select_all::<serde_json::Value>("sales_invoices").await {
+            for inv in invoices {
+                let status = inv
+                    .get("status")
+                    .and_then(serde_json::Value::as_str)
+                    .unwrap_or("Unpaid");
+                if status != "Paid" && status != "Cancelled" {
+                    let outstanding = inv
+                        .get("outstanding_amount")
+                        .or_else(|| inv.get("grand_total"))
+                        .and_then(|v| {
+                            v.as_str()
+                                .and_then(|s| Decimal::from_str(s).ok())
+                                .or_else(|| v.as_f64().and_then(Decimal::from_f64_retain))
+                        })
+                        .unwrap_or(Decimal::ZERO);
+
+                    let posting_date_str = inv
+                        .get("posting_date")
+                        .and_then(serde_json::Value::as_str)
+                        .unwrap_or("");
+                    let posting_date =
+                        NaiveDate::parse_from_str(posting_date_str, "%Y-%m-%d").unwrap_or(as_of);
+                    let days_diff = (as_of - posting_date).num_days();
+
+                    if days_diff <= 30 {
+                        bucket_0_30 += outstanding;
+                    } else if days_diff <= 60 {
+                        bucket_31_60 += outstanding;
+                    } else if days_diff <= 90 {
+                        bucket_61_90 += outstanding;
+                    } else {
+                        bucket_90_plus += outstanding;
+                    }
+
+                    if let Some(cust) = inv.get("customer").and_then(serde_json::Value::as_str) {
+                        *customer_breakdown
+                            .entry(cust.to_string())
+                            .or_insert(Decimal::ZERO) += outstanding;
+                    }
+                }
+            }
+        }
+    }
+
+    let total_ar = bucket_0_30 + bucket_31_60 + bucket_61_90 + bucket_90_plus;
+
+    HttpResponse::Ok().json(serde_json::json!({
+        "as_of_date": as_of,
+        "total_ar": total_ar,
+        "buckets": {
+            "0_30_days": bucket_0_30,
+            "31_60_days": bucket_31_60,
+            "61_90_days": bucket_61_90,
+            "90_plus_days": bucket_90_plus,
+        },
+        "customer_breakdown": customer_breakdown,
+    }))
+}
+
+/// Handler for Accounts Payable (AP) Aging: `GET /api/v2/accounting/ap_aging`
+pub async fn accounting_ap_aging_handler(
+    req: HttpRequest,
+    pool_mgr: web::Data<ConnectionPoolManager>,
+    query: web::Query<AgingReportQuery>,
+) -> impl Responder {
+    let tenant_id = resolve_tenant_id(&req);
+    let as_of = query.as_of_date.unwrap_or_else(|| Utc::now().date_naive());
+
+    let mut bucket_0_30 = Decimal::ZERO;
+    let mut bucket_31_60 = Decimal::ZERO;
+    let mut bucket_61_90 = Decimal::ZERO;
+    let mut bucket_90_plus = Decimal::ZERO;
+    let mut supplier_breakdown: HashMap<String, Decimal> = HashMap::new();
+
+    if let Ok(client) = pool_mgr.get_or_initialize_client(&tenant_id).await {
+        let repo = frappe_storage::SurrealRepository::new(client.clone());
+        if let Ok(invoices) = repo
+            .select_all::<serde_json::Value>("purchase_invoices")
+            .await
+        {
+            for inv in invoices {
+                let status = inv
+                    .get("status")
+                    .and_then(serde_json::Value::as_str)
+                    .unwrap_or("Unpaid");
+                if status != "Paid" && status != "Cancelled" {
+                    let outstanding = inv
+                        .get("outstanding_amount")
+                        .or_else(|| inv.get("grand_total"))
+                        .and_then(|v| {
+                            v.as_str()
+                                .and_then(|s| Decimal::from_str(s).ok())
+                                .or_else(|| v.as_f64().and_then(Decimal::from_f64_retain))
+                        })
+                        .unwrap_or(Decimal::ZERO);
+
+                    let posting_date_str = inv
+                        .get("posting_date")
+                        .and_then(serde_json::Value::as_str)
+                        .unwrap_or("");
+                    let posting_date =
+                        NaiveDate::parse_from_str(posting_date_str, "%Y-%m-%d").unwrap_or(as_of);
+                    let days_diff = (as_of - posting_date).num_days();
+
+                    if days_diff <= 30 {
+                        bucket_0_30 += outstanding;
+                    } else if days_diff <= 60 {
+                        bucket_31_60 += outstanding;
+                    } else if days_diff <= 90 {
+                        bucket_61_90 += outstanding;
+                    } else {
+                        bucket_90_plus += outstanding;
+                    }
+
+                    if let Some(supp) = inv.get("supplier").and_then(serde_json::Value::as_str) {
+                        *supplier_breakdown
+                            .entry(supp.to_string())
+                            .or_insert(Decimal::ZERO) += outstanding;
+                    }
+                }
+            }
+        }
+    }
+
+    let total_ap = bucket_0_30 + bucket_31_60 + bucket_61_90 + bucket_90_plus;
+
+    HttpResponse::Ok().json(serde_json::json!({
+        "as_of_date": as_of,
+        "total_ap": total_ap,
+        "buckets": {
+            "0_30_days": bucket_0_30,
+            "31_60_days": bucket_31_60,
+            "61_90_days": bucket_61_90,
+            "90_plus_days": bucket_90_plus,
+        },
+        "supplier_breakdown": supplier_breakdown,
+    }))
+}
+
+#[derive(Debug, Clone, Deserialize)]
+pub struct GlReportQuery {
+    pub account: Option<String>,
+    pub from_date: Option<NaiveDate>,
+    pub to_date: Option<NaiveDate>,
+}
+
+/// Handler for General Ledger Detailed Ledger: `GET /api/v2/accounting/general_ledger`
+pub async fn accounting_general_ledger_handler(
+    req: HttpRequest,
+    pool_mgr: web::Data<ConnectionPoolManager>,
+    query: web::Query<GlReportQuery>,
+) -> impl Responder {
+    let tenant_id = resolve_tenant_id(&req);
+
+    let mut filtered_entries = Vec::new();
+    let mut total_debit = Decimal::ZERO;
+    let mut total_credit = Decimal::ZERO;
+
+    if let Ok(client) = pool_mgr.get_or_initialize_client(&tenant_id).await {
+        let repo = frappe_storage::SurrealRepository::new(client.clone());
+        if let Ok(entries) = repo.select_all::<GlEntry>("gl_entries").await {
+            for entry in entries {
+                if let Some(ref target_acc) = query.account
+                    && !entry.account.eq_ignore_ascii_case(target_acc)
+                {
+                    continue;
+                }
+                if let Some(from) = query.from_date
+                    && entry.posting_date < from
+                {
+                    continue;
+                }
+                if let Some(to) = query.to_date
+                    && entry.posting_date > to
+                {
+                    continue;
+                }
+
+                total_debit += entry.debit;
+                total_credit += entry.credit;
+                filtered_entries.push(entry);
+            }
+        }
+    }
+
+    HttpResponse::Ok().json(serde_json::json!({
+        "entries_count": filtered_entries.len(),
+        "total_debit": total_debit,
+        "total_credit": total_credit,
+        "net_balance": total_debit - total_credit,
+        "entries": filtered_entries,
+    }))
+}
+
+/// Handler for Cash Flow Statement: `GET /api/v2/accounting/cash_flow`
+pub async fn accounting_cash_flow_handler(
+    req: HttpRequest,
+    pool_mgr: web::Data<ConnectionPoolManager>,
+    query: web::Query<GlReportQuery>,
+) -> impl Responder {
+    let tenant_id = resolve_tenant_id(&req);
+
+    let mut operating_inflow = Decimal::ZERO;
+    let mut operating_outflow = Decimal::ZERO;
+    let mut financing_flow = Decimal::ZERO;
+
+    if let Ok(client) = pool_mgr.get_or_initialize_client(&tenant_id).await {
+        let repo = frappe_storage::SurrealRepository::new(client.clone());
+        if let Ok(entries) = repo.select_all::<GlEntry>("gl_entries").await {
+            for entry in entries {
+                if let Some(from) = query.from_date
+                    && entry.posting_date < from
+                {
+                    continue;
+                }
+                if let Some(to) = query.to_date
+                    && entry.posting_date > to
+                {
+                    continue;
+                }
+
+                let acc_lower = entry.account.to_lowercase();
+                if acc_lower.contains("bank") || acc_lower.contains("cash") {
+                    let vtype_lower = entry.voucher_type.to_lowercase();
+                    if entry.debit > Decimal::ZERO {
+                        if vtype_lower.contains("sales") || vtype_lower.contains("payment") {
+                            operating_inflow += entry.debit;
+                        } else {
+                            financing_flow += entry.debit;
+                        }
+                    }
+                    if entry.credit > Decimal::ZERO {
+                        if vtype_lower.contains("purchase")
+                            || vtype_lower.contains("journal")
+                            || vtype_lower.contains("receipt")
+                        {
+                            operating_outflow += entry.credit;
+                        } else {
+                            financing_flow -= entry.credit;
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    let net_operating_cash = operating_inflow - operating_outflow;
+    let net_cash_change = net_operating_cash + financing_flow;
+
+    HttpResponse::Ok().json(serde_json::json!({
+        "operating_activities": {
+            "inflow": operating_inflow,
+            "outflow": operating_outflow,
+            "net_cash_from_operations": net_operating_cash,
+        },
+        "financing_activities": {
+            "net_flow": financing_flow,
+        },
+        "net_change_in_cash": net_cash_change,
+    }))
+}
+
+// --- 8. Customer & Supplier Self-Service Portal ---
+
+#[derive(Debug, Clone, Deserialize)]
+pub struct PortalQuery {
+    pub party_id: Option<String>,
+}
+
+/// Handler for Customer Portal Overview: `GET /api/v2/portal/customer_dashboard`
+pub async fn portal_customer_dashboard_handler(
+    req: HttpRequest,
+    pool_mgr: web::Data<ConnectionPoolManager>,
+    query: web::Query<PortalQuery>,
+) -> impl Responder {
+    let tenant_id = resolve_tenant_id(&req);
+    let target_customer = query.party_id.clone().unwrap_or_default();
+
+    let mut open_orders = 0;
+    let mut unpaid_invoices = 0;
+    let mut total_due = Decimal::ZERO;
+
+    if let Ok(client) = pool_mgr.get_or_initialize_client(&tenant_id).await {
+        let repo = frappe_storage::SurrealRepository::new(client.clone());
+        if let Ok(invoices) = repo.select_all::<serde_json::Value>("sales_invoices").await {
+            for inv in invoices {
+                let cust = inv
+                    .get("customer")
+                    .and_then(serde_json::Value::as_str)
+                    .unwrap_or("");
+                if target_customer.is_empty() || cust.eq_ignore_ascii_case(&target_customer) {
+                    let status = inv
+                        .get("status")
+                        .and_then(serde_json::Value::as_str)
+                        .unwrap_or("Unpaid");
+                    if status != "Paid" && status != "Cancelled" {
+                        unpaid_invoices += 1;
+                        let amt = inv
+                            .get("grand_total")
+                            .and_then(|v| {
+                                v.as_str()
+                                    .and_then(|s| Decimal::from_str(s).ok())
+                                    .or_else(|| v.as_f64().and_then(Decimal::from_f64_retain))
+                            })
+                            .unwrap_or(Decimal::ZERO);
+                        total_due += amt;
+                    }
+                }
+            }
+        }
+        if let Ok(orders) = repo.select_all::<serde_json::Value>("sales_orders").await {
+            for ord in orders {
+                let cust = ord
+                    .get("customer")
+                    .and_then(serde_json::Value::as_str)
+                    .unwrap_or("");
+                if target_customer.is_empty() || cust.eq_ignore_ascii_case(&target_customer) {
+                    let status = ord
+                        .get("status")
+                        .and_then(serde_json::Value::as_str)
+                        .unwrap_or("Draft");
+                    if status != "Completed" && status != "Cancelled" {
+                        open_orders += 1;
+                    }
+                }
+            }
+        }
+    }
+
+    HttpResponse::Ok().json(serde_json::json!({
+        "customer": target_customer,
+        "open_sales_orders": open_orders,
+        "unpaid_invoices": unpaid_invoices,
+        "total_outstanding_due": total_due,
+        "status": "Active",
+    }))
+}
+
+/// Handler for Supplier Portal Overview: `GET /api/v2/portal/supplier_dashboard`
+pub async fn portal_supplier_dashboard_handler(
+    req: HttpRequest,
+    pool_mgr: web::Data<ConnectionPoolManager>,
+    query: web::Query<PortalQuery>,
+) -> impl Responder {
+    let tenant_id = resolve_tenant_id(&req);
+    let target_supplier = query.party_id.clone().unwrap_or_default();
+
+    let mut open_pos = 0;
+    let mut unpaid_bills = 0;
+    let mut total_payable = Decimal::ZERO;
+
+    if let Ok(client) = pool_mgr.get_or_initialize_client(&tenant_id).await {
+        let repo = frappe_storage::SurrealRepository::new(client.clone());
+        if let Ok(pos) = repo
+            .select_all::<serde_json::Value>("purchase_orders")
+            .await
+        {
+            for po in pos {
+                let supp = po
+                    .get("supplier")
+                    .and_then(serde_json::Value::as_str)
+                    .unwrap_or("");
+                if target_supplier.is_empty() || supp.eq_ignore_ascii_case(&target_supplier) {
+                    let status = po
+                        .get("status")
+                        .and_then(serde_json::Value::as_str)
+                        .unwrap_or("Draft");
+                    if status != "Completed" && status != "Cancelled" {
+                        open_pos += 1;
+                    }
+                }
+            }
+        }
+        if let Ok(bills) = repo
+            .select_all::<serde_json::Value>("purchase_invoices")
+            .await
+        {
+            for bill in bills {
+                let supp = bill
+                    .get("supplier")
+                    .and_then(serde_json::Value::as_str)
+                    .unwrap_or("");
+                if target_supplier.is_empty() || supp.eq_ignore_ascii_case(&target_supplier) {
+                    let status = bill
+                        .get("status")
+                        .and_then(serde_json::Value::as_str)
+                        .unwrap_or("Unpaid");
+                    if status != "Paid" && status != "Cancelled" {
+                        unpaid_bills += 1;
+                        let amt = bill
+                            .get("grand_total")
+                            .and_then(|v| {
+                                v.as_str()
+                                    .and_then(|s| Decimal::from_str(s).ok())
+                                    .or_else(|| v.as_f64().and_then(Decimal::from_f64_retain))
+                            })
+                            .unwrap_or(Decimal::ZERO);
+                        total_payable += amt;
+                    }
+                }
+            }
+        }
+    }
+
+    HttpResponse::Ok().json(serde_json::json!({
+        "supplier": target_supplier,
+        "open_purchase_orders": open_pos,
+        "unpaid_purchase_invoices": unpaid_bills,
+        "total_payable_balance": total_payable,
+        "status": "Active",
+    }))
+}
+
+// --- 9. Setup Wizard & Quick Start Seeding Engine ---
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct SetupWizardPayload {
+    pub company_name: String,
+    pub currency: Option<String>,
+    pub country: Option<String>,
+    pub fiscal_year_start: Option<NaiveDate>,
+    pub fiscal_year_end: Option<NaiveDate>,
+}
+
+/// Handler for first-time system setup wizard: `POST /api/v2/setup/wizard`
+pub async fn setup_wizard_handler(
+    req: HttpRequest,
+    pool_mgr: web::Data<ConnectionPoolManager>,
+    payload: web::Json<SetupWizardPayload>,
+) -> impl Responder {
+    let tenant_id = resolve_tenant_id(&req);
+    let currency = payload
+        .currency
+        .clone()
+        .unwrap_or_else(|| "USD".to_string());
+    let country = payload
+        .country
+        .clone()
+        .unwrap_or_else(|| "United States".to_string());
+
+    let seeded_accounts = vec![
+        ("1000", "Current Assets", "Asset", true),
+        ("1100", "Cash & Bank", "Asset", false),
+        ("1200", "Debtors / Accounts Receivable", "Asset", false),
+        ("1300", "Stock Assets", "Asset", false),
+        ("2000", "Current Liabilities", "Liability", true),
+        ("2100", "Creditors / Accounts Payable", "Liability", false),
+        ("2200", "Duties & Taxes (VAT)", "Liability", false),
+        ("3000", "Capital & Equity", "Equity", true),
+        ("3100", "Retained Earnings", "Equity", false),
+        ("4000", "Sales Income", "Income", false),
+        ("4100", "Service Income", "Income", false),
+        ("5000", "Cost of Goods Sold", "Expense", false),
+        ("5100", "Operating Expenses", "Expense", false),
+        ("5200", "Payroll & Salaries", "Expense", false),
+    ];
+
+    let seeded_warehouses = vec![
+        (
+            "Stores - Default",
+            "Warehouse for raw material & component receipt",
+        ),
+        (
+            "Work In Progress - Default",
+            "Staging floor for active manufacturing work orders",
+        ),
+        (
+            "Finished Goods - Default",
+            "Warehouse for completed products and outgoing deliveries",
+        ),
+    ];
+
+    if let Ok(client) = pool_mgr.get_or_initialize_client(&tenant_id).await {
+        let repo = frappe_storage::SurrealRepository::new(client.clone());
+
+        // 1. Seed Company
+        let company_doc = serde_json::json!({
+            "name": payload.company_name,
+            "default_currency": currency,
+            "country": country,
+            "fiscal_year_start": payload.fiscal_year_start.unwrap_or_else(|| NaiveDate::from_ymd_opt(2026, 1, 1).unwrap()),
+            "fiscal_year_end": payload.fiscal_year_end.unwrap_or_else(|| NaiveDate::from_ymd_opt(2026, 12, 31).unwrap()),
+            "is_active": true,
+            "created_at": Utc::now().to_rfc3339(),
+        });
+        let clean_comp_id = payload.company_name.replace(' ', "_").to_lowercase();
+        let _ = repo.upsert("companies", &clean_comp_id, &company_doc).await;
+
+        // 2. Seed Chart of Accounts
+        for (code, name, root_type, is_group) in &seeded_accounts {
+            let acc_doc = serde_json::json!({
+                "account_number": code,
+                "account_name": name,
+                "root_type": root_type,
+                "is_group": is_group,
+                "company": payload.company_name,
+                "currency": currency,
+            });
+            let _ = repo.upsert("accounts", code, &acc_doc).await;
+        }
+
+        // 3. Seed Warehouses
+        for (wh_name, desc) in &seeded_warehouses {
+            let wh_doc = serde_json::json!({
+                "warehouse_name": wh_name,
+                "description": desc,
+                "company": payload.company_name,
+                "is_active": true,
+            });
+            let clean_wh = wh_name.replace(' ', "_").to_lowercase();
+            let _ = repo.upsert("warehouses", &clean_wh, &wh_doc).await;
+        }
+    }
+
+    HttpResponse::Created().json(serde_json::json!({
+        "status": "SUCCESS",
+        "company": payload.company_name,
+        "currency": currency,
+        "country": country,
+        "accounts_seeded": seeded_accounts.len(),
+        "warehouses_seeded": seeded_warehouses.len(),
+        "message": "RustNext ERP Setup Wizard completed successfully. Chart of Accounts and Warehouses seeded.",
+    }))
+}
+
+// --- 10. Item Variant Matrix Generator ---
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct VariantMatrixPayload {
+    pub template_item_code: String,
+    pub item_name: Option<String>,
+    pub attributes: HashMap<String, Vec<String>>,
+    pub base_price: Option<Decimal>,
+}
+
+/// Handler for generating item variant matrix: `POST /api/v2/inventory/variant_matrix`
+pub async fn inventory_variant_matrix_handler(
+    req: HttpRequest,
+    pool_mgr: web::Data<ConnectionPoolManager>,
+    payload: web::Json<VariantMatrixPayload>,
+) -> impl Responder {
+    let tenant_id = resolve_tenant_id(&req);
+    let base_name = payload
+        .item_name
+        .clone()
+        .unwrap_or_else(|| payload.template_item_code.clone());
+    let base_price = payload.base_price.unwrap_or(dec!(100.00));
+
+    // Cartesian product of attribute key-value pairs
+    let attr_keys: Vec<String> = payload.attributes.keys().cloned().collect();
+    let mut combinations: Vec<Vec<(String, String)>> = vec![vec![]];
+
+    for key in &attr_keys {
+        let values = payload.attributes.get(key).cloned().unwrap_or_default();
+        let mut new_combinations = Vec::new();
+        for comb in combinations {
+            for val in &values {
+                let mut extended = comb.clone();
+                extended.push((key.clone(), val.clone()));
+                new_combinations.push(extended);
+            }
+        }
+        combinations = new_combinations;
+    }
+
+    let mut created_variants = Vec::new();
+
+    if let Ok(client) = pool_mgr.get_or_initialize_client(&tenant_id).await {
+        let repo = frappe_storage::SurrealRepository::new(client.clone());
+
+        for comb in combinations {
+            let suffix = comb
+                .iter()
+                .map(|(_, v)| v.clone())
+                .collect::<Vec<_>>()
+                .join("-");
+            let variant_sku = format!("{}-{}", payload.template_item_code, suffix);
+            let variant_desc = format!("{} ({})", base_name, suffix);
+
+            let variant_doc = serde_json::json!({
+                "item_code": variant_sku,
+                "item_name": variant_desc,
+                "template_item": payload.template_item_code,
+                "is_variant": true,
+                "standard_rate": base_price,
+                "attributes": comb.into_iter().collect::<HashMap<String, String>>(),
+                "created_at": Utc::now().to_rfc3339(),
+            });
+
+            let clean_sku = variant_sku.replace(' ', "_");
+            let _ = repo.upsert("items", &clean_sku, &variant_doc).await;
+            created_variants.push(variant_sku);
+        }
+    }
+
+    HttpResponse::Created().json(serde_json::json!({
+        "status": "SUCCESS",
+        "template_item_code": payload.template_item_code,
+        "variants_count": created_variants.len(),
+        "variants": created_variants,
     }))
 }
 

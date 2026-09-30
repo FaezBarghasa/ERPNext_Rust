@@ -16,7 +16,9 @@ use crate::tenant::{
     AcmeGateway, ConnectionPoolManager, MicroTopologyConfig, TenantId, TenantResolver,
 };
 use crate::v2_routes::{
-    DynamicRbacState, accounting_balance_sheet_handler, accounting_journal_entry_handler,
+    DynamicRbacState, accounting_ap_aging_handler, accounting_ar_aging_handler,
+    accounting_balance_sheet_handler, accounting_cash_flow_handler,
+    accounting_general_ledger_handler, accounting_journal_entry_handler,
     accounting_payment_entry_handler, accounting_period_close_handler,
     accounting_profit_loss_handler, accounting_trial_balance_handler, admin_action_handler,
     admin_create_ip_rule_handler, admin_create_role_handler, admin_create_user_handler,
@@ -33,19 +35,21 @@ use crate::v2_routes::{
     crm_convert_quotation_handler, download_file_handler, email_list_queue_handler,
     email_send_handler, export_dataset_handler, h3_stream_file_handler,
     h3_stream_telemetry_handler, hr_process_payroll_handler, inventory_stock_balance_handler,
-    inventory_stock_entry_handler, login_handler, logout_handler,
+    inventory_stock_entry_handler, inventory_variant_matrix_handler, login_handler, logout_handler,
     manufacturing_complete_work_order_handler, manufacturing_work_order_handler,
     notifications_dispatch_handler, notifications_get_inbox_handler, ping_handler,
-    print_document_handler, quic_status_handler, render_invoice_handler, render_receipt_handler,
+    portal_customer_dashboard_handler, portal_supplier_dashboard_handler, print_document_handler,
+    quic_status_handler, render_invoice_handler, render_receipt_handler,
     report_pivot_table_handler, selling_delivery_note_handler, selling_sales_invoice_handler,
-    trade_add_wishlist_item_handler, trade_apply_coupon_handler, trade_calculate_shipping_handler,
-    trade_create_coupon_handler, trade_get_wishlist_handler, trade_list_coupons_handler,
-    trade_list_reviews_handler, trade_list_shipping_zones_handler, trade_moderate_review_handler,
-    trade_order_transition_handler, trade_remove_wishlist_item_handler, trade_rma_submit_handler,
-    trade_submit_review_handler, upload_file_handler, v2_amend_document, v2_cancel_document,
-    v2_create_document, v2_delete_document, v2_get_document, v2_list_document, v2_submit_document,
-    v2_update_document, webhooks_dispatch_test_handler, workflow_evaluate_handler,
-    workflow_version_history_handler, workflow_version_rollback_handler,
+    setup_wizard_handler, trade_add_wishlist_item_handler, trade_apply_coupon_handler,
+    trade_calculate_shipping_handler, trade_create_coupon_handler, trade_get_wishlist_handler,
+    trade_list_coupons_handler, trade_list_reviews_handler, trade_list_shipping_zones_handler,
+    trade_moderate_review_handler, trade_order_transition_handler,
+    trade_remove_wishlist_item_handler, trade_rma_submit_handler, trade_submit_review_handler,
+    upload_file_handler, v2_amend_document, v2_cancel_document, v2_create_document,
+    v2_delete_document, v2_get_document, v2_list_document, v2_submit_document, v2_update_document,
+    webhooks_dispatch_test_handler, workflow_evaluate_handler, workflow_version_history_handler,
+    workflow_version_rollback_handler,
 };
 use actix_web::{
     App, HttpMessage, HttpRequest, HttpResponse, HttpServer, Responder, middleware::Compress,
@@ -763,6 +767,7 @@ pub fn configure_app(
         .route("/sitemap.xml", web::get().to(sitemap_xml_handler))
         .route("/robots.txt", web::get().to(robots_txt_handler))
         .route("/manifest.json", web::get().to(pwa_manifest_handler))
+        .route("/manifest.webmanifest", web::get().to(pwa_manifest_handler))
         .route("/sw.js", web::get().to(service_worker_handler))
         .route("/health", web::get().to(health_check))
         .route("/healthz/live", web::get().to(liveness_handler))
@@ -1128,6 +1133,38 @@ pub fn configure_app(
         .route(
             "/api/v2/accounting/period_close",
             web::post().to(accounting_period_close_handler),
+        )
+        .route(
+            "/api/v2/accounting/ar_aging",
+            web::get().to(accounting_ar_aging_handler),
+        )
+        .route(
+            "/api/v2/accounting/ap_aging",
+            web::get().to(accounting_ap_aging_handler),
+        )
+        .route(
+            "/api/v2/accounting/general_ledger",
+            web::get().to(accounting_general_ledger_handler),
+        )
+        .route(
+            "/api/v2/accounting/cash_flow",
+            web::get().to(accounting_cash_flow_handler),
+        )
+        // V2 Customer & Supplier Self-Service Portal Endpoints
+        .route(
+            "/api/v2/portal/customer_dashboard",
+            web::get().to(portal_customer_dashboard_handler),
+        )
+        .route(
+            "/api/v2/portal/supplier_dashboard",
+            web::get().to(portal_supplier_dashboard_handler),
+        )
+        // V2 First-Time Setup Wizard & Seeding Endpoint
+        .route("/api/v2/setup/wizard", web::post().to(setup_wizard_handler))
+        // V2 Item Variant Matrix Generation Endpoint
+        .route(
+            "/api/v2/inventory/variant_matrix",
+            web::post().to(inventory_variant_matrix_handler),
         )
         // V2 Manufacturing Work Order Endpoints
         .route(

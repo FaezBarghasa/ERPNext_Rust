@@ -20,9 +20,11 @@ use frappe_net::v2_routes::{
     CompleteWorkOrderPayload, DeliveryNoteItem, DeliveryNotePayload, PaymentEntryPayload,
     PeriodClosePayload, PrintDocumentPayload, PurchaseInvoiceItem, PurchaseInvoicePayload,
     PurchaseOrderItem, PurchaseOrderPayload, PurchaseReceiptItem, PurchaseReceiptPayload,
-    SalesInvoiceItem, SalesInvoicePayload, SendEmailPayload, StockEntryPayload, WorkOrderPayload,
+    SalesInvoiceItem, SalesInvoicePayload, SendEmailPayload, SetupWizardPayload, StockEntryPayload,
+    VariantMatrixPayload, WorkOrderPayload,
 };
 use rust_decimal_macros::dec;
+use std::collections::HashMap;
 use std::time::Duration;
 
 #[tokio::test]
@@ -382,4 +384,119 @@ async fn test_erpnext_v16_manufacturing_and_period_close_flow() {
     let body = to_bytes(resp.into_body()).await.unwrap();
     let json: serde_json::Value = serde_json::from_slice(&body).unwrap();
     assert!(json["queue_count"].as_u64().unwrap() >= 1);
+}
+
+#[tokio::test]
+async fn test_erpnext_v16_reporting_portals_setup_and_pwa_flow() {
+    let pool_mgr = ConnectionPoolManager::in_memory(Duration::from_secs(60));
+    let app = init_service(App::new().configure(|cfg| {
+        configure_app(cfg, pool_mgr.clone(), MicroTopologyConfig::default(), None)
+    }))
+    .await;
+
+    // 1. Run Setup Wizard
+    let setup_payload = SetupWizardPayload {
+        company_name: "Apex Global Dynamics".into(),
+        currency: Some("EUR".into()),
+        country: Some("Germany".into()),
+        fiscal_year_start: Some(NaiveDate::from_ymd_opt(2026, 1, 1).unwrap()),
+        fiscal_year_end: Some(NaiveDate::from_ymd_opt(2026, 12, 31).unwrap()),
+    };
+    let req = TestRequest::post()
+        .uri("/api/v2/setup/wizard")
+        .insert_header(("X-Frappe-Site-Name", "test-site"))
+        .set_json(&setup_payload)
+        .to_request();
+    let resp = call_service(&app, req).await;
+    assert_eq!(resp.status(), StatusCode::CREATED);
+    let body = to_bytes(resp.into_body()).await.unwrap();
+    let json: serde_json::Value = serde_json::from_slice(&body).unwrap();
+    assert_eq!(json["status"], "SUCCESS");
+    assert_eq!(json["company"], "Apex Global Dynamics");
+    assert_eq!(json["accounts_seeded"], 14);
+    assert_eq!(json["warehouses_seeded"], 3);
+
+    // 2. Generate Item Variant Matrix
+    let mut attr_map = HashMap::new();
+    attr_map.insert("Size".to_string(), vec!["S".to_string(), "M".to_string()]);
+    attr_map.insert(
+        "Color".to_string(),
+        vec!["Black".to_string(), "Navy".to_string()],
+    );
+    let variant_payload = VariantMatrixPayload {
+        template_item_code: "TSHIRT".into(),
+        item_name: Some("Premium Cotton T-Shirt".into()),
+        attributes: attr_map,
+        base_price: Some(dec!(45.00)),
+    };
+    let req = TestRequest::post()
+        .uri("/api/v2/inventory/variant_matrix")
+        .insert_header(("X-Frappe-Site-Name", "test-site"))
+        .set_json(&variant_payload)
+        .to_request();
+    let resp = call_service(&app, req).await;
+    assert_eq!(resp.status(), StatusCode::CREATED);
+    let body = to_bytes(resp.into_body()).await.unwrap();
+    let json: serde_json::Value = serde_json::from_slice(&body).unwrap();
+    assert_eq!(json["variants_count"], 4);
+
+    // 3. Test AR & AP Aging Reports
+    let req = TestRequest::get()
+        .uri("/api/v2/accounting/ar_aging?as_of_date=2026-10-31")
+        .insert_header(("X-Frappe-Site-Name", "test-site"))
+        .to_request();
+    let resp = call_service(&app, req).await;
+    assert_eq!(resp.status(), StatusCode::OK);
+
+    let req = TestRequest::get()
+        .uri("/api/v2/accounting/ap_aging?as_of_date=2026-10-31")
+        .insert_header(("X-Frappe-Site-Name", "test-site"))
+        .to_request();
+    let resp = call_service(&app, req).await;
+    assert_eq!(resp.status(), StatusCode::OK);
+
+    // 4. Test Detailed General Ledger & Cash Flow Reports
+    let req = TestRequest::get()
+        .uri("/api/v2/accounting/general_ledger")
+        .insert_header(("X-Frappe-Site-Name", "test-site"))
+        .to_request();
+    let resp = call_service(&app, req).await;
+    assert_eq!(resp.status(), StatusCode::OK);
+
+    let req = TestRequest::get()
+        .uri("/api/v2/accounting/cash_flow")
+        .insert_header(("X-Frappe-Site-Name", "test-site"))
+        .to_request();
+    let resp = call_service(&app, req).await;
+    assert_eq!(resp.status(), StatusCode::OK);
+
+    // 5. Test Customer & Supplier Portal Dashboards
+    let req = TestRequest::get()
+        .uri("/api/v2/portal/customer_dashboard?party_id=Acme%20Corporation")
+        .insert_header(("X-Frappe-Site-Name", "test-site"))
+        .to_request();
+    let resp = call_service(&app, req).await;
+    assert_eq!(resp.status(), StatusCode::OK);
+    let body = to_bytes(resp.into_body()).await.unwrap();
+    let json: serde_json::Value = serde_json::from_slice(&body).unwrap();
+    assert_eq!(json["status"], "Active");
+
+    let req = TestRequest::get()
+        .uri("/api/v2/portal/supplier_dashboard?party_id=SUPP-GLOBAL-01")
+        .insert_header(("X-Frappe-Site-Name", "test-site"))
+        .to_request();
+    let resp = call_service(&app, req).await;
+    assert_eq!(resp.status(), StatusCode::OK);
+
+    // 6. Test PWA Manifest & Service Worker delivery
+    let req = TestRequest::get().uri("/manifest.webmanifest").to_request();
+    let resp = call_service(&app, req).await;
+    assert_eq!(resp.status(), StatusCode::OK);
+
+    let req = TestRequest::get().uri("/sw.js").to_request();
+    let resp = call_service(&app, req).await;
+    assert_eq!(resp.status(), StatusCode::OK);
+    let body = to_bytes(resp.into_body()).await.unwrap();
+    let sw_str = String::from_utf8(body.to_vec()).unwrap();
+    assert!(sw_str.contains("rustnext-core-"));
 }
