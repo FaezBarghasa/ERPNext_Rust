@@ -9,6 +9,7 @@ pub mod migration;
 pub mod naming;
 pub mod profiles;
 pub mod rbac;
+pub mod registry;
 pub mod role_tools;
 pub mod schema;
 pub mod schema_compiler;
@@ -47,6 +48,7 @@ pub use rbac::{
     ROLE_SYSTEM_MANAGER, ROLE_WAREHOUSE_MANAGER, ROLE_WEBSITE_UPDATER, ROLE_WORKER_USER, Role,
     STANDARD_ROLES, User, UserRecord, check_permission, compile_rls_policy,
 };
+pub use registry::{DocTypeRegistry, standard_erpnext_schemas};
 pub use role_tools::{RoleEvaluator, RoleReplicationBundle};
 pub use schema::{
     DataPreset, DocFieldSchema, DocPermSchema, DocTypeSchema, FieldType, NamingRule, SchemaError,
