@@ -7,11 +7,9 @@ pub mod print;
 pub mod security;
 pub mod seo_engine;
 pub mod storefront;
-pub mod subtitles;
 pub mod taxonomy;
 pub mod template_catalog;
 pub mod theme_engine;
-pub mod transcoder;
 
 pub use media_library::{MediaAsset, MediaError, MediaLibraryRegistry};
 pub use taxonomy::{TaxonomyError, TaxonomyRegistry, TaxonomyTerm, TaxonomyType};
@@ -32,7 +30,6 @@ pub use seo_engine::{SeoMetadata, generate_robots_txt, generate_sitemap_xml};
 pub use storefront::{
     AtomicCheckoutEngine, CheckoutError, CheckoutItem, CheckoutResult, CustomerCheckoutRequest,
 };
-pub use subtitles::{SubtitleSearchEngine, SubtitleSegment};
 pub use template_catalog::{
     TemplateSuite, get_template_suite, list_template_suites, render_template_html,
     render_template_html_with_variant, render_template_index_html, render_theme_switcher_dock,
@@ -41,7 +38,6 @@ pub use theme_engine::{
     CompiledTheme, DesignTokens, RenderEngineKind, SlotDefinition, ThemeManifest, ThemeRegistry,
     ThemeVariant, WorkTypeClassification,
 };
-pub use transcoder::{HlsPlaylistGenerator, STANDARD_VARIANTS, VideoVariant};
 
 #[cfg(test)]
 mod tests {
@@ -123,19 +119,5 @@ mod tests {
                 .start_playback("user_1", "session_2".into(), true, 1)
                 .is_ok()
         );
-    }
-
-    #[test]
-    fn test_hls_master_playlist_and_cosine_similarity() {
-        let master = HlsPlaylistGenerator::generate_master_playlist(STANDARD_VARIANTS);
-        assert!(master.contains("#EXTM3U"));
-        assert!(master.contains("1080p.m3u8"));
-        assert!(master.contains("720p.m3u8"));
-        assert!(master.contains("480p.m3u8"));
-
-        // Cosine similarity between identical vectors = 1.0
-        let vec_a = vec![1.0, 2.0, 3.0];
-        let sim_identical = SubtitleSearchEngine::cosine_similarity(&vec_a, &vec_a);
-        assert!((sim_identical - 1.0).abs() < 1e-5);
     }
 }

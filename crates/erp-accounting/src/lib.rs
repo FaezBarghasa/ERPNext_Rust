@@ -10,8 +10,9 @@ pub mod multibook;
 pub mod receivables;
 pub mod report_engine;
 pub mod tax_withholding;
+pub mod payment_gateway;
+pub mod print_format;
 pub mod treasury;
-pub mod zk_proof;
 
 pub use asset_capitalization::{
     AssetCapitalizationRecord, AssetOverhaulEngine, CapitalizationServiceItem,
@@ -32,14 +33,20 @@ pub use ledger::{
 pub use multibook::{
     AccountingBook, MultiBookJournalLine, MultiBookPostingEngine, MultiBookTransaction,
 };
+pub use payment_gateway::{
+    MockPaymentGateway, PaymentError, PaymentGatewayProcessor, PaymentIntent, PaymentMethod,
+    PaymentReconciliationEngine, PaymentStatus,
+};
+pub use print_format::{
+    PrintableBankDetails, PrintableCompany, PrintableInvoice, PrintableLineItem, PrintableParty,
+    PrintableTaxCharge,
+};
 pub use receivables::{ArApEngine, OpenInvoice, PaymentAllocationResult};
 pub use report_engine::{
     FinancialReportEngine, FinancialReportRow, ReportError, ReportRowType, StatementLine,
 };
 pub use tax_withholding::{ItemWiseTaxDetail, TaxPricingEngine, TaxWithholdingEntry};
 pub use treasury::{BankAccount, TreasuryPoolingEngine, ZbaSweepTransaction};
-#[allow(deprecated)]
-pub use zk_proof::{ZkBalanceProof, ZkProofEngine, ZkVerificationResult};
 
 #[cfg(test)]
 mod tests {

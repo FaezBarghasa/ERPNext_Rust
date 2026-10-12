@@ -7,7 +7,6 @@ pub mod primitives;
 pub mod resources;
 pub mod signals;
 pub mod spc_view;
-pub mod video_hud;
 pub mod views;
 pub mod wms_view;
 
@@ -33,7 +32,6 @@ pub use resources::{
     PageMetaComposable, ResourceState,
 };
 pub use spc_view::{SpcChartViewModel, SpcPointView};
-pub use video_hud::{ChapterMarker, VideoHudState};
 pub use views::{
     FormTimelineEntry, FormViewModel, KanbanColumn, KanbanViewModel, ListViewColumn, ListViewModel,
     ReportType, ReportViewModel,
@@ -147,33 +145,5 @@ mod tests {
             "status==Open && workflow_state==Approved",
             &values
         ));
-    }
-
-    #[test]
-    fn test_video_hud_state() {
-        let mut hud = VideoHudState::new(
-            "VID-001",
-            120.0,
-            vec![
-                ChapterMarker {
-                    timestamp_secs: 0.0,
-                    title: "Introduction".into(),
-                },
-                ChapterMarker {
-                    timestamp_secs: 45.0,
-                    title: "Core Concepts".into(),
-                },
-            ],
-        );
-
-        assert_eq!(hud.current_time_secs, 0.0);
-        hud.toggle_play();
-        assert!(hud.is_playing);
-
-        hud.seek_to(50.0);
-        assert_eq!(hud.current_time_secs, 50.0);
-
-        hud.push_comment("Great explanation!".into());
-        assert_eq!(hud.comments.len(), 1);
     }
 }

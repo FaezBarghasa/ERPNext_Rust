@@ -15,7 +15,7 @@
 #![allow(deprecated)]
 
 use chrono::Utc;
-use erp_accounting::{BenfordGuard, zk_proof::ZkProofEngine};
+use erp_accounting::{BenfordGuard, DecLine, verify_balanced_dec};
 use erp_asset::safety::{IsolationPointType, LotoTag, PermitToWork};
 use erp_cms::block_canvas::{CmsPage, FeatureItem, PageBlock, SsrEngine};
 use erp_inventory::fifo::{add_fifo_layer, consume_fifo};
@@ -478,19 +478,26 @@ fn test_epoch_9_merkle_envelope_encryption_and_zk_proofs() {
     let decrypted = encryption.decrypt_field(tenant, &encrypted, aad).unwrap();
     assert_eq!(decrypted, pii_data);
 
-    // 9.3 Zero-Knowledge Balance Sheet Proofs
-    let debits = vec![dec!(25000.00), dec!(5000.00)];
-    let credits = vec![dec!(30000.00)];
-    let secret = [0xAAu8; 32];
-
-    let proof =
-        ZkProofEngine::generate_balance_proof("tenant_corp", "2026-Q3", &debits, &credits, &secret)
-            .expect("ZK proof generation");
-    assert!(proof.generation_time_micros < 4_500_000);
-
-    let verify_res = ZkProofEngine::verify_proof(&proof);
-    assert!(verify_res.is_valid);
-    assert!(verify_res.verification_time_micros < 15_000);
+    // 9.3 Double-Entry Balance Verification (Strict 128-bit Decimal)
+    let lines = vec![
+        DecLine {
+            account: "1110 - Cash".into(),
+            debit: dec!(25000.00),
+            credit: dec!(0.00),
+        },
+        DecLine {
+            account: "1120 - Bank".into(),
+            debit: dec!(5000.00),
+            credit: dec!(0.00),
+        },
+        DecLine {
+            account: "2110 - Accounts Payable".into(),
+            debit: dec!(0.00),
+            credit: dec!(30000.00),
+        },
+    ];
+    let is_balanced = verify_balanced_dec(&lines);
+    assert!(is_balanced);
 }
 
 #[test]
