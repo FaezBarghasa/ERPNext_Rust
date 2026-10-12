@@ -12,6 +12,8 @@
 //! - Epoch IX: Merkle Audit Lineage, Field-Level Envelope Encryption (AEAD) & ZK Balance Proofs.
 //! - Epoch X: High-Density Agency Domain Map, Direct WooCommerce Ingestion & Vertical Profiles.
 
+#![allow(deprecated)]
+
 use chrono::Utc;
 use erp_accounting::{BenfordGuard, zk_proof::ZkProofEngine};
 use erp_asset::safety::{IsolationPointType, LotoTag, PermitToWork};

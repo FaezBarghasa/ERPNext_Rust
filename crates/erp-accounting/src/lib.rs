@@ -38,6 +38,7 @@ pub use report_engine::{
 };
 pub use tax_withholding::{ItemWiseTaxDetail, TaxPricingEngine, TaxWithholdingEntry};
 pub use treasury::{BankAccount, TreasuryPoolingEngine, ZbaSweepTransaction};
+#[allow(deprecated)]
 pub use zk_proof::{ZkBalanceProof, ZkProofEngine, ZkVerificationResult};
 
 #[cfg(test)]

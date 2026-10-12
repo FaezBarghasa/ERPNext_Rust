@@ -252,7 +252,7 @@ impl ConnectionPoolManager {
                 .map_err(|e| TenantError::ConnectionFailed(e.to_string()))?,
             DatabaseBackend::SurrealKv { base_path } => {
                 let tenant_dir = format!("{}/{}", base_path, tenant.0);
-                std::fs::create_dir_all(&tenant_dir).map_err(|e| {
+                tokio::fs::create_dir_all(&tenant_dir).await.map_err(|e| {
                     TenantError::ConnectionFailed(format!("Failed to create tenant data dir: {e}"))
                 })?;
                 Surreal::new::<SurrealKv>(&tenant_dir)

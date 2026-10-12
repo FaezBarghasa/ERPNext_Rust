@@ -29,7 +29,7 @@ pub fn get_desk_workspaces() -> Vec<WorkspaceModule> {
             badge: "ACID Double-Entry".into(),
             description: "General Ledger, Invoicing, Multi-Currency, Fiscal Years & Statutory Tax".into(),
             doctypes: vec!["Sales Invoice".into(), "Purchase Invoice".into(), "Journal Entry".into(), "Account".into()],
-            route: "/api/v2/document/sales_invoice".into(),
+            route: "/desk/list/sales_invoice".into(),
         },
         WorkspaceModule {
             id: "sales".into(),
@@ -38,7 +38,7 @@ pub fn get_desk_workspaces() -> Vec<WorkspaceModule> {
             badge: "Omnichannel".into(),
             description: "Quotations, Sales Orders, Customer Portals, CPQ & Storefront Fulfillment".into(),
             doctypes: vec!["Quotation".into(), "Sales Order".into(), "Customer".into(), "Pricing Rule".into()],
-            route: "/api/v2/document/sales_order".into(),
+            route: "/desk/list/sales_order".into(),
         },
         WorkspaceModule {
             id: "purchasing".into(),
@@ -47,7 +47,7 @@ pub fn get_desk_workspaces() -> Vec<WorkspaceModule> {
             badge: "3-Way Matching".into(),
             description: "Material Requests, Supplier RFQs, Purchase Orders & Landed Cost Vouchers".into(),
             doctypes: vec!["Purchase Order".into(), "Supplier".into(), "Material Request".into()],
-            route: "/api/v2/document/purchase_order".into(),
+            route: "/desk/list/purchase_order".into(),
         },
         WorkspaceModule {
             id: "inventory".into(),
@@ -56,7 +56,7 @@ pub fn get_desk_workspaces() -> Vec<WorkspaceModule> {
             badge: "FIFO Valuation".into(),
             description: "Multi-Warehouse Bins, Serial/Batch Tracking, Reorder Levels & Stock Ledger".into(),
             doctypes: vec!["Item".into(), "Stock Entry".into(), "Warehouse".into(), "Batch".into()],
-            route: "/api/v2/document/item".into(),
+            route: "/desk/list/item".into(),
         },
         WorkspaceModule {
             id: "manufacturing".into(),
@@ -65,7 +65,7 @@ pub fn get_desk_workspaces() -> Vec<WorkspaceModule> {
             badge: "Multi-Level BOM".into(),
             description: "Work Orders, Routing Operations, Job Cards, Digital Travelers & Live SPC".into(),
             doctypes: vec!["BOM".into(), "Work Order".into(), "Job Card".into(), "Operation".into()],
-            route: "/api/v2/document/work_order".into(),
+            route: "/desk/list/work_order".into(),
         },
         WorkspaceModule {
             id: "wms".into(),
@@ -83,7 +83,7 @@ pub fn get_desk_workspaces() -> Vec<WorkspaceModule> {
             badge: "Kanban Pipeline".into(),
             description: "Lead Enrichment, Deal Stages, Opportunity Forecasting & Activity Streams".into(),
             doctypes: vec!["Lead".into(), "Opportunity".into(), "Campaign".into()],
-            route: "/api/v2/document/lead".into(),
+            route: "/desk/list/lead".into(),
         },
         WorkspaceModule {
             id: "hr".into(),
@@ -92,7 +92,7 @@ pub fn get_desk_workspaces() -> Vec<WorkspaceModule> {
             badge: "Salary Slips".into(),
             description: "Employee Records, Attendance, Leave Allocations, Tax Deductions & Payroll Slips".into(),
             doctypes: vec!["Employee".into(), "Salary Slip".into(), "Leave Application".into()],
-            route: "/api/v2/document/employee".into(),
+            route: "/desk/list/employee".into(),
         },
         WorkspaceModule {
             id: "assets".into(),
@@ -101,7 +101,7 @@ pub fn get_desk_workspaces() -> Vec<WorkspaceModule> {
             badge: "Depreciation Schedules".into(),
             description: "Fixed Asset Registry, Straight-Line Depreciation, Repair Work Orders & Telemetry".into(),
             doctypes: vec!["Asset".into(), "Asset Repair".into(), "Maintenance Schedule".into()],
-            route: "/api/v2/document/asset".into(),
+            route: "/desk/list/asset".into(),
         },
         WorkspaceModule {
             id: "learning".into(),
@@ -377,6 +377,394 @@ pub fn render_desk_shell_html(persona: &str, user_name: &str) -> String {
         .replace("__CARDS__", &cards_html)
 }
 
+/// Compiles an interactive, responsive HTML List View for any DocType.
+#[must_use]
+pub fn render_list_view_html(doctype: &str, user_name: &str) -> String {
+    let avatar_char = user_name.chars().next().unwrap_or('A').to_string();
+    let display_title = doctype.replace('_', " ");
+    format!(
+        r##"<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{display_title} List — RustNext Desk</title>
+    <style>
+        :root {{
+            --bg-primary: #0a0b10; --bg-secondary: #12141c; --bg-card: rgba(22, 25, 37, 0.75);
+            --border: rgba(255, 255, 255, 0.08); --accent: #6366f1; --accent-glow: rgba(99, 102, 241, 0.25);
+            --text-primary: #f8fafc; --text-secondary: #94a3b8; --success: #10b981; --warning: #f59e0b; --danger: #ef4444;
+        }}
+        * {{ margin: 0; padding: 0; box-sizing: border-box; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }}
+        body {{ background-color: var(--bg-primary); color: var(--text-primary); min-height: 100vh; display: flex; flex-direction: column; }}
+        header {{
+            position: sticky; top: 0; z-index: 50; background: rgba(10, 11, 16, 0.85); backdrop-filter: blur(16px);
+            border-bottom: 1px solid var(--border); padding: 0.75rem 2rem; display: flex; justify-content: space-between; align-items: center;
+        }}
+        .brand {{ display: flex; align-items: center; gap: 0.75rem; font-weight: 700; font-size: 1.25rem; text-decoration: none; color: inherit; }}
+        .brand-logo {{ width: 32px; height: 32px; background: linear-gradient(135deg, #6366f1, #a855f7); border-radius: 8px; display: flex; align-items: center; justify-content: center; font-weight: 900; color: white; }}
+        .nav-actions {{ display: flex; align-items: center; gap: 1rem; }}
+        .user-chip {{ display: flex; align-items: center; gap: 0.5rem; font-size: 0.875rem; color: var(--text-secondary); }}
+        .user-avatar {{ width: 32px; height: 32px; border-radius: 50%; background: #334155; display: flex; align-items: center; justify-content: center; color: white; font-weight: 600; }}
+        main {{ max-width: 1440px; margin: 0 auto; width: 100%; padding: 2rem; flex: 1; }}
+        .action-bar {{ display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 1rem; }}
+        .breadcrumbs {{ display: flex; align-items: center; gap: 0.5rem; font-size: 0.875rem; color: var(--text-secondary); margin-bottom: 0.5rem; }}
+        .breadcrumbs a {{ color: var(--accent); text-decoration: none; }}
+        .page-title {{ font-size: 1.75rem; font-weight: 800; text-transform: capitalize; }}
+        .btn {{ padding: 0.5rem 1.2rem; border-radius: 8px; font-weight: 600; font-size: 0.875rem; cursor: pointer; border: none; transition: all 0.2s; display: inline-flex; align-items: center; gap: 0.5rem; text-decoration: none; }}
+        .btn-primary {{ background: var(--accent); color: white; box-shadow: 0 0 12px var(--accent-glow); }}
+        .btn-primary:hover {{ opacity: 0.9; transform: translateY(-1px); }}
+        .btn-secondary {{ background: var(--bg-secondary); color: var(--text-primary); border: 1px solid var(--border); }}
+        .btn-secondary:hover {{ border-color: var(--accent); }}
+        .table-container {{ background: var(--bg-card); border: 1px solid var(--border); border-radius: 12px; overflow: hidden; }}
+        .table-filter-bar {{ padding: 1rem 1.5rem; border-bottom: 1px solid var(--border); display: flex; gap: 1rem; align-items: center; flex-wrap: wrap; }}
+        .search-input {{ background: var(--bg-secondary); border: 1px solid var(--border); color: white; padding: 0.5rem 1rem; border-radius: 8px; width: 300px; outline: none; font-size: 0.875rem; }}
+        .search-input:focus {{ border-color: var(--accent); }}
+        table {{ width: 100%; border-collapse: collapse; text-align: left; font-size: 0.875rem; }}
+        th {{ background: rgba(255, 255, 255, 0.02); padding: 0.85rem 1.5rem; color: var(--text-secondary); font-weight: 600; border-bottom: 1px solid var(--border); }}
+        td {{ padding: 1rem 1.5rem; border-bottom: 1px solid var(--border); color: var(--text-primary); }}
+        tr.clickable-row {{ cursor: pointer; transition: background 0.15s; }}
+        tr.clickable-row:hover {{ background: rgba(99, 102, 241, 0.08); }}
+        .badge {{ font-size: 0.75rem; font-weight: 600; padding: 0.2rem 0.6rem; border-radius: 9999px; }}
+        .badge-draft {{ background: rgba(245, 158, 11, 0.15); color: #fbbf24; border: 1px solid rgba(245, 158, 11, 0.3); }}
+        .badge-submitted {{ background: rgba(16, 185, 129, 0.15); color: #34d399; border: 1px solid rgba(16, 185, 129, 0.3); }}
+        .badge-cancelled {{ background: rgba(239, 68, 68, 0.15); color: #f87171; border: 1px solid rgba(239, 68, 68, 0.3); }}
+        .empty-state {{ text-align: center; padding: 4rem 2rem; color: var(--text-secondary); }}
+        #toast {{ position: fixed; bottom: 24px; right: 24px; background: rgba(18,24,38,0.95); border: 1px solid var(--border); padding: 12px 18px; border-radius: 8px; display: none; z-index: 9999; }}
+    </style>
+</head>
+<body>
+    <header>
+        <a href="/desk" class="brand">
+            <div class="brand-logo">R</div>
+            <span>RustNext Desk</span>
+        </a>
+        <div class="nav-actions">
+            <a href="/desk" class="btn btn-secondary">← Back to Workspace</a>
+            <div class="user-chip">
+                <div class="user-avatar">{avatar_char}</div>
+                <span>{user_name}</span>
+            </div>
+        </div>
+    </header>
+    <main>
+        <div class="breadcrumbs">
+            <a href="/desk">Desk</a> <span>/</span> <span>{display_title}</span>
+        </div>
+        <div class="action-bar">
+            <div>
+                <h1 class="page-title">{display_title}</h1>
+            </div>
+            <div style="display: flex; gap: 0.75rem;">
+                <button class="btn btn-secondary" onclick="loadRecords()">↻ Refresh</button>
+                <a href="/desk/form/{doctype}/new" class="btn btn-primary">+ New {display_title}</a>
+            </div>
+        </div>
+        <div class="table-container">
+            <div class="table-filter-bar">
+                <input type="text" id="filter-search" class="search-input" placeholder="Search by name, ID or details..." oninput="filterTable()" />
+                <span id="record-count" style="font-size: 0.85rem; color: var(--text-secondary); margin-left: auto;">Loading records...</span>
+            </div>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Document Identifier</th>
+                        <th>Status</th>
+                        <th>Created</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody id="table-body">
+                    <tr><td colspan="4" class="empty-state">Loading {display_title} records from SurrealDB...</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </main>
+    <div id="toast"></div>
+    <script>
+        let allRecords = [];
+        async function loadRecords() {{
+            const tbody = document.getElementById('table-body');
+            const countSpan = document.getElementById('record-count');
+            try {{
+                const res = await fetch('/api/v2/document/{doctype}?limit=50');
+                if (!res.ok) throw new Error('Status: ' + res.status);
+                const json = await res.json();
+                allRecords = json.data || [];
+                renderRows(allRecords);
+            }} catch (err) {{
+                tbody.innerHTML = `<tr><td colspan="4" class="empty-state" style="color:var(--danger)">Failed to load records: ${{err.message}}</td></tr>`;
+                countSpan.textContent = 'Error loading records';
+            }}
+        }}
+
+        function renderRows(records) {{
+            const tbody = document.getElementById('table-body');
+            const countSpan = document.getElementById('record-count');
+            countSpan.textContent = `${{records.length}} record(s) found`;
+            if (records.length === 0) {{
+                tbody.innerHTML = `<tr><td colspan="4" class="empty-state">No records found. Click "+ New {display_title}" to create one.</td></tr>`;
+                return;
+            }}
+            tbody.innerHTML = records.map(r => {{
+                const docname = r.name || r.id || 'unnamed';
+                const status = r.docstatus === 1 ? 'Submitted' : (r.docstatus === 2 ? 'Cancelled' : 'Draft');
+                const badgeClass = r.docstatus === 1 ? 'badge-submitted' : (r.docstatus === 2 ? 'badge-cancelled' : 'badge-draft');
+                const created = r.creation || r.created_at || 'Just now';
+                return `<tr class="clickable-row" onclick="window.location.href='/desk/form/{doctype}/${{encodeURIComponent(docname)}}'">
+                    <td style="font-weight:600; color:var(--accent);">${{docname}}</td>
+                    <td><span class="badge ${{badgeClass}}">${{status}}</span></td>
+                    <td style="color:var(--text-secondary);">${{created}}</td>
+                    <td><a href="/desk/form/{doctype}/${{encodeURIComponent(docname)}}" class="btn btn-secondary" style="padding:0.25rem 0.6rem;font-size:0.75rem;">Edit</a></td>
+                </tr>`;
+            }}).join('');
+        }}
+
+        function filterTable() {{
+            const q = document.getElementById('filter-search').value.toLowerCase().trim();
+            if (!q) {{ renderRows(allRecords); return; }}
+            const filtered = allRecords.filter(r => JSON.stringify(r).toLowerCase().includes(q));
+            renderRows(filtered);
+        }}
+
+        loadRecords();
+    </script>
+</body>
+</html>"##
+    )
+}
+
+/// Compiles an interactive, responsive HTML Form View for editing or creating documents.
+#[must_use]
+pub fn render_form_view_html(doctype: &str, docname: &str, user_name: &str) -> String {
+    let avatar_char = user_name.chars().next().unwrap_or('A').to_string();
+    let display_title = doctype.replace('_', " ");
+    let is_new = docname == "new";
+    format!(
+        r##"<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{display_title} — {docname} — RustNext Desk</title>
+    <style>
+        :root {{
+            --bg-primary: #0a0b10; --bg-secondary: #12141c; --bg-card: rgba(22, 25, 37, 0.75);
+            --border: rgba(255, 255, 255, 0.08); --accent: #6366f1; --accent-glow: rgba(99, 102, 241, 0.25);
+            --text-primary: #f8fafc; --text-secondary: #94a3b8; --success: #10b981; --warning: #f59e0b; --danger: #ef4444;
+        }}
+        * {{ margin: 0; padding: 0; box-sizing: border-box; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }}
+        body {{ background-color: var(--bg-primary); color: var(--text-primary); min-height: 100vh; display: flex; flex-direction: column; }}
+        header {{
+            position: sticky; top: 0; z-index: 50; background: rgba(10, 11, 16, 0.85); backdrop-filter: blur(16px);
+            border-bottom: 1px solid var(--border); padding: 0.75rem 2rem; display: flex; justify-content: space-between; align-items: center;
+        }}
+        .brand {{ display: flex; align-items: center; gap: 0.75rem; font-weight: 700; font-size: 1.25rem; text-decoration: none; color: inherit; }}
+        .brand-logo {{ width: 32px; height: 32px; background: linear-gradient(135deg, #6366f1, #a855f7); border-radius: 8px; display: flex; align-items: center; justify-content: center; font-weight: 900; color: white; }}
+        .nav-actions {{ display: flex; align-items: center; gap: 1rem; }}
+        .user-chip {{ display: flex; align-items: center; gap: 0.5rem; font-size: 0.875rem; color: var(--text-secondary); }}
+        .user-avatar {{ width: 32px; height: 32px; border-radius: 50%; background: #334155; display: flex; align-items: center; justify-content: center; color: white; font-weight: 600; }}
+        main {{ max-width: 1100px; margin: 0 auto; width: 100%; padding: 2rem; flex: 1; }}
+        .breadcrumbs {{ display: flex; align-items: center; gap: 0.5rem; font-size: 0.875rem; color: var(--text-secondary); margin-bottom: 0.5rem; }}
+        .breadcrumbs a {{ color: var(--accent); text-decoration: none; }}
+        .action-bar {{ display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 1rem; }}
+        .page-title {{ font-size: 1.75rem; font-weight: 800; display: flex; align-items: center; gap: 0.75rem; }}
+        .btn {{ padding: 0.5rem 1.2rem; border-radius: 8px; font-weight: 600; font-size: 0.875rem; cursor: pointer; border: none; transition: all 0.2s; display: inline-flex; align-items: center; gap: 0.5rem; text-decoration: none; }}
+        .btn-primary {{ background: var(--accent); color: white; box-shadow: 0 0 12px var(--accent-glow); }}
+        .btn-primary:hover {{ opacity: 0.9; transform: translateY(-1px); }}
+        .btn-success {{ background: var(--success); color: white; }}
+        .btn-danger {{ background: var(--danger); color: white; }}
+        .btn-secondary {{ background: var(--bg-secondary); color: var(--text-primary); border: 1px solid var(--border); }}
+        .btn-secondary:hover {{ border-color: var(--accent); }}
+        .form-card {{ background: var(--bg-card); border: 1px solid var(--border); border-radius: 14px; padding: 2rem; margin-bottom: 1.5rem; }}
+        .form-grid {{ display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1.5rem; margin-bottom: 1.5rem; }}
+        .form-group {{ display: flex; flex-direction: column; gap: 0.4rem; }}
+        .form-group label {{ font-size: 0.8rem; font-weight: 600; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.05em; }}
+        .form-control {{ background: var(--bg-secondary); border: 1px solid var(--border); color: white; padding: 0.6rem 0.85rem; border-radius: 8px; font-size: 0.875rem; outline: none; transition: border-color 0.2s; width: 100%; }}
+        .form-control:focus {{ border-color: var(--accent); }}
+        textarea.form-control {{ min-height: 120px; resize: vertical; font-family: monospace; }}
+        .badge {{ font-size: 0.75rem; font-weight: 600; padding: 0.2rem 0.6rem; border-radius: 9999px; }}
+        .badge-draft {{ background: rgba(245, 158, 11, 0.15); color: #fbbf24; border: 1px solid rgba(245, 158, 11, 0.3); }}
+        .badge-submitted {{ background: rgba(16, 185, 129, 0.15); color: #34d399; border: 1px solid rgba(16, 185, 129, 0.3); }}
+        .badge-cancelled {{ background: rgba(239, 68, 68, 0.15); color: #f87171; border: 1px solid rgba(239, 68, 68, 0.3); }}
+        #toast {{ position: fixed; bottom: 24px; right: 24px; background: rgba(18,24,38,0.95); border: 1px solid var(--border); padding: 12px 18px; border-radius: 8px; font-size: 13px; z-index: 9999; display: none; }}
+    </style>
+</head>
+<body>
+    <header>
+        <a href="/desk" class="brand">
+            <div class="brand-logo">R</div>
+            <span>RustNext Desk</span>
+        </a>
+        <div class="nav-actions">
+            <a href="/desk/list/{doctype}" class="btn btn-secondary">← Back to List</a>
+            <div class="user-chip">
+                <div class="user-avatar">{avatar_char}</div>
+                <span>{user_name}</span>
+            </div>
+        </div>
+    </header>
+    <main>
+        <div class="breadcrumbs">
+            <a href="/desk">Desk</a> <span>/</span> <a href="/desk/list/{doctype}">{display_title}</a> <span>/</span> <span>{docname}</span>
+        </div>
+        <div class="action-bar">
+            <div>
+                <h1 class="page-title">
+                    <span>{docname}</span>
+                    <span id="docstatus-badge" class="badge badge-draft">Draft</span>
+                </h1>
+            </div>
+            <div style="display: flex; gap: 0.75rem;">
+                <button id="btn-save" class="btn btn-primary" onclick="saveDocument()">💾 Save</button>
+                <button id="btn-submit" class="btn btn-success" style="display:none;" onclick="submitDocument()">✓ Submit</button>
+                <button id="btn-cancel" class="btn btn-danger" style="display:none;" onclick="cancelDocument()">✕ Cancel</button>
+                <button id="btn-delete" class="btn btn-secondary" style="display:none;" onclick="deleteDocument()">🗑 Delete</button>
+            </div>
+        </div>
+
+        <form id="doc-form" onsubmit="event.preventDefault(); saveDocument();">
+            <div class="form-card">
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label>Identifier / Name</label>
+                        <input type="text" id="field-name" class="form-control" value="{docname}" disabled />
+                    </div>
+                    <div class="form-group">
+                        <label>Posting / Transaction Date</label>
+                        <input type="date" id="field-posting_date" class="form-control" />
+                    </div>
+                    <div class="form-group">
+                        <label>Party / Reference</label>
+                        <input type="text" id="field-party" class="form-control" placeholder="Customer / Supplier / Reference..." />
+                    </div>
+                    <div class="form-group">
+                        <label>Total Amount / Value</label>
+                        <input type="number" step="0.01" id="field-total" class="form-control" placeholder="0.00" />
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Remarks / Description / Payload</label>
+                    <textarea id="field-remarks" class="form-control" placeholder="Enter notes or JSON data..."></textarea>
+                </div>
+            </div>
+        </form>
+    </main>
+    <div id="toast"></div>
+
+    <script>
+        const isNew = {is_new};
+        const doctype = '{doctype}';
+        let currentName = '{docname}';
+
+        function showToast(msg, ok = true) {{
+            const t = document.getElementById('toast');
+            t.style.display = 'block';
+            t.style.borderColor = ok ? 'var(--success)' : 'var(--danger)';
+            t.innerHTML = `<span style="color:${{ok ? 'var(--success)' : 'var(--danger)'}}">●</span> ${{msg}}`;
+            setTimeout(() => {{ t.style.display = 'none'; }}, 3500);
+        }}
+
+        async function loadDocument() {{
+            if (isNew) {{
+                document.getElementById('field-posting_date').value = new Date().toISOString().split('T')[0];
+                return;
+            }}
+            try {{
+                const res = await fetch(`/api/v2/document/${{doctype}}/${{encodeURIComponent(currentName)}}`);
+                if (!res.ok) throw new Error('Status ' + res.status);
+                const json = await res.json();
+                const d = json.data || {{}};
+                if (d.posting_date) document.getElementById('field-posting_date').value = d.posting_date;
+                if (d.customer || d.supplier || d.party) document.getElementById('field-party').value = d.customer || d.supplier || d.party || '';
+                if (d.grand_total || d.total) document.getElementById('field-total').value = d.grand_total || d.total || '';
+                if (d.remarks || d.description) document.getElementById('field-remarks').value = d.remarks || d.description || JSON.stringify(d, null, 2);
+
+                const badge = document.getElementById('docstatus-badge');
+                if (d.docstatus === 1) {{
+                    badge.className = 'badge badge-submitted';
+                    badge.textContent = 'Submitted';
+                    document.getElementById('btn-cancel').style.display = 'inline-flex';
+                }} else if (d.docstatus === 2) {{
+                    badge.className = 'badge badge-cancelled';
+                    badge.textContent = 'Cancelled';
+                }} else {{
+                    badge.className = 'badge badge-draft';
+                    badge.textContent = 'Draft';
+                    document.getElementById('btn-submit').style.display = 'inline-flex';
+                    document.getElementById('btn-delete').style.display = 'inline-flex';
+                }}
+            }} catch (err) {{
+                showToast('Failed to load document: ' + err.message, false);
+            }}
+        }}
+
+        async function saveDocument() {{
+            const body = {{
+                doctype: doctype,
+                posting_date: document.getElementById('field-posting_date').value,
+                party: document.getElementById('field-party').value,
+                total: parseFloat(document.getElementById('field-total').value) || 0.0,
+                remarks: document.getElementById('field-remarks').value,
+            }};
+            try {{
+                const url = isNew ? `/api/v2/document/${{doctype}}` : `/api/v2/document/${{doctype}}/${{encodeURIComponent(currentName)}}`;
+                const method = isNew ? 'POST' : 'PUT';
+                const res = await fetch(url, {{
+                    method: method,
+                    headers: {{ 'Content-Type': 'application/json' }},
+                    body: JSON.stringify(body)
+                }});
+                const json = await res.json();
+                if (!res.ok) throw new Error(json.message || 'Save failed');
+                showToast('Document saved successfully!', true);
+                setTimeout(() => {{ window.location.href = `/desk/list/${{doctype}}`; }}, 800);
+            }} catch (err) {{
+                showToast('Error: ' + err.message, false);
+            }}
+        }}
+
+        async function submitDocument() {{
+            try {{
+                const res = await fetch(`/api/v2/document/${{doctype}}/${{encodeURIComponent(currentName)}}/submit`, {{ method: 'POST' }});
+                if (!res.ok) throw new Error('Submit failed');
+                showToast('Document submitted successfully!', true);
+                setTimeout(() => {{ window.location.reload(); }}, 800);
+            }} catch (err) {{
+                showToast('Submit error: ' + err.message, false);
+            }}
+        }}
+
+        async function cancelDocument() {{
+            try {{
+                const res = await fetch(`/api/v2/document/${{doctype}}/${{encodeURIComponent(currentName)}}/cancel`, {{ method: 'POST' }});
+                if (!res.ok) throw new Error('Cancel failed');
+                showToast('Document cancelled successfully!', true);
+                setTimeout(() => {{ window.location.reload(); }}, 800);
+            }} catch (err) {{
+                showToast('Cancel error: ' + err.message, false);
+            }}
+        }}
+
+        async function deleteDocument() {{
+            if (!confirm('Are you sure you want to delete this document?')) return;
+            try {{
+                const res = await fetch(`/api/v2/document/${{doctype}}/${{encodeURIComponent(currentName)}}`, {{ method: 'DELETE' }});
+                if (!res.ok) throw new Error('Delete failed');
+                showToast('Document deleted!', true);
+                setTimeout(() => {{ window.location.href = `/desk/list/${{doctype}}`; }}, 800);
+            }} catch (err) {{
+                showToast('Delete error: ' + err.message, false);
+            }}
+        }}
+
+        loadDocument();
+    </script>
+</body>
+</html>"##
+    )
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -395,5 +783,22 @@ mod tests {
         assert!(html.contains("omnibar"));
         assert!(html.contains("Accounting & Finance"));
         assert!(html.contains("SurrealDB 3.3.0"));
+    }
+
+    #[test]
+    fn test_render_list_view_html() {
+        let html = render_list_view_html("sales_invoice", "Administrator");
+        assert!(html.contains("sales invoice List — RustNext Desk"));
+        assert!(html.contains("Document Identifier"));
+        assert!(html.contains("/api/v2/document/sales_invoice"));
+    }
+
+    #[test]
+    fn test_render_form_view_html() {
+        let html = render_form_view_html("sales_invoice", "ACC-SINV-2026-00001", "Administrator");
+        assert!(html.contains("ACC-SINV-2026-00001"));
+        assert!(html.contains("field-posting_date"));
+        assert!(html.contains("field-total"));
+        assert!(html.contains("/api/v2/document/"));
     }
 }

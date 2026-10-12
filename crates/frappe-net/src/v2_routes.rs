@@ -711,18 +711,40 @@ pub async fn upload_file_handler(
         Err(e) => return HttpResponse::InternalServerError().body(e.to_string()),
     };
 
-    let raw_bytes = match hex::decode(&payload.content_base64)
-        .or_else(|_| Ok::<Vec<u8>, hex::FromHexError>(payload.content_base64.as_bytes().to_vec()))
-    {
-        Ok(b) => b,
-        Err(e) => return HttpResponse::BadRequest().body(format!("Invalid file payload: {e}")),
-    };
+    let content_b64 = payload.content_base64.clone();
+    let file_name = payload.file_name.clone();
 
-    // Hardened: Magic byte inspection and prohibited extension validation
-    let detected_type = match validate_file_upload(&payload.file_name, &raw_bytes, 50 * 1024 * 1024)
+    let processed = match actix_web::web::block(
+        move || -> Result<(Vec<u8>, DetectedFileType, String, u64), String> {
+            let raw_bytes = hex::decode(&content_b64)
+                .or_else(|_| Ok::<Vec<u8>, hex::FromHexError>(content_b64.as_bytes().to_vec()))
+                .map_err(|e| format!("Invalid file payload: {e}"))?;
+
+            let detected_type = validate_file_upload(&file_name, &raw_bytes, 50 * 1024 * 1024)
+                .map_err(|e| e.to_string())?;
+
+            let final_bytes = if detected_type == DetectedFileType::Svg {
+                if let Ok(svg_str) = std::str::from_utf8(&raw_bytes) {
+                    sanitize_svg(svg_str).into_bytes()
+                } else {
+                    raw_bytes
+                }
+            } else {
+                raw_bytes
+            };
+
+            let mut hasher = Sha256::new();
+            hasher.update(&final_bytes);
+            let hash = hex::encode(hasher.finalize());
+            let file_size = final_bytes.len() as u64;
+
+            Ok((final_bytes, detected_type, hash, file_size))
+        },
+    )
+    .await
     {
-        Ok(t) => t,
-        Err(e) => {
+        Ok(Ok(data)) => data,
+        Ok(Err(e)) => {
             let client_ip = req
                 .connection_info()
                 .peer_addr()
@@ -743,23 +765,12 @@ pub async fn upload_file_handler(
                 "error": format!("File upload rejected: {e}")
             }));
         }
-    };
-
-    // Sanitize SVG if detected to prevent Stored XSS
-    let final_bytes = if detected_type == DetectedFileType::Svg {
-        if let Ok(svg_str) = std::str::from_utf8(&raw_bytes) {
-            sanitize_svg(svg_str).into_bytes()
-        } else {
-            raw_bytes.clone()
+        Err(e) => {
+            return HttpResponse::InternalServerError().body(format!("Blocking task error: {e}"));
         }
-    } else {
-        raw_bytes.clone()
     };
 
-    let mut hasher = Sha256::new();
-    hasher.update(&final_bytes);
-    let hash = hex::encode(hasher.finalize());
-    let file_size = final_bytes.len() as u64;
+    let (final_bytes, detected_type, hash, file_size) = processed;
 
     let file_record = serde_json::json!({
         "id": hash,
@@ -1067,7 +1078,17 @@ pub async fn login_handler(
 
     let (raw_refresh, refresh_record) = issue_refresh_token(user_id, &tenant_id.0, roles.clone());
     if let Ok(mut rft_guard) = rbac_state.refresh_tokens.write() {
-        rft_guard.insert(refresh_record.token_hash.clone(), refresh_record);
+        rft_guard.insert(refresh_record.token_hash.clone(), refresh_record.clone());
+    }
+
+    if let Ok(client) = pool_mgr.get_or_initialize_client(&tenant_id).await {
+        let _ = client
+            .query("UPSERT refresh_tokens CONTENT $rec;")
+            .bind((
+                "rec",
+                serde_json::to_value(&refresh_record).unwrap_or_default(),
+            ))
+            .await;
     }
 
     HttpResponse::Ok().json(serde_json::json!({
@@ -1087,10 +1108,46 @@ pub async fn login_handler(
 
 /// Handler for Refreshing Access Tokens: `POST /api/v2/auth/refresh`
 pub async fn auth_refresh_token_handler(
+    req: HttpRequest,
     payload: web::Json<RefreshTokenPayload>,
     rbac_state: web::Data<DynamicRbacState>,
+    pool_mgr: Option<web::Data<ConnectionPoolManager>>,
 ) -> impl Responder {
     let token_hash = hash_refresh_token(&payload.refresh_token);
+    let in_cache = rbac_state
+        .refresh_tokens
+        .read()
+        .map(|g| g.contains_key(&token_hash))
+        .unwrap_or(false);
+
+    if !in_cache && let Some(mgr) = &pool_mgr {
+        let tenant_id = req
+            .extensions()
+            .get::<TenantId>()
+            .cloned()
+            .unwrap_or_else(|| TenantId("default".into()));
+        if let Ok(client) = mgr.get_or_initialize_client(&tenant_id).await {
+            let sanitized = sanitize_surrealql_string(&token_hash);
+            if let Ok(mut res) = client
+                .query(format!(
+                    "SELECT * FROM refresh_tokens WHERE token_hash = '{sanitized}';"
+                ))
+                .await
+            {
+                let rows: Vec<serde_json::Value> = res.take(0).unwrap_or_default();
+                let db_records: Vec<RefreshTokenRecord> = rows
+                    .into_iter()
+                    .filter_map(|r| serde_json::from_value(r).ok())
+                    .collect();
+                if let Some(r) = db_records.into_iter().next()
+                    && let Ok(mut guard) = rbac_state.refresh_tokens.write()
+                {
+                    guard.insert(token_hash.clone(), r);
+                }
+            }
+        }
+    }
+
     let mut rft_guard = match rbac_state.refresh_tokens.write() {
         Ok(g) => g,
         Err(_) => return HttpResponse::InternalServerError().body("State Lock Failed"),
@@ -1110,6 +1167,7 @@ pub async fn auth_refresh_token_handler(
 
     // Revoke old refresh token (sliding rotation)
     record.revoked = true;
+    let old_revoked = record.clone();
     let user_id = record.user_id.clone();
     let tenant_id = record.tenant_id.clone();
     let roles = record.roles.clone();
@@ -1123,7 +1181,30 @@ pub async fn auth_refresh_token_handler(
     };
 
     let (new_raw_refresh, new_refresh_rec) = issue_refresh_token(&user_id, &tenant_id, roles);
-    rft_guard.insert(new_refresh_rec.token_hash.clone(), new_refresh_rec);
+    rft_guard.insert(new_refresh_rec.token_hash.clone(), new_refresh_rec.clone());
+
+    if let Some(mgr) = &pool_mgr {
+        let tid = TenantId(tenant_id);
+        let mgr_clone = mgr.clone();
+        tokio::spawn(async move {
+            if let Ok(client) = mgr_clone.get_or_initialize_client(&tid).await {
+                let _ = client
+                    .query("UPSERT refresh_tokens CONTENT $rec;")
+                    .bind((
+                        "rec",
+                        serde_json::to_value(&old_revoked).unwrap_or_default(),
+                    ))
+                    .await;
+                let _ = client
+                    .query("UPSERT refresh_tokens CONTENT $rec;")
+                    .bind((
+                        "rec",
+                        serde_json::to_value(&new_refresh_rec).unwrap_or_default(),
+                    ))
+                    .await;
+            }
+        });
+    }
 
     HttpResponse::Ok().json(serde_json::json!({
         "access_token": access_token,
@@ -2293,12 +2374,44 @@ pub struct CreateCouponPayload {
 }
 
 /// Handler: List all coupons: `GET /api/v2/trade/coupons`
-pub async fn trade_list_coupons_handler(state: web::Data<DynamicRbacState>) -> impl Responder {
-    let coupons = state
+pub async fn trade_list_coupons_handler(
+    req: HttpRequest,
+    state: web::Data<DynamicRbacState>,
+    pool_mgr: Option<web::Data<ConnectionPoolManager>>,
+) -> impl Responder {
+    let mut coupons = state
         .coupons
         .read()
         .map(|c| c.values().cloned().collect::<Vec<_>>())
         .unwrap_or_default();
+
+    if coupons.is_empty()
+        && let Some(mgr) = &pool_mgr
+    {
+        let tenant_id = req
+            .extensions()
+            .get::<TenantId>()
+            .cloned()
+            .unwrap_or_else(|| TenantId("default".into()));
+        if let Ok(client) = mgr.get_or_initialize_client(&tenant_id).await
+            && let Ok(mut res) = client.query("SELECT * FROM coupons;").await
+        {
+            let rows: Vec<serde_json::Value> = res.take(0).unwrap_or_default();
+            let db_coupons: Vec<CouponCode> = rows
+                .into_iter()
+                .filter_map(|r| serde_json::from_value(r).ok())
+                .collect();
+            if !db_coupons.is_empty() {
+                if let Ok(mut lock) = state.coupons.write() {
+                    for c in &db_coupons {
+                        lock.insert(c.code.clone(), c.clone());
+                    }
+                }
+                coupons = db_coupons;
+            }
+        }
+    }
+
     HttpResponse::Ok().json(serde_json::json!({
         "status": "OK",
         "count": coupons.len(),
@@ -2308,8 +2421,10 @@ pub async fn trade_list_coupons_handler(state: web::Data<DynamicRbacState>) -> i
 
 /// Handler: Create coupon: `POST /api/v2/trade/coupons`
 pub async fn trade_create_coupon_handler(
+    req: HttpRequest,
     state: web::Data<DynamicRbacState>,
     payload: web::Json<CreateCouponPayload>,
+    pool_mgr: Option<web::Data<ConnectionPoolManager>>,
 ) -> impl Responder {
     let p = payload.into_inner();
     let dtype = match p.discount_type.to_lowercase().as_str() {
@@ -2332,6 +2447,20 @@ pub async fn trade_create_coupon_handler(
         lock.insert(coupon.code.clone(), coupon.clone());
     }
 
+    if let Some(mgr) = &pool_mgr {
+        let tenant_id = req
+            .extensions()
+            .get::<TenantId>()
+            .cloned()
+            .unwrap_or_else(|| TenantId("default".into()));
+        if let Ok(client) = mgr.get_or_initialize_client(&tenant_id).await {
+            let _ = client
+                .query("UPSERT coupons CONTENT $coupon;")
+                .bind(("coupon", serde_json::to_value(&coupon).unwrap_or_default()))
+                .await;
+        }
+    }
+
     HttpResponse::Created().json(serde_json::json!({
         "status": "CREATED",
         "coupon": coupon,
@@ -2340,20 +2469,55 @@ pub async fn trade_create_coupon_handler(
 
 /// Handler: Apply and calculate coupon against cart: `POST /api/v2/trade/coupons/apply`
 pub async fn trade_apply_coupon_handler(
+    req: HttpRequest,
     state: web::Data<DynamicRbacState>,
     payload: web::Json<ApplyCouponPayload>,
+    pool_mgr: Option<web::Data<ConnectionPoolManager>>,
 ) -> impl Responder {
     let p = payload.into_inner();
-    let lock = match state.coupons.read() {
-        Ok(l) => l,
-        Err(_) => {
-            return HttpResponse::InternalServerError()
-                .json(serde_json::json!({"error": "Lock error"}));
-        }
+    let mut found_coupon = {
+        let lock = match state.coupons.read() {
+            Ok(l) => l,
+            Err(_) => {
+                return HttpResponse::InternalServerError()
+                    .json(serde_json::json!({"error": "Lock error"}));
+            }
+        };
+        lock.get(&p.code.to_uppercase()).cloned()
     };
 
-    let coupon = match lock.get(&p.code.to_uppercase()) {
-        Some(c) => c,
+    if found_coupon.is_none()
+        && let Some(mgr) = &pool_mgr
+    {
+        let tenant_id = req
+            .extensions()
+            .get::<TenantId>()
+            .cloned()
+            .unwrap_or_else(|| TenantId("default".into()));
+        if let Ok(client) = mgr.get_or_initialize_client(&tenant_id).await {
+            let code_upper = p.code.to_uppercase();
+            let sanitized = sanitize_surrealql_string(&code_upper);
+            if let Ok(mut res) = client
+                .query(format!("SELECT * FROM coupons WHERE code = '{sanitized}';"))
+                .await
+            {
+                let rows: Vec<serde_json::Value> = res.take(0).unwrap_or_default();
+                let db_coupons: Vec<CouponCode> = rows
+                    .into_iter()
+                    .filter_map(|r| serde_json::from_value(r).ok())
+                    .collect();
+                if let Some(c) = db_coupons.into_iter().next() {
+                    if let Ok(mut lock) = state.coupons.write() {
+                        lock.insert(c.code.clone(), c.clone());
+                    }
+                    found_coupon = Some(c);
+                }
+            }
+        }
+    }
+
+    let coupon = match found_coupon {
+        Some(ref c) => c,
         None => {
             return HttpResponse::NotFound().json(serde_json::json!({
                 "status": "INVALID",
@@ -2400,10 +2564,38 @@ pub struct ListReviewsQuery {
 
 /// Handler: List reviews: `GET /api/v2/trade/reviews`
 pub async fn trade_list_reviews_handler(
+    req: HttpRequest,
     state: web::Data<DynamicRbacState>,
     query: web::Query<ListReviewsQuery>,
+    pool_mgr: Option<web::Data<ConnectionPoolManager>>,
 ) -> impl Responder {
-    let reviews = state.reviews.read().map(|r| r.clone()).unwrap_or_default();
+    let mut reviews = state.reviews.read().map(|r| r.clone()).unwrap_or_default();
+
+    if reviews.is_empty()
+        && let Some(mgr) = &pool_mgr
+    {
+        let tenant_id = req
+            .extensions()
+            .get::<TenantId>()
+            .cloned()
+            .unwrap_or_else(|| TenantId("default".into()));
+        if let Ok(client) = mgr.get_or_initialize_client(&tenant_id).await
+            && let Ok(mut res) = client.query("SELECT * FROM product_reviews;").await
+        {
+            let rows: Vec<serde_json::Value> = res.take(0).unwrap_or_default();
+            let db_reviews: Vec<ProductReview> = rows
+                .into_iter()
+                .filter_map(|r| serde_json::from_value(r).ok())
+                .collect();
+            if !db_reviews.is_empty() {
+                if let Ok(mut lock) = state.reviews.write() {
+                    *lock = db_reviews.clone();
+                }
+                reviews = db_reviews;
+            }
+        }
+    }
+
     let filtered: Vec<ProductReview> = reviews
         .into_iter()
         .filter(|r| {
@@ -2441,8 +2633,10 @@ pub async fn trade_list_reviews_handler(
 
 /// Handler: Submit review: `POST /api/v2/trade/reviews`
 pub async fn trade_submit_review_handler(
+    req: HttpRequest,
     state: web::Data<DynamicRbacState>,
     payload: web::Json<SubmitReviewPayload>,
+    pool_mgr: Option<web::Data<ConnectionPoolManager>>,
 ) -> impl Responder {
     let p = payload.into_inner();
     let review_id = format!("rev_{}_{}", p.item_code, Utc::now().timestamp_millis());
@@ -2469,6 +2663,20 @@ pub async fn trade_submit_review_handler(
         lock.push(review.clone());
     }
 
+    if let Some(mgr) = &pool_mgr {
+        let tenant_id = req
+            .extensions()
+            .get::<TenantId>()
+            .cloned()
+            .unwrap_or_else(|| TenantId("default".into()));
+        if let Ok(client) = mgr.get_or_initialize_client(&tenant_id).await {
+            let _ = client
+                .query("UPSERT product_reviews CONTENT $rev;")
+                .bind(("rev", serde_json::to_value(&review).unwrap_or_default()))
+                .await;
+        }
+    }
+
     HttpResponse::Created().json(serde_json::json!({
         "status": "SUBMITTED",
         "review": review,
@@ -2485,8 +2693,10 @@ pub struct ModerateReviewPayload {
 
 /// Handler: Moderate review: `POST /api/v2/trade/reviews/moderate`
 pub async fn trade_moderate_review_handler(
+    req: HttpRequest,
     state: web::Data<DynamicRbacState>,
     payload: web::Json<ModerateReviewPayload>,
+    pool_mgr: Option<web::Data<ConnectionPoolManager>>,
 ) -> impl Responder {
     let p = payload.into_inner();
     let mut lock = match state.reviews.write() {
@@ -2508,9 +2718,33 @@ pub async fn trade_moderate_review_handler(
             rev.admin_reply = Some(reply);
             rev.admin_reply_at = Some(Utc::now());
         }
+
+        let updated_rev = rev.clone();
+
+        if let Some(mgr) = &pool_mgr {
+            let tenant_id = req
+                .extensions()
+                .get::<TenantId>()
+                .cloned()
+                .unwrap_or_else(|| TenantId("default".into()));
+            let updated_clone = updated_rev.clone();
+            let mgr_clone = mgr.clone();
+            tokio::spawn(async move {
+                if let Ok(client) = mgr_clone.get_or_initialize_client(&tenant_id).await {
+                    let _ = client
+                        .query("UPSERT product_reviews CONTENT $rev;")
+                        .bind((
+                            "rev",
+                            serde_json::to_value(&updated_clone).unwrap_or_default(),
+                        ))
+                        .await;
+                }
+            });
+        }
+
         HttpResponse::Ok().json(serde_json::json!({
             "status": "UPDATED",
-            "review": rev,
+            "review": updated_rev,
         }))
     } else {
         HttpResponse::NotFound().json(serde_json::json!({
@@ -2531,28 +2765,65 @@ pub struct AddWishlistItemPayload {
 
 /// Handler: Get user wishlist: `GET /api/v2/trade/wishlists/{user_id}`
 pub async fn trade_get_wishlist_handler(
+    req: HttpRequest,
     state: web::Data<DynamicRbacState>,
     user_id: web::Path<String>,
+    pool_mgr: Option<web::Data<ConnectionPoolManager>>,
 ) -> impl Responder {
     let uid = user_id.into_inner();
-    let wishlist = state
+    let mut wishlist = state
         .wishlists
         .read()
         .ok()
-        .and_then(|w| w.get(&uid).cloned())
+        .and_then(|w| w.get(&uid).cloned());
+
+    if wishlist.is_none()
+        && let Some(mgr) = &pool_mgr
+    {
+        let tenant_id = req
+            .extensions()
+            .get::<TenantId>()
+            .cloned()
+            .unwrap_or_else(|| TenantId("default".into()));
+        if let Ok(client) = mgr.get_or_initialize_client(&tenant_id).await {
+            let sanitized_uid = sanitize_surrealql_string(&uid);
+            if let Ok(mut res) = client
+                .query(format!(
+                    "SELECT * FROM wishlists WHERE user_id = '{sanitized_uid}';"
+                ))
+                .await
+            {
+                let rows: Vec<serde_json::Value> = res.take(0).unwrap_or_default();
+                let db_lists: Vec<Wishlist> = rows
+                    .into_iter()
+                    .filter_map(|r| serde_json::from_value(r).ok())
+                    .collect();
+                if let Some(wl) = db_lists.into_iter().next() {
+                    if let Ok(mut lock) = state.wishlists.write() {
+                        lock.insert(uid.clone(), wl.clone());
+                    }
+                    wishlist = Some(wl);
+                }
+            }
+        }
+    }
+
+    let final_wishlist = wishlist
         .unwrap_or_else(|| Wishlist::new(format!("wl_{uid}"), uid.clone(), "Default Wishlist"));
 
     HttpResponse::Ok().json(serde_json::json!({
         "status": "OK",
-        "wishlist": wishlist,
+        "wishlist": final_wishlist,
     }))
 }
 
 /// Handler: Add item to wishlist: `POST /api/v2/trade/wishlists/{user_id}/items`
 pub async fn trade_add_wishlist_item_handler(
+    req: HttpRequest,
     state: web::Data<DynamicRbacState>,
     user_id: web::Path<String>,
     payload: web::Json<AddWishlistItemPayload>,
+    pool_mgr: Option<web::Data<ConnectionPoolManager>>,
 ) -> impl Responder {
     let uid = user_id.into_inner();
     let p = payload.into_inner();
@@ -2576,10 +2847,30 @@ pub async fn trade_add_wishlist_item_handler(
         .entry(uid.clone())
         .or_insert_with(|| Wishlist::new(format!("wl_{uid}"), uid.clone(), "Default Wishlist"));
     match wl.add_item(item) {
-        Ok(()) => HttpResponse::Ok().json(serde_json::json!({
-            "status": "ADDED",
-            "wishlist": wl,
-        })),
+        Ok(()) => {
+            let updated_wl = wl.clone();
+            if let Some(mgr) = &pool_mgr {
+                let tenant_id = req
+                    .extensions()
+                    .get::<TenantId>()
+                    .cloned()
+                    .unwrap_or_else(|| TenantId("default".into()));
+                let wl_clone = updated_wl.clone();
+                let mgr_clone = mgr.clone();
+                tokio::spawn(async move {
+                    if let Ok(client) = mgr_clone.get_or_initialize_client(&tenant_id).await {
+                        let _ = client
+                            .query("UPSERT wishlists CONTENT $wl;")
+                            .bind(("wl", serde_json::to_value(&wl_clone).unwrap_or_default()))
+                            .await;
+                    }
+                });
+            }
+            HttpResponse::Ok().json(serde_json::json!({
+                "status": "ADDED",
+                "wishlist": updated_wl,
+            }))
+        }
         Err(e) => HttpResponse::BadRequest().json(serde_json::json!({
             "status": "ERROR",
             "message": e.to_string(),
@@ -2589,8 +2880,10 @@ pub async fn trade_add_wishlist_item_handler(
 
 /// Handler: Remove item from wishlist: `DELETE /api/v2/trade/wishlists/{user_id}/items/{item_code}`
 pub async fn trade_remove_wishlist_item_handler(
+    req: HttpRequest,
     state: web::Data<DynamicRbacState>,
     path: web::Path<(String, String)>,
+    pool_mgr: Option<web::Data<ConnectionPoolManager>>,
 ) -> impl Responder {
     let (uid, item_code) = path.into_inner();
     let mut lock = match state.wishlists.write() {
@@ -2599,20 +2892,33 @@ pub async fn trade_remove_wishlist_item_handler(
     };
 
     if let Some(wl) = lock.get_mut(&uid) {
-        match wl.remove_item(&item_code) {
-            Ok(_) => HttpResponse::Ok().json(serde_json::json!({
-                "status": "REMOVED",
-                "wishlist": wl,
-            })),
-            Err(e) => HttpResponse::NotFound().json(serde_json::json!({
-                "status": "NOT_FOUND",
-                "message": e.to_string(),
-            })),
+        let _ = wl.remove_item(&item_code);
+        let updated_wl = wl.clone();
+        if let Some(mgr) = &pool_mgr {
+            let tenant_id = req
+                .extensions()
+                .get::<TenantId>()
+                .cloned()
+                .unwrap_or_else(|| TenantId("default".into()));
+            let wl_clone = updated_wl.clone();
+            let mgr_clone = mgr.clone();
+            tokio::spawn(async move {
+                if let Ok(client) = mgr_clone.get_or_initialize_client(&tenant_id).await {
+                    let _ = client
+                        .query("UPSERT wishlists CONTENT $wl;")
+                        .bind(("wl", serde_json::to_value(&wl_clone).unwrap_or_default()))
+                        .await;
+                }
+            });
         }
+        HttpResponse::Ok().json(serde_json::json!({
+            "status": "REMOVED",
+            "wishlist": updated_wl,
+        }))
     } else {
         HttpResponse::NotFound().json(serde_json::json!({
             "status": "NOT_FOUND",
-            "message": "Wishlist not found",
+            "message": format!("Wishlist for user '{uid}' not found"),
         }))
     }
 }
@@ -3558,24 +3864,63 @@ pub async fn inventory_stock_entry_handler(
 
 /// Handler for querying current stock balance and FIFO valuation: `GET /api/v2/inventory/balance/{warehouse}/{item_code}`
 pub async fn inventory_stock_balance_handler(
+    req: HttpRequest,
     rbac_state: web::Data<DynamicRbacState>,
     path: web::Path<(String, String)>,
+    pool_mgr: Option<web::Data<ConnectionPoolManager>>,
 ) -> impl Responder {
     let (warehouse, item_code) = path.into_inner();
     let key = format!("{warehouse}:{item_code}");
 
-    let fifo_guard = match rbac_state.fifo_layers.read() {
-        Ok(g) => g,
-        Err(_) => return HttpResponse::InternalServerError().body("FIFO State Lock Failed"),
+    let mut layers = {
+        let fifo_guard = match rbac_state.fifo_layers.read() {
+            Ok(g) => g,
+            Err(_) => return HttpResponse::InternalServerError().body("FIFO State Lock Failed"),
+        };
+        fifo_guard.get(&key).cloned().unwrap_or_default()
     };
 
-    let (total_qty, total_value, layers) = if let Some(queue) = fifo_guard.get(&key) {
-        let qty: Decimal = queue.iter().map(|i| i.qty).sum();
-        let val: Decimal = queue.iter().map(|i| i.qty * i.rate).sum();
-        (qty, val, queue.clone())
-    } else {
-        (Decimal::ZERO, Decimal::ZERO, Vec::new())
-    };
+    // If cache is empty, rebuild from SurrealDB stock_ledger_entry
+    if layers.is_empty()
+        && let Some(mgr) = &pool_mgr
+    {
+        let tenant_id = req
+            .extensions()
+            .get::<TenantId>()
+            .cloned()
+            .unwrap_or_else(|| TenantId("default".into()));
+        if let Ok(client) = mgr.get_or_initialize_client(&tenant_id).await {
+            let sanitized_wh = sanitize_surrealql_string(&warehouse);
+            let sanitized_item = sanitize_surrealql_string(&item_code);
+            let sql = format!(
+                "SELECT * FROM stock_ledger_entry WHERE warehouse = '{sanitized_wh}' AND item_code = '{sanitized_item}' ORDER BY posting_date ASC, name ASC;"
+            );
+            if let Ok(mut res) = client.query(&sql).await {
+                let rows: Vec<serde_json::Value> = res.take(0).unwrap_or_default();
+                let entries: Vec<StockLedgerEntry> = rows
+                    .into_iter()
+                    .filter_map(|r| serde_json::from_value(r).ok())
+                    .collect();
+                let mut queue = Vec::new();
+                for entry in entries {
+                    if entry.actual_qty > Decimal::ZERO {
+                        add_fifo_layer(&mut queue, entry.actual_qty, entry.incoming_rate);
+                    } else if entry.actual_qty < Decimal::ZERO {
+                        let _ = consume_fifo(&mut queue, -entry.actual_qty);
+                    }
+                }
+                if !queue.is_empty() {
+                    if let Ok(mut write_guard) = rbac_state.fifo_layers.write() {
+                        write_guard.insert(key.clone(), queue.clone());
+                    }
+                    layers = queue;
+                }
+            }
+        }
+    }
+
+    let total_qty: Decimal = layers.iter().map(|i| i.qty).sum();
+    let total_value: Decimal = layers.iter().map(|i| i.qty * i.rate).sum();
 
     let avg_valuation_rate = if total_qty.is_zero() {
         Decimal::ZERO

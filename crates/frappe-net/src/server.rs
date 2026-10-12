@@ -55,7 +55,9 @@ use actix_web::{
     App, HttpMessage, HttpRequest, HttpResponse, HttpServer, Responder, middleware::Compress,
     middleware::Logger, middleware::NormalizePath, web,
 };
-use desk_components::{get_desk_workspaces, render_desk_shell_html};
+use desk_components::{
+    get_desk_workspaces, render_desk_shell_html, render_form_view_html, render_list_view_html,
+};
 use frappe_framework::WebhookDispatcher;
 use frappe_meta::rbac::{Permission, check_permission};
 use std::sync::atomic::{AtomicU64, Ordering};
@@ -162,6 +164,37 @@ async fn desk_handler(req: HttpRequest) -> impl Responder {
     HttpResponse::Ok()
         .content_type("text/html; charset=utf-8")
         .body(render_desk_shell_html("Enterprise Desk", &user_name))
+}
+
+async fn desk_list_view_handler(req: HttpRequest, path: web::Path<String>) -> impl Responder {
+    TOTAL_REQUESTS.fetch_add(1, Ordering::Relaxed);
+    let doctype = path.into_inner();
+    let user_name = req
+        .extensions()
+        .get::<SecurityContext>()
+        .map(|ctx| ctx.claims.sub.clone())
+        .unwrap_or_else(|| "Administrator".to_string());
+
+    HttpResponse::Ok()
+        .content_type("text/html; charset=utf-8")
+        .body(render_list_view_html(&doctype, &user_name))
+}
+
+async fn desk_form_view_handler(
+    req: HttpRequest,
+    path: web::Path<(String, String)>,
+) -> impl Responder {
+    TOTAL_REQUESTS.fetch_add(1, Ordering::Relaxed);
+    let (doctype, docname) = path.into_inner();
+    let user_name = req
+        .extensions()
+        .get::<SecurityContext>()
+        .map(|ctx| ctx.claims.sub.clone())
+        .unwrap_or_else(|| "Administrator".to_string());
+
+    HttpResponse::Ok()
+        .content_type("text/html; charset=utf-8")
+        .body(render_form_view_html(&doctype, &docname, &user_name))
 }
 
 async fn portal_handler(req: HttpRequest) -> impl Responder {
@@ -756,6 +789,14 @@ pub fn configure_app(
         // Root storefront & Multi-Persona Shells
         .route("/", web::get().to(storefront_handler))
         .route("/desk", web::get().to(desk_handler))
+        .route(
+            "/desk/list/{doctype}",
+            web::get().to(desk_list_view_handler),
+        )
+        .route(
+            "/desk/form/{doctype}/{id}",
+            web::get().to(desk_form_view_handler),
+        )
         .route("/portal", web::get().to(portal_handler))
         .route("/worker", web::get().to(worker_handler))
         .route("/factory", web::get().to(factory_handler))

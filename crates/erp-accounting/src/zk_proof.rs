@@ -6,12 +6,15 @@
 //!
 //! All verifiable without disclosing private customer transactions, profit margins, or item quantities.
 
+#![allow(deprecated)]
+
 use compact_str::CompactString;
 use rust_decimal::Decimal;
 use sha2::{Digest, Sha256};
 use std::time::Instant;
 
 /// Cryptographic zero-knowledge balance sheet proof token.
+#[deprecated(note = "Ponytail pruned: Speculative ZK proof engine")]
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct ZkBalanceProof {
     pub tenant_id: CompactString,
@@ -24,6 +27,7 @@ pub struct ZkBalanceProof {
 }
 
 /// Verification result for external auditors and tax authorities.
+#[deprecated(note = "Ponytail pruned: Speculative ZK proof engine")]
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct ZkVerificationResult {
     pub is_valid: bool,
@@ -31,6 +35,7 @@ pub struct ZkVerificationResult {
     pub audit_attestation: CompactString,
 }
 
+#[deprecated(note = "Ponytail pruned: Speculative ZK proof engine")]
 pub struct ZkProofEngine;
 
 impl ZkProofEngine {
@@ -124,6 +129,7 @@ impl ZkProofEngine {
 }
 
 #[cfg(test)]
+#[allow(deprecated)]
 mod tests {
     use super::*;
     use rust_decimal_macros::dec;

@@ -11,7 +11,10 @@ pub mod video_hud;
 pub mod views;
 pub mod wms_view;
 
-pub use desk_shell::{WorkspaceModule, get_desk_workspaces, render_desk_shell_html};
+pub use desk_shell::{
+    WorkspaceModule, get_desk_workspaces, render_desk_shell_html, render_form_view_html,
+    render_list_view_html,
+};
 
 pub use cpq_view::{CpqConfiguratorModel, OptionCard};
 pub use forms::{DocTypeForm, DynamicFormModel, FormFieldWidget, eval_depends_on};
