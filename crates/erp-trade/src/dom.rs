@@ -46,7 +46,7 @@ impl DomRouter {
                     (item_unit_value * required_qty) * (node.tax_rate_percent / Decimal::from(100));
                 let total_cost = shipping.freight_cost + handling + tax;
 
-                if best.as_ref().map_or(true, |(_, c)| total_cost < *c) {
+                if best.as_ref().is_none_or(|(_, c)| total_cost < *c) {
                     best = Some((node, total_cost));
                 }
             }

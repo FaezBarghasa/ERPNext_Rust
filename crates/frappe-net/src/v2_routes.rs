@@ -942,16 +942,12 @@ pub async fn login_handler(
         }
         None => {
             // Check in-memory rbac_state users or bootstrap
-            let matching_user = rbac_state
-                .users
-                .read()
-                .ok()
-                .and_then(|in_mem| {
-                    in_mem
-                        .iter()
-                        .find(|u| u.id == user_id && u.enabled)
-                        .cloned()
-                });
+            let matching_user = rbac_state.users.read().ok().and_then(|in_mem| {
+                in_mem
+                    .iter()
+                    .find(|u| u.id == user_id && u.enabled)
+                    .cloned()
+            });
             if let Some(u) = matching_user {
                 let default_pwd =
                     std::env::var("ADMIN_INITIAL_PASSWORD").unwrap_or_else(|_| "Admin123!".into());

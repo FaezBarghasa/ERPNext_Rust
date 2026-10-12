@@ -503,7 +503,7 @@ fn test_epoch_10_agency_fleet_woocommerce_and_vertical_profiles() {
         regular_price: Some("49.99".into()),
         sale_price: Some("45.00".into()),
         sku: Some("PROP-PR-01".into()),
-        stock_quantity: Some(500.0),
+        stock_quantity: Some(dec!(500)),
         description: Some("Carbon fiber propeller blades".into()),
     }];
     let items = WooMigrationEngine::ingest_products(&woo_products);

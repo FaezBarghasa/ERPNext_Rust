@@ -17,7 +17,7 @@ pub struct WooProduct {
     pub regular_price: Option<String>,
     pub sale_price: Option<String>,
     pub sku: Option<String>,
-    pub stock_quantity: Option<f64>,
+    pub stock_quantity: Option<Decimal>,
     pub description: Option<String>,
 }
 
@@ -39,7 +39,7 @@ pub struct WooOrderLineItem {
     pub id: u64,
     pub product_id: u64,
     pub name: String,
-    pub quantity: f64,
+    pub quantity: Decimal,
     pub subtotal: String,
     pub total: String,
 }
@@ -168,7 +168,7 @@ mod tests {
             regular_price: Some("32.50".into()),
             sale_price: Some("28.00".into()),
             sku: Some("ROAST-ETH-01".into()),
-            stock_quantity: Some(250.0),
+            stock_quantity: Some(dec!(250)),
             description: Some("Single origin Ethiopian Yirgacheffe".into()),
         }];
 

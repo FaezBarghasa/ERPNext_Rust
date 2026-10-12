@@ -82,12 +82,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                     eprintln!("Warning: Template `{template}` not found in registry, falling back to `b2c-retail`");
                     ProfileRegistry::get_profile("b2c-retail")
                 })
-                .unwrap_or_else(|| frappe_meta::VerticalProfile {
-                    id: "b2c-retail".into(),
-                    title: "B2C Retail & Omni-Commerce".into(),
-                    required_doctypes: vec![],
-                    active_menus: vec![],
-                });
+                .unwrap_or_else(|| ProfileRegistry::list_profiles().swap_remove(0));
 
             let tenant_ns = format!("tenant_{}", site_name.replace('.', "_"));
             let db_name = "site_production";
@@ -896,6 +891,7 @@ pub fn on_validate(ctx: &PluginContext, doc: &mut DocRecord) -> DocMutationResul
                             },
                         },
                     ];
+                    let start = Instant::now();
                     let elapsed = start.elapsed();
                     if let Ok(sim) = erp_ppm::MonteCarloSimulator::simulate(&tasks, iterations) {
                         println!("  Elapsed Time:     {elapsed:.2?}");

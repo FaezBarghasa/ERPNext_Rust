@@ -74,7 +74,7 @@ impl Vda5050FleetCoordinator {
                 && r.battery_charge_percent >= 20.0
                 && best
                     .as_ref()
-                    .map_or(true, |b| r.battery_charge_percent > b.battery_charge_percent)
+                    .is_none_or(|b| r.battery_charge_percent > b.battery_charge_percent)
             {
                 best = Some(r);
             }

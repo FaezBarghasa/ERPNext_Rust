@@ -60,7 +60,7 @@ impl SlottingEngine {
         let mut best: Option<(&'a WarehouseBin, f64)> = None;
         for bin in bins {
             if let Some(score) = Self::score_bin(item, bin)
-                && best.as_ref().map_or(true, |(_, s)| score > *s)
+                && best.as_ref().is_none_or(|(_, s)| score > *s)
             {
                 best = Some((bin, score));
             }

@@ -139,17 +139,17 @@ async fn main() {
         option_id: "OPT-TURBINE-SIC".into(),
         name: "Silicon-Carbide Hybrid Turbine Core".into(),
         group: "Propulsion".into(),
-        price: 250_000.0,
+        price: rust_decimal_macros::dec!(250000.0),
         is_selected: true,
         is_disabled: false,
         disable_reason: None,
     });
-    cpq.list_price = 750_000.0;
-    cpq.net_price = 720_000.0;
-    cpq.pocket_price = 690_000.0;
-    cpq.gross_margin_percent = 42.5;
+    cpq.list_price = rust_decimal_macros::dec!(750000.0);
+    cpq.net_price = rust_decimal_macros::dec!(720000.0);
+    cpq.pocket_price = rust_decimal_macros::dec!(690000.0);
+    cpq.gross_margin_percent = rust_decimal_macros::dec!(42.5);
     println!(
-        "[4/10] CPQ Constraint Configurator: Quote `{}` (List: ${:.2}, Net: ${:.2}, Gross Margin: {:.1}%).",
+        "[4/10] CPQ Constraint Configurator: Quote `{}` (List: ${}, Net: ${}, Gross Margin: {}%).",
         cpq.quote_id, cpq.list_price, cpq.net_price, cpq.gross_margin_percent
     );
 
