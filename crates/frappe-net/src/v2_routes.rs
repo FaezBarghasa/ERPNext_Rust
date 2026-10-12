@@ -942,13 +942,16 @@ pub async fn login_handler(
         }
         None => {
             // Check in-memory rbac_state users or bootstrap
-            let matching_user = {
-                let in_mem = rbac_state.users.read().unwrap();
-                in_mem
-                    .iter()
-                    .find(|u| u.id == user_id && u.enabled)
-                    .cloned()
-            };
+            let matching_user = rbac_state
+                .users
+                .read()
+                .ok()
+                .and_then(|in_mem| {
+                    in_mem
+                        .iter()
+                        .find(|u| u.id == user_id && u.enabled)
+                        .cloned()
+                });
             if let Some(u) = matching_user {
                 let default_pwd =
                     std::env::var("ADMIN_INITIAL_PASSWORD").unwrap_or_else(|_| "Admin123!".into());
@@ -1372,7 +1375,7 @@ pub async fn h3_stream_file_handler(
                     let bytes =
                         hex::decode(raw_data).unwrap_or_else(|_| raw_data.as_bytes().to_vec());
 
-                    let peer_addr: std::net::SocketAddr = "127.0.0.1:4433".parse().unwrap();
+                    let peer_addr = std::net::SocketAddr::from(([127, 0, 0, 1], 4433));
                     let mut engine = crate::quic_h3_stream::QuicH3StreamingEngine::new(peer_addr);
                     let stream_id = engine.create_bidirectional_stream();
 
@@ -1406,7 +1409,7 @@ pub async fn h3_stream_file_handler(
 
 /// Handler for Real-Time Mutation Push over HTTP/3 Stream: `POST /api/v2/stream/h3/telemetry`
 pub async fn h3_stream_telemetry_handler(payload: web::Json<serde_json::Value>) -> impl Responder {
-    let peer_addr: std::net::SocketAddr = "127.0.0.1:4433".parse().unwrap();
+    let peer_addr = std::net::SocketAddr::from(([127, 0, 0, 1], 4433));
     let mut engine = crate::quic_h3_stream::QuicH3StreamingEngine::new(peer_addr);
     let push_stream_id = engine.create_unidirectional_push_stream();
 
@@ -5640,8 +5643,8 @@ pub async fn setup_wizard_handler(
             "name": payload.company_name,
             "default_currency": currency,
             "country": country,
-            "fiscal_year_start": payload.fiscal_year_start.unwrap_or_else(|| NaiveDate::from_ymd_opt(2026, 1, 1).unwrap()),
-            "fiscal_year_end": payload.fiscal_year_end.unwrap_or_else(|| NaiveDate::from_ymd_opt(2026, 12, 31).unwrap()),
+            "fiscal_year_start": payload.fiscal_year_start.unwrap_or_else(|| NaiveDate::from_ymd_opt(2026, 1, 1).unwrap_or_default()),
+            "fiscal_year_end": payload.fiscal_year_end.unwrap_or_else(|| NaiveDate::from_ymd_opt(2026, 12, 31).unwrap_or_default()),
             "is_active": true,
             "created_at": Utc::now().to_rfc3339(),
         });

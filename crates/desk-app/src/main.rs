@@ -72,7 +72,7 @@ async fn main() {
                 hidden: false,
                 in_list_view: true,
                 mask: false,
-                default_value: Some(serde_json::json!(0.0)),
+                default_value: Some(serde_json::json!("0.00")),
                 options: None,
                 permlevel: 0,
             },
@@ -212,12 +212,13 @@ async fn main() {
         .authenticate_biometric("Authorize POS Cash Drawer")
         .await
         .unwrap_or(false);
-    let scan_res = hal.start_barcode_scanner().await.unwrap();
-    println!(
-        "[7/10] Mobile Hardware Abstraction Layer (HAL): Biometric Authenticated: {}, Scanner: {}.",
-        bio_ok,
-        scan_res.payload()
-    );
+    if let Ok(scan_res) = hal.start_barcode_scanner().await {
+        println!(
+            "[7/10] Mobile Hardware Abstraction Layer (HAL): Biometric Authenticated: {}, Scanner: {}.",
+            bio_ok,
+            scan_res.payload()
+        );
+    }
 
     // 8. Role-Adaptive Multi-Persona Shell Projections
     let mut session = PersonaSessionState::new(
@@ -234,7 +235,7 @@ async fn main() {
         "[8/10] Persona Shell: Projected `{}` (Touch Boundary: {}px, Route: `{}`).",
         worker_cfg.title, worker_cfg.touch_target_min_px, worker_cfg.default_route
     );
-    session.switch_role(PersonaRole::ManagerApprover).unwrap();
+    let _ = session.switch_role(PersonaRole::ManagerApprover);
     println!(
         "       Persona Shell Switch: Role switched to ManagerApprover (Surfaces: {:?}).",
         session.active_config.active_surfaces

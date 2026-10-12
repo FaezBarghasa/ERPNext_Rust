@@ -52,7 +52,7 @@ impl SequenceOptimizer {
 
         let mut unassigned: Vec<ProductionJob> = jobs.to_vec();
         // Sort initial list by earliest due date (EDD)
-        unassigned.sort_by(|a, b| a.due_date_hours.partial_cmp(&b.due_date_hours).unwrap());
+        unassigned.sort_by(|a, b| a.due_date_hours.total_cmp(&b.due_date_hours));
 
         let mut sequence = Vec::with_capacity(jobs.len());
         let mut current_product = String::new();

@@ -72,8 +72,9 @@ impl Vda5050FleetCoordinator {
         for r in robots {
             if r.state == AmrState::Idle
                 && r.battery_charge_percent >= 20.0
-                && (best.is_none()
-                    || r.battery_charge_percent > best.as_ref().unwrap().battery_charge_percent)
+                && best
+                    .as_ref()
+                    .map_or(true, |b| r.battery_charge_percent > b.battery_charge_percent)
             {
                 best = Some(r);
             }

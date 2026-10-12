@@ -194,21 +194,22 @@ impl CouponEngine {
             return Err(CouponValidationError::NotStarted(coupon.code.clone()));
         }
 
-        if coupon.valid_until.is_some_and(|until| now > until) {
-            return Err(CouponValidationError::Expired(
-                coupon.code.clone(),
-                coupon.valid_until.unwrap().to_rfc3339(),
-            ));
+        if let Some(until) = coupon.valid_until {
+            if now > until {
+                return Err(CouponValidationError::Expired(
+                    coupon.code.clone(),
+                    until.to_rfc3339(),
+                ));
+            }
         }
 
-        if coupon
-            .usage_limit_total
-            .is_some_and(|limit| coupon.times_used >= limit)
-        {
-            return Err(CouponValidationError::GlobalUsageLimitExceeded(
-                coupon.code.clone(),
-                coupon.usage_limit_total.unwrap(),
-            ));
+        if let Some(limit) = coupon.usage_limit_total {
+            if coupon.times_used >= limit {
+                return Err(CouponValidationError::GlobalUsageLimitExceeded(
+                    coupon.code.clone(),
+                    limit,
+                ));
+            }
         }
 
         if let (Some(per_user_limit), Some(uid)) = (coupon.usage_limit_per_user, user_id) {
@@ -222,11 +223,13 @@ impl CouponEngine {
             }
         }
 
-        if coupon.min_subtotal.is_some_and(|min| subtotal < min) {
-            return Err(CouponValidationError::MinimumSpendNotMet(
-                subtotal,
-                coupon.min_subtotal.unwrap(),
-            ));
+        if let Some(min) = coupon.min_subtotal {
+            if subtotal < min {
+                return Err(CouponValidationError::MinimumSpendNotMet(
+                    subtotal,
+                    min,
+                ));
+            }
         }
 
         let eligible_amount = Self::compute_eligible_subtotal(coupon, items);
@@ -320,14 +323,13 @@ impl CouponEngine {
         coupon: &mut CouponCode,
         user_id: Option<&str>,
     ) -> Result<(), CouponValidationError> {
-        if coupon
-            .usage_limit_total
-            .is_some_and(|limit| coupon.times_used >= limit)
-        {
-            return Err(CouponValidationError::GlobalUsageLimitExceeded(
-                coupon.code.clone(),
-                coupon.usage_limit_total.unwrap(),
-            ));
+        if let Some(limit) = coupon.usage_limit_total {
+            if coupon.times_used >= limit {
+                return Err(CouponValidationError::GlobalUsageLimitExceeded(
+                    coupon.code.clone(),
+                    limit,
+                ));
+            }
         }
 
         coupon.times_used += 1;

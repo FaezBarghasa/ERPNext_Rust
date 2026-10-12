@@ -78,7 +78,7 @@ impl SalaryCalculator {
         // Overtime rate: 1.5x hourly rate (8-hour day)
         let hourly_rate = (structure.base_salary / total_working_days) / Decimal::from(8);
         let overtime_amount =
-            overtime_hours * hourly_rate * Decimal::from_str_exact("1.5").unwrap();
+            overtime_hours * hourly_rate * rust_decimal_macros::dec!(1.5);
 
         let gross_salary = earned_basic + earned_hra + overtime_amount;
         let tax_deducted = gross_salary * (structure.tax_withholding_rate / Decimal::from(100));

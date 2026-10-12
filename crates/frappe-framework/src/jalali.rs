@@ -162,8 +162,7 @@ impl JalaliDate {
             gm += 1;
         }
 
-        NaiveDate::from_ymd_opt(gy2, gm as u32, gd as u32)
-            .unwrap_or_else(|| NaiveDate::from_ymd_opt(2026, 1, 1).unwrap())
+        NaiveDate::from_ymd_opt(gy2, gm as u32, gd as u32).unwrap_or_default()
     }
 
     /// Formats as Latin Shamsi string: `YYYY/MM/DD`.
