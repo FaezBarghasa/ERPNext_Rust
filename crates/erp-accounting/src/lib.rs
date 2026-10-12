@@ -7,11 +7,11 @@ pub mod decimal_ledger;
 pub mod intercompany;
 pub mod ledger;
 pub mod multibook;
+pub mod payment_gateway;
+pub mod print_format;
 pub mod receivables;
 pub mod report_engine;
 pub mod tax_withholding;
-pub mod payment_gateway;
-pub mod print_format;
 pub mod treasury;
 
 pub use asset_capitalization::{

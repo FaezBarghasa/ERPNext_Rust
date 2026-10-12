@@ -104,10 +104,7 @@ impl PrintableInvoice {
             other => other,
         };
 
-        let doc_number = doc
-            .get("name")
-            .and_then(|v| v.as_str())
-            .unwrap_or("DRAFT");
+        let doc_number = doc.get("name").and_then(|v| v.as_str()).unwrap_or("DRAFT");
 
         let posting_date = doc
             .get("posting_date")
@@ -342,7 +339,10 @@ impl PrintableInvoice {
             currency: currency.into(),
             company: PrintableCompany {
                 name: company_name.into(),
-                tax_id: doc.get("tax_id").and_then(|v| v.as_str()).map(CompactString::from),
+                tax_id: doc
+                    .get("tax_id")
+                    .and_then(|v| v.as_str())
+                    .map(CompactString::from),
                 address_line1: "Enterprise Way".into(),
                 address_line2: None,
                 city: "Corporate City".into(),
@@ -440,11 +440,12 @@ impl PrintableInvoice {
                 swift = b
                     .routing_or_swift
                     .as_ref()
-                    .map_or(String::new(), |s| format!("<div class=\"small\"><strong>SWIFT / BIC:</strong> {s}</div>")),
-                iban = b
-                    .iban
-                    .as_ref()
-                    .map_or(String::new(), |i| format!("<div class=\"small\"><strong>IBAN:</strong> {i}</div>"))
+                    .map_or(String::new(), |s| format!(
+                        "<div class=\"small\"><strong>SWIFT / BIC:</strong> {s}</div>"
+                    )),
+                iban = b.iban.as_ref().map_or(String::new(), |i| format!(
+                    "<div class=\"small\"><strong>IBAN:</strong> {i}</div>"
+                ))
             ),
             None => String::new(),
         };
@@ -831,7 +832,9 @@ mod tests {
                 iban: Some("US64CHAS9876543210".into()),
             }),
             payment_terms: Some("Net 30 Days from Receipt of Goods".into()),
-            notes_and_terms: Some("Late payments subject to 1.5% statutory monthly interest.".into()),
+            notes_and_terms: Some(
+                "Late payments subject to 1.5% statutory monthly interest.".into(),
+            ),
         };
 
         let html = invoice.render_html();

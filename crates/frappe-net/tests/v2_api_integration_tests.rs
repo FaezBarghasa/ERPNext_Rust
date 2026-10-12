@@ -254,8 +254,16 @@ async fn test_v2_payment_charge_and_webhook_integration() {
 
     let body: serde_json::Value = test::read_body_json(resp).await;
     assert_eq!(body["status"], "SUCCESS");
-    assert!(body["intent_id"].as_str().is_some_and(|id| id.starts_with("PI-")));
-    assert!(body["gateway_reference"].as_str().is_some_and(|r| r.starts_with("CAP_MOCK_")));
+    assert!(
+        body["intent_id"]
+            .as_str()
+            .is_some_and(|id| id.starts_with("PI-"))
+    );
+    assert!(
+        body["gateway_reference"]
+            .as_str()
+            .is_some_and(|r| r.starts_with("CAP_MOCK_"))
+    );
     assert!(body["settlement_journal"].is_object());
 
     // 2. Reject Negative Charge Amount

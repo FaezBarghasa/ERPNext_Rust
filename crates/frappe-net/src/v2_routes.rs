@@ -4740,7 +4740,9 @@ where
             } else if let Some(i) = n.as_i64() {
                 Ok(Decimal::from(i))
             } else {
-                Err(serde::de::Error::custom("Invalid number format for decimal"))
+                Err(serde::de::Error::custom(
+                    "Invalid number format for decimal",
+                ))
             }
         }
         serde_json::Value::String(s) => s.parse::<Decimal>().map_err(serde::de::Error::custom),

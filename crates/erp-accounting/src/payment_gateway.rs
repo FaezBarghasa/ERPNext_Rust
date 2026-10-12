@@ -71,10 +71,7 @@ pub trait PaymentGatewayProcessor: Send + Sync {
     ) -> Result<CompactString, PaymentError>;
 
     /// Captures previously authorized funds and returns settled gateway ID.
-    fn capture(
-        &self,
-        intent: &mut PaymentIntent,
-    ) -> Result<CompactString, PaymentError>;
+    fn capture(&self, intent: &mut PaymentIntent) -> Result<CompactString, PaymentError>;
 
     /// Refunds a settled transaction.
     fn refund(
@@ -160,7 +157,9 @@ impl PaymentGatewayProcessor for MockPaymentGateway {
     ) -> Result<CompactString, PaymentError> {
         if self.should_fail || token == "tok_fail" {
             intent.status = PaymentStatus::Failed;
-            return Err(PaymentError::AuthorizationFailed("Card declined or invalid token".into()));
+            return Err(PaymentError::AuthorizationFailed(
+                "Card declined or invalid token".into(),
+            ));
         }
         if intent.amount <= Decimal::ZERO {
             return Err(PaymentError::InvalidAmount(intent.amount));
@@ -174,7 +173,10 @@ impl PaymentGatewayProcessor for MockPaymentGateway {
 
     fn capture(&self, intent: &mut PaymentIntent) -> Result<CompactString, PaymentError> {
         if intent.status != PaymentStatus::Authorized {
-            return Err(PaymentError::TerminalState(intent.intent_id.clone(), intent.status));
+            return Err(PaymentError::TerminalState(
+                intent.intent_id.clone(),
+                intent.status,
+            ));
         }
 
         let capture_id: CompactString = format!("CAP_MOCK_{}", intent.intent_id).into();
@@ -190,7 +192,10 @@ impl PaymentGatewayProcessor for MockPaymentGateway {
         refund_amount: Decimal,
     ) -> Result<CompactString, PaymentError> {
         if intent.status != PaymentStatus::Captured {
-            return Err(PaymentError::TerminalState(intent.intent_id.clone(), intent.status));
+            return Err(PaymentError::TerminalState(
+                intent.intent_id.clone(),
+                intent.status,
+            ));
         }
         if refund_amount <= Decimal::ZERO || refund_amount > intent.amount {
             return Err(PaymentError::InvalidAmount(refund_amount));
