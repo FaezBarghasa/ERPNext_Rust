@@ -689,7 +689,7 @@ pub fn render_form_view_html(doctype: &str, docname: &str, user_name: &str) -> S
                 const res = await fetch(`/api/v2/document/${{doctype}}/${{encodeURIComponent(currentName)}}`);
                 if (!res.ok) throw new Error('Status ' + res.status);
                 const json = await res.json();
-                const d = json.data || {{}};
+                const d = json.doc || json.data || {{}};
                 if (d.posting_date) document.getElementById('field-posting_date').value = d.posting_date;
                 if (d.customer || d.supplier || d.party) document.getElementById('field-party').value = d.customer || d.supplier || d.party || '';
                 if (d.grand_total || d.total) document.getElementById('field-total').value = d.grand_total || d.total || '';

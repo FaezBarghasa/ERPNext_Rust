@@ -1,0 +1,43 @@
+- generic [active] [ref=f5e1]:
+  - banner [ref=f5e2]:
+    - link "R RustNext Desk" [ref=f5e3] [cursor=pointer]:
+      - /url: /desk
+      - generic [ref=f5e4]: R
+      - generic [ref=f5e5]: RustNext Desk
+    - generic [ref=f5e6]:
+      - link "Back to List" [ref=f5e7] [cursor=pointer]:
+        - /url: /desk/list/sales_invoice
+      - generic [ref=f5e10]:
+        - generic [ref=f5e11]: A
+        - generic [ref=f5e12]: Administrator
+  - main [ref=f5e13]:
+    - generic [ref=f5e14]:
+      - link "Desk" [ref=f5e15] [cursor=pointer]:
+        - /url: /desk
+      - generic [ref=f5e16]: /
+      - link "sales invoice" [ref=f5e17] [cursor=pointer]:
+        - /url: /desk/list/sales_invoice
+      - generic [ref=f5e18]: /
+      - generic [ref=f5e19]: new
+    - generic [ref=f5e20]:
+      - heading "new Draft" [level=1] [ref=f5e22]:
+        - generic [ref=f5e23]: new
+        - generic [ref=f5e24]: Draft
+      - button "Save" [ref=f5e26] [cursor=pointer]
+    - generic [ref=f5e32]:
+      - generic [ref=f5e33]:
+        - generic [ref=f5e34]:
+          - generic [ref=f5e35]: Identifier / Name
+          - textbox [disabled] [ref=f5e36]: new
+        - generic [ref=f5e37]:
+          - generic [ref=f5e38]: Posting / Transaction Date
+          - textbox [ref=f5e39]: 2026-10-12
+        - generic [ref=f5e40]:
+          - generic [ref=f5e41]: Party / Reference
+          - textbox "Customer / Supplier / Reference..." [ref=f5e42]
+        - generic [ref=f5e43]:
+          - generic [ref=f5e44]: Total Amount / Value
+          - spinbutton "0.00" [ref=f5e45]
+      - generic [ref=f5e46]:
+        - generic [ref=f5e47]: Remarks / Description / Payload
+        - textbox "Enter notes or JSON data..." [ref=f5e48]

@@ -1,0 +1,36 @@
+- generic [active] [ref=f6e1]:
+  - banner [ref=f6e2]:
+    - generic [ref=f6e3]:
+      - generic [ref=f6e4]: O
+      - generic [ref=f6e5]:
+        - generic [ref=f6e6]: Operator
+        - generic [ref=f6e7]: "Worker Role · Terminal #04 (Line A)"
+    - generic [ref=f6e8]: Connected · Fast Punch Active
+  - main [ref=f6e11]:
+    - generic [ref=f6e12] [cursor=pointer]:
+      - generic [ref=f6e13]:
+        - generic [ref=f6e14]: ⏱️
+        - generic [ref=f6e15]: Punch Attendance
+        - generic [ref=f6e16]: "Shift 1 (08:00 - 16:30) · Status: In-Progress"
+      - button "PUNCH OUT (BREAK)" [ref=f6e17]
+    - generic [ref=f6e18] [cursor=pointer]:
+      - generic [ref=f6e19]:
+        - generic [ref=f6e24]: My Assigned Jobs
+        - generic [ref=f6e25]:
+          - text: "Active:"
+          - strong [ref=f6e26]: JC-2026-8891
+          - text: "(CNC Milling) · Target: 120 units"
+      - generic [ref=f6e27]: Tap to View Digital Traveler →
+    - generic [ref=f6e28] [cursor=pointer]:
+      - generic [ref=f6e29]:
+        - generic [ref=f6e34]: Scan Material / SABB
+        - generic [ref=f6e35]: Point Laser Gun or Camera at GS1 / Batch Barcode
+      - generic [ref=f6e36]: "Continuous Scan: READY"
+    - generic [ref=f6e37] [cursor=pointer]:
+      - generic [ref=f6e38]:
+        - generic [ref=f6e43]: Today's Accrued Earnings
+        - generic [ref=f6e44]: Piece-Rate (94 units) + Shift Differential
+      - generic [ref=f6e45]: $248.50
+  - contentinfo [ref=f6e46]:
+    - generic [ref=f6e47]: Strict Worker Sandbox Active · Zero Accounting/Customer Exposure
+    - generic [ref=f6e51]: "Hardware Laser Wedge Interceptor: Active (Δt < 35ms)"

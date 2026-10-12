@@ -1,0 +1,38 @@
+- generic [active] [ref=f4e1]:
+  - banner [ref=f4e2]:
+    - link "R RustNext Desk" [ref=f4e3] [cursor=pointer]:
+      - /url: /desk
+      - generic [ref=f4e4]: R
+      - generic [ref=f4e5]: RustNext Desk
+    - generic [ref=f4e6]:
+      - link "Back to Workspace" [ref=f4e7] [cursor=pointer]:
+        - /url: /desk
+      - generic [ref=f4e10]:
+        - generic [ref=f4e11]: A
+        - generic [ref=f4e12]: Administrator
+  - main [ref=f4e13]:
+    - generic [ref=f4e14]:
+      - link "Desk" [ref=f4e15] [cursor=pointer]:
+        - /url: /desk
+      - generic [ref=f4e16]: /
+      - generic [ref=f4e17]: sales invoice
+    - generic [ref=f4e18]:
+      - heading "sales invoice" [level=1] [ref=f4e20]
+      - generic [ref=f4e21]:
+        - button "Refresh" [ref=f4e22] [cursor=pointer]
+        - link "New sales invoice" [ref=f4e25] [cursor=pointer]:
+          - /url: /desk/form/sales_invoice/new
+    - generic [ref=f4e28]:
+      - generic [ref=f4e29]:
+        - textbox "Search by name, ID or details..." [ref=f4e30]
+        - generic [ref=f4e31]: Loading records...
+      - table [ref=f4e32]:
+        - rowgroup [ref=f4e33]:
+          - row [ref=f4e34]:
+            - columnheader "Document Identifier" [ref=f4e35]
+            - columnheader "Status" [ref=f4e36]
+            - columnheader "Created" [ref=f4e37]
+            - columnheader "Action" [ref=f4e38]
+        - rowgroup [ref=f4e39]:
+          - row [ref=f4e40]:
+            - cell "Loading sales invoice records from SurrealDB..." [ref=f4e41]
