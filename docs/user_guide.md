@@ -110,3 +110,76 @@ curl -X POST http://127.0.0.1:8080/api/v1/trade/woocommerce-migrate \
 ```
 
 The ingestion engine transforms legacy relational rows directly into native `tab_item`, `tab_customer`, and `tab_sales_invoice` SurrealDB records at $\ge 10{,}000$ records in $\le 12$ seconds.
+
+---
+
+## 5. Enterprise Desk, Printable Formats & Payment Processing
+
+### 5.1 The Unified Enterprise Desk (`/desk`)
+The main administrative desk serves as the command center across all 11 core modules:
+- **Instant OmniBar Filtering (`Ctrl+K`)**: Rapidly filter across modules, DocTypes, and operations in real-time.
+- **Direct Workspace Shortcuts**: Launch directly into Sales Invoices, Purchase Orders, Items, Work Orders, and CRM Leads.
+- **Multi-Persona Switcher**: Seamlessly switch between Enterprise Desk, Customer Portal, Warehouse Scanner, Shopfloor MES, Approval Deck, and System Admin Cockpit.
+
+### 5.2 DocType List & Form Views
+- **List View (`/desk/list/{doctype}`)**:
+  - Live query filtering with search box.
+  - Color-coded document status chips: `Draft` (Yellow), `Submitted` (Emerald), `Cancelled` (Crimson).
+  - Quick action to create new records (`+ New {DocType}`).
+- **Form View (`/desk/form/{doctype}/{id}`)**:
+  - View and edit document attributes with strict decimal validation.
+  - Lifecycle controls: **Save** (Draft), **Submit** (Lock against modifications), **Cancel** (Void), and **Delete**.
+  - Direct breadcrumbs back to List View and Workspace.
+
+### 5.3 Enterprise Printable Commercial Documents
+Generate compliant commercial PDF/print outputs with `@media print` formatting:
+- **Print View Route**:
+  ```http
+  GET /api/v2/document/{doctype}/{name}/print
+  ```
+- **Direct HTML Generation Route**:
+  ```http
+  POST /api/v2/print/document
+  Content-Type: application/json
+
+  {
+    "doctype": "Sales Invoice",
+    "name": "ACC-SINV-2026-00001",
+    "customer": "Acme Corp",
+    "total": "1500.00",
+    "items": [
+      { "item_code": "CONS-001", "qty": "10", "rate": "150.00", "amount": "1500.00" }
+    ]
+  }
+  ```
+- Includes official letterhead, multi-rate tax/VAT tranches, itemized tables, bank payment instructions (IBAN, BIC/SWIFT), and authorized signature areas.
+
+### 5.4 Pluggable Payments & Automated Reconciliation
+Process card charges and handle provider webhooks with automated double-entry GL reconciliation:
+- **Process Payment Charge**:
+  ```http
+  POST /api/v2/payments/charge
+  Content-Type: application/json
+
+  {
+    "invoice_id": "ACC-SINV-2026-00001",
+    "amount": "1500.00",
+    "currency": "USD",
+    "party_id": "CUST-00001",
+    "payment_method": "credit_card",
+    "capture": true
+  }
+  ```
+- **Handle Payment Webhook**:
+  ```http
+  POST /api/v2/payments/webhook
+  Content-Type: application/json
+
+  {
+    "event_type": "payment.succeeded",
+    "intent_id": "PI-ACC-SINV-2026-00001",
+    "amount": "1500.00",
+    "reference": "CAP_MOCK_12345"
+  }
+  ```
+- On successful payment capture, the `PaymentReconciliationEngine` automatically generates a balanced Journal Entry clearing Accounts Receivable and posting to the designated Bank/Clearing Ledger.

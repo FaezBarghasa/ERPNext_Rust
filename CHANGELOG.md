@@ -7,6 +7,37 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [0.3.0] - 2026-10-12
+
+### Added
+- **Production Printable Commercial Document Engine (`print_format.rs`)**:
+  - Implemented enterprise-grade printable commercial invoice, receipt, and sales order rendering engine in `erp-accounting`.
+  - Full `@media print` CSS stylesheet with page margin constraints, vector SVG branding, line items table, multi-rate VAT breakdown, bank payment instructions (IBAN, BIC/SWIFT, routing), and authorized signatory blocks.
+  - Mounted HTTP endpoints in `frappe-net`: `GET /api/v2/document/{doctype}/{name}/print` and `POST /api/v2/print/document`.
+- **Pluggable Payment Gateway & Automated GL Reconciliation (`payment_gateway.rs`)**:
+  - Built pluggable transaction processing abstraction (`PaymentGateway`, `PaymentIntent`, `PaymentStatus`: Authorized, Captured, Refunded, Failed) in `erp-accounting`.
+  - Implemented `PaymentReconciliationEngine` automatically generating double-entry balanced Journal Entries and clearing Accounts Receivable against bank/clearing ledgers on capture.
+  - Mounted HTTP endpoints in `frappe-net`: `POST /api/v2/payments/charge` and `POST /api/v2/payments/webhook`.
+- **Unified Enterprise Desk Shell, List View & Form View (`desk-components` & `desk-app`)**:
+  - Full SSR hypermedia administration desktop with real-time OmniBar filtering (`Ctrl+K`).
+  - Dynamic List View (`/desk/list/{doctype}`) with search query filter, record counts, and SurrealDB pagination.
+  - Responsive Form View (`/desk/form/{doctype}/{id}`) supporting field editing, Draft save, Submit lifecycle lock (`docstatus` 1), Cancellation (`docstatus` 2), and deletion.
+  - Role-adaptive multi-persona views: `/desk` (Enterprise), `/portal` (Customer), `/worker` (Warehouse Kiosk), `/factory` (MES Operator), `/approvals` (Executive Triage), `/admin` (System Ops Cockpit).
+- **GUI-UX Craft Polishing & Anti-Slop Cleansing (`/gui-ux-tester`)**:
+  - Replaced all emoji glyphs with authentic inline SVG vector icons across desk shells, kiosk views, and print headers.
+  - Added Emil Kowalski physics springs (`cubic-bezier(0.16, 1, 0.3, 1)`), button active press micro-interactions (`transform: scale(0.98)`), and Webkit scrollbar restyling.
+
+### Removed (Ponytail Bloat Pruning)
+- Removed speculative ZK proof engine (`zk_proof.rs`) and dummy video HUD (`video_hud.rs`).
+- Removed CMS subtitle and transcoder stubs (`subtitles.rs`, `transcoder.rs`).
+- Removed dead dependencies and streamlined workspace compilation footprint.
+
+### Fixed
+- Fixed Decimal serialization invariant in API v2 routes: exact string representations preserved for currency outputs while input deserializer flexibly parses JSON numbers and strings.
+- Resolved SurrealDB payload resolution in form view JavaScript ensuring `json.doc` and `json.data` properly update document status and action triggers.
+
+---
+
 ## [0.2.0] - 2026-09-28
 
 ### Added

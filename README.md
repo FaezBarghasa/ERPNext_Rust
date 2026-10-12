@@ -23,7 +23,7 @@ ERPNext_workspace/
 │   ├── frappe-framework/    # Document lifecycle state machines, Rhai & WASI 0.2 Wasmtime sandbox, AI tool dispatcher
 │   ├── frappe-storage/      # SurrealDB 3.3 multi-model driver, CRDT vector clocks/LWW, deduplicated drive, envelope encryption
 │   ├── frappe-net/          # Micro-mode topology, ACME gateway, multi-tenant router, live WebSocket actor, HTTP/3 gateway
-│   ├── erp-accounting/      # Double-entry ledger, multi-currency, asset depreciation, Benford fraud guard, ZK proofs, Proptests
+│   ├── erp-accounting/      # Double-entry ledger, multi-currency, printable document engine, payment gateway & GL settlement, Benford guard
 │   ├── erp-inventory/       # Real-time stock ledgers, warehouse bin balancing, FIFO batch queues, serial tracking
 │   ├── erp-manufacturing/   # Multilevel BOM explosions, routing, MRP capacity, MILP job shop scheduler, SPC control charts
 │   ├── erp-trade/           # Pricing rules, metered billing, landed cost, 3-way invoice matching, WooCommerce migration
@@ -42,8 +42,8 @@ ERPNext_workspace/
 │   ├── erp-importer/        # High-volume batch data importer with type coercion and transactional rollback
 │   ├── erp-stealth-scraper/ # Resilient, distributed market data and catalog synchronizer
 │   ├── erpnext-plugin-sdk/  # Third-party app extension SDK with WASM/WASI plugin interface and DocType bindings
-│   ├── desk-components/     # Reactive Dioxus v7 UI components, dynamic JSON-schema forms, interactive Gantt & SPC charts
-│   ├── desk-app/            # Desktop & Web unified shell application powered by Dioxus v7
+│   ├── desk-components/     # Reactive Dioxus v7 UI components, desk shell SSR, List & Form views, dynamic forms, Gantt & SPC
+│   ├── desk-app/            # Unified multi-persona desktop & mobile shell application (Desk, Portal, Kiosk, MES, Approvals, Admin)
 │   └── rbench/              # CLI bench equivalent: site provisioning, schema migrations, load generator, benchmarks
 └── docs/                    # Architectural charter, PRD, and TDD specifications
 ```

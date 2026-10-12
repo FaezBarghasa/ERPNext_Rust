@@ -26,7 +26,7 @@ graph TD
     end
     
     subgraph Business Intelligence & Execution Layer
-        Frame --> Accounting[erp-accounting: Multi-Book GL, Benford & ZK Proofs]
+        Frame --> Accounting[erp-accounting: Multi-Book GL, Print Engine & Payments]
         Frame --> Inventory[erp-inventory: FIFO Queue & Batch Tracking]
         Frame --> Mfg[erp-manufacturing: BOM, MILP Scheduler & SPC Charts]
         Frame --> PPM[erp-ppm: EVMS, CPM/CCPM & Monte Carlo]
@@ -81,7 +81,9 @@ graph TD
 
 ### 3.6 `desk-app` & `desk-components`
 - **Universal Hardware Abstraction Layer (`MobileHardwareAbstractionLayer`)**: Async Rust 2024 trait routing biometric verification, barcode scanning, thermal ESC/POS printing, and geolocation between Android JNI (`AndroidJniHalAdapter`) and W3C Web APIs (`WebApisHalAdapter`).
-- **Role-Adaptive Multi-Persona Shell (`PersonaShellConfig`)**: Projects 5 specialized interfaces (`ClientCustomer`, `WarehouseWorker`, `ShopfloorMes`, `ManagerApprover`, `SystemAdmin`) from a single binary.
+- **Role-Adaptive Multi-Persona Shell (`PersonaShellConfig`, `render_desk_shell_html`)**: Projects 5 specialized interfaces (`ClientCustomer`, `WarehouseWorker`, `ShopfloorMes`, `ManagerApprover`, `SystemAdmin`) and unified enterprise desktop from a single binary.
+- **Generic DocType List & Form View Engines (`render_list_view_html`, `render_form_view_html`)**: SSR hypermedia views providing dynamic search filtering, SurrealDB persistence, and document lifecycle management (Draft $\to$ Submitted $\to$ Cancelled).
+- **Anti-Slop Craft Standards**: Crisp inline SVG vectors, Emil Kowalski physics curves (`cubic-bezier(0.16, 1, 0.3, 1)`), active tactile scale feedback (`transform: scale(0.98)`), and restyled scrollbars.
 - **Local-First Edge Synchronization (`LocalMutationBuffer`, `CloudSyncArbiter`)**: Enforces offline resilience via causal vector clocks (`VectorClock`), commutative PN-Counters for stock movements, and LWW element sets with cryptographic tombstones.
 - **Dual Mobile Delivery Engine (`PwaWebManifest`, `ServiceWorkerGenerator`)**: Compiles theme-aware W3C web app manifests, caching service workers (`sw.js`), and Android NDK packaging descriptors (`cargo-apk`).
 
@@ -91,7 +93,7 @@ graph TD
 
 | Crate | Architectural Domain | Key Engineering Mechanisms |
 | :--- | :--- | :--- |
-| **`erp-accounting`** | General Ledger & Financial Integrity | Multi-book ledger enforcing $\sum \text{Debit} - \sum \text{Credit} = 0$, Benford's Law statistical fraud guard (`BenfordGuard`), and Non-Interactive Zero-Knowledge Balance Sheet Proofs (`ZkProofEngine`). |
+| **`erp-accounting`** | General Ledger, Print & Payments | Multi-book ledger enforcing $\sum \text{Debit} - \sum \text{Credit} = 0$, Benford's Law statistical fraud guard (`BenfordGuard`), enterprise printable document engine (`print_format.rs`), and pluggable payment gateway with automated double-entry GL reconciliation (`payment_gateway.rs`). |
 | **`erp-inventory`** | Physical Stock & Warehouse Valuation | Real-time Stock Ledger Entries (SLE), SIMD-aligned FIFO cost valuation queues (`consume_fifo`), and batch/serial expiration validation. |
 | **`erp-manufacturing`** | Production Engineering & Quality | Recursive multi-level BOM explosion, Mixed-Integer Linear Programming (MILP) job shop scheduler (`MilpJobShopScheduler`), and Statistical Process Control (`SpcEngine`) with Nelson rules. |
 | **`erp-ppm`** | Project Portfolio & Scheduling | Critical Path Method (CPM/CCPM), ANSI/EIA-748 EVMS metrics (CPI, SPI, EAC, TCPI), and 100k-iteration Monte Carlo stochastic risk simulator (`MonteCarloSimulator`). |

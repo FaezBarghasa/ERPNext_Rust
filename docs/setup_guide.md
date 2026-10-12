@@ -25,7 +25,7 @@ This document provides step-by-step instructions to install, build, configure, p
 git clone https://github.com/FaezBarghasa/ERPNext_Rust.git
 cd ERPNext_Rust
 
-# Verify compilation across all 21 crates
+# Verify compilation across all 28 crates
 cargo check --workspace
 ```
 
@@ -39,15 +39,18 @@ cargo run -p rbench -- site deploy \
   --admin-email admin@enterprise.local
 ```
 
-### Step 3: Launch the Production Web Server
+### Step 3: Launch the Production Web Server & Enterprise Desk
 ```bash
-# Launch frappe-net HTTP/1.1, HTTP/2, HTTP/3, and WebSocket server
-cargo run -p frappe-net
+# Launch frappe-net HTTP/1.1, HTTP/2, HTTP/3, and WebSocket server with Enterprise Desk
+cargo run -p frappe-net -- start --bind 127.0.0.1:8000 --micro
 ```
-* **Universal Template Portal:** `http://127.0.0.1:8080/templates`
-* **Direct Template Site:** `http://127.0.0.1:8080/templates/svod-streaming`
-* **Health Check:** `http://127.0.0.1:8080/health`
-* **Template Catalog JSON API:** `http://127.0.0.1:8080/api/v1/templates`
+* **Unified Enterprise Desk:** `http://127.0.0.1:8000/desk`
+* **DocType List View:** `http://127.0.0.1:8000/desk/list/sales_invoice`
+* **DocType Form View:** `http://127.0.0.1:8000/desk/form/sales_invoice/new`
+* **Printable Invoice Engine:** `http://127.0.0.1:8000/api/v2/document/sales_invoice/{name}/print`
+* **Payment API Endpoint:** `http://127.0.0.1:8000/api/v2/payments/charge`
+* **Universal Template Portal:** `http://127.0.0.1:8000/templates`
+* **Health Check:** `http://127.0.0.1:8000/health`
 
 ---
 
@@ -132,6 +135,6 @@ cargo fmt --check
 # 2. Strict Clippy check with zero warnings allowed
 cargo clippy --workspace --all-targets -- -D warnings
 
-# 3. Full test suite execution across all 21 crates
+# 3. Full test suite execution across all 28 crates
 cargo test --workspace
 ```
