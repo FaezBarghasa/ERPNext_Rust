@@ -4727,11 +4727,35 @@ pub async fn accounting_payment_entry_handler(
     }))
 }
 
+fn deserialize_flexible_decimal<'de, D>(deserializer: D) -> Result<Decimal, D::Error>
+where
+    D: serde::Deserializer<'de>,
+{
+    let val = serde_json::Value::deserialize(deserializer)?;
+    match val {
+        serde_json::Value::Number(n) => {
+            if let Some(f) = n.as_f64() {
+                Decimal::from_f64_retain(f)
+                    .ok_or_else(|| serde::de::Error::custom("Invalid float for decimal"))
+            } else if let Some(i) = n.as_i64() {
+                Ok(Decimal::from(i))
+            } else {
+                Err(serde::de::Error::custom("Invalid number format for decimal"))
+            }
+        }
+        serde_json::Value::String(s) => s.parse::<Decimal>().map_err(serde::de::Error::custom),
+        _ => Err(serde::de::Error::custom(
+            "Expected number or string for decimal",
+        )),
+    }
+}
+
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct PaymentChargePayload {
     pub doctype: String,
     pub docname: String,
     pub customer: String,
+    #[serde(deserialize_with = "deserialize_flexible_decimal")]
     pub amount: Decimal,
     pub currency: String,
     pub payment_token: String,
@@ -4838,6 +4862,7 @@ pub struct PaymentWebhookPayload {
     pub event_type: String,
     pub intent_id: String,
     pub gateway_reference: String,
+    #[serde(deserialize_with = "deserialize_flexible_decimal")]
     pub amount: Decimal,
     pub currency: String,
     pub status: String,
