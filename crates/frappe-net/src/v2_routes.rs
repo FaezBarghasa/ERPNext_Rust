@@ -4757,48 +4757,54 @@ pub async fn accounting_payment_entry_handler(
             } else {
                 "purchase_invoice"
             };
-            if let Ok(Some(mut inv_doc)) = repo.select_one::<serde_json::Value>(inv_table, inv_no).await {
-                let current_outstanding = inv_doc
-                    .get("outstanding_amount")
-                    .and_then(|v| {
-                        if let Some(s) = v.as_str() {
-                            s.parse::<Decimal>().ok()
-                        } else if let Some(n) = v.as_f64() {
-                            Decimal::from_f64_retain(n)
-                        } else {
-                            None
-                        }
-                    })
-                    .unwrap_or(Decimal::ZERO);
+            let sanitized_inv = sanitize_surrealql_string(inv_no);
+            let select_sql = format!("SELECT * FROM {inv_table} WHERE name = '{sanitized_inv}';");
+            if let Ok(mut res) = client.query(&select_sql).await {
+                let records: Vec<serde_json::Value> = res.take(0).unwrap_or_default();
+                if let Some(inv_doc) = records.into_iter().next() {
+                    let current_outstanding = inv_doc
+                        .get("outstanding_amount")
+                        .and_then(|v| {
+                            if let Some(s) = v.as_str() {
+                                s.parse::<Decimal>().ok()
+                            } else if let Some(n) = v.as_f64() {
+                                Decimal::from_f64_retain(n)
+                            } else {
+                                None
+                            }
+                        })
+                        .unwrap_or(Decimal::ZERO);
 
-                let current_paid = inv_doc
-                    .get("paid_amount")
-                    .and_then(|v| {
-                        if let Some(s) = v.as_str() {
-                            s.parse::<Decimal>().ok()
-                        } else if let Some(n) = v.as_f64() {
-                            Decimal::from_f64_retain(n)
-                        } else {
-                            None
-                        }
-                    })
-                    .unwrap_or(Decimal::ZERO);
+                    let current_paid = inv_doc
+                        .get("paid_amount")
+                        .and_then(|v| {
+                            if let Some(s) = v.as_str() {
+                                s.parse::<Decimal>().ok()
+                            } else if let Some(n) = v.as_f64() {
+                                Decimal::from_f64_retain(n)
+                            } else {
+                                None
+                            }
+                        })
+                        .unwrap_or(Decimal::ZERO);
 
-                let new_paid = current_paid + payload.paid_amount;
-                let new_outstanding = (current_outstanding - payload.paid_amount).max(Decimal::ZERO);
-                let new_status = if new_outstanding.is_zero() {
-                    "Paid"
-                } else {
-                    "Partly Paid"
-                };
+                    let new_paid = current_paid + payload.paid_amount;
+                    let new_outstanding = (current_outstanding - payload.paid_amount).max(Decimal::ZERO);
+                    let new_status = if new_outstanding.is_zero() {
+                        "Paid"
+                    } else {
+                        "Partly Paid"
+                    };
 
-                if let Some(obj) = inv_doc.as_object_mut() {
-                    obj.insert("paid_amount".to_string(), serde_json::json!(new_paid.to_string()));
-                    obj.insert("outstanding_amount".to_string(), serde_json::json!(new_outstanding.to_string()));
-                    obj.insert("status".to_string(), serde_json::json!(new_status));
-                    obj.insert("modified".to_string(), serde_json::json!(Utc::now().to_rfc3339()));
+                    let update_sql = format!("UPDATE {inv_table} MERGE $patch WHERE name = '{sanitized_inv}';");
+                    let patch = serde_json::json!({
+                        "paid_amount": new_paid.to_string(),
+                        "outstanding_amount": new_outstanding.to_string(),
+                        "status": new_status,
+                        "modified": Utc::now().to_rfc3339()
+                    });
+                    let _ = client.query(&update_sql).bind(("patch", patch)).await;
                 }
-                let _ = repo.upsert(inv_table, inv_no, &inv_doc).await;
             }
         }
     }
@@ -4932,49 +4938,54 @@ pub async fn payment_charge_handler(
                 if payload.doctype.eq_ignore_ascii_case("sales_invoice")
                     || payload.doctype.eq_ignore_ascii_case("sales invoice")
                 {
-                    let ref_doc = payload.docname.clone();
-                    if let Ok(Some(mut inv_doc)) = repo.select_one::<serde_json::Value>("sales_invoice", &ref_doc).await {
-                        let current_outstanding = inv_doc
-                            .get("outstanding_amount")
-                            .and_then(|v| {
-                                if let Some(s) = v.as_str() {
-                                    s.parse::<Decimal>().ok()
-                                } else if let Some(n) = v.as_f64() {
-                                    Decimal::from_f64_retain(n)
-                                } else {
-                                    None
-                                }
-                            })
-                            .unwrap_or(Decimal::ZERO);
+                    let sanitized_ref = sanitize_surrealql_string(&payload.docname);
+                    let select_sql = format!("SELECT * FROM sales_invoice WHERE name = '{sanitized_ref}';");
+                    if let Ok(mut res) = client.query(&select_sql).await {
+                        let records: Vec<serde_json::Value> = res.take(0).unwrap_or_default();
+                        if let Some(inv_doc) = records.into_iter().next() {
+                            let current_outstanding = inv_doc
+                                .get("outstanding_amount")
+                                .and_then(|v| {
+                                    if let Some(s) = v.as_str() {
+                                        s.parse::<Decimal>().ok()
+                                    } else if let Some(n) = v.as_f64() {
+                                        Decimal::from_f64_retain(n)
+                                    } else {
+                                        None
+                                    }
+                                })
+                                .unwrap_or(Decimal::ZERO);
 
-                        let current_paid = inv_doc
-                            .get("paid_amount")
-                            .and_then(|v| {
-                                if let Some(s) = v.as_str() {
-                                    s.parse::<Decimal>().ok()
-                                } else if let Some(n) = v.as_f64() {
-                                    Decimal::from_f64_retain(n)
-                                } else {
-                                    None
-                                }
-                            })
-                            .unwrap_or(Decimal::ZERO);
+                            let current_paid = inv_doc
+                                .get("paid_amount")
+                                .and_then(|v| {
+                                    if let Some(s) = v.as_str() {
+                                        s.parse::<Decimal>().ok()
+                                    } else if let Some(n) = v.as_f64() {
+                                        Decimal::from_f64_retain(n)
+                                    } else {
+                                        None
+                                    }
+                                })
+                                .unwrap_or(Decimal::ZERO);
 
-                        let new_paid = current_paid + intent.amount;
-                        let new_outstanding = (current_outstanding - intent.amount).max(Decimal::ZERO);
-                        let new_status = if new_outstanding.is_zero() {
-                            "Paid"
-                        } else {
-                            "Partly Paid"
-                        };
+                            let new_paid = current_paid + intent.amount;
+                            let new_outstanding = (current_outstanding - intent.amount).max(Decimal::ZERO);
+                            let new_status = if new_outstanding.is_zero() {
+                                "Paid"
+                            } else {
+                                "Partly Paid"
+                            };
 
-                        if let Some(obj) = inv_doc.as_object_mut() {
-                            obj.insert("paid_amount".to_string(), serde_json::json!(new_paid.to_string()));
-                            obj.insert("outstanding_amount".to_string(), serde_json::json!(new_outstanding.to_string()));
-                            obj.insert("status".to_string(), serde_json::json!(new_status));
-                            obj.insert("modified".to_string(), serde_json::json!(Utc::now().to_rfc3339()));
+                            let update_sql = format!("UPDATE sales_invoice MERGE $patch WHERE name = '{sanitized_ref}';");
+                            let patch = serde_json::json!({
+                                "paid_amount": new_paid.to_string(),
+                                "outstanding_amount": new_outstanding.to_string(),
+                                "status": new_status,
+                                "modified": Utc::now().to_rfc3339()
+                            });
+                            let _ = client.query(&update_sql).bind(("patch", patch)).await;
                         }
-                        let _ = repo.upsert("sales_invoice", &ref_doc, &inv_doc).await;
                     }
                 }
             }

@@ -502,9 +502,17 @@ async fn test_v2_invoice_settlement_reconciliation() {
     assert!(resp.status().is_success());
     let fetched_doc: serde_json::Value = test::read_body_json(resp).await;
     let data = fetched_doc.get("data").or_else(|| fetched_doc.get("doc")).expect("doc data");
-
     assert_eq!(data.get("status").and_then(|v| v.as_str()), Some("Paid"));
-    let out_amt = data.get("outstanding_amount").and_then(|v| v.as_f64()).unwrap_or(-1.0);
+    let out_amt = data
+        .get("outstanding_amount")
+        .and_then(|v| {
+            if let Some(s) = v.as_str() {
+                s.parse::<f64>().ok()
+            } else {
+                v.as_f64()
+            }
+        })
+        .unwrap_or(-1.0);
     assert_eq!(out_amt, 0.0);
 }
 
