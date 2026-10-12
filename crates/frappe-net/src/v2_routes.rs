@@ -354,6 +354,37 @@ pub async fn v2_get_document(
     }
 }
 
+/// Handler for introspecting all registered DocTypes: `GET /api/v2/meta`
+pub async fn v2_list_meta_handler() -> impl Responder {
+    let registry = frappe_meta::registry::DocTypeRegistry::new_standard_erpnext();
+    HttpResponse::Ok().json(serde_json::json!({
+        "doctypes": registry.list_doctypes(),
+        "total": registry.len(),
+    }))
+}
+
+/// Handler for fetching canonical DocType schema metadata: `GET /api/v2/meta/{doctype}`
+pub async fn v2_get_meta_handler(path: web::Path<String>) -> impl Responder {
+    let target = path.into_inner();
+    let registry = frappe_meta::registry::DocTypeRegistry::new_standard_erpnext();
+
+    let found = registry.list_doctypes().into_iter().find(|name| {
+        name.eq_ignore_ascii_case(&target)
+            || name.replace(' ', "_").eq_ignore_ascii_case(&target)
+            || target.replace('_', " ").eq_ignore_ascii_case(name)
+    });
+
+    if let Some(name) = found {
+        if let Some(schema) = registry.get(&name) {
+            return HttpResponse::Ok().json(schema);
+        }
+    }
+
+    HttpResponse::NotFound().json(serde_json::json!({
+        "error": format!("DocType schema '{target}' not found in registry")
+    }))
+}
+
 /// Handler for rendering print format of a document: `GET /api/v2/document/{doctype}/{name}/print`
 pub async fn v2_print_document(
     req: HttpRequest,
@@ -4718,6 +4749,58 @@ pub async fn accounting_payment_entry_handler(
         for gl in &gl_entries {
             let _ = repo.upsert("gl_entry", &gl.name, gl).await;
         }
+
+        // Auto-reconcile referenced invoice outstanding amount & status
+        if let Some(ref inv_no) = payload.reference_invoice {
+            let inv_table = if payload.payment_type == "Receive" {
+                "sales_invoice"
+            } else {
+                "purchase_invoice"
+            };
+            if let Ok(Some(mut inv_doc)) = repo.get::<serde_json::Value>(inv_table, inv_no).await {
+                let current_outstanding = inv_doc
+                    .get("outstanding_amount")
+                    .and_then(|v| {
+                        if let Some(s) = v.as_str() {
+                            s.parse::<Decimal>().ok()
+                        } else if let Some(n) = v.as_f64() {
+                            Decimal::from_f64_retain(n)
+                        } else {
+                            None
+                        }
+                    })
+                    .unwrap_or(Decimal::ZERO);
+
+                let current_paid = inv_doc
+                    .get("paid_amount")
+                    .and_then(|v| {
+                        if let Some(s) = v.as_str() {
+                            s.parse::<Decimal>().ok()
+                        } else if let Some(n) = v.as_f64() {
+                            Decimal::from_f64_retain(n)
+                        } else {
+                            None
+                        }
+                    })
+                    .unwrap_or(Decimal::ZERO);
+
+                let new_paid = current_paid + payload.paid_amount;
+                let new_outstanding = (current_outstanding - payload.paid_amount).max(Decimal::ZERO);
+                let new_status = if new_outstanding.is_zero() {
+                    "Paid"
+                } else {
+                    "Partly Paid"
+                };
+
+                if let Some(obj) = inv_doc.as_object_mut() {
+                    obj.insert("paid_amount".to_string(), serde_json::json!(new_paid.to_string()));
+                    obj.insert("outstanding_amount".to_string(), serde_json::json!(new_outstanding.to_string()));
+                    obj.insert("status".to_string(), serde_json::json!(new_status));
+                    obj.insert("modified".to_string(), serde_json::json!(Utc::now().to_rfc3339()));
+                }
+                let _ = repo.upsert(inv_table, inv_no, &inv_doc).await;
+            }
+        }
     }
 
     HttpResponse::Created().json(serde_json::json!({
@@ -4844,6 +4927,56 @@ pub async fn payment_charge_handler(
                 let repo = frappe_storage::SurrealRepository::new(client.clone());
                 let jv_no = format!("JV-PAY-{}", Utc::now().timestamp_millis());
                 let _ = repo.upsert("journal_entry", &jv_no, &jv).await;
+
+                // Auto-reconcile referenced Sales Invoice
+                if payload.doctype.eq_ignore_ascii_case("sales_invoice")
+                    || payload.doctype.eq_ignore_ascii_case("sales invoice")
+                {
+                    let ref_doc = payload.docname.clone();
+                    if let Ok(Some(mut inv_doc)) = repo.get::<serde_json::Value>("sales_invoice", &ref_doc).await {
+                        let current_outstanding = inv_doc
+                            .get("outstanding_amount")
+                            .and_then(|v| {
+                                if let Some(s) = v.as_str() {
+                                    s.parse::<Decimal>().ok()
+                                } else if let Some(n) = v.as_f64() {
+                                    Decimal::from_f64_retain(n)
+                                } else {
+                                    None
+                                }
+                            })
+                            .unwrap_or(Decimal::ZERO);
+
+                        let current_paid = inv_doc
+                            .get("paid_amount")
+                            .and_then(|v| {
+                                if let Some(s) = v.as_str() {
+                                    s.parse::<Decimal>().ok()
+                                } else if let Some(n) = v.as_f64() {
+                                    Decimal::from_f64_retain(n)
+                                } else {
+                                    None
+                                }
+                            })
+                            .unwrap_or(Decimal::ZERO);
+
+                        let new_paid = current_paid + intent.amount;
+                        let new_outstanding = (current_outstanding - intent.amount).max(Decimal::ZERO);
+                        let new_status = if new_outstanding.is_zero() {
+                            "Paid"
+                        } else {
+                            "Partly Paid"
+                        };
+
+                        if let Some(obj) = inv_doc.as_object_mut() {
+                            obj.insert("paid_amount".to_string(), serde_json::json!(new_paid.to_string()));
+                            obj.insert("outstanding_amount".to_string(), serde_json::json!(new_outstanding.to_string()));
+                            obj.insert("status".to_string(), serde_json::json!(new_status));
+                            obj.insert("modified".to_string(), serde_json::json!(Utc::now().to_rfc3339()));
+                        }
+                        let _ = repo.upsert("sales_invoice", &ref_doc, &inv_doc).await;
+                    }
+                }
             }
         }
     }
