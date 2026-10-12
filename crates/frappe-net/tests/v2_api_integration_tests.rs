@@ -419,8 +419,8 @@ async fn test_v2_metadata_introspection_api() {
     assert!(resp.status().is_success());
     let body: serde_json::Value = test::read_body_json(resp).await;
     let doctypes = body.get("doctypes").and_then(|v| v.as_array()).expect("doctypes array");
-    assert!(doctypes.iter().any(|d| d.as_str() == Some("sales_invoice")));
-    assert!(doctypes.iter().any(|d| d.as_str() == Some("item")));
+    assert!(doctypes.iter().any(|d| d.as_str() == Some("Sales Invoice")));
+    assert!(doctypes.iter().any(|d| d.as_str() == Some("Item")));
 
     // 2. Introspect sales_invoice metadata
     let req = test::TestRequest::get()
@@ -430,7 +430,7 @@ async fn test_v2_metadata_introspection_api() {
     let resp = test::call_service(&app, req).await;
     assert!(resp.status().is_success());
     let schema: serde_json::Value = test::read_body_json(resp).await;
-    assert_eq!(schema.get("name").and_then(|v| v.as_str()), Some("sales_invoice"));
+    assert_eq!(schema.get("name").and_then(|v| v.as_str()), Some("Sales Invoice"));
     let fields = schema.get("fields").and_then(|v| v.as_array()).expect("fields array");
     assert!(fields.iter().any(|f| f.get("fieldname").and_then(|v| v.as_str()) == Some("customer")));
     assert!(fields.iter().any(|f| f.get("fieldname").and_then(|v| v.as_str()) == Some("grand_total")));
@@ -443,7 +443,7 @@ async fn test_v2_metadata_introspection_api() {
     let resp = test::call_service(&app, req).await;
     assert!(resp.status().is_success());
     let item_schema: serde_json::Value = test::read_body_json(resp).await;
-    assert_eq!(item_schema.get("name").and_then(|v| v.as_str()), Some("item"));
+    assert_eq!(item_schema.get("name").and_then(|v| v.as_str()), Some("Item"));
     let item_fields = item_schema.get("fields").and_then(|v| v.as_array()).expect("item fields array");
     assert!(item_fields.iter().any(|f| f.get("fieldname").and_then(|v| v.as_str()) == Some("item_code")));
 }
@@ -477,14 +477,16 @@ async fn test_v2_invoice_settlement_reconciliation() {
 
     // 2. Post a Payment Charge for this invoice
     let charge_payload = json!({
-        "doctype": "sales_invoice",
+        "doctype": "Sales Invoice",
         "docname": "ACC-SINV-2026-RECON1",
+        "customer": "Global Corp Ltd",
         "amount": 5000.0,
         "currency": "USD",
+        "payment_token": "tok_visa_enterprise",
         "payment_method": "CreditCard"
     });
     let req = test::TestRequest::post()
-        .uri("/api/v2/method/payment/charge")
+        .uri("/api/v2/payments/charge")
         .insert_header(("X-Frappe-Site-Name", "default"))
         .set_json(&charge_payload)
         .to_request();
