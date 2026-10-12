@@ -144,6 +144,11 @@ const DESK_BASE_HTML: &str = r#"<!DOCTYPE html>
             --font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
         }
         * { margin: 0; padding: 0; box-sizing: border-box; font-family: var(--font-family); }
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.15); border-radius: 9999px; }
+        ::-webkit-scrollbar-thumb:hover { background: rgba(255, 255, 255, 0.25); }
+        button:active, .persona-select:active { transform: scale(0.98); }
         body { background: var(--bg-primary); color: var(--text-primary); min-height: 100vh; display: flex; flex-direction: column; overflow-x: hidden; }
         
         header {
@@ -396,6 +401,11 @@ pub fn render_list_view_html(doctype: &str, user_name: &str) -> String {
             --text-primary: #f8fafc; --text-secondary: #94a3b8; --success: #10b981; --warning: #f59e0b; --danger: #ef4444;
         }}
         * {{ margin: 0; padding: 0; box-sizing: border-box; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }}
+        ::-webkit-scrollbar {{ width: 6px; height: 6px; }}
+        ::-webkit-scrollbar-track {{ background: transparent; }}
+        ::-webkit-scrollbar-thumb {{ background: rgba(255, 255, 255, 0.15); border-radius: 9999px; }}
+        ::-webkit-scrollbar-thumb:hover {{ background: rgba(255, 255, 255, 0.25); }}
+        .btn:active, button:active {{ transform: scale(0.98); }}
         body {{ background-color: var(--bg-primary); color: var(--text-primary); min-height: 100vh; display: flex; flex-direction: column; }}
         header {{
             position: sticky; top: 0; z-index: 50; background: rgba(10, 11, 16, 0.85); backdrop-filter: blur(16px);
@@ -411,7 +421,7 @@ pub fn render_list_view_html(doctype: &str, user_name: &str) -> String {
         .breadcrumbs {{ display: flex; align-items: center; gap: 0.5rem; font-size: 0.875rem; color: var(--text-secondary); margin-bottom: 0.5rem; }}
         .breadcrumbs a {{ color: var(--accent); text-decoration: none; }}
         .page-title {{ font-size: 1.75rem; font-weight: 800; text-transform: capitalize; }}
-        .btn {{ padding: 0.5rem 1.2rem; border-radius: 8px; font-weight: 600; font-size: 0.875rem; cursor: pointer; border: none; transition: all 0.2s; display: inline-flex; align-items: center; gap: 0.5rem; text-decoration: none; }}
+        .btn {{ padding: 0.5rem 1.2rem; border-radius: 8px; font-weight: 600; font-size: 0.875rem; cursor: pointer; border: none; transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1); display: inline-flex; align-items: center; gap: 0.5rem; text-decoration: none; }}
         .btn-primary {{ background: var(--accent); color: white; box-shadow: 0 0 12px var(--accent-glow); }}
         .btn-primary:hover {{ opacity: 0.9; transform: translateY(-1px); }}
         .btn-secondary {{ background: var(--bg-secondary); color: var(--text-primary); border: 1px solid var(--border); }}
@@ -440,7 +450,7 @@ pub fn render_list_view_html(doctype: &str, user_name: &str) -> String {
             <span>RustNext Desk</span>
         </a>
         <div class="nav-actions">
-            <a href="/desk" class="btn btn-secondary">← Back to Workspace</a>
+            <a href="/desk" class="btn btn-secondary"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M12 19l-7-7 7-7"/></svg> Back to Workspace</a>
             <div class="user-chip">
                 <div class="user-avatar">{avatar_char}</div>
                 <span>{user_name}</span>
@@ -456,8 +466,8 @@ pub fn render_list_view_html(doctype: &str, user_name: &str) -> String {
                 <h1 class="page-title">{display_title}</h1>
             </div>
             <div style="display: flex; gap: 0.75rem;">
-                <button class="btn btn-secondary" onclick="loadRecords()">↻ Refresh</button>
-                <a href="/desk/form/{doctype}/new" class="btn btn-primary">+ New {display_title}</a>
+                <button class="btn btn-secondary" onclick="loadRecords()"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"/></svg> Refresh</button>
+                <a href="/desk/form/{doctype}/new" class="btn btn-primary"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg> New {display_title}</a>
             </div>
         </div>
         <div class="table-container">
@@ -554,6 +564,11 @@ pub fn render_form_view_html(doctype: &str, docname: &str, user_name: &str) -> S
             --text-primary: #f8fafc; --text-secondary: #94a3b8; --success: #10b981; --warning: #f59e0b; --danger: #ef4444;
         }}
         * {{ margin: 0; padding: 0; box-sizing: border-box; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }}
+        ::-webkit-scrollbar {{ width: 6px; height: 6px; }}
+        ::-webkit-scrollbar-track {{ background: transparent; }}
+        ::-webkit-scrollbar-thumb {{ background: rgba(255, 255, 255, 0.15); border-radius: 9999px; }}
+        ::-webkit-scrollbar-thumb:hover {{ background: rgba(255, 255, 255, 0.25); }}
+        .btn:active, button:active {{ transform: scale(0.98); }}
         body {{ background-color: var(--bg-primary); color: var(--text-primary); min-height: 100vh; display: flex; flex-direction: column; }}
         header {{
             position: sticky; top: 0; z-index: 50; background: rgba(10, 11, 16, 0.85); backdrop-filter: blur(16px);
@@ -569,7 +584,7 @@ pub fn render_form_view_html(doctype: &str, docname: &str, user_name: &str) -> S
         .breadcrumbs a {{ color: var(--accent); text-decoration: none; }}
         .action-bar {{ display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 1rem; }}
         .page-title {{ font-size: 1.75rem; font-weight: 800; display: flex; align-items: center; gap: 0.75rem; }}
-        .btn {{ padding: 0.5rem 1.2rem; border-radius: 8px; font-weight: 600; font-size: 0.875rem; cursor: pointer; border: none; transition: all 0.2s; display: inline-flex; align-items: center; gap: 0.5rem; text-decoration: none; }}
+        .btn {{ padding: 0.5rem 1.2rem; border-radius: 8px; font-weight: 600; font-size: 0.875rem; cursor: pointer; border: none; transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1); display: inline-flex; align-items: center; gap: 0.5rem; text-decoration: none; }}
         .btn-primary {{ background: var(--accent); color: white; box-shadow: 0 0 12px var(--accent-glow); }}
         .btn-primary:hover {{ opacity: 0.9; transform: translateY(-1px); }}
         .btn-success {{ background: var(--success); color: white; }}
@@ -597,7 +612,7 @@ pub fn render_form_view_html(doctype: &str, docname: &str, user_name: &str) -> S
             <span>RustNext Desk</span>
         </a>
         <div class="nav-actions">
-            <a href="/desk/list/{doctype}" class="btn btn-secondary">← Back to List</a>
+            <a href="/desk/list/{doctype}" class="btn btn-secondary"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M12 19l-7-7 7-7"/></svg> Back to List</a>
             <div class="user-chip">
                 <div class="user-avatar">{avatar_char}</div>
                 <span>{user_name}</span>
@@ -616,10 +631,10 @@ pub fn render_form_view_html(doctype: &str, docname: &str, user_name: &str) -> S
                 </h1>
             </div>
             <div style="display: flex; gap: 0.75rem;">
-                <button id="btn-save" class="btn btn-primary" onclick="saveDocument()">💾 Save</button>
-                <button id="btn-submit" class="btn btn-success" style="display:none;" onclick="submitDocument()">✓ Submit</button>
-                <button id="btn-cancel" class="btn btn-danger" style="display:none;" onclick="cancelDocument()">✕ Cancel</button>
-                <button id="btn-delete" class="btn btn-secondary" style="display:none;" onclick="deleteDocument()">🗑 Delete</button>
+                <button id="btn-save" class="btn btn-primary" onclick="saveDocument()"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg> Save</button>
+                <button id="btn-submit" class="btn btn-success" style="display:none;" onclick="submitDocument()"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg> Submit</button>
+                <button id="btn-cancel" class="btn btn-danger" style="display:none;" onclick="cancelDocument()"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg> Cancel</button>
+                <button id="btn-delete" class="btn btn-secondary" style="display:none;" onclick="deleteDocument()"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg> Delete</button>
             </div>
         </div>
 

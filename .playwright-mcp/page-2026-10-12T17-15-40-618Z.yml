@@ -1,0 +1,120 @@
+- generic [active] [ref=f3e1]:
+  - banner [ref=f3e2]:
+    - generic [ref=f3e3]:
+      - generic [ref=f3e4]: R
+      - generic [ref=f3e5]: RustNext Desk
+    - generic [ref=f3e6]:
+      - textbox "Search DocTypes, records, methods, or shortcuts..." [ref=f3e7]
+      - generic [ref=f3e8]: Ctrl+K
+    - generic [ref=f3e9]:
+      - combobox [ref=f3e10] [cursor=pointer]:
+        - option "Unified Enterprise Desk" [selected]
+        - option "Customer Portal"
+        - option "Warehouse Scanner"
+        - option "Shopfloor MES"
+        - option "Approval Deck"
+        - option "Admin Cockpit"
+      - generic [ref=f3e11]:
+        - generic [ref=f3e12]: A
+        - generic [ref=f3e13]: Administrator
+  - main [ref=f3e14]:
+    - generic [ref=f3e15]:
+      - heading "Welcome to Enterprise Desk" [level=1] [ref=f3e16]
+      - paragraph [ref=f3e17]: High-performance local-first Rust ERP runtime with ACID transaction ledger and sub-millisecond hypermedia response.
+    - generic [ref=f3e18]:
+      - generic [ref=f3e19] [cursor=pointer]:
+        - generic [ref=f3e20]: ACID Double-Entry
+        - heading "Accounting & Finance" [level=3] [ref=f3e25]
+        - paragraph [ref=f3e26]: General Ledger, Invoicing, Multi-Currency, Fiscal Years & Statutory Tax
+        - generic [ref=f3e27]:
+          - generic [ref=f3e28]: Sales Invoice
+          - generic [ref=f3e29]: Purchase Invoice
+          - generic [ref=f3e30]: Journal Entry
+          - generic [ref=f3e31]: Account
+      - generic [ref=f3e32] [cursor=pointer]:
+        - generic [ref=f3e33]: Omnichannel
+        - heading "Sales & Commerce" [level=3] [ref=f3e38]
+        - paragraph [ref=f3e39]: Quotations, Sales Orders, Customer Portals, CPQ & Storefront Fulfillment
+        - generic [ref=f3e40]:
+          - generic [ref=f3e41]: Quotation
+          - generic [ref=f3e42]: Sales Order
+          - generic [ref=f3e43]: Customer
+          - generic [ref=f3e44]: Pricing Rule
+      - generic [ref=f3e45] [cursor=pointer]:
+        - generic [ref=f3e46]: 3-Way Matching
+        - heading "Buying & Procurement" [level=3] [ref=f3e51]
+        - paragraph [ref=f3e52]: Material Requests, Supplier RFQs, Purchase Orders & Landed Cost Vouchers
+        - generic [ref=f3e53]:
+          - generic [ref=f3e54]: Purchase Order
+          - generic [ref=f3e55]: Supplier
+          - generic [ref=f3e56]: Material Request
+      - generic [ref=f3e57] [cursor=pointer]:
+        - generic [ref=f3e58]: FIFO Valuation
+        - heading "Stock & Inventory" [level=3] [ref=f3e63]
+        - paragraph [ref=f3e64]: Multi-Warehouse Bins, Serial/Batch Tracking, Reorder Levels & Stock Ledger
+        - generic [ref=f3e65]:
+          - generic [ref=f3e66]: Item
+          - generic [ref=f3e67]: Stock Entry
+          - generic [ref=f3e68]: Warehouse
+          - generic [ref=f3e69]: Batch
+      - generic [ref=f3e70] [cursor=pointer]:
+        - generic [ref=f3e71]: Multi-Level BOM
+        - heading "Manufacturing & MES" [level=3] [ref=f3e76]
+        - paragraph [ref=f3e77]: Work Orders, Routing Operations, Job Cards, Digital Travelers & Live SPC
+        - generic [ref=f3e78]:
+          - generic [ref=f3e79]: BOM
+          - generic [ref=f3e80]: Work Order
+          - generic [ref=f3e81]: Job Card
+          - generic [ref=f3e82]: Operation
+      - generic [ref=f3e83] [cursor=pointer]:
+        - generic [ref=f3e84]: VDA 5050 Robot Fleet
+        - heading "WMS & AMR Logistics" [level=3] [ref=f3e89]
+        - paragraph [ref=f3e90]: 3D Bin Visualizer, Directed Pick-Paths, AMR Mission Dispatcher & Cross-Docking
+        - generic [ref=f3e91]:
+          - generic [ref=f3e92]: Putaway Rule
+          - generic [ref=f3e93]: Pick List
+          - generic [ref=f3e94]: AMR Vehicle
+      - generic [ref=f3e95] [cursor=pointer]:
+        - generic [ref=f3e96]: Kanban Pipeline
+        - heading "CRM & Pipelines" [level=3] [ref=f3e101]
+        - paragraph [ref=f3e102]: Lead Enrichment, Deal Stages, Opportunity Forecasting & Activity Streams
+        - generic [ref=f3e103]:
+          - generic [ref=f3e104]: Lead
+          - generic [ref=f3e105]: Opportunity
+          - generic [ref=f3e106]: Campaign
+      - generic [ref=f3e107] [cursor=pointer]:
+        - generic [ref=f3e108]: Salary Slips
+        - heading "HR & Payroll" [level=3] [ref=f3e113]
+        - paragraph [ref=f3e114]: Employee Records, Attendance, Leave Allocations, Tax Deductions & Payroll Slips
+        - generic [ref=f3e115]:
+          - generic [ref=f3e116]: Employee
+          - generic [ref=f3e117]: Salary Slip
+          - generic [ref=f3e118]: Leave Application
+      - generic [ref=f3e119] [cursor=pointer]:
+        - generic [ref=f3e120]: Depreciation Schedules
+        - heading "Assets & Maintenance" [level=3] [ref=f3e125]
+        - paragraph [ref=f3e126]: Fixed Asset Registry, Straight-Line Depreciation, Repair Work Orders & Telemetry
+        - generic [ref=f3e127]:
+          - generic [ref=f3e128]: Asset
+          - generic [ref=f3e129]: Asset Repair
+          - generic [ref=f3e130]: Maintenance Schedule
+      - generic [ref=f3e131] [cursor=pointer]:
+        - generic [ref=f3e132]: SVOD Streaming
+        - heading "LMS & Education" [level=3] [ref=f3e137]
+        - paragraph [ref=f3e138]: Course Catalogs, Student Enrollment, Interactive Quizzes & Typst Diploma Engine
+        - generic [ref=f3e139]:
+          - generic [ref=f3e140]: Course
+          - generic [ref=f3e141]: Lesson
+          - generic [ref=f3e142]: Student
+      - generic [ref=f3e143] [cursor=pointer]:
+        - generic [ref=f3e144]: Cluster Operations
+        - heading "System Admin Cockpit" [level=3] [ref=f3e149]
+        - paragraph [ref=f3e150]: Multi-Tenant Database Pools, Wasmtime Fuel Monitor, Rate Limiters & Tracing Telemetry
+        - generic [ref=f3e151]:
+          - generic [ref=f3e152]: Tenant
+          - generic [ref=f3e153]: DocType
+          - generic [ref=f3e154]: User
+          - generic [ref=f3e155]: Role
+  - contentinfo [ref=f3e156]:
+    - generic [ref=f3e157]: SurrealDB 3.3.0 KV Local Engine • Tokio Multi-Thread • Wasmtime Sandboxed
+    - generic [ref=f3e160]: RustNext v0.2.0 (2024 Edition) • Zero-IPC In-Memory Cache

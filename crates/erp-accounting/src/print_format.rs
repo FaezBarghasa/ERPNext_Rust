@@ -603,8 +603,9 @@ impl PrintableInvoice {
 <body>
 <div class="invoice-card">
   <div class="no-print" style="margin-bottom: 20px; display: flex; justify-content: flex-end; gap: 12px;">
-    <button onclick="window.print()" style="padding: 8px 16px; background: var(--primary); color: white; border: none; border-radius: 4px; font-weight: 600; cursor: pointer;">
-      🖨️ Print Commercial Document
+    <button onclick="window.print()" style="padding: 8px 16px; background: var(--primary); color: white; border: none; border-radius: 6px; font-weight: 600; cursor: pointer; display: inline-flex; align-items: center; gap: 8px; transition: transform 0.15s ease;">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9V2h12v7M6 18H4a2 2 0 01-2-2v-5a2 2 0 012-2h16a2 2 0 012 2v5a2 2 0 01-2 2h-2"/><path d="M6 14h12v8H6z"/></svg>
+      Print Commercial Document
     </button>
   </div>
 

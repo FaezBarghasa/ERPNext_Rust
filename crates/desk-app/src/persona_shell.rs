@@ -403,7 +403,7 @@ pub fn render_worker_kiosk_html(operator_name: &str) -> String {
         <!-- Action 2: My Assigned Jobs -->
         <div class="kiosk-card" style="border-color: #2563eb;" onclick="alert('Opening Job Card JC-2026-8891...')">
             <div>
-                <div class="card-icon">📋</div>
+                <div class="card-icon"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><rect x="8" y="2" width="8" height="4" rx="1" ry="1"/></svg></div>
                 <div class="card-title">My Assigned Jobs</div>
                 <div class="card-desc">Active: <strong>JC-2026-8891</strong> (CNC Milling) &middot; Target: 120 units</div>
             </div>
@@ -413,7 +413,7 @@ pub fn render_worker_kiosk_html(operator_name: &str) -> String {
         <!-- Action 3: Scan Material & Batch -->
         <div class="kiosk-card" style="border-color: #d97706;" onclick="alert('Camera Scanner Engaged')">
             <div>
-                <div class="card-icon">📦</div>
+                <div class="card-icon"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg></div>
                 <div class="card-title">Scan Material / SABB</div>
                 <div class="card-desc">Point Laser Gun or Camera at GS1 / Batch Barcode</div>
             </div>
@@ -423,7 +423,7 @@ pub fn render_worker_kiosk_html(operator_name: &str) -> String {
         <!-- Action 4: Live Earning Telemetry -->
         <div class="kiosk-card" style="border-color: #7c3aed;">
             <div>
-                <div class="card-icon">💰</div>
+                <div class="card-icon"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M16 8h-6a2 2 0 1 0 0 4h4a2 2 0 1 1 0 4H8"/><line x1="12" y1="2" x2="12" y2="4"/><line x1="12" y1="20" x2="12" y2="22"/></svg></div>
                 <div class="card-title">Today's Accrued Earnings</div>
                 <div class="card-desc">Piece-Rate (94 units) + Shift Differential</div>
             </div>
@@ -432,7 +432,7 @@ pub fn render_worker_kiosk_html(operator_name: &str) -> String {
     </main>
 
     <footer class="kiosk-footer">
-        <div>🔒 Strict Worker Sandbox Active &middot; Zero Accounting/Customer Exposure</div>
+        <div><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;margin-right:4px;"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg> Strict Worker Sandbox Active &middot; Zero Accounting/Customer Exposure</div>
         <div>Hardware Laser Wedge Interceptor: Active (&Delta;t &lt; 35ms)</div>
     </footer>
 </body>
