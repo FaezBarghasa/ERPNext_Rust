@@ -4,6 +4,7 @@
 //! - Sales Invoices & Credit Notes
 //! - Purchase Orders & Purchase Invoices
 //! - Delivery Notes & Goods Receipts
+//!
 //! Includes full VAT/GST tax tranches, bank wire details, signature seals, and `@media print` styling.
 
 use compact_str::CompactString;

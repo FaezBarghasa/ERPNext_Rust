@@ -299,3 +299,95 @@ async fn test_v2_payment_charge_and_webhook_integration() {
     assert_eq!(body["received"], true);
     assert_eq!(body["status"], "PROCESSED");
 }
+
+#[actix_web::test]
+async fn test_gui_shell_multi_persona_and_views_integration() {
+    let pool_mgr = ConnectionPoolManager::in_memory(Duration::from_secs(300));
+    let topology = MicroTopologyConfig::default();
+
+    let app = test::init_service(
+        App::new().configure(|cfg| configure_app(cfg, pool_mgr.clone(), topology.clone(), None)),
+    )
+    .await;
+
+    // 1. Enterprise Desk Home View
+    let req = test::TestRequest::get().uri("/desk").to_request();
+    let resp = test::call_service(&app, req).await;
+    assert!(resp.status().is_success());
+    let body = test::read_body(resp).await;
+    let html = String::from_utf8_lossy(&body);
+    assert!(html.contains("RustNext Enterprise Desk"));
+    assert!(html.contains("Accounting & Finance"));
+    assert!(html.contains("Stock & Inventory"));
+
+    // 2. Generic DocType List View
+    let req = test::TestRequest::get()
+        .uri("/desk/list/sales_invoice")
+        .to_request();
+    let resp = test::call_service(&app, req).await;
+    assert!(resp.status().is_success());
+    let body = test::read_body(resp).await;
+    let html = String::from_utf8_lossy(&body);
+    assert!(html.contains("sales invoice List"));
+    assert!(html.contains("RustNext Desk"));
+
+    // 3. Document Interactive Form View
+    let req = test::TestRequest::get()
+        .uri("/desk/form/sales_invoice/ACC-SINV-2026-8888")
+        .to_request();
+    let resp = test::call_service(&app, req).await;
+    assert!(resp.status().is_success());
+    let body = test::read_body(resp).await;
+    let html = String::from_utf8_lossy(&body);
+    assert!(html.contains("ACC-SINV-2026-8888"));
+    assert!(html.contains("sales invoice"));
+
+    // 4. Customer Portal Persona
+    let req = test::TestRequest::get().uri("/portal").to_request();
+    let resp = test::call_service(&app, req).await;
+    assert!(resp.status().is_success());
+    let body = test::read_body(resp).await;
+    let html = String::from_utf8_lossy(&body);
+    assert!(html.contains("Customer Portal"));
+
+    // 5. Warehouse Worker Kiosk Persona
+    let req = test::TestRequest::get().uri("/worker").to_request();
+    let resp = test::call_service(&app, req).await;
+    assert!(resp.status().is_success());
+    let body = test::read_body(resp).await;
+    let html = String::from_utf8_lossy(&body);
+    assert!(html.contains("Floor Terminal Kiosk"));
+
+    // 6. Shopfloor MES Operator Cockpit Persona
+    let req = test::TestRequest::get().uri("/factory").to_request();
+    let resp = test::call_service(&app, req).await;
+    assert!(resp.status().is_success());
+    let body = test::read_body(resp).await;
+    let html = String::from_utf8_lossy(&body);
+    assert!(html.contains("SCADA Floor Cockpit"));
+
+    // 7. Executive Approvals Hub Persona
+    let req = test::TestRequest::get().uri("/approvals").to_request();
+    let resp = test::call_service(&app, req).await;
+    assert!(resp.status().is_success());
+    let body = test::read_body(resp).await;
+    let html = String::from_utf8_lossy(&body);
+    assert!(html.contains("Executive Approvals Hub"));
+
+    // 8. Systems Administrator Cockpit Persona
+    let req = test::TestRequest::get().uri("/admin").to_request();
+    let resp = test::call_service(&app, req).await;
+    assert!(resp.status().is_success());
+    let body = test::read_body(resp).await;
+    let html = String::from_utf8_lossy(&body);
+    assert!(html.contains("Planetary Operational Cockpit"));
+
+    // 9. PWA Web Manifest & Service Worker
+    let req = test::TestRequest::get().uri("/manifest.json").to_request();
+    let resp = test::call_service(&app, req).await;
+    assert!(resp.status().is_success());
+
+    let req = test::TestRequest::get().uri("/sw.js").to_request();
+    let resp = test::call_service(&app, req).await;
+    assert!(resp.status().is_success());
+}
