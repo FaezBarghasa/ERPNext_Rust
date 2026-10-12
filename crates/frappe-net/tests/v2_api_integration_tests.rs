@@ -418,7 +418,10 @@ async fn test_v2_metadata_introspection_api() {
     let resp = test::call_service(&app, req).await;
     assert!(resp.status().is_success());
     let body: serde_json::Value = test::read_body_json(resp).await;
-    let doctypes = body.get("doctypes").and_then(|v| v.as_array()).expect("doctypes array");
+    let doctypes = body
+        .get("doctypes")
+        .and_then(|v| v.as_array())
+        .expect("doctypes array");
     assert!(doctypes.iter().any(|d| d.as_str() == Some("Sales Invoice")));
     assert!(doctypes.iter().any(|d| d.as_str() == Some("Item")));
 
@@ -430,10 +433,24 @@ async fn test_v2_metadata_introspection_api() {
     let resp = test::call_service(&app, req).await;
     assert!(resp.status().is_success());
     let schema: serde_json::Value = test::read_body_json(resp).await;
-    assert_eq!(schema.get("name").and_then(|v| v.as_str()), Some("Sales Invoice"));
-    let fields = schema.get("fields").and_then(|v| v.as_array()).expect("fields array");
-    assert!(fields.iter().any(|f| f.get("fieldname").and_then(|v| v.as_str()) == Some("customer")));
-    assert!(fields.iter().any(|f| f.get("fieldname").and_then(|v| v.as_str()) == Some("grand_total")));
+    assert_eq!(
+        schema.get("name").and_then(|v| v.as_str()),
+        Some("Sales Invoice")
+    );
+    let fields = schema
+        .get("fields")
+        .and_then(|v| v.as_array())
+        .expect("fields array");
+    assert!(
+        fields
+            .iter()
+            .any(|f| f.get("fieldname").and_then(|v| v.as_str()) == Some("customer"))
+    );
+    assert!(
+        fields
+            .iter()
+            .any(|f| f.get("fieldname").and_then(|v| v.as_str()) == Some("grand_total"))
+    );
 
     // 3. Introspect item metadata
     let req = test::TestRequest::get()
@@ -443,9 +460,19 @@ async fn test_v2_metadata_introspection_api() {
     let resp = test::call_service(&app, req).await;
     assert!(resp.status().is_success());
     let item_schema: serde_json::Value = test::read_body_json(resp).await;
-    assert_eq!(item_schema.get("name").and_then(|v| v.as_str()), Some("Item"));
-    let item_fields = item_schema.get("fields").and_then(|v| v.as_array()).expect("item fields array");
-    assert!(item_fields.iter().any(|f| f.get("fieldname").and_then(|v| v.as_str()) == Some("item_code")));
+    assert_eq!(
+        item_schema.get("name").and_then(|v| v.as_str()),
+        Some("Item")
+    );
+    let item_fields = item_schema
+        .get("fields")
+        .and_then(|v| v.as_array())
+        .expect("item fields array");
+    assert!(
+        item_fields
+            .iter()
+            .any(|f| f.get("fieldname").and_then(|v| v.as_str()) == Some("item_code"))
+    );
 }
 
 #[actix_web::test]
@@ -501,7 +528,10 @@ async fn test_v2_invoice_settlement_reconciliation() {
     let resp = test::call_service(&app, req).await;
     assert!(resp.status().is_success());
     let fetched_doc: serde_json::Value = test::read_body_json(resp).await;
-    let data = fetched_doc.get("data").or_else(|| fetched_doc.get("doc")).expect("doc data");
+    let data = fetched_doc
+        .get("data")
+        .or_else(|| fetched_doc.get("doc"))
+        .expect("doc data");
     assert_eq!(data.get("status").and_then(|v| v.as_str()), Some("Paid"));
     let out_amt = data
         .get("outstanding_amount")
@@ -515,4 +545,3 @@ async fn test_v2_invoice_settlement_reconciliation() {
         .unwrap_or(-1.0);
     assert_eq!(out_amt, 0.0);
 }
-

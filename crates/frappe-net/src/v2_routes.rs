@@ -374,10 +374,10 @@ pub async fn v2_get_meta_handler(path: web::Path<String>) -> impl Responder {
             || target.replace('_', " ").eq_ignore_ascii_case(name)
     });
 
-    if let Some(name) = found {
-        if let Some(schema) = registry.get(&name) {
-            return HttpResponse::Ok().json(schema);
-        }
+    if let Some(name) = found
+        && let Some(schema) = registry.get(&name)
+    {
+        return HttpResponse::Ok().json(schema);
     }
 
     HttpResponse::NotFound().json(serde_json::json!({
@@ -4789,14 +4789,16 @@ pub async fn accounting_payment_entry_handler(
                         .unwrap_or(Decimal::ZERO);
 
                     let new_paid = current_paid + payload.paid_amount;
-                    let new_outstanding = (current_outstanding - payload.paid_amount).max(Decimal::ZERO);
+                    let new_outstanding =
+                        (current_outstanding - payload.paid_amount).max(Decimal::ZERO);
                     let new_status = if new_outstanding.is_zero() {
                         "Paid"
                     } else {
                         "Partly Paid"
                     };
 
-                    let update_sql = format!("UPDATE {inv_table} MERGE $patch WHERE name = '{sanitized_inv}';");
+                    let update_sql =
+                        format!("UPDATE {inv_table} MERGE $patch WHERE name = '{sanitized_inv}';");
                     let patch = serde_json::json!({
                         "paid_amount": new_paid.to_string(),
                         "outstanding_amount": new_outstanding.to_string(),
@@ -4939,7 +4941,8 @@ pub async fn payment_charge_handler(
                     || payload.doctype.eq_ignore_ascii_case("sales invoice")
                 {
                     let sanitized_ref = sanitize_surrealql_string(&payload.docname);
-                    let select_sql = format!("SELECT * FROM sales_invoice WHERE name = '{sanitized_ref}';");
+                    let select_sql =
+                        format!("SELECT * FROM sales_invoice WHERE name = '{sanitized_ref}';");
                     if let Ok(mut res) = client.query(&select_sql).await {
                         let records: Vec<serde_json::Value> = res.take(0).unwrap_or_default();
                         if let Some(inv_doc) = records.into_iter().next() {
@@ -4970,14 +4973,17 @@ pub async fn payment_charge_handler(
                                 .unwrap_or(Decimal::ZERO);
 
                             let new_paid = current_paid + intent.amount;
-                            let new_outstanding = (current_outstanding - intent.amount).max(Decimal::ZERO);
+                            let new_outstanding =
+                                (current_outstanding - intent.amount).max(Decimal::ZERO);
                             let new_status = if new_outstanding.is_zero() {
                                 "Paid"
                             } else {
                                 "Partly Paid"
                             };
 
-                            let update_sql = format!("UPDATE sales_invoice MERGE $patch WHERE name = '{sanitized_ref}';");
+                            let update_sql = format!(
+                                "UPDATE sales_invoice MERGE $patch WHERE name = '{sanitized_ref}';"
+                            );
                             let patch = serde_json::json!({
                                 "paid_amount": new_paid.to_string(),
                                 "outstanding_amount": new_outstanding.to_string(),

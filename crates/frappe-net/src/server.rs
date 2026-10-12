@@ -47,10 +47,10 @@ use crate::v2_routes::{
     trade_list_reviews_handler, trade_list_shipping_zones_handler, trade_moderate_review_handler,
     trade_order_transition_handler, trade_remove_wishlist_item_handler, trade_rma_submit_handler,
     trade_submit_review_handler, upload_file_handler, v2_amend_document, v2_cancel_document,
-    v2_create_document, v2_delete_document, v2_get_document, v2_get_meta_handler,
-    v2_list_document, v2_list_meta_handler, v2_print_document, v2_submit_document,
-    v2_update_document, webhooks_dispatch_test_handler, workflow_evaluate_handler,
-    workflow_version_history_handler, workflow_version_rollback_handler,
+    v2_create_document, v2_delete_document, v2_get_document, v2_get_meta_handler, v2_list_document,
+    v2_list_meta_handler, v2_print_document, v2_submit_document, v2_update_document,
+    webhooks_dispatch_test_handler, workflow_evaluate_handler, workflow_version_history_handler,
+    workflow_version_rollback_handler,
 };
 use actix_web::{
     App, HttpMessage, HttpRequest, HttpResponse, HttpServer, Responder, middleware::Compress,
