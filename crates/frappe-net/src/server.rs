@@ -37,7 +37,8 @@ use crate::v2_routes::{
     h3_stream_telemetry_handler, hr_process_payroll_handler, inventory_stock_balance_handler,
     inventory_stock_entry_handler, inventory_variant_matrix_handler, login_handler, logout_handler,
     manufacturing_complete_work_order_handler, manufacturing_work_order_handler,
-    notifications_dispatch_handler, notifications_get_inbox_handler, ping_handler,
+    notifications_dispatch_handler, notifications_get_inbox_handler,
+    payment_charge_handler, payment_webhook_handler, ping_handler,
     portal_customer_dashboard_handler, portal_supplier_dashboard_handler, print_document_handler,
     quic_status_handler, render_invoice_handler, render_receipt_handler,
     report_pivot_table_handler, selling_delivery_note_handler, selling_sales_invoice_handler,
@@ -47,9 +48,9 @@ use crate::v2_routes::{
     trade_moderate_review_handler, trade_order_transition_handler,
     trade_remove_wishlist_item_handler, trade_rma_submit_handler, trade_submit_review_handler,
     upload_file_handler, v2_amend_document, v2_cancel_document, v2_create_document,
-    v2_delete_document, v2_get_document, v2_list_document, v2_submit_document, v2_update_document,
-    webhooks_dispatch_test_handler, workflow_evaluate_handler, workflow_version_history_handler,
-    workflow_version_rollback_handler,
+    v2_delete_document, v2_get_document, v2_list_document, v2_print_document, v2_submit_document,
+    v2_update_document, webhooks_dispatch_test_handler, workflow_evaluate_handler,
+    workflow_version_history_handler, workflow_version_rollback_handler,
 };
 use actix_web::{
     App, HttpMessage, HttpRequest, HttpResponse, HttpServer, Responder, middleware::Compress,
@@ -1226,6 +1227,15 @@ pub fn configure_app(
             "/api/v2/email/queue",
             web::get().to(email_list_queue_handler),
         )
+        // V2 Payment Gateway Processing & Settlement Webhooks
+        .route(
+            "/api/v2/payments/charge",
+            web::post().to(payment_charge_handler),
+        )
+        .route(
+            "/api/v2/payments/webhook",
+            web::post().to(payment_webhook_handler),
+        )
         // Protected V1 REST Resource API Scope
         .service(
             web::scope("/api/v1/resource")
@@ -1242,6 +1252,7 @@ pub fn configure_app(
                 .route("/{doctype}", web::get().to(v2_list_document))
                 .route("/{doctype}", web::post().to(v2_create_document))
                 .route("/{doctype}/{name}", web::get().to(v2_get_document))
+                .route("/{doctype}/{name}/print", web::get().to(v2_print_document))
                 .route("/{doctype}/{name}", web::put().to(v2_update_document))
                 .route("/{doctype}/{name}", web::delete().to(v2_delete_document))
                 .route(

@@ -841,4 +841,51 @@ mod tests {
         assert!(html.contains("CHASUS33"));
         assert!(html.contains("@media print"));
     }
+
+    #[test]
+    fn test_printable_invoice_from_document_json() {
+        let doc_json = serde_json::json!({
+            "name": "ACC-SINV-2026-00099",
+            "doctype": "Sales Invoice",
+            "posting_date": "2026-10-12",
+            "due_date": "2026-11-12",
+            "company": "RustNext Global Enterprise",
+            "customer": "Starlight Aerospace",
+            "currency": "EUR",
+            "items": [
+                {
+                    "item_code": "AV-SENSOR-01",
+                    "description": "Avionics Multi-Spectrum Sensor",
+                    "qty": 2.0,
+                    "rate": 4500.0,
+                    "discount_amount": 0.0,
+                    "tax_rate": 19.0,
+                    "amount": 9000.0
+                }
+            ],
+            "taxes": [
+                {
+                    "description": "EU Standard VAT",
+                    "rate": 19.0,
+                    "tax_amount": 1710.0
+                }
+            ],
+            "net_total": 9000.0,
+            "grand_total": 10710.0,
+            "outstanding_amount": 10710.0
+        });
+
+        let printable = PrintableInvoice::from_document_json("Sales Invoice", &doc_json);
+        assert_eq!(printable.document_number, "ACC-SINV-2026-00099");
+        assert_eq!(printable.party.name, "Starlight Aerospace");
+        assert_eq!(printable.currency, "EUR");
+        assert_eq!(printable.line_items.len(), 1);
+        assert_eq!(printable.grand_total, dec!(10710.0));
+
+        let html = printable.render_html();
+        assert!(html.contains("ACC-SINV-2026-00099"));
+        assert!(html.contains("Starlight Aerospace"));
+        assert!(html.contains("Avionics Multi-Spectrum Sensor"));
+        assert!(html.contains("10710.00"));
+    }
 }

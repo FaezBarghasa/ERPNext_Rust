@@ -16,7 +16,11 @@ use crate::rate_limit::LoginGuard;
 use crate::tenant::{ConnectionPoolManager, TenantId};
 use actix_web::{HttpMessage, HttpRequest, HttpResponse, Responder, web};
 use chrono::{NaiveDate, Utc};
-use erp_accounting::{GlEntry, JournalEntry, JournalEntryLine, StatementGenerator};
+use erp_accounting::{
+    GlEntry, JournalEntry, JournalEntryLine, MockPaymentGateway, PaymentGatewayProcessor,
+    PaymentIntent, PaymentMethod, PaymentReconciliationEngine, PaymentStatus, PrintableInvoice,
+    StatementGenerator,
+};
 use erp_cms::media_library::{MediaAsset, MediaLibraryRegistry};
 use erp_cms::seo_engine::SeoMetadata;
 use erp_cms::taxonomy::{TaxonomyRegistry, TaxonomyTerm};
@@ -343,6 +347,56 @@ pub async fn v2_get_document(
             let records: Vec<serde_json::Value> = res.take(0).unwrap_or_default();
             match records.into_iter().next() {
                 Some(r) => HttpResponse::Ok().json(serde_json::json!({ "doc": r })),
+                None => HttpResponse::NotFound().body("Document not found"),
+            }
+        }
+        Err(e) => HttpResponse::InternalServerError().body(e.to_string()),
+    }
+}
+
+/// Handler for rendering print format of a document: `GET /api/v2/document/{doctype}/{name}/print`
+pub async fn v2_print_document(
+    req: HttpRequest,
+    path: web::Path<(String, String)>,
+    pool_mgr: web::Data<ConnectionPoolManager>,
+) -> impl Responder {
+    let (doctype, name) = path.into_inner();
+    let tenant_id = match req.extensions().get::<TenantId>() {
+        Some(t) => t.clone(),
+        None => return HttpResponse::BadRequest().body("Missing tenant context"),
+    };
+
+    if let Some(ctx) = req.extensions().get::<SecurityContext>()
+        && !check_permission(&ctx.claims.roles, &[], Permission::Read, 0)
+    {
+        return HttpResponse::Forbidden().json(serde_json::json!({
+            "error": "Permission Denied: insufficient read privileges"
+        }));
+    }
+
+    let client = match pool_mgr.get_or_initialize_client(&tenant_id).await {
+        Ok(c) => c,
+        Err(e) => return HttpResponse::InternalServerError().body(e.to_string()),
+    };
+
+    let table = doctype.to_lowercase().replace(' ', "_");
+    if !SAFE_FIELD_REGEX.is_match(&table) {
+        return HttpResponse::BadRequest().body("Invalid doctype identifier");
+    }
+
+    let sanitized_name = sanitize_surrealql_string(&name);
+    let sql = format!("SELECT * FROM {table} WHERE name = '{sanitized_name}';");
+    match client.query(&sql).await {
+        Ok(mut res) => {
+            let records: Vec<serde_json::Value> = res.take(0).unwrap_or_default();
+            match records.into_iter().next() {
+                Some(doc) => {
+                    let printable = PrintableInvoice::from_document_json(&doctype, &doc);
+                    let html = printable.render_html();
+                    HttpResponse::Ok()
+                        .content_type("text/html; charset=utf-8")
+                        .body(html)
+                }
                 None => HttpResponse::NotFound().body("Document not found"),
             }
         }
@@ -4673,6 +4727,145 @@ pub async fn accounting_payment_entry_handler(
     }))
 }
 
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct PaymentChargePayload {
+    pub doctype: String,
+    pub docname: String,
+    pub customer: String,
+    pub amount: Decimal,
+    pub currency: String,
+    pub payment_token: String,
+    pub method: Option<String>,
+    pub auto_reconcile: Option<bool>,
+    pub bank_account: Option<String>,
+    pub ar_account: Option<String>,
+}
+
+/// Handler for executing an online card or wallet payment: `POST /api/v2/payments/charge`
+pub async fn payment_charge_handler(
+    req: HttpRequest,
+    pool_mgr: web::Data<ConnectionPoolManager>,
+    payload: web::Json<PaymentChargePayload>,
+) -> impl Responder {
+    let tenant_id = resolve_tenant_id(&req);
+
+    if payload.amount <= Decimal::ZERO {
+        return HttpResponse::BadRequest().json(serde_json::json!({
+            "error": "Charge amount must be positive"
+        }));
+    }
+
+    let method = match payload.method.as_deref() {
+        Some("BankTransfer") => PaymentMethod::BankTransfer,
+        Some("DigitalWallet") => PaymentMethod::DigitalWallet,
+        Some("CashOnDelivery") => PaymentMethod::CashOnDelivery,
+        _ => PaymentMethod::CreditCard,
+    };
+
+    let intent_id: compact_str::CompactString =
+        format!("PI-{}", Utc::now().timestamp_millis()).into();
+    let mut intent = PaymentIntent {
+        intent_id: intent_id.clone(),
+        reference_doctype: payload.doctype.clone().into(),
+        reference_docname: payload.docname.clone().into(),
+        customer_id: payload.customer.clone().into(),
+        currency: payload.currency.clone().into(),
+        amount: payload.amount,
+        method,
+        status: PaymentStatus::Pending,
+        gateway_reference: None,
+        created_at: Utc::now(),
+        settled_at: None,
+    };
+
+    let gateway = MockPaymentGateway::new();
+    if let Err(e) = gateway.authorize(&mut intent, &payload.payment_token) {
+        return HttpResponse::PaymentRequired().json(serde_json::json!({
+            "status": "FAILED",
+            "error": e.to_string(),
+            "intent": intent,
+        }));
+    }
+
+    if let Err(e) = gateway.capture(&mut intent) {
+        return HttpResponse::InternalServerError().json(serde_json::json!({
+            "status": "FAILED",
+            "error": e.to_string(),
+            "intent": intent,
+        }));
+    }
+
+    let mut settlement_jv = None;
+    if payload.auto_reconcile.unwrap_or(true) {
+        let bank_account = payload
+            .bank_account
+            .clone()
+            .unwrap_or_else(|| "1110 - Operating Bank Account".to_string());
+        let ar_account = payload
+            .ar_account
+            .clone()
+            .unwrap_or_else(|| "1310 - Accounts Receivable".to_string());
+        let today = Utc::now().date_naive();
+
+        if let Ok(jv) = PaymentReconciliationEngine::create_settlement_journal_entry(
+            &intent,
+            &bank_account,
+            &ar_account,
+            today,
+        ) {
+            settlement_jv = Some(jv.clone());
+            if let Ok(client) = pool_mgr.get_or_initialize_client(&tenant_id).await {
+                let repo = frappe_storage::SurrealRepository::new(client.clone());
+                let jv_no = format!("JV-PAY-{}", Utc::now().timestamp_millis());
+                let _ = repo.upsert("journal_entry", &jv_no, &jv).await;
+            }
+        }
+    }
+
+    HttpResponse::Ok().json(serde_json::json!({
+        "status": "SUCCESS",
+        "intent_id": intent.intent_id,
+        "gateway_reference": intent.gateway_reference,
+        "amount": intent.amount,
+        "currency": intent.currency,
+        "settled_at": intent.settled_at,
+        "settlement_journal": settlement_jv,
+    }))
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct PaymentWebhookPayload {
+    pub event_type: String,
+    pub intent_id: String,
+    pub gateway_reference: String,
+    pub amount: Decimal,
+    pub currency: String,
+    pub status: String,
+    pub customer: Option<String>,
+    pub reference_doctype: Option<String>,
+    pub reference_docname: Option<String>,
+}
+
+/// Handler for processing payment gateway async webhooks: `POST /api/v2/payments/webhook`
+pub async fn payment_webhook_handler(
+    req: HttpRequest,
+    payload: web::Json<PaymentWebhookPayload>,
+) -> impl Responder {
+    let _tenant_id = resolve_tenant_id(&req);
+    tracing::info!(
+        "Payment Webhook received event={} intent_id={}",
+        payload.event_type,
+        payload.intent_id
+    );
+
+    HttpResponse::Ok().json(serde_json::json!({
+        "received": true,
+        "event_type": payload.event_type,
+        "intent_id": payload.intent_id,
+        "status": "PROCESSED",
+    }))
+}
+
 #[derive(Debug, Clone, Deserialize)]
 pub struct ProfitLossQuery {
     pub from_date: Option<chrono::NaiveDate>,
@@ -5012,53 +5205,19 @@ pub async fn print_document_handler(payload: web::Json<PrintDocumentPayload>) ->
         .company
         .clone()
         .unwrap_or_else(|| "RustNext Enterprise Ltd.".to_string());
-    let theme = payload
-        .print_format
-        .clone()
-        .unwrap_or_else(|| "Standard".to_string());
 
-    let html = format!(
-        r#"<!DOCTYPE html>
-<html lang="en">
-<head>
-<meta charset="utf-8">
-<title>{doctype} - {docname}</title>
-<style>
-  body {{ font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; margin: 40px; color: #1e293b; }}
-  .header {{ display: flex; justify-content: space-between; border-bottom: 2px solid #e2e8f0; padding-bottom: 20px; }}
-  .logo {{ font-size: 24px; font-weight: 800; color: #0284c7; }}
-  .meta {{ text-align: right; }}
-  .doc-title {{ font-size: 20px; font-weight: 700; margin: 30px 0 10px; }}
-  table {{ width: 100%; border-collapse: collapse; margin-top: 20px; }}
-  th, td {{ padding: 12px; border: 1px solid #cbd5e1; text-align: left; }}
-  th {{ background: #f8fafc; font-weight: 600; }}
-  .total-box {{ margin-top: 20px; text-align: right; font-size: 16px; font-weight: 700; }}
-  .footer {{ margin-top: 50px; font-size: 12px; color: #64748b; text-align: center; border-top: 1px solid #e2e8f0; padding-top: 20px; }}
-</style>
-</head>
-<body>
-  <div class="header">
-    <div class="logo">{company}</div>
-    <div class="meta">
-      <div>Format: {theme}</div>
-      <div>Date: {now}</div>
-    </div>
-  </div>
-  <div class="doc-title">{doctype}: {docname}</div>
-  <div class="content">
-    <p>Official certified document generated by RustNext ERP (ERPNext v16 Parity Engine).</p>
-  </div>
-  <div class="footer">
-    Verified Electronic Document &bull; Document ID: {docname}
-  </div>
-</body>
-</html>"#,
-        doctype = payload.doctype,
-        docname = payload.docname,
-        company = company,
-        theme = theme,
-        now = Utc::now().format("%Y-%m-%d %H:%M:%S UTC")
-    );
+    let doc = if let Some(ref raw) = payload.raw_data {
+        raw.clone()
+    } else {
+        serde_json::json!({
+            "name": payload.docname,
+            "company": company,
+            "doctype": payload.doctype,
+        })
+    };
+
+    let printable = PrintableInvoice::from_document_json(&payload.doctype, &doc);
+    let html = printable.render_html();
 
     HttpResponse::Ok()
         .content_type("text/html; charset=utf-8")
