@@ -4757,7 +4757,7 @@ pub async fn accounting_payment_entry_handler(
             } else {
                 "purchase_invoice"
             };
-            if let Ok(Some(mut inv_doc)) = repo.get::<serde_json::Value>(inv_table, inv_no).await {
+            if let Ok(Some(mut inv_doc)) = repo.select_one::<serde_json::Value>(inv_table, inv_no).await {
                 let current_outstanding = inv_doc
                     .get("outstanding_amount")
                     .and_then(|v| {
@@ -4933,7 +4933,7 @@ pub async fn payment_charge_handler(
                     || payload.doctype.eq_ignore_ascii_case("sales invoice")
                 {
                     let ref_doc = payload.docname.clone();
-                    if let Ok(Some(mut inv_doc)) = repo.get::<serde_json::Value>("sales_invoice", &ref_doc).await {
+                    if let Ok(Some(mut inv_doc)) = repo.select_one::<serde_json::Value>("sales_invoice", &ref_doc).await {
                         let current_outstanding = inv_doc
                             .get("outstanding_amount")
                             .and_then(|v| {

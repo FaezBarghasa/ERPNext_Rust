@@ -399,3 +399,110 @@ async fn test_gui_shell_multi_persona_and_views_integration() {
     let resp = test::call_service(&app, req).await;
     assert!(resp.status().is_success());
 }
+
+#[actix_web::test]
+async fn test_v2_metadata_introspection_api() {
+    let pool_mgr = ConnectionPoolManager::in_memory(Duration::from_secs(300));
+    let topology = MicroTopologyConfig::default();
+
+    let app = test::init_service(
+        App::new().configure(|cfg| configure_app(cfg, pool_mgr.clone(), topology.clone(), None)),
+    )
+    .await;
+
+    // 1. List all metadata schemas
+    let req = test::TestRequest::get()
+        .uri("/api/v2/meta")
+        .insert_header(("X-Frappe-Site-Name", "default"))
+        .to_request();
+    let resp = test::call_service(&app, req).await;
+    assert!(resp.status().is_success());
+    let body: serde_json::Value = test::read_body_json(resp).await;
+    let doctypes = body.get("doctypes").and_then(|v| v.as_array()).expect("doctypes array");
+    assert!(doctypes.iter().any(|d| d.as_str() == Some("sales_invoice")));
+    assert!(doctypes.iter().any(|d| d.as_str() == Some("item")));
+
+    // 2. Introspect sales_invoice metadata
+    let req = test::TestRequest::get()
+        .uri("/api/v2/meta/sales_invoice")
+        .insert_header(("X-Frappe-Site-Name", "default"))
+        .to_request();
+    let resp = test::call_service(&app, req).await;
+    assert!(resp.status().is_success());
+    let schema: serde_json::Value = test::read_body_json(resp).await;
+    assert_eq!(schema.get("name").and_then(|v| v.as_str()), Some("sales_invoice"));
+    let fields = schema.get("fields").and_then(|v| v.as_array()).expect("fields array");
+    assert!(fields.iter().any(|f| f.get("fieldname").and_then(|v| v.as_str()) == Some("customer")));
+    assert!(fields.iter().any(|f| f.get("fieldname").and_then(|v| v.as_str()) == Some("grand_total")));
+
+    // 3. Introspect item metadata
+    let req = test::TestRequest::get()
+        .uri("/api/v2/meta/item")
+        .insert_header(("X-Frappe-Site-Name", "default"))
+        .to_request();
+    let resp = test::call_service(&app, req).await;
+    assert!(resp.status().is_success());
+    let item_schema: serde_json::Value = test::read_body_json(resp).await;
+    assert_eq!(item_schema.get("name").and_then(|v| v.as_str()), Some("item"));
+    let item_fields = item_schema.get("fields").and_then(|v| v.as_array()).expect("item fields array");
+    assert!(item_fields.iter().any(|f| f.get("fieldname").and_then(|v| v.as_str()) == Some("item_code")));
+}
+
+#[actix_web::test]
+async fn test_v2_invoice_settlement_reconciliation() {
+    let pool_mgr = ConnectionPoolManager::in_memory(Duration::from_secs(300));
+    let topology = MicroTopologyConfig::default();
+
+    let app = test::init_service(
+        App::new().configure(|cfg| configure_app(cfg, pool_mgr.clone(), topology.clone(), None)),
+    )
+    .await;
+
+    // 1. Create a Sales Invoice
+    let inv_payload = json!({
+        "name": "ACC-SINV-2026-RECON1",
+        "customer": "Global Corp Ltd",
+        "grand_total": 5000.0,
+        "outstanding_amount": 5000.0,
+        "paid_amount": 0.0,
+        "status": "Unpaid"
+    });
+    let req = test::TestRequest::post()
+        .uri("/api/v2/document/sales_invoice")
+        .insert_header(("X-Frappe-Site-Name", "default"))
+        .set_json(&inv_payload)
+        .to_request();
+    let resp = test::call_service(&app, req).await;
+    assert_eq!(resp.status(), 201);
+
+    // 2. Post a Payment Charge for this invoice
+    let charge_payload = json!({
+        "doctype": "sales_invoice",
+        "docname": "ACC-SINV-2026-RECON1",
+        "amount": 5000.0,
+        "currency": "USD",
+        "payment_method": "CreditCard"
+    });
+    let req = test::TestRequest::post()
+        .uri("/api/v2/method/payment/charge")
+        .insert_header(("X-Frappe-Site-Name", "default"))
+        .set_json(&charge_payload)
+        .to_request();
+    let resp = test::call_service(&app, req).await;
+    assert!(resp.status().is_success());
+
+    // 3. Fetch invoice and verify outstanding_amount is 0.0 and status is Paid
+    let req = test::TestRequest::get()
+        .uri("/api/v2/document/sales_invoice/ACC-SINV-2026-RECON1")
+        .insert_header(("X-Frappe-Site-Name", "default"))
+        .to_request();
+    let resp = test::call_service(&app, req).await;
+    assert!(resp.status().is_success());
+    let fetched_doc: serde_json::Value = test::read_body_json(resp).await;
+    let data = fetched_doc.get("data").or_else(|| fetched_doc.get("doc")).expect("doc data");
+
+    assert_eq!(data.get("status").and_then(|v| v.as_str()), Some("Paid"));
+    let out_amt = data.get("outstanding_amount").and_then(|v| v.as_f64()).unwrap_or(-1.0);
+    assert_eq!(out_amt, 0.0);
+}
+

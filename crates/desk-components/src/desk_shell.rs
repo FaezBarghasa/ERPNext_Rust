@@ -640,27 +640,35 @@ pub fn render_form_view_html(doctype: &str, docname: &str, user_name: &str) -> S
 
         <form id="doc-form" onsubmit="event.preventDefault(); saveDocument();">
             <div class="form-card">
-                <div class="form-grid">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 1.25rem;">
+                    <div style="font-size:0.875rem; font-weight:700; color:var(--text-secondary); text-transform:uppercase; letter-spacing:0.05em;" id="form-section-title">Document Properties</div>
+                    <button type="button" class="btn btn-secondary" style="padding:0.25rem 0.6rem; font-size:0.75rem;" onclick="toggleRawView()">Toggle JSON View</button>
+                </div>
+                <div id="form-grid" class="form-grid">
                     <div class="form-group">
                         <label>Identifier / Name</label>
-                        <input type="text" id="field-name" class="form-control" value="{docname}" disabled />
+                        <input type="text" id="field-name" data-fieldname="name" class="form-control" value="{docname}" disabled />
                     </div>
                     <div class="form-group">
                         <label>Posting / Transaction Date</label>
-                        <input type="date" id="field-posting_date" class="form-control" />
+                        <input type="date" id="field-posting_date" data-fieldname="posting_date" class="form-control" />
                     </div>
                     <div class="form-group">
                         <label>Party / Reference</label>
-                        <input type="text" id="field-party" class="form-control" placeholder="Customer / Supplier / Reference..." />
+                        <input type="text" id="field-party" data-fieldname="party" class="form-control" placeholder="Customer / Supplier / Reference..." />
                     </div>
                     <div class="form-group">
                         <label>Total Amount / Value</label>
-                        <input type="number" step="0.01" id="field-total" class="form-control" placeholder="0.00" />
+                        <input type="number" step="0.01" id="field-total" data-fieldname="total" class="form-control" placeholder="0.00" />
                     </div>
                 </div>
-                <div class="form-group">
+                <div id="form-remarks-group" class="form-group" style="margin-top: 1rem;">
                     <label>Remarks / Description / Payload</label>
-                    <textarea id="field-remarks" class="form-control" placeholder="Enter notes or JSON data..."></textarea>
+                    <textarea id="field-remarks" data-fieldname="remarks" class="form-control" placeholder="Enter notes or JSON data..."></textarea>
+                </div>
+                <div id="raw-json-container" class="form-group" style="margin-top: 1rem; display:none;">
+                    <label>Raw Document Payload (JSON)</label>
+                    <textarea id="field-raw-json" class="form-control" style="min-height: 180px; font-family: monospace; font-size: 12px;"></textarea>
                 </div>
             </div>
         </form>
@@ -671,6 +679,8 @@ pub fn render_form_view_html(doctype: &str, docname: &str, user_name: &str) -> S
         const isNew = {is_new};
         const doctype = '{doctype}';
         let currentName = '{docname}';
+        let schemaMeta = null;
+        let loadedDoc = {{}};
 
         function showToast(msg, ok = true) {{
             const t = document.getElementById('toast');
@@ -680,9 +690,84 @@ pub fn render_form_view_html(doctype: &str, docname: &str, user_name: &str) -> S
             setTimeout(() => {{ t.style.display = 'none'; }}, 3500);
         }}
 
+        function toggleRawView() {{
+            const rawBox = document.getElementById('raw-json-container');
+            const isHidden = rawBox.style.display === 'none';
+            rawBox.style.display = isHidden ? 'block' : 'none';
+            if (isHidden) {{
+                document.getElementById('field-raw-json').value = JSON.stringify(collectFormData(), null, 2);
+            }}
+        }}
+
+        async function initSchema() {{
+            try {{
+                const res = await fetch(`/api/v2/meta/${{doctype}}`);
+                if (res.ok) {{
+                    const meta = await res.json();
+                    if (meta && meta.fields && meta.fields.length > 0) {{
+                        schemaMeta = meta;
+                        renderDynamicForm(meta);
+                    }}
+                }}
+            }} catch (e) {{
+                console.warn('Meta fetch skipped or not available, using standard layout', e);
+            }}
+            await loadDocument();
+        }}
+
+        function renderDynamicForm(meta) {{
+            const grid = document.getElementById('form-grid');
+            let html = `
+                <div class="form-group">
+                    <label>Identifier / Name</label>
+                    <input type="text" id="field-name" data-fieldname="name" class="form-control" value="${{currentName}}" disabled />
+                </div>
+            `;
+            const supportedFields = meta.fields.filter(f => !f.hidden && f.fieldtype !== 'Table');
+            for (const f of supportedFields) {{
+                if (f.fieldname === 'name') continue;
+                const reqdAttr = f.reqd ? 'required' : '';
+                const reqdStar = f.reqd ? '<span style="color:var(--danger)">*</span>' : '';
+                const readonlyAttr = f.read_only ? 'readonly' : '';
+                let inputHtml = '';
+                const ftype = f.fieldtype || 'Data';
+
+                if (ftype === 'Currency' || ftype === 'Float') {{
+                    inputHtml = `<input type="number" step="0.01" class="form-control" data-fieldname="${{f.fieldname}}" id="field-${{f.fieldname}}" placeholder="0.00" ${{reqdAttr}} ${{readonlyAttr}} />`;
+                }} else if (ftype === 'Int') {{
+                    inputHtml = `<input type="number" step="1" class="form-control" data-fieldname="${{f.fieldname}}" id="field-${{f.fieldname}}" placeholder="0" ${{reqdAttr}} ${{readonlyAttr}} />`;
+                }} else if (ftype === 'Date') {{
+                    inputHtml = `<input type="date" class="form-control" data-fieldname="${{f.fieldname}}" id="field-${{f.fieldname}}" ${{reqdAttr}} ${{readonlyAttr}} />`;
+                }} else if (ftype === 'Datetime') {{
+                    inputHtml = `<input type="datetime-local" class="form-control" data-fieldname="${{f.fieldname}}" id="field-${{f.fieldname}}" ${{reqdAttr}} ${{readonlyAttr}} />`;
+                }} else if (ftype === 'Check') {{
+                    inputHtml = `<div style="display:flex; align-items:center; height:38px;"><input type="checkbox" style="width:18px; height:18px; accent-color:var(--accent);" data-fieldname="${{f.fieldname}}" id="field-${{f.fieldname}}" /></div>`;
+                }} else if (ftype === 'Select' && f.options) {{
+                    const opts = f.options.split('\\n').map(o => o.trim()).filter(Boolean);
+                    inputHtml = `<select class="form-control" data-fieldname="${{f.fieldname}}" id="field-${{f.fieldname}}" ${{reqdAttr}}>
+                        <option value="">-- Select ${{f.label || f.fieldname}} --</option>
+                        ${{opts.map(o => `<option value="${{o}}">${{o}}</option>`).join('')}}
+                    </select>`;
+                }} else if (ftype === 'SmallText' || ftype === 'LongText' || ftype === 'Code' || ftype === 'TextEditor') {{
+                    inputHtml = `<textarea class="form-control" style="min-height:80px;" data-fieldname="${{f.fieldname}}" id="field-${{f.fieldname}}" placeholder="${{f.label || f.fieldname}}" ${{reqdAttr}} ${{readonlyAttr}}></textarea>`;
+                }} else {{
+                    inputHtml = `<input type="text" class="form-control" data-fieldname="${{f.fieldname}}" id="field-${{f.fieldname}}" placeholder="${{f.label || f.fieldname}}" ${{reqdAttr}} ${{readonlyAttr}} />`;
+                }}
+
+                html += `
+                    <div class="form-group">
+                        <label>${{f.label || f.fieldname}} ${{reqdStar}}</label>
+                        ${{inputHtml}}
+                    </div>
+                `;
+            }}
+            grid.innerHTML = html;
+        }}
+
         async function loadDocument() {{
             if (isNew) {{
-                document.getElementById('field-posting_date').value = new Date().toISOString().split('T')[0];
+                const dateElem = document.getElementById('field-posting_date');
+                if (dateElem) dateElem.value = new Date().toISOString().split('T')[0];
                 return;
             }}
             try {{
@@ -690,10 +775,34 @@ pub fn render_form_view_html(doctype: &str, docname: &str, user_name: &str) -> S
                 if (!res.ok) throw new Error('Status ' + res.status);
                 const json = await res.json();
                 const d = json.doc || json.data || {{}};
-                if (d.posting_date) document.getElementById('field-posting_date').value = d.posting_date;
-                if (d.customer || d.supplier || d.party) document.getElementById('field-party').value = d.customer || d.supplier || d.party || '';
-                if (d.grand_total || d.total) document.getElementById('field-total').value = d.grand_total || d.total || '';
-                if (d.remarks || d.description) document.getElementById('field-remarks').value = d.remarks || d.description || JSON.stringify(d, null, 2);
+                loadedDoc = d;
+
+                // Populate form fields matching data-fieldname
+                document.querySelectorAll('#doc-form [data-fieldname]').forEach(el => {{
+                    const fn = el.getAttribute('data-fieldname');
+                    if (d[fn] !== undefined && d[fn] !== null) {{
+                        if (el.type === 'checkbox') {{
+                            el.checked = Boolean(d[fn] === 1 || d[fn] === true || d[fn] === '1');
+                        }} else {{
+                            el.value = d[fn];
+                        }}
+                    }}
+                }});
+
+                // Fallback field population for standard fields
+                if (d.posting_date && document.getElementById('field-posting_date')) {{
+                    document.getElementById('field-posting_date').value = d.posting_date;
+                }}
+                if ((d.customer || d.supplier || d.party) && document.getElementById('field-party')) {{
+                    document.getElementById('field-party').value = d.customer || d.supplier || d.party || '';
+                }}
+                if ((d.grand_total || d.total) && document.getElementById('field-total')) {{
+                    document.getElementById('field-total').value = d.grand_total || d.total || '';
+                }}
+                if (d.remarks && document.getElementById('field-remarks')) {{
+                    document.getElementById('field-remarks').value = d.remarks;
+                }}
+                document.getElementById('field-raw-json').value = JSON.stringify(d, null, 2);
 
                 const badge = document.getElementById('docstatus-badge');
                 if (d.docstatus === 1) {{
@@ -714,14 +823,36 @@ pub fn render_form_view_html(doctype: &str, docname: &str, user_name: &str) -> S
             }}
         }}
 
+        function collectFormData() {{
+            const body = Object.assign({{}}, loadedDoc, {{ doctype: doctype }});
+            document.querySelectorAll('#doc-form [data-fieldname]').forEach(el => {{
+                const fn = el.getAttribute('data-fieldname');
+                if (fn === 'name' && isNew) return;
+                if (el.type === 'checkbox') {{
+                    body[fn] = el.checked ? 1 : 0;
+                }} else if (el.type === 'number') {{
+                    body[fn] = el.value !== '' ? (parseFloat(el.value) || 0) : 0;
+                }} else {{
+                    body[fn] = el.value;
+                }}
+            }});
+            return body;
+        }}
+
         async function saveDocument() {{
-            const body = {{
-                doctype: doctype,
-                posting_date: document.getElementById('field-posting_date').value,
-                party: document.getElementById('field-party').value,
-                total: parseFloat(document.getElementById('field-total').value) || 0.0,
-                remarks: document.getElementById('field-remarks').value,
-            }};
+            const rawBox = document.getElementById('raw-json-container');
+            let body = {{}};
+            if (rawBox.style.display !== 'none' && document.getElementById('field-raw-json').value.trim()) {{
+                try {{
+                    body = JSON.parse(document.getElementById('field-raw-json').value);
+                }} catch (e) {{
+                    showToast('Invalid JSON in Raw Payload: ' + e.message, false);
+                    return;
+                }}
+            }} else {{
+                body = collectFormData();
+            }}
+
             try {{
                 const url = isNew ? `/api/v2/document/${{doctype}}` : `/api/v2/document/${{doctype}}/${{encodeURIComponent(currentName)}}`;
                 const method = isNew ? 'POST' : 'PUT';
@@ -773,7 +904,7 @@ pub fn render_form_view_html(doctype: &str, docname: &str, user_name: &str) -> S
             }}
         }}
 
-        loadDocument();
+        initSchema();
     </script>
 </body>
 </html>"##
