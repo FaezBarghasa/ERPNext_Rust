@@ -73,8 +73,11 @@ graph TD
 
 ### 3.4 `frappe-net`
 - **Sub-64MB Micro-Topology (`MicroTopologyConfig`)**: Optimized runtime profile configured for low-memory appliances (8MB write buffer, 16MB read cache, bounded 1024-item task queues, 2MB payload cap).
+- **DocType Metadata Introspection API (`/api/v2/meta`, `/api/v2/meta/{doctype}`)**: Exposes all 44 standard ERPNext schemas directly from `frappe_meta::registry::DocTypeRegistry` to client interfaces and hypermedia shells.
+- **Automated Double-Entry Invoice Settlement Reconciliation**: Payment entries and gateway payment charges (`/api/v2/payments/charge`, `/api/v2/method/accounting/payment-entry`) automatically query and reconcile the target `Sales Invoice` or `Purchase Invoice` in SurrealDB, decrementing `outstanding_amount` and transitioning document status from `Unpaid` to `Paid` or `Partly Paid`.
 - **In-Process Automated ACME Gateway (`AcmeGateway`)**: Manages Let's Encrypt automated certificate negotiation, caching, and host-to-tenant SNI routing.
 - **Tenant Context Scoping (`TenantContext`, `resolve_scoped_session`)**: Strictly isolates tenant database handles extracted from headers (`X-Tenant-Id`) or subdomain routing.
+
 ### 3.5 `rbench`
 - **Site Orchestration CLI**: Automates tenant namespace provisioning (`new-site`), fast template deployment (`site deploy`), schema migration (`migrate`), and app archive verification (`install-app`).
 - **Synthetic Load Generator (`benchmark`)**: Multi-threaded async benchmark engine tracking latency percentiles (p50, p90, p95, p99) and QPS throughput across in-memory and cluster deployments.
@@ -82,7 +85,7 @@ graph TD
 ### 3.6 `desk-app` & `desk-components`
 - **Universal Hardware Abstraction Layer (`MobileHardwareAbstractionLayer`)**: Async Rust 2024 trait routing biometric verification, barcode scanning, thermal ESC/POS printing, and geolocation between Android JNI (`AndroidJniHalAdapter`) and W3C Web APIs (`WebApisHalAdapter`).
 - **Role-Adaptive Multi-Persona Shell (`PersonaShellConfig`, `render_desk_shell_html`)**: Projects 5 specialized interfaces (`ClientCustomer`, `WarehouseWorker`, `ShopfloorMes`, `ManagerApprover`, `SystemAdmin`) and unified enterprise desktop from a single binary.
-- **Generic DocType List & Form View Engines (`render_list_view_html`, `render_form_view_html`)**: SSR hypermedia views providing dynamic search filtering, SurrealDB persistence, and document lifecycle management (Draft $\to$ Submitted $\to$ Cancelled).
+- **Schema-Driven Dynamic Form & List View Engines (`render_list_view_html`, `render_form_view_html`)**: Dynamically queries `/api/v2/meta/{doctype}` and generates typed form inputs (`Currency`, `Float`, `Int`, `Date`, `Datetime`, `Check`, `Select`, `Textarea`), required field indicators, raw JSON developer inspector toggle, SurrealDB persistence, and document lifecycle controls (`Draft` $\to$ `Submitted` $\to$ `Cancelled`).
 - **Anti-Slop Craft Standards**: Crisp inline SVG vectors, Emil Kowalski physics curves (`cubic-bezier(0.16, 1, 0.3, 1)`), active tactile scale feedback (`transform: scale(0.98)`), and restyled scrollbars.
 - **Local-First Edge Synchronization (`LocalMutationBuffer`, `CloudSyncArbiter`)**: Enforces offline resilience via causal vector clocks (`VectorClock`), commutative PN-Counters for stock movements, and LWW element sets with cryptographic tombstones.
 - **Dual Mobile Delivery Engine (`PwaWebManifest`, `ServiceWorkerGenerator`)**: Compiles theme-aware W3C web app manifests, caching service workers (`sw.js`), and Android NDK packaging descriptors (`cargo-apk`).
