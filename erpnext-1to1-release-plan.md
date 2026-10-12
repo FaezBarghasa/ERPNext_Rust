@@ -14,10 +14,11 @@ Deliver a stable, production-ready, pure-Rust enterprise alternative with 1:1 fu
 - [x] Task 8: Benchmark multi-tenant HTTP/1.1, HTTP/2 and HTTP/3 transaction throughput with `rbench` → Verify: `cargo test -p rbench` passes all scaffolding, migration, and site provisioning tests
 - [x] Task 9: Verify edge offline mutation buffer convergence with vector clocks and commutative counters → Verify: `cargo test -p desk-app` passes
 - [x] Task 10: Run full cross-browser E2E verification suite with Playwright → Verify: `npx playwright test --project=chromium` passes all 21 test suites
+- [x] Task 11: Mainstream ERPNext 1:1 GUI Parity (AwesomeBar Ctrl+K autocomplete popover, collapsible Frappe sidebar, theme switcher, status filter pills, bulk action batch operations, sortable columns, CSV export, linked connections dashboard, child table editable grid with real-time arithmetic, and keyboard shortcuts) → Verify: `npx playwright test --project=chromium` passes all 24 E2E tests
 
 ## Done When
-- [x] All 21 Playwright GUI/UX & API E2E tests pass cleanly.
-- [x] All 71+ workspace unit and integration test suites pass with 0 failures.
+- [x] All 24 Playwright GUI/UX & API E2E tests pass cleanly (100% pass rate).
+- [x] All 71+ workspace unit and integration test suites pass with 0 failures (31 unit + 32 integration in `frappe-net`, 14 in `desk-components`).
 - [x] Workspace compiles with 0 compiler warnings and passes `cargo clippy --workspace --all-targets -- -D warnings`.
 - [x] 100% compliance with `cargo fmt --check`.
 
