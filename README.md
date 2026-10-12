@@ -14,16 +14,16 @@ Next-generation, ultra-high-throughput, memory-safe rewrite of Frappe and ERPNex
 
 ## 📦 Workspace Crate Topology
 
-The workspace comprises 21 modular, loosely coupled crates structured across infrastructure, business engines, user interfaces, and verification harnesses:
+The workspace comprises 26 modular, high-performance crates structured across infrastructure, meta-modeling, business modules, user interfaces, and verification harnesses:
 
 ```
 ERPNext_workspace/
 ├── crates/
-│   ├── frappe-meta/         # DocType schema engine, dynamic DDL compiler, RBAC, AI schema synthesizer, profiles
+│   ├── frappe-meta/         # DocType schema engine, dynamic SurrealQL DDL compiler, RBAC, Custom Fields, Hooks, Registry
 │   ├── frappe-framework/    # Document lifecycle state machines, Rhai & WASI 0.2 Wasmtime sandbox, AI tool dispatcher
-│   ├── frappe-storage/      # SurrealDB driver, CRDT vector clocks/LWW, deduplicated drive, envelope encryption, Merkle trees
-│   ├── frappe-net/          # Micro-mode topology, ACME gateway, multi-tenant router, live WebSocket actor, CLI harness
-│   ├── erp-accounting/      # Double-entry ledger, multi-currency, asset depreciation, Benford fraud guard, ZK balance proofs
+│   ├── frappe-storage/      # SurrealDB 3.3 multi-model driver, CRDT vector clocks/LWW, deduplicated drive, envelope encryption
+│   ├── frappe-net/          # Micro-mode topology, ACME gateway, multi-tenant router, live WebSocket actor, HTTP/3 gateway
+│   ├── erp-accounting/      # Double-entry ledger, multi-currency, asset depreciation, Benford fraud guard, ZK proofs, Proptests
 │   ├── erp-inventory/       # Real-time stock ledgers, warehouse bin balancing, FIFO batch queues, serial tracking
 │   ├── erp-manufacturing/   # Multilevel BOM explosions, routing, MRP capacity, MILP job shop scheduler, SPC control charts
 │   ├── erp-trade/           # Pricing rules, metered billing, landed cost, 3-way invoice matching, WooCommerce migration
@@ -31,15 +31,20 @@ ERPNext_workspace/
 │   ├── erp-wms/             # 3D slotting optimization, TSP pick paths, VDA 5050 AMR fleet dispatch, GS1 SSCC-18
 │   ├── erp-asset/           # Linear Referencing (LRS), Weibull reliability & RUL degradation, cryptographic PTW & LOTO
 │   ├── erp-software/        # ASC 606 revenue recognition, graduated SaaS subscription tiers, SLA penalty ledger
-│   ├── erp-hr/              # Employee directory, biometric attendance logs, salary structures, payroll batches
+│   ├── erp-hr/              # Employee directory, biometric attendance logs, leave applications, payroll processing
 │   ├── erp-crm/             # Lead acquisition pipelines, deal tracking, weighted opportunity conversion scoring
+│   ├── erp-quality/         # Inspection readings, templates, Non-Conformance Reports (NCR), CAPA remediation
 │   ├── erp-support/         # SLA timers, escalation matrices, support gameplans
 │   ├── erp-lending/         # Loan portfolios, reducing/compound interest accrual, amortization schedules
 │   ├── erp-learning/        # Course syllabi, student enrollment tracking, quiz assessment engines
 │   ├── erp-cms/             # Visual Block Canvas AST, <10ms SSR engine, atomic checkout, tokenized SVOD streaming
-│   ├── desk-components/     # Reactive Dioxus UI components, dynamic JSON-schema forms, interactive Gantt & SPC charts
-│   ├── desk-app/            # Desktop & Web unified shell application
-│   └── rbench/              # Multi-tenant load generator, latency profiling, and micro-benchmarks
+│   ├── erp-scanner/         # High-throughput barcode, QR code, and hardware scanner ingestion pipeline
+│   ├── erp-importer/        # High-volume batch data importer with type coercion and transactional rollback
+│   ├── erp-stealth-scraper/ # Resilient, distributed market data and catalog synchronizer
+│   ├── erpnext-plugin-sdk/  # Third-party app extension SDK with WASM/WASI plugin interface and DocType bindings
+│   ├── desk-components/     # Reactive Dioxus v7 UI components, dynamic JSON-schema forms, interactive Gantt & SPC charts
+│   ├── desk-app/            # Desktop & Web unified shell application powered by Dioxus v7
+│   └── rbench/              # CLI bench equivalent: site provisioning, schema migrations, load generator, benchmarks
 └── docs/                    # Architectural charter, PRD, and TDD specifications
 ```
 
@@ -126,11 +131,14 @@ cargo run -p desk-app
 ### Build, Test & Lint
 
 ```bash
-# Verify compilation across all 21 workspace crates
+# Verify compilation across all 26 workspace crates
 cargo check --workspace
 
-# Run complete verification test suite across all crates
+# Run complete verification test suite across all 26 crates (including 3,000+ randomized proptests)
 cargo test --workspace
+
+# Run property-based double-entry financial invariant tests
+cargo test -p erp-accounting --test proptest_ledger
 
 # Validate code formatting and lint cleanliness (zero warnings)
 cargo fmt --check

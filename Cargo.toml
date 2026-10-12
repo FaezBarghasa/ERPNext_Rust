@@ -24,6 +24,7 @@ members = [
     "crates/erp-stealth-scraper",
     "crates/erp-scanner",
     "crates/erp-importer",
+    "crates/erp-quality",
     "crates/rbench",
 ]
 resolver = "3"
@@ -50,6 +51,7 @@ erp-learning = { path = "crates/erp-learning" }
 erp-lending = { path = "crates/erp-lending" }
 erp-manufacturing = { path = "crates/erp-manufacturing" }
 erp-ppm = { path = "crates/erp-ppm" }
+erp-quality = { path = "crates/erp-quality" }
 erp-scanner = { path = "crates/erp-scanner" }
 erp-software = { path = "crates/erp-software" }
 erp-stealth-scraper = { path = "crates/erp-stealth-scraper" }
@@ -109,6 +111,8 @@ dioxus = { version = "0.7.10", default-features = false, features = [
     "hooks",
     "html",
 ] }
+proptest = "1.6"
+
 
 [profile.release]
 opt-level = "z"

@@ -2,8 +2,10 @@ pub mod ai_schema;
 pub mod audit;
 pub mod auth;
 pub mod class_inheritance;
+pub mod custom_fields;
 pub mod dynamic_doc;
 pub mod graph_schema;
+pub mod hooks_meta;
 pub mod lazy_doc;
 pub mod mfa;
 pub mod migration;
@@ -34,10 +36,14 @@ pub use security_rules::{
 
 pub use ai_schema::{AiSchemaSynthesizer, SynthesisResult, SynthesizedEntity, SynthesizedField};
 pub use class_inheritance::ClassInheritanceRegistry;
+pub use custom_fields::{CustomDocType, CustomField, CustomFieldManager};
 pub use dynamic_doc::{DocValue, DynamicDocument, SurrealDdlGenerator};
 pub use graph_schema::{
     EdgeAttribute, GraphEdgeSchema, RelationType, bom_explosion_query, compile_all_graph_edges,
     document_lineage_query, relate_statement, standard_erpnext_graph_edges,
+};
+pub use hooks_meta::{
+    DocEventType, MethodHooksRegistry, ReportDefinition, ReportType, ScheduledJob,
 };
 pub use lazy_doc::{LazyDocument, VirtualChildRow};
 pub use migration::{

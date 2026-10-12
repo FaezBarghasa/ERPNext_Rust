@@ -12,14 +12,16 @@ pub fn verify_balanced_dec(lines: &[DecLine]) -> bool {
         .fold(Decimal::ZERO, |a, l| a + l.debit - l.credit)
         == Decimal::ZERO
 }
-/// Straight-line depreciation in Decimal.
+/// Straight-line depreciation in Decimal with zero penny drift.
 pub fn straight_line_dec(cost: Decimal, salvage: Decimal, n: usize) -> Vec<Decimal> {
     if n == 0 {
         return vec![];
     }
-    let per = (cost - salvage) / Decimal::from(n);
+    let total = cost - salvage;
+    let scale = cost.scale().max(salvage.scale()).max(2);
+    let per = (total / Decimal::from(n)).round_dp(scale);
     let mut v = vec![per; n];
-    let diff = (cost - salvage) - per * Decimal::from(n);
+    let diff = total - per * Decimal::from(n);
     if let Some(l) = v.last_mut() {
         *l += diff;
     }
