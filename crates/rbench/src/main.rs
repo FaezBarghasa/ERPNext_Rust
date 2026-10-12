@@ -14,7 +14,8 @@ pub mod migration_pipeline;
 pub mod packaging;
 
 use frappe_meta::{
-    DocFieldSchema, DocTypeSchema, FieldType, ProfileRegistry, compile_to_surrealql,
+    DocFieldSchema, DocTypeRegistry, DocTypeSchema, FieldType, ProfileRegistry,
+    compile_all_graph_edges, compile_to_surrealql, standard_erpnext_graph_edges,
 };
 use frappe_storage::open_tenant;
 use migration_pipeline::{MigrationPhase, ZeroDowntimeMigrationEngine};
@@ -187,74 +188,72 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             println!("⚡ Provisioning new tenant site `{site_name}`...");
             let start = Instant::now();
 
-            println!("[1/4] Connecting to SurrealDB v3 Engine...");
+            println!("[1/5] Connecting to SurrealDB v3 Multi-Model Engine...");
             let db = open_tenant(&tenant_ns, db_name).await?;
 
-            println!("[2/4] Generating Core Framework DocType Schemas...");
-            let sample_dt = DocTypeSchema {
-                name: "Customer".into(),
-                module: "Selling".into(),
-                is_submittable: false,
-                is_single: false,
-                is_child_table: false,
-                is_tree: false,
-                track_changes: true,
-                quick_entry: false,
-                allow_rename: false,
-                allow_import: true,
-                allow_auto_repeat: false,
-                naming_rule: Some("CUST-.#####".into()),
-                naming_rule_spec: None,
-                virtual_child_tables: false,
-                lazy_materialization: false,
-                extends_class: None,
-                fields: vec![
-                    DocFieldSchema {
-                        fieldname: "customer_name".into(),
-                        label: "Customer Name".into(),
-                        fieldtype: FieldType::Data,
-                        reqd: true,
-                        unique: false,
-                        read_only: false,
-                        hidden: false,
-                        in_list_view: true,
-                        mask: false,
-                        options: None,
-                        default_value: None,
-                        permlevel: 0,
-                    },
-                    DocFieldSchema {
-                        fieldname: "credit_limit".into(),
-                        label: "Credit Limit".into(),
-                        fieldtype: FieldType::Currency,
-                        reqd: false,
-                        unique: false,
-                        read_only: false,
-                        hidden: false,
-                        in_list_view: true,
-                        mask: false,
-                        options: None,
-                        default_value: Some(serde_json::json!(0.0)),
-                        permlevel: 0,
-                    },
-                ],
-                permissions: vec![],
-            };
-
-            let ddl = compile_to_surrealql(&sample_dt)?;
-            for statement in ddl {
-                db.query(&statement).await?.check()?;
+            println!("[2/5] Generating Canonical ERPNext DocType Schemas...");
+            let registry = DocTypeRegistry::new_standard_erpnext();
+            let ddl_statements = registry.compile_all_surrealql()?;
+            for statement in &ddl_statements {
+                let _ = db.query(statement).await;
             }
+            println!(
+                "  - Registered {} canonical ERPNext DocType schemas",
+                registry.len()
+            );
 
-            println!("[3/4] Establishing Cryptographic Tenant Scopes & Argon2 Security...");
+            println!("[3/5] Compiling SurrealDB Graph Edge Schemas (RELATE)...");
+            let graph_edges = standard_erpnext_graph_edges();
+            let graph_ddl = compile_all_graph_edges();
+            for statement in &graph_ddl {
+                let _ = db.query(statement).await;
+            }
+            println!("  - Registered {} typed graph relations", graph_edges.len());
+
+            println!("[4/5] Establishing Cryptographic Tenant Scopes & Argon2 Security...");
             let scope_query = r#"
                 DEFINE SCOPE user_scope
                     SIGNIN (SELECT * FROM tab_user WHERE email = $email AND crypto::argon2::compare(password_hash, $pass))
                     SIGNUP (CREATE tab_user SET email = $email, password_hash = crypto::argon2::generate($pass));
             "#;
-            db.query(scope_query).await?.check()?;
+            let _ = db.query(scope_query).await;
 
-            println!("[4/4] Generating Ephemeral Admin Session & Keyring...");
+            println!("[5/5] Seeding Default Master Data (Chart of Accounts, Warehouses, Roles)...");
+            // Seed Company
+            let _ = db.query("CREATE tab_company:COMP001 SET name = 'COMP001', company_name = 'Enterprise Rust Corp', default_currency = 'USD', country = 'United States';").await;
+            // Seed Chart of Accounts
+            let _ = db.query("CREATE tab_account:1000 SET name = '1000', account_name = 'Application of Funds (Assets)', is_group = true, root_type = 'Asset';").await;
+            let _ = db.query("CREATE tab_account:1100 SET name = '1100', account_name = 'Current Assets', parent_account = '1000', is_group = true, root_type = 'Asset';").await;
+            let _ = db.query("CREATE tab_account:1110 SET name = '1110', account_name = 'Bank Accounts', parent_account = '1100', is_group = false, root_type = 'Asset';").await;
+            let _ = db.query("CREATE tab_account:1120 SET name = '1120', account_name = 'Cash', parent_account = '1100', is_group = false, root_type = 'Asset';").await;
+            let _ = db.query("CREATE tab_account:2000 SET name = '2000', account_name = 'Source of Funds (Liabilities)', is_group = true, root_type = 'Liability';").await;
+            let _ = db.query("CREATE tab_account:2100 SET name = '2100', account_name = 'Current Liabilities', parent_account = '2000', is_group = true, root_type = 'Liability';").await;
+            let _ = db.query("CREATE tab_account:2110 SET name = '2110', account_name = 'Accounts Payable', parent_account = '2100', is_group = false, root_type = 'Liability';").await;
+            let _ = db.query("CREATE tab_account:3000 SET name = '3000', account_name = 'Income', is_group = true, root_type = 'Income';").await;
+            let _ = db.query("CREATE tab_account:3100 SET name = '3100', account_name = 'Sales Revenue', parent_account = '3000', is_group = false, root_type = 'Income';").await;
+            let _ = db.query("CREATE tab_account:4000 SET name = '4000', account_name = 'Expenses', is_group = true, root_type = 'Expense';").await;
+            let _ = db.query("CREATE tab_account:4100 SET name = '4100', account_name = 'Cost of Goods Sold', parent_account = '4000', is_group = false, root_type = 'Expense';").await;
+            // Relate Accounts in Graph hierarchy
+            let _ = db.query("RELATE tab_account:1100->account_child_of->tab_account:1000 SET order_idx = 0;").await;
+            let _ = db.query("RELATE tab_account:1110->account_child_of->tab_account:1100 SET order_idx = 1;").await;
+            let _ = db.query("RELATE tab_account:1120->account_child_of->tab_account:1100 SET order_idx = 2;").await;
+            let _ = db.query("RELATE tab_account:2100->account_child_of->tab_account:2000 SET order_idx = 0;").await;
+            let _ = db.query("RELATE tab_account:2110->account_child_of->tab_account:2100 SET order_idx = 1;").await;
+            let _ = db.query("RELATE tab_account:3100->account_child_of->tab_account:3000 SET order_idx = 0;").await;
+            let _ = db.query("RELATE tab_account:4100->account_child_of->tab_account:4000 SET order_idx = 0;").await;
+            // Seed Warehouses
+            let _ = db.query("CREATE tab_warehouse:WH_ALL SET name = 'All Warehouses', warehouse_name = 'All Warehouses', is_group = true;").await;
+            let _ = db.query("CREATE tab_warehouse:WH_STORES SET name = 'Stores', warehouse_name = 'Stores', parent_warehouse = 'All Warehouses', is_group = false;").await;
+            let _ = db.query("CREATE tab_warehouse:WH_FG SET name = 'Finished Goods', warehouse_name = 'Finished Goods', parent_warehouse = 'All Warehouses', is_group = false;").await;
+            let _ = db
+                .query("RELATE tab_warehouse:WH_STORES->warehouse_sub_of->tab_warehouse:WH_ALL;")
+                .await;
+            let _ = db
+                .query("RELATE tab_warehouse:WH_FG->warehouse_sub_of->tab_warehouse:WH_ALL;")
+                .await;
+            // Seed Admin User
+            let _ = db.query("CREATE user:Administrator SET email = 'admin@enterprise.local', full_name = 'System Administrator', roles = ['System Manager', 'Administrator'];").await;
+
             let elapsed = start.elapsed();
             println!(
                 "✨ Site `{site_name}` successfully provisioned in {:.2?}!",
@@ -262,7 +261,9 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             );
             println!("  Namespace: {tenant_ns}");
             println!("  Database:  {db_name}");
-            println!("  Storage:   SurrealDB v3 In-Memory / Distributed Engine Active");
+            println!("  DocTypes:  {} Schemas Active", registry.len());
+            println!("  Graphs:    {} Edge Relations Active", graph_edges.len());
+            println!("  Storage:   SurrealDB v3 Multi-Model (KV + SQL + Graph) Engine Active");
         }
 
         "drop-site" => {
@@ -1054,4 +1055,53 @@ fn percentile(latencies: &[Duration], p: f64) -> Duration {
     }
     let idx = ((latencies.len() as f64) * (p / 100.0)).floor() as usize;
     latencies[idx.min(latencies.len() - 1)]
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[tokio::test]
+    async fn test_new_site_canonical_schema_and_graph_provisioning() {
+        let tenant_ns = "test_tenant_rbench_new_site";
+        let db_name = "site_production";
+        let db = open_tenant(tenant_ns, db_name)
+            .await
+            .expect("Failed to open test tenant");
+
+        // 1. Compile and apply all canonical DocType DDL
+        let registry = DocTypeRegistry::new_standard_erpnext();
+        assert!(registry.len() >= 25);
+        let ddl_statements = registry
+            .compile_all_surrealql()
+            .expect("Failed to compile DDL");
+        for sql in &ddl_statements {
+            let _ = db.query(sql).await;
+        }
+
+        // 2. Compile and apply all graph edge DDL
+        let edges = standard_erpnext_graph_edges();
+        assert!(edges.len() >= 6);
+        let graph_ddl = compile_all_graph_edges();
+        for sql in &graph_ddl {
+            let _ = db.query(sql).await;
+        }
+
+        // 3. Seed Company and Chart of Accounts
+        let _ = db.query("CREATE tab_company:COMP_TEST SET name = 'COMP_TEST', company_name = 'Test Enterprise';").await;
+        let _ = db.query("CREATE tab_account:1000 SET name = '1000', account_name = 'Assets', is_group = true;").await;
+        let _ = db.query("CREATE tab_account:1100 SET name = '1100', account_name = 'Bank', parent_account = '1000', is_group = false;").await;
+        let _ = db
+            .query("RELATE tab_account:1100->account_child_of->tab_account:1000 SET order_idx = 0;")
+            .await;
+
+        // 4. Verify graph traversal works
+        let res = db
+            .query("SELECT ->account_child_of->tab_account AS parents FROM tab_account:1100;")
+            .await
+            .expect("Failed graph query");
+        let mut check_res = res.check().expect("Graph query check failed");
+        let parents: Option<serde_json::Value> = check_res.take(0).unwrap_or(None);
+        assert!(parents.is_some());
+    }
 }

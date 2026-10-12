@@ -2583,11 +2583,7 @@ fn schema_project() -> DocTypeSchema {
             DocFieldSchema {
                 fieldname: "status".into(),
                 fieldtype: FieldType::Select {
-                    options: vec![
-                        "Open".into(),
-                        "Completed".into(),
-                        "Cancelled".into(),
-                    ],
+                    options: vec!["Open".into(), "Completed".into(), "Cancelled".into()],
                 },
                 label: "Status".into(),
                 reqd: false,
@@ -2899,7 +2895,9 @@ mod tests {
         assert!(registry.get("Project").is_some());
 
         // Validate that all standard schemas compile to valid SurrealQL DDL
-        let ddl = registry.compile_all_surrealql().expect("DDL compilation must succeed");
+        let ddl = registry
+            .compile_all_surrealql()
+            .expect("DDL compilation must succeed");
         assert!(!ddl.is_empty());
     }
 }

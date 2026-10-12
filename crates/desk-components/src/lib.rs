@@ -14,7 +14,7 @@ pub mod wms_view;
 pub use desk_shell::{WorkspaceModule, get_desk_workspaces, render_desk_shell_html};
 
 pub use cpq_view::{CpqConfiguratorModel, OptionCard};
-pub use forms::{DynamicFormModel, FormFieldWidget, eval_depends_on};
+pub use forms::{DocTypeForm, DynamicFormModel, FormFieldWidget, eval_depends_on};
 pub use gantt::{GanttDependencyLink, GanttTaskRow, GanttViewModel};
 pub use grid::{
     CellCoordinate, CellSelectionRange, GridNavDirection, VirtualizedGridState, visible_slice,

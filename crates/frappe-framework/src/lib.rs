@@ -1,5 +1,6 @@
 pub mod ai_tools;
 pub mod bpmn;
+pub mod controller;
 pub mod dmn;
 pub mod export_engine;
 pub mod jalali;
@@ -36,6 +37,7 @@ pub use ai_tools::{
 pub use bpmn::{
     ActivityType, BpmnEngine, BpmnProcessDefinition, FlowNode, ProcessInstance, SequenceFlow,
 };
+pub use controller::{ControllerRegistry, DocController};
 pub use dmn::{ConditionOp, DecisionRule, DecisionTable, HitPolicy};
 pub use jalali::JalaliDate;
 pub use lifecycle::{Document, DocumentController, DocumentError};

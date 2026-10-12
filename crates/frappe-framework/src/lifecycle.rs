@@ -1,3 +1,4 @@
+use crate::controller::{ControllerRegistry, DocController};
 use crate::scripting::{LifecycleEvent, RhaiHookEngine, ScriptError};
 use frappe_meta::{DocTypeSchema, NamingSeriesParser};
 use serde::{Deserialize, Serialize};
@@ -112,6 +113,7 @@ pub struct WorkflowTransition {
 pub struct DocumentController {
     engine: RhaiHookEngine,
     workflow_transitions: HashMap<String, Vec<WorkflowTransition>>,
+    controllers: ControllerRegistry,
 }
 
 impl Default for DocumentController {
@@ -127,7 +129,16 @@ impl DocumentController {
         Self {
             engine: RhaiHookEngine::new(),
             workflow_transitions: HashMap::new(),
+            controllers: ControllerRegistry::new(),
         }
+    }
+
+    /// Registers a typed controller for a specific DocType.
+    pub fn register_controller<C>(&mut self, doctype: &str, controller: C)
+    where
+        C: DocController + 'static,
+    {
+        self.controllers.register(doctype, controller);
     }
 
     /// Registers workflow transitions for a specific DocType.
@@ -154,6 +165,10 @@ impl DocumentController {
             doc.name = NamingSeriesParser::format(template, year, seq);
         }
 
+        if let Some(ctrl) = self.controllers.get(&doc.doctype) {
+            ctrl.before_validate(doc, schema)?;
+        }
+
         if let Some(s) = script {
             self.engine
                 .dispatch_hook(LifecycleEvent::BeforeValidate, &mut doc.data, s)?;
@@ -163,6 +178,11 @@ impl DocumentController {
             .validate()
             .map_err(|e| DocumentError::ValidationFailed(e.to_string()))?;
 
+        if let Some(ctrl) = self.controllers.get(&doc.doctype) {
+            ctrl.validate(doc, schema)?;
+            ctrl.before_save(doc, schema)?;
+        }
+
         if let Some(s) = script {
             self.engine
                 .dispatch_hook(LifecycleEvent::Validate, &mut doc.data, s)?;
@@ -171,6 +191,10 @@ impl DocumentController {
         }
 
         doc.docstatus = 0;
+
+        if let Some(ctrl) = self.controllers.get(&doc.doctype) {
+            ctrl.after_save(doc, schema)?;
+        }
 
         if let Some(s) = script {
             self.engine
@@ -194,6 +218,11 @@ impl DocumentController {
 
         doc.data = new_data;
 
+        if let Some(ctrl) = self.controllers.get(&doc.doctype) {
+            ctrl.validate(doc, schema)?;
+            ctrl.before_save(doc, schema)?;
+        }
+
         if let Some(s) = script {
             self.engine
                 .dispatch_hook(LifecycleEvent::Validate, &mut doc.data, s)?;
@@ -206,6 +235,10 @@ impl DocumentController {
         schema
             .validate()
             .map_err(|e| DocumentError::ValidationFailed(e.to_string()))?;
+
+        if let Some(ctrl) = self.controllers.get(&doc.doctype) {
+            ctrl.after_save(doc, schema)?;
+        }
 
         Ok(())
     }
@@ -221,12 +254,20 @@ impl DocumentController {
             return Err(DocumentError::DocTypeNotSubmittable(schema.name.clone()));
         }
 
+        if let Some(ctrl) = self.controllers.get(&doc.doctype) {
+            ctrl.before_submit(doc, schema)?;
+        }
+
         if let Some(s) = script {
             self.engine
                 .dispatch_hook(LifecycleEvent::BeforeSubmit, &mut doc.data, s)?;
         }
 
         doc.docstatus = 1;
+
+        if let Some(ctrl) = self.controllers.get(&doc.doctype) {
+            ctrl.on_submit(doc, schema)?;
+        }
 
         if let Some(s) = script {
             self.engine
@@ -240,7 +281,7 @@ impl DocumentController {
     pub fn cancel(
         &self,
         doc: &mut Document,
-        _schema: &DocTypeSchema,
+        schema: &DocTypeSchema,
         script: Option<&str>,
     ) -> Result<(), DocumentError> {
         if doc.docstatus != 1 {
@@ -249,12 +290,20 @@ impl DocumentController {
             ));
         }
 
+        if let Some(ctrl) = self.controllers.get(&doc.doctype) {
+            ctrl.before_cancel(doc, schema)?;
+        }
+
         if let Some(s) = script {
             self.engine
                 .dispatch_hook(LifecycleEvent::BeforeCancel, &mut doc.data, s)?;
         }
 
         doc.docstatus = 2;
+
+        if let Some(ctrl) = self.controllers.get(&doc.doctype) {
+            ctrl.on_cancel(doc, schema)?;
+        }
 
         if let Some(s) = script {
             self.engine
@@ -370,6 +419,29 @@ impl DocumentController {
             action.to_string(),
             user_role.to_string(),
         ))
+    }
+
+    /// Compiles an atomic SurrealDB transaction string wrapping document mutation,
+    /// audit logs, and ledger side effects.
+    #[must_use]
+    pub fn compile_surreal_transaction(
+        &self,
+        table: &str,
+        doc_id: &str,
+        doc_status: i32,
+        payload: &serde_json::Value,
+        side_effects: &[String],
+    ) -> String {
+        let mut stmts = vec!["BEGIN TRANSACTION;".to_string()];
+        let clean_id = doc_id.replace([':', ' ', '-'], "_");
+        stmts.push(format!(
+            "UPDATE {table}:{clean_id} MERGE {payload} SET docstatus = {doc_status}, modified = time::now();"
+        ));
+        for side in side_effects {
+            stmts.push(side.clone());
+        }
+        stmts.push("COMMIT TRANSACTION;".to_string());
+        stmts.join("\n")
     }
 }
 

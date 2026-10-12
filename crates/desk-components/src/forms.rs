@@ -162,3 +162,100 @@ pub fn eval_depends_on(expr: &str, form_values: &HashMap<String, String>) -> boo
         }
     })
 }
+
+use dioxus::prelude::*;
+
+/// Dioxus v7 Dynamic DocType Form Component.
+#[component]
+pub fn DocTypeForm(model: DynamicFormModel, initial_values: HashMap<String, String>) -> Element {
+    let mut values = use_signal(move || initial_values);
+
+    rsx! {
+        form { class: "desk-form-container",
+            div { class: "desk-form-header",
+                h2 { "{model.doctype_name}" }
+                if model.is_submittable {
+                    button { r#type: "button", class: "btn-submit", "Submit" }
+                }
+            }
+            div { class: "desk-form-grid",
+                for widget in model.widgets {
+                    match widget {
+                        FormFieldWidget::TextInput { fieldname, label, reqd } => rsx! {
+                            div { class: "form-group",
+                                label { "{label}" }
+                                input {
+                                    r#type: "text",
+                                    required: reqd,
+                                    value: values.read().get(&fieldname).cloned().unwrap_or_default(),
+                                    oninput: move |evt| {
+                                        let v = evt.value();
+                                        values.write().insert(fieldname.clone(), v);
+                                    }
+                                }
+                            }
+                        },
+                        FormFieldWidget::NumberInput { fieldname, label, reqd } => rsx! {
+                            div { class: "form-group",
+                                label { "{label}" }
+                                input {
+                                    r#type: "number",
+                                    required: reqd,
+                                    value: values.read().get(&fieldname).cloned().unwrap_or_default(),
+                                    oninput: move |evt| {
+                                        let v = evt.value();
+                                        values.write().insert(fieldname.clone(), v);
+                                    }
+                                }
+                            }
+                        },
+                        FormFieldWidget::CurrencyInput { fieldname, label, reqd } => rsx! {
+                            div { class: "form-group",
+                                label { "{label}" }
+                                input {
+                                    r#type: "number",
+                                    step: "0.01",
+                                    required: reqd,
+                                    value: values.read().get(&fieldname).cloned().unwrap_or_default(),
+                                    oninput: move |evt| {
+                                        let v = evt.value();
+                                        values.write().insert(fieldname.clone(), v);
+                                    }
+                                }
+                            }
+                        },
+                        FormFieldWidget::Checkbox { fieldname, label, default_checked } => rsx! {
+                            div { class: "form-group form-check",
+                                input {
+                                    r#type: "checkbox",
+                                    checked: values.read().get(&fieldname).map(|v| v == "true").unwrap_or(default_checked),
+                                    onchange: move |evt| {
+                                        let v = if evt.checked() { "true" } else { "false" };
+                                        values.write().insert(fieldname.clone(), v.into());
+                                    }
+                                }
+                                label { "{label}" }
+                            }
+                        },
+                        FormFieldWidget::SelectDropdown { fieldname, label, options, reqd } => rsx! {
+                            div { class: "form-group",
+                                label { "{label}" }
+                                select {
+                                    required: reqd,
+                                    onchange: move |evt| {
+                                        let v = evt.value();
+                                        values.write().insert(fieldname.clone(), v);
+                                    },
+                                    for opt in options {
+                                        option { value: "{opt}", "{opt}" }
+                                    }
+                                }
+                            }
+                        },
+                        _ => rsx! { div {} }
+                    }
+                }
+            }
+        }
+    }
+}

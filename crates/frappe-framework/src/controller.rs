@@ -22,11 +22,7 @@ pub trait DocController: Send + Sync {
     }
 
     /// Hook executed to validate business invariants, field links, and calculation rules.
-    fn validate(
-        &self,
-        _doc: &mut Document,
-        _schema: &DocTypeSchema,
-    ) -> Result<(), DocumentError> {
+    fn validate(&self, _doc: &mut Document, _schema: &DocTypeSchema) -> Result<(), DocumentError> {
         Ok(())
     }
 
@@ -58,11 +54,7 @@ pub trait DocController: Send + Sync {
     }
 
     /// Hook executed on document submission (e.g. posting General Ledger or Stock Ledger entries).
-    fn on_submit(
-        &self,
-        _doc: &mut Document,
-        _schema: &DocTypeSchema,
-    ) -> Result<(), DocumentError> {
+    fn on_submit(&self, _doc: &mut Document, _schema: &DocTypeSchema) -> Result<(), DocumentError> {
         Ok(())
     }
 
@@ -76,20 +68,12 @@ pub trait DocController: Send + Sync {
     }
 
     /// Hook executed on document cancellation (e.g. reversing ledger entries).
-    fn on_cancel(
-        &self,
-        _doc: &mut Document,
-        _schema: &DocTypeSchema,
-    ) -> Result<(), DocumentError> {
+    fn on_cancel(&self, _doc: &mut Document, _schema: &DocTypeSchema) -> Result<(), DocumentError> {
         Ok(())
     }
 
     /// Hook executed before document deletion / trashing.
-    fn on_trash(
-        &self,
-        _doc: &mut Document,
-        _schema: &DocTypeSchema,
-    ) -> Result<(), DocumentError> {
+    fn on_trash(&self, _doc: &mut Document, _schema: &DocTypeSchema) -> Result<(), DocumentError> {
         Ok(())
     }
 }
@@ -165,7 +149,9 @@ mod tests {
         let mut registry = ControllerRegistry::new();
         registry.register("Sales Invoice", TestInvoiceController);
 
-        let controller = registry.get("Sales Invoice").expect("Controller must exist");
+        let controller = registry
+            .get("Sales Invoice")
+            .expect("Controller must exist");
         let mut doc = Document::new("Sales Invoice", serde_json::json!({ "total": 100 }));
         let schema = DocTypeSchema {
             name: "Sales Invoice".into(),

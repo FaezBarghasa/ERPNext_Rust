@@ -21,7 +21,10 @@ pub use replication::{
     ReplicationEnvelope, ReplicationScope,
 };
 pub use repository::SurrealRepository;
-pub use surreal::open_tenant;
+pub use surreal::{
+    atomic_next_sequence, execute_relate, execute_transaction, open_tenant, open_tenant_surrealkv,
+    query_graph_trace,
+};
 
 use std::collections::HashMap;
 use std::sync::RwLock;
