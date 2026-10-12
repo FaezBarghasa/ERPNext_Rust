@@ -256,7 +256,7 @@ pub fn render_worker_kiosk_html(operator_name: &str) -> String {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Floor Terminal Kiosk — RustNext</title>
+    <title>Shop Floor Terminal Kiosk — RustNext</title>
     <style>
         * {{ box-sizing: border-box; margin: 0; padding: 0; user-select: none; -webkit-tap-highlight-color: transparent; }}
         body {{
@@ -453,7 +453,7 @@ pub fn render_admin_cockpit_html(admin_name: &str) -> String {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Planetary Cluster Operational Cockpit — RustNext Admin</title>
+    <title>System Fleet Admin Cockpit — Planetary Cluster RustNext</title>
     <style>
         :root {{
             --bg-void: #08090d;

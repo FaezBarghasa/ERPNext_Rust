@@ -95,14 +95,7 @@ impl PrintableInvoice {
     /// Constructs a PrintableInvoice from a generic document JSON payload with sensible enterprise fallbacks.
     #[must_use]
     pub fn from_document_json(doctype: &str, doc: &serde_json::Value) -> Self {
-        let doc_title = match doctype {
-            "Sales Invoice" => "Commercial Sales Invoice",
-            "Purchase Order" => "Official Purchase Order",
-            "Purchase Invoice" => "Commercial Purchase Invoice",
-            "Delivery Note" => "Goods Delivery Note",
-            "Quotation" => "Sales Quotation",
-            other => other,
-        };
+        let doc_title = doctype;
 
         let doc_number = doc.get("name").and_then(|v| v.as_str()).unwrap_or("DRAFT");
 
@@ -620,7 +613,7 @@ impl PrintableInvoice {
     </div>
     <div>
       <div class="doc-meta-title">{doc_title}</div>
-      <div class="doc-num">{doc_num}</div>
+      <div class="doc-num">{doc_title}: {doc_num}</div>
       <div class="small text-muted" style="text-align: right; margin-top: 6px;">
         <strong>Date:</strong> {date}
       </div>

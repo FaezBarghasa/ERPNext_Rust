@@ -111,7 +111,7 @@ async fn readiness_handler(pool_mgr: web::Data<ConnectionPoolManager>) -> impl R
         .get_or_initialize_client(&TenantId("default".into()))
         .await
     {
-        Ok(client) => match client.query("SELECT 1;").await {
+        Ok(client) => match client.query("RETURN 1;").await {
             Ok(_) => HttpResponse::Ok().json(serde_json::json!({
                 "status": "ready",
                 "db": "connected",

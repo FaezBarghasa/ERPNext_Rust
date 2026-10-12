@@ -120,9 +120,9 @@ test.describe('Phase 2 & 3: Enterprise Template Suites & Manifest Endpoints', ()
     const heading = page.locator('h1');
     await expect(heading).toContainText('Universal Work-Type Templates');
 
-    // Verify all 6 template suite cards exist
+    // Verify all 10 template suite cards exist
     const cards = page.locator('.template-card');
-    await expect(cards).toHaveCount(6);
+    await expect(cards).toHaveCount(10);
 
     // Verify specific slugs exist in links
     await expect(page.locator('a[href="/templates/svod-streaming"]')).toBeVisible();
@@ -179,7 +179,7 @@ test.describe('Phase 4 & 5: Health, APIs & Offline Resilience Quality Gates', ()
     expect(res.status()).toBe(200);
     const templates = await res.json();
     expect(Array.isArray(templates)).toBe(true);
-    expect(templates.length).toBe(6);
+    expect(templates.length).toBe(10);
   });
 
   test('Storefront products API returns complete luxury catalog', async ({ request }) => {

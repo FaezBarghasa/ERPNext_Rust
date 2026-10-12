@@ -197,8 +197,7 @@ impl SeoMetadata {
     /// Constructs SEO metadata for the Digital Products & Creator Hub (`SoftwareApplication`, `Product`, `Offer`).
     #[must_use]
     pub fn for_digital_goods(slug: &str, variant: &str) -> Self {
-        let title =
-            format!("Creator Studio & Developer Assets — {variant} Vault | rustnext").into();
+        let title = format!("Creator Hub & Developer Assets — {variant} Vault | rustnext").into();
         let description = "Instant software licenses, single-use encrypted download links, automated creator payouts, and verified developer SDKs.".into();
         let canonical_url =
             format!("https://rustnext.enterprise.io/templates/{slug}?variant={variant}").into();
@@ -342,7 +341,8 @@ impl SeoMetadata {
     #[must_use]
     pub fn for_trading(slug: &str, variant: &str) -> Self {
         let title =
-            format!("Institutional Prime Brokerage & Terminal — {variant} Desk | rustnext").into();
+            format!("Institutional Trading Exchange & Prime Terminal — {variant} Desk | rustnext")
+                .into();
         let description = "High-frequency financial trading terminal with real-time Level-2 order book depth ladder, microsecond trade tape, and Zero-Knowledge solvent balance proofs.".into();
         let canonical_url =
             format!("https://rustnext.enterprise.io/templates/{slug}?variant={variant}").into();
