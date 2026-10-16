@@ -12,6 +12,7 @@
 
 pub mod migration_pipeline;
 pub mod packaging;
+pub mod perf_engine;
 
 use frappe_meta::{
     DocFieldSchema, DocTypeRegistry, DocTypeSchema, FieldType, ProfileRegistry,
@@ -885,6 +886,52 @@ pub fn on_validate(ctx: &PluginContext, doc: &mut DocRecord) -> DocMutationResul
             );
 
             match scenario.as_str() {
+                "perf_gate" => {
+                    println!("  Evaluating Phase 9 Performance SLAs and Regression Gates...");
+                    match perf_engine::PerfEngine::run_regression_gates().await {
+                        Ok(report) => {
+                            println!(
+                                "\n  ========================================================"
+                            );
+                            println!("    PHASE 9 PERFORMANCE REGRESSION GATE: ALL PASSED        ");
+                            println!("  ========================================================");
+                            println!(
+                                "    1. {}: {} [PASS]",
+                                report.doc_get_sla.name, report.doc_get_sla.measured
+                            );
+                            println!(
+                                "    2. {}: {} [PASS]",
+                                report.sales_invoice_submit_sla.name,
+                                report.sales_invoice_submit_sla.measured
+                            );
+                            println!(
+                                "    3. {}: {} [PASS]",
+                                report.list_view_filter_sla.name,
+                                report.list_view_filter_sla.measured
+                            );
+                            println!(
+                                "    4. {}: {} [PASS]",
+                                report.streaming_gl_sla.name, report.streaming_gl_sla.measured
+                            );
+                            println!(
+                                "    5. {}: {} [PASS]",
+                                report.parallel_reposting_sla.name,
+                                report.parallel_reposting_sla.measured
+                            );
+                            println!(
+                                "    6. {}: {} [PASS]",
+                                report.cold_start_sla.name, report.cold_start_sla.measured
+                            );
+                            println!(
+                                "  ========================================================\n"
+                            );
+                        }
+                        Err(e) => {
+                            eprintln!("\n  ❌ PERFORMANCE REGRESSION DETECTED: {e}");
+                            std::process::exit(1);
+                        }
+                    }
+                }
                 "monte_carlo" => {
                     println!(
                         "  Simulating Monte Carlo Schedule Risk (Iterations: {iterations})..."
@@ -1018,6 +1065,47 @@ pub fn on_validate(ctx: &PluginContext, doc: &mut DocRecord) -> DocMutationResul
                     println!("  Latency p95:      {p95:.3?}");
                     println!("  Latency p99:      {p99:.3?}");
                     println!("  Target Invariant: p99 < 2ms (Passed)");
+                }
+            }
+        }
+
+        "perf-gate" | "perf" | "sla" => {
+            println!("🚀 Executing Phase 9 Enterprise Performance Regression Gate...");
+            match perf_engine::PerfEngine::run_regression_gates().await {
+                Ok(report) => {
+                    println!("\n========================================================");
+                    println!("  PHASE 9 PERFORMANCE REGRESSION GATE: ALL PASSED       ");
+                    println!("========================================================");
+                    println!(
+                        "  1. {}: {} [PASS]",
+                        report.doc_get_sla.name, report.doc_get_sla.measured
+                    );
+                    println!(
+                        "  2. {}: {} [PASS]",
+                        report.sales_invoice_submit_sla.name,
+                        report.sales_invoice_submit_sla.measured
+                    );
+                    println!(
+                        "  3. {}: {} [PASS]",
+                        report.list_view_filter_sla.name, report.list_view_filter_sla.measured
+                    );
+                    println!(
+                        "  4. {}: {} [PASS]",
+                        report.streaming_gl_sla.name, report.streaming_gl_sla.measured
+                    );
+                    println!(
+                        "  5. {}: {} [PASS]",
+                        report.parallel_reposting_sla.name, report.parallel_reposting_sla.measured
+                    );
+                    println!(
+                        "  6. {}: {} [PASS]",
+                        report.cold_start_sla.name, report.cold_start_sla.measured
+                    );
+                    println!("========================================================\n");
+                }
+                Err(err) => {
+                    eprintln!("\n❌ PERFORMANCE REGRESSION DETECTED: {err}");
+                    std::process::exit(1);
                 }
             }
         }

@@ -18,7 +18,9 @@ pub use landed_cost_voucher::{
     LandedCostAllocationMethod, LandedCostCharge, LandedCostItem, LandedCostVoucher,
 };
 pub use reconciliation::{BatchAuditReport, BatchDiscrepancy, BatchRecalculator};
-pub use reposting::{ItemPartitionQueue, ParallelRepostingSettings, RepostItemJob};
+pub use reposting::{
+    ItemPartitionQueue, ParallelRepostingSettings, ParallelStockRepostingEngine, RepostItemJob,
+};
 pub use reservation::{
     ReservationStatus, ReservationType, StockReservationEngine, StockReservationEntry,
 };

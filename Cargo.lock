@@ -2133,6 +2133,7 @@ dependencies = [
  "erp-accounting",
  "frappe-framework",
  "frappe-meta",
+ "rayon",
  "rust_decimal",
  "rust_decimal_macros",
  "serde",
@@ -4890,8 +4891,10 @@ name = "rbench"
 version = "0.3.0"
 dependencies = [
  "chrono",
+ "compact_str",
  "erp-accounting",
  "erp-cms",
+ "erp-inventory",
  "erp-ppm",
  "frappe-framework",
  "frappe-meta",
@@ -4899,6 +4902,9 @@ dependencies = [
  "frappe-storage",
  "futures-util",
  "hex",
+ "rayon",
+ "rust_decimal",
+ "rust_decimal_macros",
  "serde",
  "serde_json",
  "sha2 0.11.0",
