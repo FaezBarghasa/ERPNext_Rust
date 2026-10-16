@@ -60,6 +60,11 @@ impl CustomField {
             options: self.options.clone(),
             default_value: self.default_value.clone(),
             permlevel: 0,
+            depends_on: None,
+            mandatory_depends_on: None,
+            read_only_depends_on: None,
+            fetch_from: None,
+            precision: None,
         }
     }
 }
@@ -173,6 +178,9 @@ impl CustomDocType {
             virtual_child_tables: false,
             lazy_materialization: false,
             extends_class: None,
+            title_field: None,
+            search_fields: None,
+            image_field: None,
             fields: self
                 .fields
                 .into_iter()
@@ -223,6 +231,9 @@ mod tests {
             virtual_child_tables: false,
             lazy_materialization: false,
             extends_class: None,
+            title_field: None,
+            search_fields: None,
+            image_field: None,
             fields: vec![
                 DocFieldSchema {
                     fieldname: "customer_name".into(),
@@ -237,6 +248,11 @@ mod tests {
                     options: None,
                     default_value: None,
                     permlevel: 0,
+                    depends_on: None,
+                    mandatory_depends_on: None,
+                    read_only_depends_on: None,
+                    fetch_from: None,
+                    precision: None,
                 },
                 DocFieldSchema {
                     fieldname: "territory".into(),
@@ -251,6 +267,11 @@ mod tests {
                     options: None,
                     default_value: None,
                     permlevel: 0,
+                    depends_on: None,
+                    mandatory_depends_on: None,
+                    read_only_depends_on: None,
+                    fetch_from: None,
+                    precision: None,
                 },
             ],
             permissions: vec![],

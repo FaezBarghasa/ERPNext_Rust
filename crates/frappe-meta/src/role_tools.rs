@@ -102,6 +102,11 @@ mod tests {
             options: None,
             default_value: None,
             permlevel: 0,
+            depends_on: None,
+            mandatory_depends_on: None,
+            read_only_depends_on: None,
+            fetch_from: None,
+            precision: None,
         };
 
         let mut user_roles = HashSet::new();

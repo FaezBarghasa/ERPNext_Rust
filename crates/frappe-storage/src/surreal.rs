@@ -138,4 +138,26 @@ mod tests {
             .unwrap();
         assert!(!trace.is_empty());
     }
+
+    #[tokio::test]
+    async fn test_all_standard_schemas_surrealql_ddl_execution() {
+        use frappe_meta::registry::DocTypeRegistry;
+
+        let db = open_tenant("test_ddl", "main").await.unwrap();
+        let registry = DocTypeRegistry::new_standard_erpnext();
+        let ddl_statements = registry
+            .compile_all_surrealql()
+            .expect("DDL compilation must succeed");
+
+        assert!(!ddl_statements.is_empty());
+
+        for stmt in &ddl_statements {
+            let res = db.query(stmt).await;
+            assert!(
+                res.is_ok(),
+                "Failed to execute DDL statement on SurrealDB: {stmt} -> {:?}",
+                res.err()
+            );
+        }
+    }
 }

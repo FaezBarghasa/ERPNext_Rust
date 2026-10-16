@@ -267,6 +267,21 @@ pub struct DocFieldSchema {
     /// Permlevel for field-level access control (0-9).
     #[serde(default)]
     pub permlevel: u8,
+    /// Conditional display expression (JS / Frappe expression).
+    #[serde(default)]
+    pub depends_on: Option<String>,
+    /// Conditional mandatory expression.
+    #[serde(default)]
+    pub mandatory_depends_on: Option<String>,
+    /// Conditional read-only expression.
+    #[serde(default)]
+    pub read_only_depends_on: Option<String>,
+    /// Field value auto-fetch link route (e.g. `customer.customer_name`).
+    #[serde(default)]
+    pub fetch_from: Option<String>,
+    /// Explicit numeric or float precision override.
+    #[serde(default)]
+    pub precision: Option<u8>,
 }
 
 /// Abstract Syntax Tree (AST) definition for an entire DocType schema.
@@ -318,6 +333,15 @@ pub struct DocTypeSchema {
     /// Parent class inheritance name (for class overrides).
     #[serde(default)]
     pub extends_class: Option<String>,
+    /// Field identifier designating the human-readable document title.
+    #[serde(default)]
+    pub title_field: Option<String>,
+    /// Comma-separated list of fields indexed for global search and autocomplete.
+    #[serde(default)]
+    pub search_fields: Option<String>,
+    /// Field identifier designating the primary image/avatar attachment.
+    #[serde(default)]
+    pub image_field: Option<String>,
     /// Field definitions.
     pub fields: Vec<DocFieldSchema>,
     /// Security permission definitions.

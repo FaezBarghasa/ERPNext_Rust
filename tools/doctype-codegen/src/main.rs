@@ -17,6 +17,11 @@ pub struct UpstreamDocField {
     pub unique: Option<i64>,
     pub in_list_view: Option<i64>,
     pub permlevel: Option<i64>,
+    pub depends_on: Option<String>,
+    pub mandatory_depends_on: Option<String>,
+    pub read_only_depends_on: Option<String>,
+    pub fetch_from: Option<String>,
+    pub precision: Option<serde_json::Value>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -37,6 +42,8 @@ pub struct UpstreamDocType {
     pub title_field: Option<String>,
     #[serde(default)]
     pub search_fields: Option<String>,
+    #[serde(default)]
+    pub image_field: Option<String>,
     #[serde(default)]
     pub track_changes: Option<i64>,
     #[serde(default)]
@@ -157,6 +164,18 @@ fn sanitize_ident(s: &str) -> String {
     ident
 }
 
+fn format_opt_str(val: &Option<String>) -> String {
+    match val {
+        Some(s) => format!(
+            "Some(\"{}\".into())",
+            s.replace('\\', "\\\\")
+                .replace('"', "\\\"")
+                .replace('\n', "\\n")
+        ),
+        None => "None".to_string(),
+    }
+}
+
 fn generate_doctype_code(dt: &UpstreamDocType) -> String {
     let fn_name = format!("schema_{}", sanitize_ident(&dt.name));
     let dt_name = dt.name.replace('"', "\\\"");
@@ -189,18 +208,26 @@ fn generate_doctype_code(dt: &UpstreamDocType) -> String {
         let in_list_view = f.in_list_view == Some(1);
         let permlevel = f.permlevel.unwrap_or(0).clamp(0, 9);
 
-        let options_str = match &f.options {
-            Some(opt) => format!(
-                "Some(\"{}\".into())",
-                opt.replace('\\', "\\\\")
-                    .replace('"', "\\\"")
-                    .replace('\n', "\\n")
-            ),
-            None => "None".to_string(),
+        let options_str = format_opt_str(&f.options);
+        let depends_on_str = format_opt_str(&f.depends_on);
+        let mandatory_depends_on_str = format_opt_str(&f.mandatory_depends_on);
+        let read_only_depends_on_str = format_opt_str(&f.read_only_depends_on);
+        let fetch_from_str = format_opt_str(&f.fetch_from);
+
+        let precision_str = match &f.precision {
+            Some(serde_json::Value::Number(n)) => format!("Some({})", n.as_u64().unwrap_or(2)),
+            Some(serde_json::Value::String(s)) => {
+                if let Ok(n) = s.parse::<u8>() {
+                    format!("Some({n})")
+                } else {
+                    "None".to_string()
+                }
+            }
+            _ => "None".to_string(),
         };
 
         fields_code.push_str(&format!(
-            "            DocFieldSchema {{\n                fieldname: \"{fname_sanitized}\".into(),\n                fieldtype: {ftype},\n                label: \"{label}\".into(),\n                reqd: {reqd},\n                unique: {unique},\n                read_only: {read_only},\n                hidden: {hidden},\n                in_list_view: {in_list_view},\n                mask: false,\n                options: {options_str},\n                default_value: None,\n                permlevel: {permlevel},\n            }},\n"
+            "            DocFieldSchema {{\n                fieldname: \"{fname_sanitized}\".into(),\n                fieldtype: {ftype},\n                label: \"{label}\".into(),\n                reqd: {reqd},\n                unique: {unique},\n                read_only: {read_only},\n                hidden: {hidden},\n                in_list_view: {in_list_view},\n                mask: false,\n                options: {options_str},\n                default_value: None,\n                permlevel: {permlevel},\n                depends_on: {depends_on_str},\n                mandatory_depends_on: {mandatory_depends_on_str},\n                read_only_depends_on: {read_only_depends_on_str},\n                fetch_from: {fetch_from_str},\n                precision: {precision_str},\n            }},\n"
         ));
     }
 
@@ -214,10 +241,10 @@ fn generate_doctype_code(dt: &UpstreamDocType) -> String {
     let allow_import = dt.allow_import != Some(0);
     let allow_auto_repeat = dt.allow_auto_repeat == Some(1);
 
-    let autoname_str = match &dt.autoname {
-        Some(a) => format!("Some(\"{}\".into())", a.replace('"', "\\\"")),
-        None => "None".to_string(),
-    };
+    let autoname_str = format_opt_str(&dt.autoname);
+    let title_field_str = format_opt_str(&dt.title_field);
+    let search_fields_str = format_opt_str(&dt.search_fields);
+    let image_field_str = format_opt_str(&dt.image_field);
 
     format!(
         r#"/// Auto-generated schema for `{dt_name}`
@@ -239,6 +266,9 @@ pub fn {fn_name}() -> DocTypeSchema {{
         virtual_child_tables: false,
         lazy_materialization: false,
         extends_class: None,
+        title_field: {title_field_str},
+        search_fields: {search_fields_str},
+        image_field: {image_field_str},
         fields: vec![
 {fields_code}        ],
         permissions: Vec::new(),
