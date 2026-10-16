@@ -1,8 +1,10 @@
 pub mod ai_tools;
+pub mod auto_repeat;
 pub mod background;
 pub mod bpmn;
 pub mod controller;
 pub mod dmn;
+pub mod email_account;
 pub mod export_engine;
 pub mod file_manager;
 pub mod jalali;
@@ -21,9 +23,15 @@ pub mod wasmtime_sandbox;
 pub mod webhook;
 pub mod workflow_approval;
 
+pub use auto_repeat::{
+    AutoRepeatEngine, AutoRepeatFrequency, AutoRepeatRecord, AutoRepeatStatus, GeneratedDocument,
+};
 pub use background::{
-    BackgroundJob, BackgroundJobQueue, JobPriority, JobStatus, ScheduledTask, SchedulerEngine,
-    SchedulerInterval,
+    BackgroundJob, BackgroundJobQueue, JobMeshCoordinator, JobPriority, JobStatus, ScheduledTask,
+    SchedulerEngine, SchedulerInterval,
+};
+pub use email_account::{
+    EmailAccount, EmailAccountPoller, EmailIngestionRecord, InboundEmailMessage,
 };
 pub use export_engine::{DocumentExporter, ExportColumn, ExportError, ExportFormat};
 pub use file_manager::{FileError, FileManager, FileRecord};

@@ -6,7 +6,7 @@
 use chrono::{DateTime, Duration, Utc};
 use serde::{Deserialize, Serialize};
 use std::collections::VecDeque;
-use std::sync::Mutex;
+use std::sync::{Arc, Mutex};
 
 /// Priority level governing worker dequeue order.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize)]
@@ -204,6 +204,64 @@ impl SchedulerEngine {
     }
 }
 
+/// Coordinator orchestrating periodic scheduler evaluation and background job dispatch.
+pub struct JobMeshCoordinator {
+    pub queue: Arc<BackgroundJobQueue>,
+    pub scheduler: Mutex<SchedulerEngine>,
+}
+
+impl JobMeshCoordinator {
+    /// Creates a new JobMesh coordinator.
+    #[must_use]
+    pub fn new(queue: Arc<BackgroundJobQueue>, scheduler: SchedulerEngine) -> Self {
+        Self {
+            queue,
+            scheduler: Mutex::new(scheduler),
+        }
+    }
+
+    /// Evaluates scheduled tasks and enqueues due tasks into the worker queue.
+    pub fn tick_scheduler_and_enqueue(&self, now: DateTime<Utc>) -> Vec<String> {
+        let mut sched = self.scheduler.lock().unwrap_or_else(|e| e.into_inner());
+        let ready_tasks = sched.tick(now);
+        for task in &ready_tasks {
+            self.queue.enqueue(
+                task,
+                serde_json::json!({
+                    "scheduled": true,
+                    "tick_time": now.to_rfc3339(),
+                }),
+                JobPriority::Default,
+            );
+        }
+        ready_tasks
+    }
+
+    /// Drains ready jobs from the queue and executes the provided handler.
+    pub fn drain_and_process<F>(&self, max_jobs: usize, mut handler: F) -> usize
+    where
+        F: FnMut(&BackgroundJob) -> Result<(), String>,
+    {
+        let mut processed = 0;
+        while processed < max_jobs {
+            let Some(job) = self.queue.dequeue() else {
+                break;
+            };
+
+            match handler(&job) {
+                Ok(()) => {
+                    self.queue.complete(&job.id);
+                }
+                Err(err) => {
+                    self.queue.fail(&job.id, &err);
+                }
+            }
+            processed += 1;
+        }
+        processed
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -257,5 +315,27 @@ mod tests {
         // 25 hours later -> ready again!
         let ready2 = scheduler.tick(t0 + Duration::hours(25));
         assert_eq!(ready2, vec!["daily_revaluation"]);
+    }
+
+    #[test]
+    fn test_job_mesh_coordinator_tick_and_drain() {
+        let queue = Arc::new(BackgroundJobQueue::new());
+        let mut scheduler = SchedulerEngine::new();
+        scheduler.register("hourly_sync", SchedulerInterval::Hourly);
+
+        let coordinator = JobMeshCoordinator::new(queue.clone(), scheduler);
+        let now = Utc::now();
+
+        let enqueued = coordinator.tick_scheduler_and_enqueue(now);
+        assert_eq!(enqueued, vec!["hourly_sync"]);
+
+        let mut executed = Vec::new();
+        let count = coordinator.drain_and_process(10, |job| {
+            executed.push(job.task_name.clone());
+            Ok(())
+        });
+
+        assert_eq!(count, 1);
+        assert_eq!(executed, vec!["hourly_sync"]);
     }
 }

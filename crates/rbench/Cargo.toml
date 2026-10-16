@@ -29,6 +29,8 @@ hex = { workspace = true }
 zstd = { workspace = true }
 erp-accounting = { workspace = true }
 erp-inventory = { workspace = true }
+erp-manufacturing = { workspace = true }
+erp-asset = { workspace = true }
 erp-cms = { workspace = true }
 erp-ppm = { workspace = true }
 rayon = { workspace = true }
