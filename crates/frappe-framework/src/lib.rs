@@ -1,30 +1,45 @@
 pub mod ai_tools;
+pub mod background;
 pub mod bpmn;
 pub mod controller;
 pub mod dmn;
 pub mod export_engine;
+pub mod file_manager;
 pub mod jalali;
 pub mod lifecycle;
 pub mod localization;
+pub mod naming;
 pub mod notification;
+pub mod permission;
 pub mod print_format;
 pub mod report_engine;
 pub mod saga;
 pub mod scripting;
+pub mod social;
 pub mod typestate;
 pub mod wasmtime_sandbox;
 pub mod webhook;
 pub mod workflow_approval;
 
+pub use background::{
+    BackgroundJob, BackgroundJobQueue, JobPriority, JobStatus, ScheduledTask, SchedulerEngine,
+    SchedulerInterval,
+};
 pub use export_engine::{DocumentExporter, ExportColumn, ExportError, ExportFormat};
+pub use file_manager::{FileError, FileManager, FileRecord};
+pub use naming::{NamingEngine, NamingSeriesStore};
 pub use notification::{
     NotificationChannel, NotificationDispatcher, NotificationError, NotificationInboxRegistry,
     NotificationMessage, NotificationPriority, UserNotificationPreferences,
 };
+pub use permission::{DocShare, PermType, PermissionEngine, UserContext};
 pub use print_format::{InvoicePrintContext, PrintEngine, PrintLineItem, ReceiptPrintContext};
 pub use report_engine::{
     PivotAggregate, PivotTableResult, ReportColumn, ReportEngine, ReportError, ReportResult,
     ReportSummaryCard,
+};
+pub use social::{
+    AssignmentRecord, CommentRecord, CommentType, FieldDelta, SocialEngine, VersionRecord,
 };
 pub use workflow_approval::{
     ApprovalWorkflow, DocumentVersionRecord, DocumentVersioningEngine, WorkflowApprovalLog,
@@ -40,7 +55,7 @@ pub use bpmn::{
 pub use controller::{ControllerRegistry, DocController};
 pub use dmn::{ConditionOp, DecisionRule, DecisionTable, HitPolicy};
 pub use jalali::JalaliDate;
-pub use lifecycle::{Document, DocumentController, DocumentError};
+pub use lifecycle::{Document, DocumentController, DocumentError, WorkflowTransition};
 pub use localization::{
     ChineseFapiaoType, JapanInvoiceEngine, JapanTaxBreakdown, PersianNormalizer, RtlEngine,
 };

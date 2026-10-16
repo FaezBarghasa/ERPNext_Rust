@@ -1,19 +1,24 @@
+pub mod aging;
 pub mod asset_capitalization;
 pub mod assets;
 pub mod bank_reconciliation;
 pub mod benford;
 pub mod coa;
 pub mod decimal_ledger;
+pub mod exchange_revaluation;
 pub mod intercompany;
 pub mod ledger;
 pub mod multibook;
 pub mod payment_gateway;
+pub mod payment_ledger;
 pub mod print_format;
 pub mod receivables;
 pub mod report_engine;
+pub mod tax_engine;
 pub mod tax_withholding;
 pub mod treasury;
 
+pub use aging::{AgingBucket, AgingInvoice, AgingReportEngine, PartyAgingRow};
 pub use asset_capitalization::{
     AssetCapitalizationRecord, AssetOverhaulEngine, CapitalizationServiceItem,
     CapitalizationStockItem,
@@ -23,6 +28,9 @@ pub use bank_reconciliation::{BankStatement, BankStatementParser, BankTransactio
 pub use benford::BenfordGuard;
 pub use coa::{Account, RootType};
 pub use decimal_ledger::{DecLine, straight_line_dec, verify_balanced_dec};
+pub use exchange_revaluation::{
+    AccountCurrencyBalance, ExchangeRevaluationEngine, RevaluationLineResult,
+};
 pub use intercompany::{
     EliminationJournalEntry, IntercompanyEliminationEngine, IntercompanyTransaction,
 };
@@ -37,6 +45,7 @@ pub use payment_gateway::{
     MockPaymentGateway, PaymentError, PaymentGatewayProcessor, PaymentIntent, PaymentMethod,
     PaymentReconciliationEngine, PaymentStatus,
 };
+pub use payment_ledger::{PaymentLedgerEngine, PaymentLedgerEntry};
 pub use print_format::{
     PrintableBankDetails, PrintableCompany, PrintableInvoice, PrintableLineItem, PrintableParty,
     PrintableTaxCharge,
@@ -45,6 +54,7 @@ pub use receivables::{ArApEngine, OpenInvoice, PaymentAllocationResult};
 pub use report_engine::{
     FinancialReportEngine, FinancialReportRow, ReportError, ReportRowType, StatementLine,
 };
+pub use tax_engine::{ChargeType, TaxCalculationEngine, TaxCalculationResult, TaxCharge};
 pub use tax_withholding::{ItemWiseTaxDetail, TaxPricingEngine, TaxWithholdingEntry};
 pub use treasury::{BankAccount, TreasuryPoolingEngine, ZbaSweepTransaction};
 

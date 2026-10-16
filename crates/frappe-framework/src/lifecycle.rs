@@ -380,6 +380,21 @@ impl DocumentController {
         Ok(())
     }
 
+    /// Trashes / deletes a document: enforces that submitted documents cannot be deleted without prior cancellation,
+    /// and triggers controller on_trash hooks.
+    pub fn trash(&self, doc: &mut Document, schema: &DocTypeSchema) -> Result<(), DocumentError> {
+        if doc.is_submitted() {
+            return Err(DocumentError::CannotEditSubmittedDocument);
+        }
+
+        if let Some(ctrl) = self.controllers.get(&doc.doctype) {
+            ctrl.on_trash(doc, schema)?;
+        }
+
+        doc.docstatus = 2; // Cancelled/Trashed
+        Ok(())
+    }
+
     /// Executes a workflow transition on a document.
     pub fn apply_workflow_action(
         &self,

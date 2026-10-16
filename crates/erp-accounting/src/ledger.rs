@@ -225,6 +225,54 @@ impl LedgerPostingEngine {
 
         Ok(gl_entries)
     }
+
+    /// Standard upstream `make_gl_entries` for all commercial vouchers (Sales/Purchase Invoice, Payment Entry, etc.).
+    pub fn make_gl_entries(
+        &self,
+        voucher_type: &str,
+        voucher_no: &str,
+        posting_date: NaiveDate,
+        company: &str,
+        lines: &[JournalEntryLine],
+    ) -> Result<Vec<GlEntry>, AccountingError> {
+        for log in &self.closing_logs {
+            if log.company == company && posting_date <= log.closing_date {
+                return Err(AccountingError::PeriodClosed(log.closing_date));
+            }
+        }
+
+        let total_debit: Decimal = lines.iter().map(|l| l.debit).sum();
+        let total_credit: Decimal = lines.iter().map(|l| l.credit).sum();
+
+        if total_debit != total_credit {
+            return Err(AccountingError::UnbalancedTransaction {
+                total_debit,
+                total_credit,
+            });
+        }
+
+        let mut gl_entries = Vec::with_capacity(lines.len());
+        for (i, line) in lines.iter().enumerate() {
+            if !self.accounts.contains_key(&line.account) {
+                return Err(AccountingError::AccountNotFound(line.account.clone()));
+            }
+
+            gl_entries.push(GlEntry {
+                name: format!("{voucher_no}-{i}"),
+                posting_date,
+                account: line.account.clone(),
+                debit: line.debit,
+                credit: line.credit,
+                voucher_type: voucher_type.to_string(),
+                voucher_no: voucher_no.to_string(),
+                party_type: line.party_type.clone(),
+                party: line.party.clone(),
+                company: company.to_string(),
+            });
+        }
+
+        Ok(gl_entries)
+    }
 }
 
 /// Trial Balance row summary.
