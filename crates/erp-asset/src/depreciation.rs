@@ -6,7 +6,7 @@
 //! - Asset Capitalization (Capital Work In Progress - CWIP -> Fixed Asset)
 //! - Asset Maintenance & Inspection logs.
 
-use chrono::{Datelike, Months, NaiveDate};
+use chrono::{Months, NaiveDate};
 use compact_str::CompactString;
 use rust_decimal::Decimal;
 use rust_decimal_macros::dec;
@@ -130,6 +130,40 @@ impl Asset {
         })
     }
 
+    /// Creates a new CWIP asset (in construction/assembly, prior to capitalization).
+    pub fn new_cwip(
+        name: impl Into<CompactString>,
+        asset_name: impl Into<CompactString>,
+        item_code: impl Into<CompactString>,
+        purchase_date: NaiveDate,
+        salvage_value: Decimal,
+        method: DepreciationMethod,
+        total_depreciations: u32,
+        frequency_months: u32,
+    ) -> Result<Self, AssetError> {
+        if total_depreciations == 0 {
+            return Err(AssetError::ZeroDepreciationPeriods);
+        }
+        if frequency_months == 0 {
+            return Err(AssetError::ZeroFrequency);
+        }
+
+        Ok(Self {
+            name: name.into(),
+            asset_name: asset_name.into(),
+            item_code: item_code.into(),
+            gross_purchase_amount: Decimal::ZERO,
+            purchase_date,
+            available_for_use_date: purchase_date,
+            expected_value_after_useful_life: salvage_value,
+            depreciation_method: method,
+            total_number_of_depreciations: total_depreciations,
+            frequency_of_depreciation_months: frequency_months,
+            status: AssetStatus::Draft,
+            schedules: Vec::new(),
+        })
+    }
+
     /// Computes and populates the complete depreciation schedule.
     pub fn calculate_depreciation_schedule(&mut self) -> Result<(), AssetError> {
         let n = self.total_number_of_depreciations;
@@ -204,7 +238,7 @@ impl Asset {
             DepreciationMethod::WrittenDownValue => {
                 // Diminishing Balance: Rate based on standard formula r = 1 - (salvage / cost)^(1/n)
                 // Approximated by standard annual diminishing rate
-                let depreciable_base = self.gross_purchase_amount - salvage;
+                let _depreciable_base = self.gross_purchase_amount - salvage;
                 let rate = (dec!(1.5) / Decimal::from(n)).round_dp(6);
 
                 for i in 1..=n {
@@ -482,12 +516,10 @@ mod tests {
     fn test_asset_capitalization_cwip_transfer() {
         let date = NaiveDate::from_ymd_opt(2026, 10, 1).unwrap();
 
-        let mut asset = Asset::new(
+        let mut asset = Asset::new_cwip(
             "AST-PLANT-01",
             "Solar Array Power Plant",
             "SOLAR-PLANT",
-            dec!(1.0), // Placeholder until capitalized
-            date,
             date,
             dec!(5000.0), // Salvage
             DepreciationMethod::StraightLine,

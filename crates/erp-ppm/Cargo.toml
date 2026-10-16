@@ -16,3 +16,4 @@ thiserror = { workspace = true }
 chrono = { workspace = true }
 rand = { workspace = true }
 rand_distr = { workspace = true }
+compact_str = { workspace = true }

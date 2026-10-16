@@ -4,8 +4,10 @@ pub mod ebr;
 pub mod eco;
 pub mod milp_scheduler;
 pub mod mrp;
+pub mod production_plan;
 pub mod quad_bom;
 pub mod spc;
+pub mod work_order;
 
 pub use bom::{Bom, BomEngine, BomItem, BomOperation, ManufacturingError};
 pub use capa::{EightDPhase, EightDReport, IshikawaCategory};
@@ -13,8 +15,13 @@ pub use ebr::{BatchStepRecord, ElectronicBatchRecord, WitnessSignature};
 pub use eco::{DispositionMode, EcoStatus, EngineeringChangeOrder};
 pub use milp_scheduler::{ProductionJob, SequenceOptimizer, WorkCenterSchedule};
 pub use mrp::{MrpEngine, OrderType, PlannedOrder, ScheduledSlot, WorkstationScheduler};
+pub use production_plan::{MaterialRequirementItem, ProductionPlan, ProductionPlanItem, ProductionPlanStatus};
 pub use quad_bom::{BomDivergence, BomLineItem, BomType, QuadBomSynchronizer, StructuredBom};
 pub use spc::{ControlLimits, SpcEngine, SpcRuleViolation, SpcSubgroup};
+pub use work_order::{
+    JobCard, JobCardStatus, JobCardTimeLog, WorkOrder, WorkOrderItem, WorkOrderOperation,
+    WorkOrderStatus,
+};
 
 #[cfg(test)]
 mod tests {

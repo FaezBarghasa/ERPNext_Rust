@@ -1,5 +1,6 @@
 pub mod appointment;
 pub mod buying_center;
+pub mod campaign;
 pub mod clm;
 pub mod cpq;
 pub mod forecast;
@@ -13,6 +14,7 @@ pub use appointment::{AppointmentBookingEngine, AppointmentSlot, CalendarInviteP
 pub use buying_center::{
     BuyingCenterGraph, CorporateHierarchy, InfluenceEdge, Stakeholder, StakeholderRole,
 };
+pub use campaign::{Campaign, CampaignError, CampaignStatus, Contract, ContractStatus};
 pub use clm::{ClauseLibrary, ClauseVariant, ContractClause, ContractRedliner};
 pub use cpq::{CpqSolver, OptionConstraint, PriceWaterfall};
 pub use forecast::{
