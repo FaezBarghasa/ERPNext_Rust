@@ -2,19 +2,29 @@ pub mod ageing;
 pub mod batches;
 pub mod catch_weight;
 pub mod fifo;
+pub mod landed_cost_voucher;
 pub mod reconciliation;
 pub mod reposting;
 pub mod reservation;
+pub mod serial_batch_bundle;
+pub mod valuation;
 pub mod warehouse;
 
 pub use ageing::{AgeingBucket, StockAgeingEngine, StockAgeingSummary, StockReceiptLayer};
 pub use batches::{Batch, SerialNo, SerialStatus};
 pub use catch_weight::CatchWeightItem;
 pub use fifo::{FifoBatchItem, InventoryError, StockLedgerEntry, add_fifo_layer, consume_fifo};
+pub use landed_cost_voucher::{
+    LandedCostAllocationMethod, LandedCostCharge, LandedCostItem, LandedCostVoucher,
+};
 pub use reconciliation::{BatchAuditReport, BatchDiscrepancy, BatchRecalculator};
 pub use reposting::{ItemPartitionQueue, ParallelRepostingSettings, RepostItemJob};
 pub use reservation::{
     ReservationStatus, ReservationType, StockReservationEngine, StockReservationEntry,
+};
+pub use serial_batch_bundle::{BundleError, BundleType, SerialBatchBundle, SerialBatchEntry};
+pub use valuation::{
+    SleParams, StockBin, StockLayer, ValuationEngine, ValuationError, ValuationMethod,
 };
 pub use warehouse::{
     Warehouse, create_delivery_note_gl_entries, create_purchase_receipt_gl_entries,

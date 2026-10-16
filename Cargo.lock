@@ -2043,6 +2043,7 @@ name = "erp-asset"
 version = "0.3.0"
 dependencies = [
  "chrono",
+ "compact_str",
  "frappe-framework",
  "frappe-meta",
  "rust_decimal",
@@ -2124,6 +2125,7 @@ name = "erp-inventory"
 version = "0.3.0"
 dependencies = [
  "chrono",
+ "compact_str",
  "erp-accounting",
  "frappe-framework",
  "frappe-meta",

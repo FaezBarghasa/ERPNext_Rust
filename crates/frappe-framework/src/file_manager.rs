@@ -154,7 +154,7 @@ mod tests {
 
         assert_eq!(record.file_name, "contract.pdf");
         assert_eq!(record.file_url, "/private/files/contract.pdf");
-        assert_eq!(record.is_private, true);
+        assert!(record.is_private);
         assert!(!record.content_hash.is_empty());
 
         let attached = manager.get_attached_files("Sales Invoice", "ACC-INV-001");

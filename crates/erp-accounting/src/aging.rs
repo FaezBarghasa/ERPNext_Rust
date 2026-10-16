@@ -92,7 +92,7 @@ impl AgingReportEngine {
             .collect();
 
         // Sort by total outstanding descending
-        results.sort_by(|a, b| b.bucket.total_outstanding.cmp(&a.bucket.total_outstanding));
+        results.sort_by_key(|a| std::cmp::Reverse(a.bucket.total_outstanding));
 
         results
     }

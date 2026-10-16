@@ -120,20 +120,16 @@ impl PermissionEngine {
         for share in shares {
             if share.user == user.user_id {
                 match ptype {
-                    PermType::Read | PermType::Print | PermType::Email | PermType::Report => {
-                        if share.read {
-                            return true;
-                        }
+                    PermType::Read | PermType::Print | PermType::Email | PermType::Report
+                        if share.read =>
+                    {
+                        return true;
                     }
-                    PermType::Write => {
-                        if share.write {
-                            return true;
-                        }
+                    PermType::Write if share.write => {
+                        return true;
                     }
-                    PermType::Share => {
-                        if share.share {
-                            return true;
-                        }
+                    PermType::Share if share.share => {
+                        return true;
                     }
                     _ => {}
                 }

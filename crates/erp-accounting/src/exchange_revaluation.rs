@@ -49,7 +49,7 @@ impl ExchangeRevaluationEngine {
         let mut total_variance = Decimal::ZERO;
 
         for bal in balances {
-            let Some(&(_, new_rate)) = target_rates.iter().find(|(c, _)| c == &bal.currency) else {
+            let Some(&(_, new_rate)) = target_rates.iter().find(|(c, _)| c == bal.currency) else {
                 continue;
             };
 

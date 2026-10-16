@@ -4,6 +4,7 @@ pub mod dom;
 pub mod einvoice;
 pub mod invoice_matching;
 pub mod landed_cost;
+pub mod mapped_doc;
 pub mod metered;
 pub mod order_lifecycle;
 pub mod order_tools;
@@ -17,6 +18,8 @@ pub mod taxes;
 pub mod wishlist;
 pub mod woocommerce_ingest;
 pub mod zatca;
+
+pub use mapped_doc::{CommercialDoc, CommercialLineItem, MappedDocEngine, MappingError};
 
 pub use coupon::{
     BogoPromotionRule, CartItemLine, CouponCalculationResult, CouponCode, CouponDiscountType,
