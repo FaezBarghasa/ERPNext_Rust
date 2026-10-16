@@ -1,14 +1,21 @@
 pub mod cpq_view;
 pub mod desk_shell;
+pub mod form_engine;
 pub mod forms;
 pub mod gantt;
 pub mod grid;
 pub mod primitives;
+pub mod report_query;
 pub mod resources;
 pub mod signals;
 pub mod spc_view;
 pub mod views;
 pub mod wms_view;
+
+pub use report_query::{
+    DeclarativeReport, FilterOperator, ReportDataChunk, ReportFilter, ReportPagination,
+    ScriptReportColumn,
+};
 
 pub use desk_shell::{
     WorkspaceModule, get_desk_workspaces, render_desk_shell_html, render_form_view_html,
@@ -16,6 +23,10 @@ pub use desk_shell::{
 };
 
 pub use cpq_view::{CpqConfiguratorModel, OptionCard};
+pub use form_engine::{
+    ChildGridColumn, ChildTableGridModel, CompiledFormLayout, FieldInspectorInfo, FormColumn,
+    FormLayoutEngine, FormLayoutWidget, FormSection, FormTab, FormTimelineEvent, FormTimelineModel,
+};
 pub use forms::{DocTypeForm, DynamicFormModel, FormFieldWidget, eval_depends_on};
 pub use gantt::{GanttDependencyLink, GanttTaskRow, GanttViewModel};
 pub use grid::{
@@ -23,9 +34,12 @@ pub use grid::{
 };
 pub use primitives::{
     AlertModel, AlertVariant, AutocompleteModel, AutocompleteOption, AvatarModel, AvatarSize,
-    BadgeModel, ButtonModel, ButtonVariant, CardModel, CommandPaletteItem, CommandPaletteModel,
-    DialogModel, FileUploaderModel, MultiSelectModel, RatingModel, SliderModel, ToastModel,
-    TooltipModel,
+    BadgeModel, ButtonModel, ButtonVariant, CalendarEvent, CalendarViewModel, CalendarViewMode,
+    CardModel, ChartCardModel, ComboboxModel, ComboboxOption, CommandPaletteItem,
+    CommandPaletteModel, ContextMenuItem, ContextMenuModel, DashboardViewModel, DatePickerModel,
+    DateTimePickerModel, DialogModel, FileUploaderModel, MobileNavItem, MobileShellModel,
+    MultiSelectModel, NumberCardModel, RatingModel, SliderModel, TimePickerModel, ToastModel,
+    TooltipModel, TreeNode, TreeViewModel,
 };
 pub use resources::{
     ColorScheme, DocumentResourceState, KeyboardShortcutConfig, ListResourceState,

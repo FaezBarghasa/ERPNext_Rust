@@ -202,6 +202,252 @@ impl Default for CommandPaletteModel {
     }
 }
 
+// -------------------------------------------------------------------------
+// Combobox & Advanced Select
+// -------------------------------------------------------------------------
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+pub struct ComboboxOption {
+    pub label: CompactString,
+    pub value: CompactString,
+    pub description: Option<CompactString>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+pub struct ComboboxModel {
+    pub placeholder: CompactString,
+    pub query: CompactString,
+    pub options: Vec<ComboboxOption>,
+    pub selected_value: Option<CompactString>,
+    pub is_open: bool,
+    pub allow_custom: bool,
+}
+
+impl ComboboxModel {
+    #[must_use]
+    pub fn new(placeholder: impl Into<CompactString>, options: Vec<ComboboxOption>) -> Self {
+        Self {
+            placeholder: placeholder.into(),
+            query: CompactString::default(),
+            options,
+            selected_value: None,
+            is_open: false,
+            allow_custom: false,
+        }
+    }
+
+    pub fn filtered_options(&self) -> Vec<&ComboboxOption> {
+        let q = self.query.to_lowercase();
+        if q.is_empty() {
+            return self.options.iter().collect();
+        }
+        let q_str = q.as_str();
+        self.options
+            .iter()
+            .filter(|opt| {
+                opt.label.to_lowercase().contains(q_str)
+                    || opt.value.to_lowercase().contains(q_str)
+                    || opt
+                        .description
+                        .as_ref()
+                        .is_some_and(|d| d.to_lowercase().contains(q_str))
+            })
+            .collect()
+    }
+}
+
+// -------------------------------------------------------------------------
+// Date & Time Pickers
+// -------------------------------------------------------------------------
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+pub struct DatePickerModel {
+    pub label: CompactString,
+    pub value: Option<CompactString>, // ISO Date "YYYY-MM-DD"
+    pub min_date: Option<CompactString>,
+    pub max_date: Option<CompactString>,
+    pub is_required: bool,
+    pub is_readonly: bool,
+}
+
+impl DatePickerModel {
+    #[must_use]
+    pub fn new(label: impl Into<CompactString>, value: Option<impl Into<CompactString>>) -> Self {
+        Self {
+            label: label.into(),
+            value: value.map(Into::into),
+            min_date: None,
+            max_date: None,
+            is_required: false,
+            is_readonly: false,
+        }
+    }
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+pub struct TimePickerModel {
+    pub label: CompactString,
+    pub value: Option<CompactString>, // Time "HH:MM:SS"
+    pub step_minutes: u32,
+    pub is_required: bool,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+pub struct DateTimePickerModel {
+    pub label: CompactString,
+    pub value: Option<CompactString>, // ISO-8601 Timestamp
+    pub is_required: bool,
+}
+
+// -------------------------------------------------------------------------
+// Tree View (Hierarchical Organizational / Chart of Accounts)
+// -------------------------------------------------------------------------
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+pub struct TreeNode {
+    pub id: CompactString,
+    pub label: CompactString,
+    pub parent_id: Option<CompactString>,
+    pub is_group: bool,
+    pub is_expanded: bool,
+    pub children: Vec<TreeNode>,
+}
+
+impl TreeNode {
+    #[must_use]
+    pub fn new(
+        id: impl Into<CompactString>,
+        label: impl Into<CompactString>,
+        parent_id: Option<impl Into<CompactString>>,
+        is_group: bool,
+    ) -> Self {
+        Self {
+            id: id.into(),
+            label: label.into(),
+            parent_id: parent_id.map(Into::into),
+            is_group,
+            is_expanded: false,
+            children: Vec::new(),
+        }
+    }
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, Default)]
+pub struct TreeViewModel {
+    pub root_nodes: Vec<TreeNode>,
+    pub selected_node_id: Option<CompactString>,
+}
+
+impl TreeViewModel {
+    #[must_use]
+    pub fn new(root_nodes: Vec<TreeNode>) -> Self {
+        Self {
+            root_nodes,
+            selected_node_id: None,
+        }
+    }
+}
+
+// -------------------------------------------------------------------------
+// Context Menu
+// -------------------------------------------------------------------------
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+pub struct ContextMenuItem {
+    pub id: CompactString,
+    pub label: CompactString,
+    pub icon: Option<CompactString>,
+    pub is_disabled: bool,
+    pub is_danger: bool,
+    pub shortcut: Option<CompactString>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Default)]
+pub struct ContextMenuModel {
+    pub x: f64,
+    pub y: f64,
+    pub items: Vec<ContextMenuItem>,
+    pub is_open: bool,
+}
+
+// -------------------------------------------------------------------------
+// Calendar View
+// -------------------------------------------------------------------------
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, Default)]
+pub enum CalendarViewMode {
+    #[default]
+    Month,
+    Week,
+    Day,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+pub struct CalendarEvent {
+    pub id: CompactString,
+    pub title: CompactString,
+    pub start_iso: CompactString,
+    pub end_iso: CompactString,
+    pub color: CompactString,
+    pub all_day: bool,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+pub struct CalendarViewModel {
+    pub doctype: CompactString,
+    pub mode: CalendarViewMode,
+    pub current_date_iso: CompactString,
+    pub events: Vec<CalendarEvent>,
+}
+
+// -------------------------------------------------------------------------
+// Dashboard & Analytics
+// -------------------------------------------------------------------------
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+pub struct NumberCardModel {
+    pub title: CompactString,
+    pub value_formatted: CompactString,
+    pub delta_percentage: Option<f64>,
+    pub is_positive_delta: bool,
+    pub color: CompactString,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+pub struct ChartCardModel {
+    pub title: CompactString,
+    pub chart_type: CompactString, // "line", "bar", "donut", "heatmap"
+    pub labels: Vec<CompactString>,
+    pub datasets: Vec<Vec<f64>>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+pub struct DashboardViewModel {
+    pub dashboard_name: CompactString,
+    pub number_cards: Vec<NumberCardModel>,
+    pub chart_cards: Vec<ChartCardModel>,
+}
+
+// -------------------------------------------------------------------------
+// Mobile Shell & PWA
+// -------------------------------------------------------------------------
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+pub struct MobileNavItem {
+    pub route: CompactString,
+    pub label: CompactString,
+    pub icon: CompactString,
+    pub badge: Option<u32>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+pub struct MobileShellModel {
+    pub active_route: CompactString,
+    pub nav_items: Vec<MobileNavItem>,
+    pub bottom_bar_visible: bool,
+    pub offline_indicator: bool,
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

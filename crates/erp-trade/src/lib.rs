@@ -6,6 +6,7 @@ pub mod invoice_matching;
 pub mod landed_cost;
 pub mod mapped_doc;
 pub mod metered;
+pub mod moadian;
 pub mod order_lifecycle;
 pub mod order_tools;
 pub mod partner_reference;
@@ -44,6 +45,10 @@ pub use invoice_matching::{
 };
 pub use landed_cost::distribute_landed_cost;
 pub use metered::{MeteredRatingEngine, RatingModel, UsageEvent};
+pub use moadian::{
+    MoadianError, MoadianHeader, MoadianInvoiceParams, MoadianInvoicePayload, MoadianInvoiceStatus,
+    MoadianItemLine, MoadianTaxIdGenerator,
+};
 pub use order_tools::{
     BulkOrderManager, InPlaceItemUpdate, MaterialRequestDoc, OrderItemLine, OrderWorkflowStatus,
     QuotationItem, RequisitionItem, calculate_quotation_totals,
