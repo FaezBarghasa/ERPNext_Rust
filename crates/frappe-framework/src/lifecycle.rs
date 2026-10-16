@@ -467,6 +467,9 @@ mod tests {
             virtual_child_tables: false,
             lazy_materialization: false,
             extends_class: None,
+            title_field: None,
+            search_fields: None,
+            image_field: None,
             fields: vec![],
             permissions: vec![],
         }

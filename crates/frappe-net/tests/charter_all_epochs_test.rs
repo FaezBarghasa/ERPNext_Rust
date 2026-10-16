@@ -119,6 +119,9 @@ fn test_epoch_2_dynamic_document_bus_and_naming() {
         virtual_child_tables: false,
         lazy_materialization: false,
         extends_class: None,
+        title_field: Some("model".into()),
+        search_fields: Some("model".into()),
+        image_field: None,
         fields: vec![
             DocFieldSchema {
                 fieldname: "model".into(),
@@ -133,6 +136,11 @@ fn test_epoch_2_dynamic_document_bus_and_naming() {
                 options: None,
                 default_value: None,
                 permlevel: 0,
+                depends_on: None,
+                mandatory_depends_on: None,
+                read_only_depends_on: None,
+                fetch_from: None,
+                precision: None,
             },
             DocFieldSchema {
                 fieldname: "hourly_rate".into(),
@@ -147,6 +155,11 @@ fn test_epoch_2_dynamic_document_bus_and_naming() {
                 options: None,
                 default_value: None,
                 permlevel: 0,
+                depends_on: None,
+                mandatory_depends_on: None,
+                read_only_depends_on: None,
+                fetch_from: None,
+                precision: None,
             },
         ],
         permissions: vec![],

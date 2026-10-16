@@ -45,6 +45,9 @@ async fn main() {
         virtual_child_tables: false,
         lazy_materialization: false,
         extends_class: None,
+        title_field: Some("customer".into()),
+        search_fields: Some("customer".into()),
+        image_field: None,
         fields: vec![
             DocFieldSchema {
                 fieldname: "customer".into(),
@@ -61,6 +64,11 @@ async fn main() {
                 default_value: None,
                 options: None,
                 permlevel: 0,
+                depends_on: None,
+                mandatory_depends_on: None,
+                read_only_depends_on: None,
+                fetch_from: None,
+                precision: None,
             },
             DocFieldSchema {
                 fieldname: "grand_total".into(),
@@ -75,6 +83,11 @@ async fn main() {
                 default_value: Some(serde_json::json!("0.00")),
                 options: None,
                 permlevel: 0,
+                depends_on: None,
+                mandatory_depends_on: None,
+                read_only_depends_on: None,
+                fetch_from: None,
+                precision: None,
             },
         ],
         permissions: vec![DocPermSchema {

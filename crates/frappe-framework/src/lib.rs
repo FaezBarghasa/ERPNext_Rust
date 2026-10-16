@@ -76,6 +76,9 @@ mod tests {
             virtual_child_tables: false,
             lazy_materialization: false,
             extends_class: None,
+            title_field: Some("customer".to_string()),
+            search_fields: Some("customer".to_string()),
+            image_field: None,
             fields: vec![
                 DocFieldSchema {
                     fieldname: "customer".to_string(),
@@ -90,6 +93,11 @@ mod tests {
                     options: None,
                     default_value: None,
                     permlevel: 0,
+                    depends_on: None,
+                    mandatory_depends_on: None,
+                    read_only_depends_on: None,
+                    fetch_from: None,
+                    precision: None,
                 },
                 DocFieldSchema {
                     fieldname: "grand_total".to_string(),
@@ -104,6 +112,11 @@ mod tests {
                     options: None,
                     default_value: Some(serde_json::json!(0.0)),
                     permlevel: 0,
+                    depends_on: None,
+                    mandatory_depends_on: None,
+                    read_only_depends_on: None,
+                    fetch_from: None,
+                    precision: None,
                 },
             ],
             permissions: vec![DocPermSchema {

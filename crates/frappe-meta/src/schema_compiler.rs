@@ -13,7 +13,6 @@ pub fn compile_expression_to_surrealql(expr: &str) -> String {
         .replace("doc.", "")
         .replace("===", "=")
         .replace("==", "=")
-        .replace("!=", "!=")
         .replace("&&", "AND")
         .replace("||", "OR")
 }
