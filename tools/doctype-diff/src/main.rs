@@ -137,12 +137,11 @@ fn scan_repo_doctypes(repo_path: &Path) -> Vec<(PathBuf, UpstreamDocType)> {
                     .parent()
                     .and_then(|p| p.file_name())
                     .and_then(|s| s.to_str());
-                if file_stem == parent_name {
-                    if let Ok(content) = fs::read_to_string(path) {
-                        if let Ok(dt) = serde_json::from_str::<UpstreamDocType>(&content) {
-                            doctypes.push((path.to_path_buf(), dt));
-                        }
-                    }
+                if file_stem == parent_name
+                    && let Ok(content) = fs::read_to_string(path)
+                    && let Ok(dt) = serde_json::from_str::<UpstreamDocType>(&content)
+                {
+                    doctypes.push((path.to_path_buf(), dt));
                 }
             }
         }
@@ -263,10 +262,8 @@ fn main() {
         (report.total_registered_rust as f64 / report.total_upstream.max(1) as f64) * 100.0
     );
 
-    if check_mode {
-        if report.total_registered_rust < 44 {
-            eprintln!("❌ Coverage regression! Expected at least 44 registered DocTypes.");
-            std::process::exit(1);
-        }
+    if check_mode && report.total_registered_rust < 44 {
+        eprintln!("❌ Coverage regression! Expected at least 44 registered DocTypes.");
+        std::process::exit(1);
     }
 }
