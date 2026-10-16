@@ -15,7 +15,9 @@ pub use ebr::{BatchStepRecord, ElectronicBatchRecord, WitnessSignature};
 pub use eco::{DispositionMode, EcoStatus, EngineeringChangeOrder};
 pub use milp_scheduler::{ProductionJob, SequenceOptimizer, WorkCenterSchedule};
 pub use mrp::{MrpEngine, OrderType, PlannedOrder, ScheduledSlot, WorkstationScheduler};
-pub use production_plan::{MaterialRequirementItem, ProductionPlan, ProductionPlanItem, ProductionPlanStatus};
+pub use production_plan::{
+    MaterialRequirementItem, ProductionPlan, ProductionPlanItem, ProductionPlanStatus,
+};
 pub use quad_bom::{BomDivergence, BomLineItem, BomType, QuadBomSynchronizer, StructuredBom};
 pub use spc::{ControlLimits, SpcEngine, SpcRuleViolation, SpcSubgroup};
 pub use work_order::{

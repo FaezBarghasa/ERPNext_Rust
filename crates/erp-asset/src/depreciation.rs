@@ -84,81 +84,56 @@ pub struct Asset {
     pub schedules: Vec<DepreciationScheduleEntry>,
 }
 
+/// Parameters for creating a Fixed Asset or CWIP Asset.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub struct AssetParams<'a> {
+    pub name: &'a str,
+    pub asset_name: &'a str,
+    pub item_code: &'a str,
+    pub gross_amount: Decimal,
+    pub purchase_date: NaiveDate,
+    pub available_date: NaiveDate,
+    pub salvage_value: Decimal,
+    pub method: DepreciationMethod,
+    pub total_depreciations: u32,
+    pub frequency_months: u32,
+    pub is_cwip: bool,
+}
+
 impl Asset {
-    /// Creates a new Asset in Draft status.
-    pub fn new(
-        name: impl Into<CompactString>,
-        asset_name: impl Into<CompactString>,
-        item_code: impl Into<CompactString>,
-        gross_amount: Decimal,
-        purchase_date: NaiveDate,
-        available_date: NaiveDate,
-        salvage_value: Decimal,
-        method: DepreciationMethod,
-        total_depreciations: u32,
-        frequency_months: u32,
-    ) -> Result<Self, AssetError> {
-        if gross_amount <= Decimal::ZERO {
-            return Err(AssetError::InvalidGrossAmount(gross_amount));
+    /// Creates a new Fixed Asset or CWIP Asset from parameters.
+    pub fn new(params: AssetParams<'_>) -> Result<Self, AssetError> {
+        if !params.is_cwip && params.gross_amount <= Decimal::ZERO {
+            return Err(AssetError::InvalidGrossAmount(params.gross_amount));
         }
-        if salvage_value >= gross_amount {
+        if !params.is_cwip && params.salvage_value >= params.gross_amount {
             return Err(AssetError::SalvageExceedsCost {
-                salvage: salvage_value,
-                gross: gross_amount,
+                salvage: params.salvage_value,
+                gross: params.gross_amount,
             });
         }
-        if total_depreciations == 0 {
+        if params.total_depreciations == 0 {
             return Err(AssetError::ZeroDepreciationPeriods);
         }
-        if frequency_months == 0 {
+        if params.frequency_months == 0 {
             return Err(AssetError::ZeroFrequency);
         }
 
         Ok(Self {
-            name: name.into(),
-            asset_name: asset_name.into(),
-            item_code: item_code.into(),
-            gross_purchase_amount: gross_amount,
-            purchase_date,
-            available_for_use_date: available_date,
-            expected_value_after_useful_life: salvage_value,
-            depreciation_method: method,
-            total_number_of_depreciations: total_depreciations,
-            frequency_of_depreciation_months: frequency_months,
-            status: AssetStatus::Draft,
-            schedules: Vec::new(),
-        })
-    }
-
-    /// Creates a new CWIP asset (in construction/assembly, prior to capitalization).
-    pub fn new_cwip(
-        name: impl Into<CompactString>,
-        asset_name: impl Into<CompactString>,
-        item_code: impl Into<CompactString>,
-        purchase_date: NaiveDate,
-        salvage_value: Decimal,
-        method: DepreciationMethod,
-        total_depreciations: u32,
-        frequency_months: u32,
-    ) -> Result<Self, AssetError> {
-        if total_depreciations == 0 {
-            return Err(AssetError::ZeroDepreciationPeriods);
-        }
-        if frequency_months == 0 {
-            return Err(AssetError::ZeroFrequency);
-        }
-
-        Ok(Self {
-            name: name.into(),
-            asset_name: asset_name.into(),
-            item_code: item_code.into(),
-            gross_purchase_amount: Decimal::ZERO,
-            purchase_date,
-            available_for_use_date: purchase_date,
-            expected_value_after_useful_life: salvage_value,
-            depreciation_method: method,
-            total_number_of_depreciations: total_depreciations,
-            frequency_of_depreciation_months: frequency_months,
+            name: params.name.into(),
+            asset_name: params.asset_name.into(),
+            item_code: params.item_code.into(),
+            gross_purchase_amount: if params.is_cwip {
+                Decimal::ZERO
+            } else {
+                params.gross_amount
+            },
+            purchase_date: params.purchase_date,
+            available_for_use_date: params.available_date,
+            expected_value_after_useful_life: params.salvage_value,
+            depreciation_method: params.method,
+            total_number_of_depreciations: params.total_depreciations,
+            frequency_of_depreciation_months: params.frequency_months,
             status: AssetStatus::Draft,
             schedules: Vec::new(),
         })
@@ -445,18 +420,19 @@ mod tests {
         let use_date = NaiveDate::from_ymd_opt(2026, 1, 1).unwrap();
 
         // Asset cost $10,000, salvage $1,000, 3 years (36 months) frequency = 12 months (3 periods)
-        let mut asset = Asset::new(
-            "AST-001",
-            "CNC Milling Machine",
-            "MACH-01",
-            dec!(10000.0),
-            buy_date,
-            use_date,
-            dec!(1000.0),
-            DepreciationMethod::StraightLine,
-            3,
-            12,
-        )
+        let mut asset = Asset::new(AssetParams {
+            name: "AST-001",
+            asset_name: "CNC Milling Machine",
+            item_code: "MACH-01",
+            gross_amount: dec!(10000.0),
+            purchase_date: buy_date,
+            available_date: use_date,
+            salvage_value: dec!(1000.0),
+            method: DepreciationMethod::StraightLine,
+            total_depreciations: 3,
+            frequency_months: 12,
+            is_cwip: false,
+        })
         .unwrap();
 
         asset.calculate_depreciation_schedule().unwrap();
@@ -471,7 +447,10 @@ mod tests {
 
         assert_eq!(asset.schedules[2].depreciation_amount, dec!(3000.0));
         assert_eq!(asset.schedules[2].book_value, dec!(1000.0)); // Exactly salvage value!
-        assert_eq!(asset.schedules[2].accumulated_depreciation_amount, dec!(9000.0));
+        assert_eq!(
+            asset.schedules[2].accumulated_depreciation_amount,
+            dec!(9000.0)
+        );
     }
 
     #[test]
@@ -479,18 +458,19 @@ mod tests {
         let date = NaiveDate::from_ymd_opt(2026, 1, 1).unwrap();
 
         // Cost $10,000, salvage $1,000, 4 periods -> Rate = 2/4 = 0.50 (50%)
-        let mut asset = Asset::new(
-            "AST-002",
-            "Server Rack",
-            "IT-01",
-            dec!(10000.0),
-            date,
-            date,
-            dec!(1000.0),
-            DepreciationMethod::DoubleDecliningBalance,
-            4,
-            12,
-        )
+        let mut asset = Asset::new(AssetParams {
+            name: "AST-002",
+            asset_name: "Server Rack",
+            item_code: "IT-01",
+            gross_amount: dec!(10000.0),
+            purchase_date: date,
+            available_date: date,
+            salvage_value: dec!(1000.0),
+            method: DepreciationMethod::DoubleDecliningBalance,
+            total_depreciations: 4,
+            frequency_months: 12,
+            is_cwip: false,
+        })
         .unwrap();
 
         asset.calculate_depreciation_schedule().unwrap();
@@ -516,16 +496,19 @@ mod tests {
     fn test_asset_capitalization_cwip_transfer() {
         let date = NaiveDate::from_ymd_opt(2026, 10, 1).unwrap();
 
-        let mut asset = Asset::new_cwip(
-            "AST-PLANT-01",
-            "Solar Array Power Plant",
-            "SOLAR-PLANT",
-            date,
-            dec!(5000.0), // Salvage
-            DepreciationMethod::StraightLine,
-            5,
-            12,
-        )
+        let mut asset = Asset::new(AssetParams {
+            name: "AST-PLANT-01",
+            asset_name: "Solar Array Power Plant",
+            item_code: "SOLAR-PLANT",
+            gross_amount: Decimal::ZERO,
+            purchase_date: date,
+            available_date: date,
+            salvage_value: dec!(5000.0), // Salvage
+            method: DepreciationMethod::StraightLine,
+            total_depreciations: 5,
+            frequency_months: 12,
+            is_cwip: true,
+        })
         .unwrap();
 
         let mut cap = AssetCapitalization::new("CAP-001", date, "AST-PLANT-01");

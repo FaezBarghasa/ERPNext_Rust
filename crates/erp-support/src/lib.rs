@@ -1,8 +1,10 @@
 pub mod gameplan;
+pub mod issue;
 pub mod sla;
 pub mod warranty;
 
 pub use gameplan::{TaskStatus, WorkspaceManager, WorkspaceTask};
+pub use issue::{Issue, IssueError, IssuePriority, IssueSlaStatus, IssueStatus};
 pub use sla::{
     SlaEscalationEvent, SlaWatchdog, SupportAgent, SupportError, SupportTicket, TicketPriority,
     TicketRouter, TicketStatus,

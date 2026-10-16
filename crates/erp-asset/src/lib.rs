@@ -7,9 +7,9 @@ pub mod reliability;
 pub mod safety;
 
 pub use depreciation::{
-    Asset, AssetCapitalization, AssetError, AssetMaintenance, AssetStatus, CapitalizationItem,
-    CapitalizationService, DepreciationMethod, DepreciationScheduleEntry, MaintenancePeriodicity,
-    MaintenanceTask,
+    Asset, AssetCapitalization, AssetError, AssetMaintenance, AssetParams, AssetStatus,
+    CapitalizationItem, CapitalizationService, DepreciationMethod, DepreciationScheduleEntry,
+    MaintenancePeriodicity, MaintenanceTask,
 };
 pub use lrs::{LinearMarker, LinearSegment, LrsEngine};
 pub use mro::{MroPartRequirement, PoissonMroOptimizer};

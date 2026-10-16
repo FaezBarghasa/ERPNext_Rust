@@ -185,7 +185,12 @@ mod tests {
         );
 
         // Plan 10 batteries
-        plan.add_item("SOLAR-BATTERY-5KWH", "BOM-BATTERY", dec!(10.0), Some("SO-001"));
+        plan.add_item(
+            "SOLAR-BATTERY-5KWH",
+            "BOM-BATTERY",
+            dec!(10.0),
+            Some("SO-001"),
+        );
 
         // Current stock: 100 LFP-CELL in warehouse, 10 BMS-BOARD
         let mut stock = HashMap::new();
