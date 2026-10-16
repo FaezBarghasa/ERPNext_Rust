@@ -13,3 +13,4 @@ thiserror = { workspace = true }
 compact_str = { workspace = true }
 dioxus = { workspace = true }
 rust_decimal = { workspace = true }
+rust_decimal_macros = { workspace = true }

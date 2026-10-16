@@ -228,12 +228,12 @@ impl DeclarativeReport {
             if matches!(col.fieldtype.as_str(), "Currency" | "Float" | "Percent") {
                 let mut sum = Decimal::ZERO;
                 for row in &filtered {
-                    if let Some(val) = row.get(&col.fieldname) {
-                        if let Some(num) = val.as_f64() {
-                            if let Ok(dec) = Decimal::try_from(num) {
-                                sum += dec;
-                            }
-                        }
+                    if let Some(dec) = row
+                        .get(&col.fieldname)
+                        .and_then(|val| val.as_f64())
+                        .and_then(|num| Decimal::try_from(num).ok())
+                    {
+                        sum += dec;
                     }
                 }
                 grand_totals.insert(col.fieldname.clone(), sum);

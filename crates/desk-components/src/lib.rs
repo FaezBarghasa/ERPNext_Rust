@@ -34,7 +34,7 @@ pub use grid::{
 };
 pub use primitives::{
     AlertModel, AlertVariant, AutocompleteModel, AutocompleteOption, AvatarModel, AvatarSize,
-    BadgeModel, ButtonModel, ButtonVariant, CalendarEvent, CalendarViewModel, CalendarViewMode,
+    BadgeModel, ButtonModel, ButtonVariant, CalendarEvent, CalendarViewMode, CalendarViewModel,
     CardModel, ChartCardModel, ComboboxModel, ComboboxOption, CommandPaletteItem,
     CommandPaletteModel, ContextMenuItem, ContextMenuModel, DashboardViewModel, DatePickerModel,
     DateTimePickerModel, DialogModel, FileUploaderModel, MobileNavItem, MobileShellModel,

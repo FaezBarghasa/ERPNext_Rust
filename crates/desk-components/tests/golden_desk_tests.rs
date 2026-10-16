@@ -6,7 +6,7 @@
 //! 3. Declarative Script Report execution (typed filtering, pagination, and grand totals calculation).
 
 use desk_components::{
-    CalendarEvent, CalendarViewModel, CalendarViewMode, ChartCardModel, ComboboxModel,
+    CalendarEvent, CalendarViewMode, CalendarViewModel, ChartCardModel, ComboboxModel,
     ComboboxOption, ContextMenuItem, ContextMenuModel, DashboardViewModel, DatePickerModel,
     DeclarativeReport, FilterOperator, FormLayoutEngine, FormLayoutWidget, FormTimelineEvent,
     MobileNavItem, MobileShellModel, NumberCardModel, ReportFilter, ReportPagination,
@@ -153,157 +153,83 @@ fn test_golden_desk_widgets_suite() {
     assert_eq!(mobile.nav_items[1].badge, Some(3));
 }
 
+fn make_doc_field(
+    fieldname: &str,
+    label: &str,
+    fieldtype: FieldType,
+    reqd: bool,
+) -> DocFieldSchema {
+    DocFieldSchema {
+        fieldname: fieldname.into(),
+        fieldtype,
+        label: label.into(),
+        reqd,
+        unique: false,
+        read_only: false,
+        hidden: false,
+        in_list_view: false,
+        mask: false,
+        options: None,
+        default_value: None,
+        permlevel: 0,
+        depends_on: None,
+        mandatory_depends_on: None,
+        read_only_depends_on: None,
+        fetch_from: None,
+        precision: None,
+    }
+}
+
 #[test]
 fn test_golden_doctype_driven_form_layout_engine() {
     // Construct a realistic Sales Invoice DocTypeSchema with Tabs, Sections, Columns, and Child Table
     let fields = vec![
         // Tab 1: Details
-        DocFieldSchema {
-            fieldname: "tab_details".into(),
-            label: "Invoice Details".into(),
-            fieldtype: FieldType::TabBreak,
-            reqd: false,
-            read_only: false,
-            hidden: false,
-            default_value: None,
-            options: None,
-            depends_on: None,
-            description: None,
-            in_list_view: false,
-            in_standard_filter: false,
-            collapsible: false,
-        },
+        make_doc_field("tab_details", "Invoice Details", FieldType::TabBreak, false),
         // Section 1: Customer Information
-        DocFieldSchema {
-            fieldname: "sec_customer".into(),
-            label: "Customer Info".into(),
-            fieldtype: FieldType::SectionBreak,
-            reqd: false,
-            read_only: false,
-            hidden: false,
-            default_value: None,
-            options: None,
-            depends_on: None,
-            description: None,
-            in_list_view: false,
-            in_standard_filter: false,
-            collapsible: false,
-        },
+        make_doc_field(
+            "sec_customer",
+            "Customer Info",
+            FieldType::SectionBreak { collapsible: false },
+            false,
+        ),
         // Column 1: Customer Link
-        DocFieldSchema {
-            fieldname: "customer".into(),
-            label: "Customer".into(),
-            fieldtype: FieldType::Link {
+        make_doc_field(
+            "customer",
+            "Customer",
+            FieldType::Link {
                 target_doctype: "Customer".into(),
             },
-            reqd: true,
-            read_only: false,
-            hidden: false,
-            default_value: None,
-            options: None,
-            depends_on: None,
-            description: Some("Select the purchasing customer".into()),
-            in_list_view: true,
-            in_standard_filter: true,
-            collapsible: false,
-        },
+            true,
+        ),
         // Column 2: Date
-        DocFieldSchema {
-            fieldname: "col_break_1".into(),
-            label: "".into(),
-            fieldtype: FieldType::ColumnBreak,
-            reqd: false,
-            read_only: false,
-            hidden: false,
-            default_value: None,
-            options: None,
-            depends_on: None,
-            description: None,
-            in_list_view: false,
-            in_standard_filter: false,
-            collapsible: false,
-        },
-        DocFieldSchema {
-            fieldname: "posting_date".into(),
-            label: "Posting Date".into(),
-            fieldtype: FieldType::Date,
-            reqd: true,
-            read_only: false,
-            hidden: false,
-            default_value: None,
-            options: None,
-            depends_on: None,
-            description: None,
-            in_list_view: true,
-            in_standard_filter: false,
-            collapsible: false,
-        },
+        make_doc_field("col_break_1", "", FieldType::ColumnBreak, false),
+        make_doc_field("posting_date", "Posting Date", FieldType::Date, true),
         // Section 2: Items Table
-        DocFieldSchema {
-            fieldname: "sec_items".into(),
-            label: "Line Items".into(),
-            fieldtype: FieldType::SectionBreak,
-            reqd: false,
-            read_only: false,
-            hidden: false,
-            default_value: None,
-            options: None,
-            depends_on: None,
-            description: None,
-            in_list_view: false,
-            in_standard_filter: false,
-            collapsible: false,
-        },
-        DocFieldSchema {
-            fieldname: "items".into(),
-            label: "Items".into(),
-            fieldtype: FieldType::Table {
+        make_doc_field(
+            "sec_items",
+            "Line Items",
+            FieldType::SectionBreak { collapsible: false },
+            false,
+        ),
+        make_doc_field(
+            "items",
+            "Items",
+            FieldType::Table {
                 child_doctype: "Sales Invoice Item".into(),
             },
-            reqd: true,
-            read_only: false,
-            hidden: false,
-            default_value: None,
-            options: None,
-            depends_on: None,
-            description: None,
-            in_list_view: false,
-            in_standard_filter: false,
-            collapsible: false,
-        },
+            true,
+        ),
         // Tab 2: Accounting Dimensions
-        DocFieldSchema {
-            fieldname: "tab_accounting".into(),
-            label: "Accounting".into(),
-            fieldtype: FieldType::TabBreak,
-            reqd: false,
-            read_only: false,
-            hidden: false,
-            default_value: None,
-            options: None,
-            depends_on: None,
-            description: None,
-            in_list_view: false,
-            in_standard_filter: false,
-            collapsible: false,
-        },
-        DocFieldSchema {
-            fieldname: "cost_center".into(),
-            label: "Cost Center".into(),
-            fieldtype: FieldType::Link {
+        make_doc_field("tab_accounting", "Accounting", FieldType::TabBreak, false),
+        make_doc_field(
+            "cost_center",
+            "Cost Center",
+            FieldType::Link {
                 target_doctype: "Cost Center".into(),
             },
-            reqd: false,
-            read_only: false,
-            hidden: false,
-            default_value: None,
-            options: None,
-            depends_on: None,
-            description: None,
-            in_list_view: false,
-            in_standard_filter: false,
-            collapsible: false,
-        },
+            false,
+        ),
     ];
 
     let schema = DocTypeSchema {
@@ -318,6 +244,14 @@ fn test_golden_doctype_driven_form_layout_engine() {
         allow_rename: false,
         allow_import: true,
         allow_auto_repeat: true,
+        naming_rule: None,
+        naming_rule_spec: None,
+        virtual_child_tables: false,
+        lazy_materialization: false,
+        extends_class: None,
+        title_field: None,
+        search_fields: None,
+        image_field: None,
         fields,
         permissions: Vec::new(),
     };
@@ -353,10 +287,7 @@ fn test_golden_doctype_driven_form_layout_engine() {
     {
         assert_eq!(fieldname.as_str(), "customer");
         assert!(reqd);
-        assert_eq!(
-            inspector.description.as_deref(),
-            Some("Select the purchasing customer")
-        );
+        assert_eq!(inspector.label.as_str(), "Customer");
     } else {
         panic!("Expected field widget in col 0");
     }

@@ -7,11 +7,16 @@
 pub mod diff_reporter;
 pub mod format_decoder;
 pub mod fuzzy_matcher;
+pub mod mariadb_importer;
 pub mod streaming_pipeline;
 
 pub use diff_reporter::{DiffReporter, ImportExecutionSummary, RowValidationError};
 pub use format_decoder::{CharacterEncoding, FormatDecoder, IngestionFormat, RawDataRow};
 pub use fuzzy_matcher::{FuzzyMatcher, TargetFieldSchema};
+pub use mariadb_importer::{
+    MariaDbImportConfig, MariaDbMigrationEngine, MariaDbTableDump, MigrationReconciliationReport,
+    ReconciliationDiscrepancy,
+};
 pub use streaming_pipeline::{StreamingImportConfig, StreamingPipelineProcessor};
 
 /// High-level Unified Data Ingestion Facade.

@@ -14,3 +14,5 @@ compact_str = { workspace = true }
 chrono = { workspace = true }
 tracing = { workspace = true }
 regex = { workspace = true }
+rust_decimal = { workspace = true }
+rust_decimal_macros = { workspace = true }
