@@ -1526,7 +1526,7 @@ dependencies = [
 
 [[package]]
 name = "desk-app"
-version = "0.2.0"
+version = "0.3.0"
 dependencies = [
  "chrono",
  "compact_str",
@@ -1545,7 +1545,7 @@ dependencies = [
 
 [[package]]
 name = "desk-components"
-version = "0.2.0"
+version = "0.3.0"
 dependencies = [
  "compact_str",
  "dioxus",
@@ -1854,6 +1854,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "doctype-codegen"
+version = "0.1.0"
+dependencies = [
+ "compact_str",
+ "serde",
+ "serde_json",
+ "walkdir",
+]
+
+[[package]]
 name = "doctype-diff"
 version = "0.1.0"
 dependencies = [
@@ -2012,7 +2022,7 @@ checksum = "877a4ace8713b0bcf2a4e7eec82529c029f1d0619886d18145fea96c3ffe5c0f"
 
 [[package]]
 name = "erp-accounting"
-version = "0.2.0"
+version = "0.3.0"
 dependencies = [
  "chrono",
  "compact_str",
@@ -2030,7 +2040,7 @@ dependencies = [
 
 [[package]]
 name = "erp-asset"
-version = "0.2.0"
+version = "0.3.0"
 dependencies = [
  "chrono",
  "frappe-framework",
@@ -2045,7 +2055,7 @@ dependencies = [
 
 [[package]]
 name = "erp-cms"
-version = "0.2.0"
+version = "0.3.0"
 dependencies = [
  "chrono",
  "compact_str",
@@ -2066,7 +2076,7 @@ dependencies = [
 
 [[package]]
 name = "erp-crm"
-version = "0.2.0"
+version = "0.3.0"
 dependencies = [
  "chrono",
  "erp-trade",
@@ -2081,7 +2091,7 @@ dependencies = [
 
 [[package]]
 name = "erp-hr"
-version = "0.2.0"
+version = "0.3.0"
 dependencies = [
  "chrono",
  "compact_str",
@@ -2098,7 +2108,7 @@ dependencies = [
 
 [[package]]
 name = "erp-importer"
-version = "0.2.0"
+version = "0.3.0"
 dependencies = [
  "chrono",
  "compact_str",
@@ -2111,7 +2121,7 @@ dependencies = [
 
 [[package]]
 name = "erp-inventory"
-version = "0.2.0"
+version = "0.3.0"
 dependencies = [
  "chrono",
  "erp-accounting",
@@ -2126,7 +2136,7 @@ dependencies = [
 
 [[package]]
 name = "erp-learning"
-version = "0.2.0"
+version = "0.3.0"
 dependencies = [
  "chrono",
  "frappe-framework",
@@ -2140,7 +2150,7 @@ dependencies = [
 
 [[package]]
 name = "erp-lending"
-version = "0.2.0"
+version = "0.3.0"
 dependencies = [
  "chrono",
  "erp-accounting",
@@ -2155,7 +2165,7 @@ dependencies = [
 
 [[package]]
 name = "erp-manufacturing"
-version = "0.2.0"
+version = "0.3.0"
 dependencies = [
  "chrono",
  "erp-inventory",
@@ -2171,7 +2181,7 @@ dependencies = [
 
 [[package]]
 name = "erp-ppm"
-version = "0.2.0"
+version = "0.3.0"
 dependencies = [
  "chrono",
  "frappe-framework",
@@ -2187,7 +2197,7 @@ dependencies = [
 
 [[package]]
 name = "erp-quality"
-version = "0.2.0"
+version = "0.3.0"
 dependencies = [
  "chrono",
  "compact_str",
@@ -2202,7 +2212,7 @@ dependencies = [
 
 [[package]]
 name = "erp-scanner"
-version = "0.2.0"
+version = "0.3.0"
 dependencies = [
  "chrono",
  "compact_str",
@@ -2215,7 +2225,7 @@ dependencies = [
 
 [[package]]
 name = "erp-software"
-version = "0.2.0"
+version = "0.3.0"
 dependencies = [
  "chrono",
  "erp-accounting",
@@ -2232,7 +2242,7 @@ dependencies = [
 
 [[package]]
 name = "erp-stealth-scraper"
-version = "0.2.0"
+version = "0.3.0"
 dependencies = [
  "chrono",
  "compact_str",
@@ -2249,7 +2259,7 @@ dependencies = [
 
 [[package]]
 name = "erp-support"
-version = "0.2.0"
+version = "0.3.0"
 dependencies = [
  "chrono",
  "frappe-framework",
@@ -2262,7 +2272,7 @@ dependencies = [
 
 [[package]]
 name = "erp-trade"
-version = "0.2.0"
+version = "0.3.0"
 dependencies = [
  "chrono",
  "compact_str",
@@ -2281,7 +2291,7 @@ dependencies = [
 
 [[package]]
 name = "erp-wms"
-version = "0.2.0"
+version = "0.3.0"
 dependencies = [
  "chrono",
  "frappe-framework",
@@ -2295,7 +2305,7 @@ dependencies = [
 
 [[package]]
 name = "erpnext-plugin-sdk"
-version = "0.2.0"
+version = "0.3.0"
 dependencies = [
  "chrono",
  "compact_str",
@@ -2452,7 +2462,7 @@ dependencies = [
 
 [[package]]
 name = "frappe-framework"
-version = "0.2.0"
+version = "0.3.0"
 dependencies = [
  "anyhow",
  "chrono",
@@ -2475,7 +2485,7 @@ dependencies = [
 
 [[package]]
 name = "frappe-meta"
-version = "0.2.0"
+version = "0.3.0"
 dependencies = [
  "argon2 0.6.0",
  "chrono",
@@ -2495,7 +2505,7 @@ dependencies = [
 
 [[package]]
 name = "frappe-net"
-version = "0.2.0"
+version = "0.3.0"
 dependencies = [
  "actix-web",
  "actix-ws",
@@ -2536,7 +2546,7 @@ dependencies = [
 
 [[package]]
 name = "frappe-storage"
-version = "0.2.0"
+version = "0.3.0"
 dependencies = [
  "anyhow",
  "chrono",
@@ -4868,7 +4878,7 @@ dependencies = [
 
 [[package]]
 name = "rbench"
-version = "0.2.0"
+version = "0.3.0"
 dependencies = [
  "chrono",
  "erp-accounting",

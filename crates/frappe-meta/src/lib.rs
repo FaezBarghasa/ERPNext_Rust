@@ -18,6 +18,7 @@ pub mod schema;
 pub mod schema_compiler;
 pub mod security_rules;
 pub mod tree;
+pub mod generated;
 
 pub use audit::{AuditAction, AuditEntry, AuditQueryFilter, AuditTrailRegistry, compute_json_diff};
 pub use auth::{

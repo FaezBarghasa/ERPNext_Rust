@@ -33,6 +33,16 @@ impl DocTypeRegistry {
         registry
     }
 
+    /// Initializes a complete registry pre-populated with all 840+ ERPNext v16 & Frappe v16 DocTypes.
+    #[must_use]
+    pub fn new_v16_full() -> Self {
+        let mut registry = Self::new();
+        for schema in crate::generated::v16_schemas::all_v16_schemas() {
+            let _ = registry.register(schema);
+        }
+        registry
+    }
+
     /// Registers a new DocType schema into the registry, validating its fields and rules.
     pub fn register(&mut self, schema: DocTypeSchema) -> Result<(), SchemaError> {
         schema.validate()?;
