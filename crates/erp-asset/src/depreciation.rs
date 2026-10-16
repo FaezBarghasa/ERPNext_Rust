@@ -30,6 +30,10 @@ pub enum AssetError {
     InvalidState(CompactString),
     #[error("No CWIP items or services specified for capitalization")]
     EmptyCapitalization,
+    #[error("Depreciation schedule entry #{0} not found")]
+    ScheduleNotFound(u32),
+    #[error("Depreciation schedule entry #{0} has already been posted to GL")]
+    AlreadyPosted(u32),
 }
 
 /// Supported fixed asset depreciation calculation methods.
@@ -246,6 +250,67 @@ impl Asset {
 
         self.schedules = entries;
         Ok(())
+    }
+
+    /// Generates balancing GL entries for a given scheduled depreciation period, marking the schedule entry as posted.
+    /// - Debit: Depreciation Expense Account
+    /// - Credit: Accumulated Depreciation Account
+    pub fn post_depreciation_entry(
+        &mut self,
+        schedule_idx: u32,
+        company: &str,
+        depreciation_expense_account: &str,
+        accumulated_depreciation_account: &str,
+    ) -> Result<Vec<erp_accounting::GlEntry>, AssetError> {
+        let n = self.total_number_of_depreciations;
+        let schedule = self
+            .schedules
+            .iter_mut()
+            .find(|s| s.idx == schedule_idx)
+            .ok_or(AssetError::ScheduleNotFound(schedule_idx))?;
+
+        if schedule.journal_entry.is_some() {
+            return Err(AssetError::AlreadyPosted(schedule_idx));
+        }
+
+        let amount = schedule.depreciation_amount;
+        let posting_date = schedule.schedule_date;
+        let voucher_no = format!("JV-DEP-{}-{}", self.name, schedule_idx);
+
+        let entries = vec![
+            erp_accounting::GlEntry {
+                name: format!("{}-dr", voucher_no),
+                posting_date,
+                account: depreciation_expense_account.to_string(),
+                debit: amount,
+                credit: Decimal::ZERO,
+                voucher_type: "Asset Depreciation".to_string(),
+                voucher_no: voucher_no.clone(),
+                party_type: None,
+                party: None,
+                company: company.to_string(),
+            },
+            erp_accounting::GlEntry {
+                name: format!("{}-cr", voucher_no),
+                posting_date,
+                account: accumulated_depreciation_account.to_string(),
+                debit: Decimal::ZERO,
+                credit: amount,
+                voucher_type: "Asset Depreciation".to_string(),
+                voucher_no: voucher_no.clone(),
+                party_type: None,
+                party: None,
+                company: company.to_string(),
+            },
+        ];
+
+        schedule.journal_entry = Some(voucher_no.into());
+
+        if schedule_idx == n {
+            self.status = AssetStatus::FullyDepreciated;
+        }
+
+        Ok(entries)
     }
 }
 

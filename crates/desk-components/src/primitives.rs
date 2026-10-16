@@ -124,11 +124,106 @@ pub struct SliderModel {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+pub struct AttachedFile {
+    pub name: CompactString,
+    pub size_bytes: usize,
+    pub file_url: CompactString,
+    pub mime_type: CompactString,
+    pub is_image: bool,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, Default)]
 pub struct FileUploaderModel {
     pub allowed_extensions: Vec<CompactString>,
     pub max_size_mb: u32,
     pub upload_progress_pct: u8,
     pub is_uploading: bool,
+    pub attached_files: Vec<AttachedFile>,
+}
+
+impl FileUploaderModel {
+    #[must_use]
+    pub fn new(allowed_extensions: Vec<CompactString>, max_size_mb: u32) -> Self {
+        Self {
+            allowed_extensions,
+            max_size_mb,
+            upload_progress_pct: 0,
+            is_uploading: false,
+            attached_files: Vec::new(),
+        }
+    }
+
+    pub fn validate_file(&self, filename: &str, size_bytes: usize) -> Result<(), CompactString> {
+        let max_bytes = (self.max_size_mb as usize) * 1024 * 1024;
+        if self.max_size_mb > 0 && size_bytes > max_bytes {
+            return Err(format!(
+                "File size {size_bytes} bytes exceeds maximum permitted size of {} MB",
+                self.max_size_mb
+            )
+            .into());
+        }
+
+        if !self.allowed_extensions.is_empty() {
+            let ext = filename.rsplit('.').next().unwrap_or("").to_lowercase();
+            let matched = self
+                .allowed_extensions
+                .iter()
+                .any(|e| e.trim_start_matches('.').to_lowercase() == ext);
+            if !matched {
+                return Err(format!("File extension '.{ext}' is not permitted").into());
+            }
+        }
+        Ok(())
+    }
+
+    #[must_use]
+    pub fn detect_mime(filename: &str) -> (CompactString, bool) {
+        let ext = filename.rsplit('.').next().unwrap_or("").to_lowercase();
+        match ext.as_str() {
+            "png" => ("image/png".into(), true),
+            "jpg" | "jpeg" => ("image/jpeg".into(), true),
+            "gif" => ("image/gif".into(), true),
+            "webp" => ("image/webp".into(), true),
+            "svg" => ("image/svg+xml".into(), true),
+            "pdf" => ("application/pdf".into(), false),
+            "csv" => ("text/csv".into(), false),
+            "json" => ("application/json".into(), false),
+            "xlsx" => (
+                "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet".into(),
+                false,
+            ),
+            _ => ("application/octet-stream".into(), false),
+        }
+    }
+
+    pub fn attach_file(
+        &mut self,
+        filename: impl Into<CompactString>,
+        size_bytes: usize,
+        file_url: impl Into<CompactString>,
+    ) -> Result<&AttachedFile, CompactString> {
+        let fname = filename.into();
+        self.validate_file(fname.as_str(), size_bytes)?;
+        let (mime_type, is_image) = Self::detect_mime(fname.as_str());
+        let file = AttachedFile {
+            name: fname,
+            size_bytes,
+            file_url: file_url.into(),
+            mime_type,
+            is_image,
+        };
+        self.attached_files.push(file);
+        Ok(self.attached_files.last().expect("just pushed"))
+    }
+
+    pub fn remove_file(&mut self, filename: &str) -> bool {
+        if let Some(pos) = self.attached_files.iter().position(|f| f.name == filename) {
+            self.attached_files.remove(pos);
+            true
+        } else {
+            false
+        }
+    }
 }
 
 // -------------------------------------------------------------------------
@@ -156,14 +251,17 @@ pub struct ToastModel {
 pub struct CommandPaletteItem {
     pub id: CompactString,
     pub title: CompactString,
-    pub group: CompactString, // "Routes", "DocTypes", "Actions"
+    pub group: CompactString, // "Routes", "DocTypes", "Actions", "Recent"
+    pub route: Option<CompactString>,
     pub shortcut: Option<CompactString>,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, Default)]
 pub struct CommandPaletteModel {
     pub query: CompactString,
     pub items: Vec<CommandPaletteItem>,
+    pub recent_ids: Vec<CompactString>,
+    pub selected_index: usize,
     pub is_open: bool,
 }
 
@@ -173,32 +271,148 @@ impl CommandPaletteModel {
         Self {
             query: CompactString::default(),
             items: Vec::new(),
+            recent_ids: Vec::new(),
+            selected_index: 0,
             is_open: false,
         }
     }
 
-    /// Fuzzy searches items based on query.
+    pub fn add_item(&mut self, item: CommandPaletteItem) {
+        self.items.push(item);
+    }
+
+    pub fn add_route(
+        &mut self,
+        id: impl Into<CompactString>,
+        title: impl Into<CompactString>,
+        route: impl Into<CompactString>,
+        shortcut: Option<impl Into<CompactString>>,
+    ) {
+        self.items.push(CommandPaletteItem {
+            id: id.into(),
+            title: title.into(),
+            group: "Routes".into(),
+            route: Some(route.into()),
+            shortcut: shortcut.map(Into::into),
+        });
+    }
+
+    pub fn add_doctype(&mut self, doctype: impl Into<CompactString>) {
+        let dt = doctype.into();
+        let title = format!("{dt} List");
+        let route = format!("/app/{}", dt.to_lowercase().replace(' ', "-"));
+        self.items.push(CommandPaletteItem {
+            id: format!("doctype:{dt}").into(),
+            title: title.into(),
+            group: "DocTypes".into(),
+            route: Some(route.into()),
+            shortcut: None,
+        });
+    }
+
+    pub fn add_action(
+        &mut self,
+        id: impl Into<CompactString>,
+        title: impl Into<CompactString>,
+        shortcut: Option<impl Into<CompactString>>,
+    ) {
+        self.items.push(CommandPaletteItem {
+            id: id.into(),
+            title: title.into(),
+            group: "Actions".into(),
+            route: None,
+            shortcut: shortcut.map(Into::into),
+        });
+    }
+
+    pub fn open(&mut self) {
+        self.is_open = true;
+        self.selected_index = 0;
+    }
+
+    pub fn close(&mut self) {
+        self.is_open = false;
+        self.query.clear();
+        self.selected_index = 0;
+    }
+
+    /// Fuzzy/ranked searches items based on query.
     #[must_use]
     pub fn search_results(&self) -> Vec<&CommandPaletteItem> {
         let q = self.query.to_lowercase();
         if q.is_empty() {
-            return self.items.iter().collect();
+            let mut results = Vec::new();
+            for r_id in &self.recent_ids {
+                if let Some(item) = self.items.iter().find(|i| i.id == *r_id) {
+                    results.push(item);
+                }
+            }
+            for item in &self.items {
+                if !self.recent_ids.contains(&item.id) {
+                    results.push(item);
+                }
+            }
+            return results;
         }
 
         let q_str = q.as_str();
-        self.items
-            .iter()
-            .filter(|item| {
-                item.title.to_lowercase().contains(q_str)
-                    || item.group.to_lowercase().contains(q_str)
-            })
-            .collect()
-    }
-}
+        let mut exact = Vec::new();
+        let mut prefix = Vec::new();
+        let mut contains = Vec::new();
 
-impl Default for CommandPaletteModel {
-    fn default() -> Self {
-        Self::new()
+        for item in &self.items {
+            let title_lower = item.title.to_lowercase();
+            let group_lower = item.group.to_lowercase();
+            let route_match = item
+                .route
+                .as_ref()
+                .is_some_and(|r| r.to_lowercase().contains(q_str));
+
+            if title_lower == q_str {
+                exact.push(item);
+            } else if title_lower.starts_with(q_str) {
+                prefix.push(item);
+            } else if title_lower.contains(q_str) || group_lower.contains(q_str) || route_match {
+                contains.push(item);
+            }
+        }
+
+        exact.extend(prefix);
+        exact.extend(contains);
+        exact
+    }
+
+    pub fn select_next(&mut self) {
+        let total = self.search_results().len();
+        if total > 0 {
+            self.selected_index = (self.selected_index + 1) % total;
+        }
+    }
+
+    pub fn select_prev(&mut self) {
+        let total = self.search_results().len();
+        if total > 0 {
+            if self.selected_index == 0 {
+                self.selected_index = total - 1;
+            } else {
+                self.selected_index -= 1;
+            }
+        }
+    }
+
+    #[must_use]
+    pub fn current_selection(&self) -> Option<&CommandPaletteItem> {
+        let results = self.search_results();
+        results.get(self.selected_index).copied()
+    }
+
+    pub fn record_selection(&mut self, id: impl Into<CompactString>) {
+        let id_comp = id.into();
+        self.recent_ids.retain(|r| *r != id_comp);
+        self.recent_ids.insert(0, id_comp);
+        if self.recent_ids.len() > 10 {
+            self.recent_ids.pop();
+        }
     }
 }
 
@@ -428,6 +642,49 @@ pub struct DashboardViewModel {
     pub chart_cards: Vec<ChartCardModel>,
 }
 
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+pub struct WorkspaceShortcut {
+    pub label: CompactString,
+    pub link_to: CompactString,
+    pub doc_view: Option<CompactString>,
+    pub icon: Option<CompactString>,
+    pub color: Option<CompactString>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+pub struct WorkspaceDesktopModel {
+    pub title: CompactString,
+    pub icon: Option<CompactString>,
+    pub shortcuts: Vec<WorkspaceShortcut>,
+    pub number_cards: Vec<NumberCardModel>,
+    pub chart_cards: Vec<ChartCardModel>,
+}
+
+impl WorkspaceDesktopModel {
+    #[must_use]
+    pub fn new(title: impl Into<CompactString>) -> Self {
+        Self {
+            title: title.into(),
+            icon: None,
+            shortcuts: Vec::new(),
+            number_cards: Vec::new(),
+            chart_cards: Vec::new(),
+        }
+    }
+
+    pub fn add_shortcut(&mut self, shortcut: WorkspaceShortcut) {
+        self.shortcuts.push(shortcut);
+    }
+
+    pub fn add_number_card(&mut self, card: NumberCardModel) {
+        self.number_cards.push(card);
+    }
+
+    pub fn add_chart_card(&mut self, card: ChartCardModel) {
+        self.chart_cards.push(card);
+    }
+}
+
 // -------------------------------------------------------------------------
 // Mobile Shell & PWA
 // -------------------------------------------------------------------------
@@ -459,12 +716,14 @@ mod tests {
             id: "1".into(),
             title: "Sales Invoice List".into(),
             group: "DocTypes".into(),
+            route: Some("/app/sales-invoice".into()),
             shortcut: Some("Cmd+Shift+I".into()),
         });
         palette.items.push(CommandPaletteItem {
             id: "2".into(),
             title: "General Ledger Report".into(),
             group: "Reports".into(),
+            route: Some("/app/query-report/General Ledger".into()),
             shortcut: None,
         });
 
@@ -472,5 +731,59 @@ mod tests {
         let results = palette.search_results();
         assert_eq!(results.len(), 1);
         assert_eq!(results[0].title.as_str(), "Sales Invoice List");
+
+        palette.query.clear();
+        palette.record_selection("2");
+        let recents = palette.search_results();
+        assert_eq!(recents[0].id.as_str(), "2");
+
+        palette.select_next();
+        assert_eq!(palette.selected_index, 1);
+        palette.select_prev();
+        assert_eq!(palette.selected_index, 0);
+    }
+
+    #[test]
+    fn test_file_uploader_validation_and_attachment() {
+        let mut uploader = FileUploaderModel::new(vec!["png".into(), "pdf".into()], 5);
+
+        // Disallowed extension
+        assert!(uploader.validate_file("malicious.exe", 1024).is_err());
+
+        // File too large (> 5MB)
+        assert!(uploader.validate_file("large.pdf", 6 * 1024 * 1024).is_err());
+
+        // Valid image
+        let attach_res = uploader.attach_file("invoice.png", 50000, "/files/invoice.png");
+        assert!(attach_res.is_ok());
+        let file = attach_res.unwrap();
+        assert!(file.is_image);
+        assert_eq!(file.mime_type.as_str(), "image/png");
+        assert_eq!(uploader.attached_files.len(), 1);
+
+        // Remove file
+        assert!(uploader.remove_file("invoice.png"));
+        assert_eq!(uploader.attached_files.len(), 0);
+    }
+
+    #[test]
+    fn test_workspace_desktop_model() {
+        let mut ws = WorkspaceDesktopModel::new("Accounting");
+        ws.add_shortcut(WorkspaceShortcut {
+            label: "General Ledger".into(),
+            link_to: "/app/query-report/General Ledger".into(),
+            doc_view: Some("Report".into()),
+            icon: Some("book".into()),
+            color: Some("blue".into()),
+        });
+        ws.add_number_card(NumberCardModel {
+            title: "Total Receivables".into(),
+            value_formatted: "$120,000".into(),
+            delta_percentage: Some(4.5),
+            is_positive_delta: true,
+            color: "green".into(),
+        });
+        assert_eq!(ws.shortcuts.len(), 1);
+        assert_eq!(ws.number_cards.len(), 1);
     }
 }

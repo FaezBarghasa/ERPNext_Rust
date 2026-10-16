@@ -7,6 +7,9 @@ pub mod reconciliation;
 pub mod reposting;
 pub mod reservation;
 pub mod serial_batch_bundle;
+pub mod serial_state_machine;
+pub mod stock_entry;
+pub mod stock_reconciliation;
 pub mod valuation;
 pub mod warehouse;
 
@@ -25,6 +28,16 @@ pub use reservation::{
     ReservationStatus, ReservationType, StockReservationEngine, StockReservationEntry,
 };
 pub use serial_batch_bundle::{BundleError, BundleType, SerialBatchBundle, SerialBatchEntry};
+pub use serial_state_machine::{
+    SerialHistoryRecord, SerialLifecycleState, SerialReceiptParams, SerialRecord, SerialRegistry,
+    SerialStateError,
+};
+pub use stock_entry::{
+    StockEntry, StockEntryAdditionalCost, StockEntryError, StockEntryItem, StockEntryPurpose,
+};
+pub use stock_reconciliation::{
+    StockReconciliation, StockReconciliationError, StockReconciliationItem,
+};
 pub use valuation::{
     SleParams, StockBin, StockLayer, ValuationEngine, ValuationError, ValuationMethod,
 };

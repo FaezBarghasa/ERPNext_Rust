@@ -1550,6 +1550,7 @@ dependencies = [
  "compact_str",
  "dioxus",
  "frappe-meta",
+ "rhai",
  "rust_decimal",
  "rust_decimal_macros",
  "serde",
@@ -2045,6 +2046,7 @@ version = "0.3.0"
 dependencies = [
  "chrono",
  "compact_str",
+ "erp-accounting",
  "frappe-framework",
  "frappe-meta",
  "rust_decimal",
@@ -2176,6 +2178,7 @@ version = "0.3.0"
 dependencies = [
  "chrono",
  "compact_str",
+ "erp-accounting",
  "erp-inventory",
  "frappe-framework",
  "frappe-meta",

@@ -107,6 +107,43 @@ pub struct KanbanViewModel {
     pub columns: Vec<KanbanColumn>,
 }
 
+impl KanbanViewModel {
+    #[must_use]
+    pub fn new(doctype: impl Into<CompactString>, group_field: impl Into<CompactString>) -> Self {
+        Self {
+            doctype: doctype.into(),
+            group_field: group_field.into(),
+            columns: Vec::new(),
+        }
+    }
+
+    /// Moves a card between columns, updating order and workflow status.
+    pub fn move_card(
+        &mut self,
+        card_id: &str,
+        from_col_title: &str,
+        to_col_title: &str,
+        target_index: usize,
+    ) -> bool {
+        let from_col = self.columns.iter_mut().find(|c| c.title == from_col_title);
+        let Some(from) = from_col else {
+            return false;
+        };
+        let Some(pos) = from.card_ids.iter().position(|id| id == card_id) else {
+            return false;
+        };
+        let removed_id = from.card_ids.remove(pos);
+
+        let to_col = self.columns.iter_mut().find(|c| c.title == to_col_title);
+        let Some(to) = to_col else {
+            return false;
+        };
+        let insert_idx = target_index.min(to.card_ids.len());
+        to.card_ids.insert(insert_idx, removed_id);
+        true
+    }
+}
+
 /// Report Builder configuration.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 pub enum ReportType {
@@ -122,6 +159,48 @@ pub struct ReportViewModel {
     pub query_or_script: CompactString,
     pub columns: Vec<CompactString>,
     pub data: Vec<Vec<serde_json::Value>>,
+}
+
+impl ReportViewModel {
+    /// Exports the report rows to RFC-4180 CSV string format.
+    #[must_use]
+    pub fn export_to_csv(&self) -> String {
+        let mut out = String::new();
+        let header = self.columns.join(",");
+        out.push_str(&header);
+        out.push('\n');
+
+        for row in &self.data {
+            let row_strs: Vec<String> = row
+                .iter()
+                .map(|val| match val {
+                    serde_json::Value::String(s) => {
+                        if s.contains(',') || s.contains('"') || s.contains('\n') {
+                            format!("\"{}\"", s.replace('"', "\"\""))
+                        } else {
+                            s.clone()
+                        }
+                    }
+                    serde_json::Value::Number(n) => n.to_string(),
+                    serde_json::Value::Bool(b) => b.to_string(),
+                    serde_json::Value::Null => String::new(),
+                    other => other.to_string(),
+                })
+                .collect();
+            out.push_str(&row_strs.join(","));
+            out.push('\n');
+        }
+        out
+    }
+
+    /// Calculates column sum for a given numeric column index.
+    #[must_use]
+    pub fn calculate_column_sum(&self, col_idx: usize) -> f64 {
+        self.data
+            .iter()
+            .filter_map(|row| row.get(col_idx)?.as_f64())
+            .sum()
+    }
 }
 
 #[cfg(test)]

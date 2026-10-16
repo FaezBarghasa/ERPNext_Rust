@@ -9,9 +9,15 @@
 //! - Form Timeline & Activity Trail (Comments, Audit, Mutations)
 //! - Alt-Key Quick Field Inspector telemetry.
 
+pub mod client_script;
+
 use compact_str::CompactString;
 use frappe_meta::{DocTypeSchema, FieldType};
 use serde::{Deserialize, Serialize};
+
+pub use client_script::{
+    ClientScriptEngine, ClientScriptError, DynamicFieldState, DynamicFormEvaluator,
+};
 
 /// Information exposed when Alt-key hovering over a field for live inspection.
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]

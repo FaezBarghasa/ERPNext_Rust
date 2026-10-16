@@ -9,14 +9,23 @@ pub mod exchange_revaluation;
 pub mod intercompany;
 pub mod ledger;
 pub mod multibook;
+pub mod payment_entry;
 pub mod payment_gateway;
 pub mod payment_ledger;
 pub mod print_format;
+pub mod purchase_invoice;
 pub mod receivables;
 pub mod report_engine;
 pub mod tax_engine;
 pub mod tax_withholding;
 pub mod treasury;
+
+pub use payment_entry::{
+    PaymentEntry, PaymentEntryDeduction, PaymentEntryError, PaymentEntryReference, PaymentType,
+};
+pub use purchase_invoice::{
+    PurchaseInvoice, PurchaseInvoiceError, PurchaseInvoiceItem, PurchaseTaxItem,
+};
 
 pub use aging::{AgingBucket, AgingInvoice, AgingReportEngine, PartyAgingRow};
 pub use asset_capitalization::{

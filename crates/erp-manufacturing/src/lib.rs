@@ -7,6 +7,7 @@ pub mod mrp;
 pub mod production_plan;
 pub mod quad_bom;
 pub mod spc;
+pub mod subcontracting;
 pub mod work_order;
 
 pub use bom::{Bom, BomEngine, BomItem, BomOperation, ManufacturingError};
@@ -20,6 +21,10 @@ pub use production_plan::{
 };
 pub use quad_bom::{BomDivergence, BomLineItem, BomType, QuadBomSynchronizer, StructuredBom};
 pub use spc::{ControlLimits, SpcEngine, SpcRuleViolation, SpcSubgroup};
+pub use subcontracting::{
+    SubcontractingError, SubcontractingOrder, SubcontractingOrderItem, SubcontractingReceipt,
+    SubcontractingReceiptItem, SubcontractingReceiptSuppliedItem, SubcontractingSuppliedItem,
+};
 pub use work_order::{
     JobCard, JobCardStatus, JobCardTimeLog, WorkOrder, WorkOrderItem, WorkOrderOperation,
     WorkOrderStatus,

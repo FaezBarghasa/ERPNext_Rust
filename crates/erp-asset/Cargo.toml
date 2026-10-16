@@ -8,6 +8,7 @@ license.workspace = true
 [dependencies]
 frappe-meta = { workspace = true }
 frappe-framework = { workspace = true }
+erp-accounting = { workspace = true }
 rust_decimal = { workspace = true }
 rust_decimal_macros = { workspace = true }
 serde = { workspace = true }

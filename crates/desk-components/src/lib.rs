@@ -24,7 +24,8 @@ pub use desk_shell::{
 
 pub use cpq_view::{CpqConfiguratorModel, OptionCard};
 pub use form_engine::{
-    ChildGridColumn, ChildTableGridModel, CompiledFormLayout, FieldInspectorInfo, FormColumn,
+    ChildGridColumn, ChildTableGridModel, ClientScriptEngine, ClientScriptError,
+    CompiledFormLayout, DynamicFieldState, DynamicFormEvaluator, FieldInspectorInfo, FormColumn,
     FormLayoutEngine, FormLayoutWidget, FormSection, FormTab, FormTimelineEvent, FormTimelineModel,
 };
 pub use forms::{DocTypeForm, DynamicFormModel, FormFieldWidget, eval_depends_on};
@@ -33,13 +34,14 @@ pub use grid::{
     CellCoordinate, CellSelectionRange, GridNavDirection, VirtualizedGridState, visible_slice,
 };
 pub use primitives::{
-    AlertModel, AlertVariant, AutocompleteModel, AutocompleteOption, AvatarModel, AvatarSize,
-    BadgeModel, ButtonModel, ButtonVariant, CalendarEvent, CalendarViewMode, CalendarViewModel,
-    CardModel, ChartCardModel, ComboboxModel, ComboboxOption, CommandPaletteItem,
-    CommandPaletteModel, ContextMenuItem, ContextMenuModel, DashboardViewModel, DatePickerModel,
-    DateTimePickerModel, DialogModel, FileUploaderModel, MobileNavItem, MobileShellModel,
-    MultiSelectModel, NumberCardModel, RatingModel, SliderModel, TimePickerModel, ToastModel,
-    TooltipModel, TreeNode, TreeViewModel,
+    AlertModel, AlertVariant, AttachedFile, AutocompleteModel, AutocompleteOption, AvatarModel,
+    AvatarSize, BadgeModel, ButtonModel, ButtonVariant, CalendarEvent, CalendarViewMode,
+    CalendarViewModel, CardModel, ChartCardModel, ComboboxModel, ComboboxOption,
+    CommandPaletteItem, CommandPaletteModel, ContextMenuItem, ContextMenuModel,
+    DashboardViewModel, DatePickerModel, DateTimePickerModel, DialogModel, FileUploaderModel,
+    MobileNavItem, MobileShellModel, MultiSelectModel, NumberCardModel, RatingModel, SliderModel,
+    TimePickerModel, ToastModel, TooltipModel, TreeNode, TreeViewModel, WorkspaceDesktopModel,
+    WorkspaceShortcut,
 };
 pub use resources::{
     ColorScheme, DocumentResourceState, KeyboardShortcutConfig, ListResourceState,
