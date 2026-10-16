@@ -4,6 +4,7 @@ pub mod auth;
 pub mod class_inheritance;
 pub mod custom_fields;
 pub mod dynamic_doc;
+pub mod generated;
 pub mod graph_schema;
 pub mod hooks_meta;
 pub mod lazy_doc;
@@ -18,7 +19,6 @@ pub mod schema;
 pub mod schema_compiler;
 pub mod security_rules;
 pub mod tree;
-pub mod generated;
 
 pub use audit::{AuditAction, AuditEntry, AuditQueryFilter, AuditTrailRegistry, compute_json_diff};
 pub use auth::{

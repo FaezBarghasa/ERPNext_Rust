@@ -3518,4 +3518,17 @@ mod tests {
             .expect("DDL compilation must succeed");
         assert!(!ddl.is_empty());
     }
+
+    #[test]
+    fn test_v16_full_registry() {
+        let registry = DocTypeRegistry::new_v16_full();
+        assert!(registry.len() >= 800);
+        assert!(registry.get("Sales Invoice").is_some());
+        assert!(registry.get("Purchase Invoice").is_some());
+        assert!(registry.get("Payment Entry").is_some());
+        assert!(registry.get("General Ledger").is_some() || registry.get("GL Entry").is_some());
+        assert!(registry.get("Stock Entry").is_some());
+        assert!(registry.get("Work Order").is_some());
+        assert!(registry.get("Quality Inspection").is_some());
+    }
 }
