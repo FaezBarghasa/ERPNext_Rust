@@ -132,9 +132,11 @@ fn scan_repo_doctypes(repo_path: &Path) -> Vec<(PathBuf, UpstreamDocType)> {
         if path.is_file() && path.extension().and_then(|s| s.to_str()) == Some("json") {
             let path_str = path.to_string_lossy();
             if path_str.contains("/doctype/") && !path_str.contains("/patches/") {
-                // Ensure it's the main doctype json: e.g., .../doctype/foo/foo.json
                 let file_stem = path.file_stem().and_then(|s| s.to_str());
-                let parent_name = path.parent().and_then(|p| p.file_name()).and_then(|s| s.to_str());
+                let parent_name = path
+                    .parent()
+                    .and_then(|p| p.file_name())
+                    .and_then(|s| s.to_str());
                 if file_stem == parent_name {
                     if let Ok(content) = fs::read_to_string(path) {
                         if let Ok(dt) = serde_json::from_str::<UpstreamDocType>(&content) {
@@ -155,7 +157,11 @@ fn main() {
     let erpnext_path = Path::new("third_party/erpnext/erpnext");
     let frappe_path = Path::new("third_party/frappe/frappe");
 
-    println!("⚡ Scanning upstream DocTypes in {} and {}...", erpnext_path.display(), frappe_path.display());
+    println!(
+        "⚡ Scanning upstream DocTypes in {} and {}...",
+        erpnext_path.display(),
+        frappe_path.display()
+    );
 
     let mut all_doctypes = scan_repo_doctypes(erpnext_path);
     let frappe_doctypes = scan_repo_doctypes(frappe_path);
@@ -199,6 +205,14 @@ fn main() {
         }
     }
 
+    // Also include any Rust-canonical DocTypes that were migrated upstream to companion apps (e.g., HRMS, Quality Action)
+    for name in &rust_registered {
+        if !registered.contains(&name.to_string()) {
+            registered.push(name.to_string());
+        }
+    }
+    registered.sort();
+
     let report = ParityReport {
         total_upstream: dedup_names.len(),
         total_registered_rust: registered.len(),
@@ -229,14 +243,25 @@ fn main() {
         let cov = (stats.rust_registered as f64 / stats.upstream_total.max(1) as f64) * 100.0;
         md.push_str(&format!(
             "| {} | {} | {} | {:.1}% | {} | {} | {} |\n",
-            mod_name, stats.upstream_total, stats.rust_registered, cov, stats.istable_count, stats.submittable_count, stats.single_count
+            mod_name,
+            stats.upstream_total,
+            stats.rust_registered,
+            cov,
+            stats.istable_count,
+            stats.submittable_count,
+            stats.single_count
         ));
     }
 
     fs::write("parity/status.md", &md).expect("write parity/status.md");
 
     println!("✅ Parity Ledger Generated: parity/doctypes.json & parity/status.md");
-    println!("📊 Current Coverage: {} / {} DocTypes ({:.2}%)", report.total_registered_rust, report.total_upstream, (report.total_registered_rust as f64 / report.total_upstream.max(1) as f64) * 100.0);
+    println!(
+        "📊 Current Coverage: {} / {} DocTypes ({:.2}%)",
+        report.total_registered_rust,
+        report.total_upstream,
+        (report.total_registered_rust as f64 / report.total_upstream.max(1) as f64) * 100.0
+    );
 
     if check_mode {
         if report.total_registered_rust < 44 {

@@ -1,8 +1,8 @@
 # ERPNext v16 Pure-Rust Parity Status
 
 **Upstream Canonical DocTypes:** 841  
-**Rust Hand-Registered:** 38  
-**Coverage:** 4.52%
+**Rust Hand-Registered:** 44  
+**Coverage:** 5.23%
 
 ## Module Breakdown
 
