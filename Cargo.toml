@@ -26,6 +26,7 @@ members = [
     "crates/erp-importer",
     "crates/erp-quality",
     "crates/rbench",
+    "tools/doctype-diff",
 ]
 resolver = "3"
 
