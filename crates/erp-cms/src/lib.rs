@@ -20,7 +20,7 @@ pub use block_canvas::{CmsPage, FeatureItem, PageBlock, SsrEngine};
 pub use builder_core::{
     BlockCssInspector, BlockValueResolver, BobAgentPromptRequest, CanvasBlock, CanvasBlockNode,
     CanvasBlockTree, CanvasBreakpoint, CanvasInteractionMode, CanvasReversionLedger,
-    DeviceFrameSwitcher, DocTypeBindingFilter, DocTypeDataBinding,
+    DeviceFrameSwitcher, DocTypeBindingFilter, DocTypeDataBinding, ResponsiveStyleCascade,
 };
 pub use emdash_studio::{
     CalloutStyle, CropBox, EditorialWorkflowError, EditorialWorkflowState, EmdashBlock,

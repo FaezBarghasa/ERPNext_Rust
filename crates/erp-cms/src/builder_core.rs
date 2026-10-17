@@ -1280,4 +1280,95 @@ mod tests {
         assert!(html.contains("Item: Titanium Gear | Cost: 150"));
         assert!(html.contains("Item: Ceramic Bearing | Cost: 45"));
     }
+
+    #[test]
+    fn test_responsive_style_cascade() {
+        let desktop = BlockCssInspector {
+            font_size_px: Some(32),
+            color: Some("#ffffff".into()),
+            display: Some("flex".into()),
+            ..Default::default()
+        };
+
+        let tablet_override = BlockCssInspector {
+            font_size_px: Some(24),
+            ..Default::default()
+        };
+
+        let mobile_override = BlockCssInspector {
+            font_size_px: Some(18),
+            flex_direction: Some("column".into()),
+            ..Default::default()
+        };
+
+        let cascade = ResponsiveStyleCascade {
+            desktop,
+            tablet: Some(tablet_override),
+            mobile: Some(mobile_override),
+        };
+
+        // Desktop resolution
+        let res_d = cascade.resolve_for(CanvasBreakpoint::Desktop);
+        assert_eq!(res_d.font_size_px, Some(32));
+        assert_eq!(res_d.color.as_deref(), Some("#ffffff"));
+
+        // Tablet resolution inherits desktop color
+        let res_t = cascade.resolve_for(CanvasBreakpoint::Tablet);
+        assert_eq!(res_t.font_size_px, Some(24));
+        assert_eq!(res_t.color.as_deref(), Some("#ffffff"));
+
+        // Mobile resolution inherits desktop color and overrides direction
+        let res_m = cascade.resolve_for(CanvasBreakpoint::Mobile);
+        assert_eq!(res_m.font_size_px, Some(18));
+        assert_eq!(res_m.flex_direction.as_deref(), Some("column"));
+        assert_eq!(res_m.color.as_deref(), Some("#ffffff"));
+
+        // CSS Media Queries compilation
+        let css = cascade.compile_element_css("#hero_heading");
+        assert!(css.contains("#hero_heading { font-size: 32px; color: #ffffff; display: flex; }"));
+        assert!(css.contains("@media (max-width: 768px)"));
+        assert!(css.contains("#hero_heading { font-size: 24px; }"));
+        assert!(css.contains("@media (max-width: 480px)"));
+        assert!(css.contains("#hero_heading { font-size: 18px; flex-direction: column; }"));
+    }
+
+    #[test]
+    fn test_canvas_slot_and_stylesheet_rendering() {
+        let mut tree = CanvasBlockTree::new();
+        let section_id = tree.insert_block(
+            None,
+            CanvasBlock::Section {
+                id: "layout_sec".into(),
+                children: Vec::new(),
+                css_classes: "page-layout".into(),
+            },
+            0,
+        );
+
+        let heading_id = tree.insert_block(
+            Some(section_id.as_str()),
+            CanvasBlock::Heading {
+                level: 1,
+                text: "Header Content".into(),
+                data_binding: None,
+            },
+            0,
+        );
+
+        // Assign named slot and responsive styles to heading
+        if let Some(node) = tree.get_node_mut(heading_id.as_str()) {
+            node.slot = Some("header".into());
+            node.responsive_styles = Some(ResponsiveStyleCascade::new(BlockCssInspector {
+                color: Some("#00ffcc".into()),
+                ..Default::default()
+            }));
+        }
+
+        let resolver = BlockValueResolver::new();
+        let html = tree.render_html(&resolver);
+        assert!(html.contains("<style>"));
+        assert!(html.contains("#blk_2 { color: #00ffcc; }"));
+        assert!(html.contains("data-slot=\"header\""));
+        assert!(html.contains("Header Content"));
+    }
 }
