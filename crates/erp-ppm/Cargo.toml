@@ -17,3 +17,7 @@ chrono = { workspace = true }
 rand = { workspace = true }
 rand_distr = { workspace = true }
 compact_str = { workspace = true }
+
+[features]
+default = ["experimental-sim"]
+experimental-sim = []

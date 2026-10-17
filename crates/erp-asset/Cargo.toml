@@ -17,3 +17,7 @@ thiserror = { workspace = true }
 chrono = { workspace = true }
 sha2 = { workspace = true }
 compact_str = { workspace = true }
+
+[features]
+default = ["aerospace-lrs"]
+aerospace-lrs = []

@@ -1,3 +1,4 @@
+#[cfg(feature = "robotics-vda5050")]
 pub mod amr;
 pub mod grid;
 pub mod ledger_preview;
@@ -6,6 +7,7 @@ pub mod picker;
 pub mod slotting;
 pub mod traceability;
 
+#[cfg(feature = "robotics-vda5050")]
 pub use amr::{AmrState, AmrTelemetry, HandlingUnit, Vda5050FleetCoordinator, Vda5050Order};
 pub use grid::{HazmatClass, HazmatMatrix, ThermalZone, WarehouseBin};
 pub use ledger_preview::{

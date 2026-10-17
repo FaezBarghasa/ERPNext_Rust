@@ -58,10 +58,14 @@ use frappe_meta::rbac::{
     ROLE_CONTENT_CREATOR, ROLE_MARKETING_ADMIN, ROLE_SYSTEM_MANAGER, ROLE_WAREHOUSE_MANAGER,
     ROLE_WEBSITE_UPDATER, ROLE_WORKER_USER, STANDARD_ROLES, UserRecord, check_permission,
 };
+use frappe_framework::controller::ControllerRegistry;
+use frappe_framework::lifecycle::Document;
 use frappe_meta::security_rules::{
     DetectedFileType, generate_password_reset_token, sanitize_svg, validate_file_upload,
     validate_password_complexity, verify_password_reset_token,
 };
+use frappe_meta::{DocTypeSchema, lookup_schema};
+use frappe_storage::execute_transaction;
 use regex::Regex;
 use rust_decimal::Decimal;
 use rust_decimal_macros::dec;
@@ -623,12 +627,37 @@ pub async fn v2_submit_document(
     req: HttpRequest,
     path: web::Path<(String, String)>,
     pool_mgr: web::Data<ConnectionPoolManager>,
+    controller_reg: Option<web::Data<ControllerRegistry>>,
 ) -> impl Responder {
     let (doctype, name) = path.into_inner();
     let tenant_id = match req.extensions().get::<TenantId>() {
         Some(t) => t.clone(),
         None => return HttpResponse::BadRequest().body("Missing tenant context"),
     };
+
+    let schema = lookup_schema(&doctype).unwrap_or_else(|| DocTypeSchema {
+        name: doctype.clone(),
+        module: "Core".to_string(),
+        is_single: false,
+        is_submittable: true,
+        is_child_table: false,
+        is_tree: false,
+        track_changes: true,
+        quick_entry: false,
+        allow_rename: false,
+        allow_import: true,
+        allow_auto_repeat: false,
+        naming_rule: None,
+        naming_rule_spec: None,
+        virtual_child_tables: false,
+        lazy_materialization: false,
+        extends_class: None,
+        title_field: None,
+        search_fields: None,
+        image_field: None,
+        fields: vec![],
+        permissions: vec![],
+    });
 
     if let Some(ctx) = req.extensions().get::<SecurityContext>()
         && !check_permission(&ctx.claims.roles, &[], Permission::Submit, 0)
@@ -669,9 +698,35 @@ pub async fn v2_submit_document(
         }));
     }
 
-    let repo = frappe_storage::SurrealRepository::new(client.clone());
+    // 2. Invoke controller before_submit and on_submit hooks
+    let default_reg = ControllerRegistry::with_standard_submittables();
+    let controller = controller_reg
+        .as_ref()
+        .and_then(|r| r.get(&doctype))
+        .or_else(|| default_reg.get(&doctype))
+        .unwrap_or_else(|| {
+            Arc::new(frappe_framework::controller::StandardSubmittableController)
+        });
+
+    let mut framework_doc = Document::new(&doctype, current_doc.clone());
+    framework_doc.name = name.clone();
+    framework_doc.docstatus = docstatus as i32;
+
+    if let Err(e) = controller.before_submit(&mut framework_doc, &schema) {
+        return HttpResponse::BadRequest().json(serde_json::json!({
+            "error": format!("Document controller rejected before_submit: {e}")
+        }));
+    }
+
+    if let Err(e) = controller.on_submit(&mut framework_doc, &schema) {
+        return HttpResponse::BadRequest().json(serde_json::json!({
+            "error": format!("Document controller rejected on_submit: {e}")
+        }));
+    }
+
     let mut generated_gl_entries: Vec<GlEntry> = Vec::new();
     let mut generated_sle_entries: Vec<StockLedgerEntry> = Vec::new();
+    let mut generated_ple_entries: Vec<(String, serde_json::Value)> = Vec::new();
 
     // 2. Execute typed double-entry business posting based on DocType
     let norm_doctype = doctype.trim().to_lowercase().replace(['_', '-'], " ");
@@ -794,9 +849,7 @@ pub async fn v2_submit_document(
                     "company": company_val,
                     "created_at": now,
                 });
-                let _ = repo
-                    .upsert("payment_ledger_entry", &format!("{name}-ple"), &ple_doc)
-                    .await;
+                generated_ple_entries.push((format!("{name}-ple"), ple_doc));
             }
         }
         "purchase invoice" => {
@@ -906,9 +959,7 @@ pub async fn v2_submit_document(
                     "company": company_val,
                     "created_at": now,
                 });
-                let _ = repo
-                    .upsert("payment_ledger_entry", &format!("{name}-ple"), &ple_doc)
-                    .await;
+                generated_ple_entries.push((format!("{name}-ple"), ple_doc));
             }
         }
         "payment entry" => {
@@ -1130,31 +1181,49 @@ pub async fn v2_submit_document(
         _ => {}
     }
 
-    // Persist all generated GL entries atomically
+    // Persist parent doc update and all generated ledger entries within a single atomic ACID transaction
+    let mut tx_stmts = Vec::new();
+    tx_stmts.push(format!(
+        "UPDATE {table} SET docstatus = 1, modified = '{now}', status = IF status = NONE OR status = 'Draft' THEN 'Submitted' ELSE status END WHERE name = '{sanitized_name}';"
+    ));
+
     for gl in &generated_gl_entries {
-        let _ = repo.upsert("gl_entry", &gl.name, gl).await;
+        let clean_id = gl.name.replace([':', ' ', '-'], "_");
+        let val_json = serde_json::to_string(gl).unwrap_or_default();
+        tx_stmts.push(format!("UPSERT gl_entry:{clean_id} CONTENT {val_json};"));
     }
-    // Persist all generated SLE entries atomically
     for sle in &generated_sle_entries {
-        let _ = repo.upsert("stock_ledger_entry", &sle.name, sle).await;
+        let clean_id = sle.name.replace([':', ' ', '-'], "_");
+        let val_json = serde_json::to_string(sle).unwrap_or_default();
+        tx_stmts.push(format!("UPSERT stock_ledger_entry:{clean_id} CONTENT {val_json};"));
+    }
+    for (ple_name, ple_doc) in &generated_ple_entries {
+        let clean_id = ple_name.replace([':', ' ', '-'], "_");
+        let val_json = serde_json::to_string(ple_doc).unwrap_or_default();
+        tx_stmts.push(format!("UPSERT payment_ledger_entry:{clean_id} CONTENT {val_json};"));
     }
 
-    // 3. Atomically update parent document status to 1 (Submitted)
-    let sql = format!(
-        "UPDATE {table} SET docstatus = 1, modified = '{now}', status = IF status = NONE OR status = 'Draft' THEN 'Submitted' ELSE status END WHERE name = '{sanitized_name}';"
-    );
-    match client.query(&sql).await {
+    if let Err(e) = execute_transaction(&client, &tx_stmts).await {
+        return HttpResponse::InternalServerError().json(serde_json::json!({
+            "error": format!("Transaction rollback on submit: {e}")
+        }));
+    }
+
+    let fetch_updated_sql = format!("SELECT * FROM {table} WHERE name = '{sanitized_name}';");
+    let updated_doc = match client.query(&fetch_updated_sql).await {
         Ok(mut res) => {
             let docs: Vec<serde_json::Value> = res.take(0).unwrap_or_default();
-            HttpResponse::Ok().json(serde_json::json!({
-                "message": "Document submitted successfully with balanced ledger postings",
-                "doc": docs.into_iter().next(),
-                "gl_entries_posted": generated_gl_entries.len(),
-                "stock_entries_posted": generated_sle_entries.len(),
-            }))
+            docs.into_iter().next()
         }
-        Err(e) => HttpResponse::InternalServerError().body(e.to_string()),
-    }
+        Err(_) => None,
+    };
+
+    HttpResponse::Ok().json(serde_json::json!({
+        "message": "Document submitted successfully with balanced ledger postings",
+        "doc": updated_doc,
+        "gl_entries_posted": generated_gl_entries.len(),
+        "stock_entries_posted": generated_sle_entries.len(),
+    }))
 }
 
 /// Handler for cancelling a document: `POST /api/v2/document/{doctype}/{name}/cancel`
@@ -1162,12 +1231,37 @@ pub async fn v2_cancel_document(
     req: HttpRequest,
     path: web::Path<(String, String)>,
     pool_mgr: web::Data<ConnectionPoolManager>,
+    controller_reg: Option<web::Data<ControllerRegistry>>,
 ) -> impl Responder {
     let (doctype, name) = path.into_inner();
     let tenant_id = match req.extensions().get::<TenantId>() {
         Some(t) => t.clone(),
         None => return HttpResponse::BadRequest().body("Missing tenant context"),
     };
+
+    let schema = lookup_schema(&doctype).unwrap_or_else(|| DocTypeSchema {
+        name: doctype.clone(),
+        module: "Core".to_string(),
+        is_single: false,
+        is_submittable: true,
+        is_child_table: false,
+        is_tree: false,
+        track_changes: true,
+        quick_entry: false,
+        allow_rename: false,
+        allow_import: true,
+        allow_auto_repeat: false,
+        naming_rule: None,
+        naming_rule_spec: None,
+        virtual_child_tables: false,
+        lazy_materialization: false,
+        extends_class: None,
+        title_field: None,
+        search_fields: None,
+        image_field: None,
+        fields: vec![],
+        permissions: vec![],
+    });
 
     if let Some(ctx) = req.extensions().get::<SecurityContext>()
         && !check_permission(&ctx.claims.roles, &[], Permission::Cancel, 0)
@@ -1208,9 +1302,38 @@ pub async fn v2_cancel_document(
         }));
     }
 
-    let repo = frappe_storage::SurrealRepository::new(client.clone());
+    // 2. Invoke controller before_cancel and on_cancel hooks
+    let default_reg = ControllerRegistry::with_standard_submittables();
+    let controller = controller_reg
+        .as_ref()
+        .and_then(|r| r.get(&doctype))
+        .or_else(|| default_reg.get(&doctype))
+        .unwrap_or_else(|| {
+            Arc::new(frappe_framework::controller::StandardSubmittableController)
+        });
 
-    // 2. Query and generate reversing GL entries
+    let mut framework_doc = Document::new(&doctype, current_doc.clone());
+    framework_doc.name = name.clone();
+    framework_doc.docstatus = docstatus as i32;
+
+    if let Err(e) = controller.before_cancel(&mut framework_doc, &schema) {
+        return HttpResponse::BadRequest().json(serde_json::json!({
+            "error": format!("Document controller rejected before_cancel: {e}")
+        }));
+    }
+
+    if let Err(e) = controller.on_cancel(&mut framework_doc, &schema) {
+        return HttpResponse::BadRequest().json(serde_json::json!({
+            "error": format!("Document controller rejected on_cancel: {e}")
+        }));
+    }
+
+    let mut tx_stmts = Vec::new();
+    tx_stmts.push(format!(
+        "UPDATE {table} SET docstatus = 2, modified = '{now}', status = 'Cancelled' WHERE name = '{sanitized_name}';"
+    ));
+
+    // 3. Query and generate reversing GL entries inside transaction
     let gl_query = format!("SELECT * FROM gl_entry WHERE voucher_no = '{sanitized_name}';");
     if let Ok(mut gl_res) = client.query(&gl_query).await {
         let existing_gls: Vec<serde_json::Value> = gl_res.take(0).unwrap_or_default();
@@ -1228,14 +1351,14 @@ pub async fn v2_cancel_document(
                     party: gl.party,
                     company: gl.company,
                 };
-                let _ = repo
-                    .upsert("gl_entry", &reversal_gl.name, &reversal_gl)
-                    .await;
+                let clean_id = reversal_gl.name.replace([':', ' ', '-'], "_");
+                let val_json = serde_json::to_string(&reversal_gl).unwrap_or_default();
+                tx_stmts.push(format!("UPSERT gl_entry:{clean_id} CONTENT {val_json};"));
             }
         }
     }
 
-    // 3. Query and generate reversing Stock Ledger entries
+    // 4. Query and generate reversing Stock Ledger entries inside transaction
     let sle_query =
         format!("SELECT * FROM stock_ledger_entry WHERE voucher_no = '{sanitized_name}';");
     if let Ok(mut sle_res) = client.query(&sle_query).await {
@@ -1254,27 +1377,59 @@ pub async fn v2_cancel_document(
                     voucher_type: sle.voucher_type,
                     voucher_no: sle.voucher_no,
                 };
-                let _ = repo
-                    .upsert("stock_ledger_entry", &reversal_sle.name, &reversal_sle)
-                    .await;
+                let clean_id = reversal_sle.name.replace([':', ' ', '-'], "_");
+                let val_json = serde_json::to_string(&reversal_sle).unwrap_or_default();
+                tx_stmts.push(format!("UPSERT stock_ledger_entry:{clean_id} CONTENT {val_json};"));
             }
         }
     }
 
-    // 4. Update document status to 2 (Cancelled)
-    let sql = format!(
-        "UPDATE {table} SET docstatus = 2, modified = '{now}', status = 'Cancelled' WHERE name = '{sanitized_name}';"
-    );
-    match client.query(&sql).await {
+    // 5. Query and generate reversing Payment Ledger entries inside transaction
+    let ple_query =
+        format!("SELECT * FROM payment_ledger_entry WHERE voucher_no = '{sanitized_name}';");
+    if let Ok(mut ple_res) = client.query(&ple_query).await {
+        let existing_ples: Vec<serde_json::Value> = ple_res.take(0).unwrap_or_default();
+        for mut val in existing_ples {
+            if let Some(obj) = val.as_object_mut() {
+                let orig_name = obj
+                    .get("name")
+                    .and_then(|v| v.as_str())
+                    .unwrap_or(&name)
+                    .to_string();
+                let rev_name = format!("{orig_name}-rev");
+                obj.insert("name".into(), serde_json::Value::String(rev_name.clone()));
+                if let Some(amt) = obj.get("amount").and_then(|v| v.as_f64()) {
+                    obj.insert("amount".into(), serde_json::json!(-amt));
+                }
+                if let Some(out_amt) = obj.get("outstanding_amount").and_then(|v| v.as_f64()) {
+                    obj.insert("outstanding_amount".into(), serde_json::json!(-out_amt));
+                }
+                let clean_id = rev_name.replace([':', ' ', '-'], "_");
+                let val_json = serde_json::to_string(obj).unwrap_or_default();
+                tx_stmts.push(format!("UPSERT payment_ledger_entry:{clean_id} CONTENT {val_json};"));
+            }
+        }
+    }
+
+    if let Err(e) = execute_transaction(&client, &tx_stmts).await {
+        return HttpResponse::InternalServerError().json(serde_json::json!({
+            "error": format!("Transaction rollback on cancel: {e}")
+        }));
+    }
+
+    let fetch_updated_sql = format!("SELECT * FROM {table} WHERE name = '{sanitized_name}';");
+    let updated_doc = match client.query(&fetch_updated_sql).await {
         Ok(mut res) => {
             let docs: Vec<serde_json::Value> = res.take(0).unwrap_or_default();
-            HttpResponse::Ok().json(serde_json::json!({
-                "message": "Document cancelled successfully with ledger reversals",
-                "doc": docs.into_iter().next()
-            }))
+            docs.into_iter().next()
         }
-        Err(e) => HttpResponse::InternalServerError().body(e.to_string()),
-    }
+        Err(_) => None,
+    };
+
+    HttpResponse::Ok().json(serde_json::json!({
+        "message": "Document cancelled successfully with ledger reversals",
+        "doc": updated_doc
+    }))
 }
 
 /// Handler for amending a cancelled document: `POST /api/v2/document/{doctype}/{name}/amend`

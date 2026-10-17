@@ -18,3 +18,7 @@ thiserror = { workspace = true }
 chrono = { workspace = true }
 sha2 = { workspace = true }
 compact_str = { workspace = true }
+
+[features]
+default = ["experimental-mfg-opt"]
+experimental-mfg-opt = []

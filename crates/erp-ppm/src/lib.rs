@@ -1,5 +1,6 @@
 pub mod construction;
 pub mod evm;
+#[cfg(feature = "experimental-sim")]
 pub mod monte_carlo;
 pub mod project;
 pub mod project_completion;
@@ -12,6 +13,7 @@ pub use construction::{
     ScheduleOfValuesItem,
 };
 pub use evm::{EvmEngine, EvmInputs, EvmMetrics};
+#[cfg(feature = "experimental-sim")]
 pub use monte_carlo::{DistributionType, MonteCarloSimulator, MonteCarloSummary, TaskRiskProfile};
 pub use project::{PpmError, Project, ProjectStatus, Task, TaskStatus};
 pub use project_completion::{PercentCompleteMethod, ProjectCompletionEngine, ProjectTaskState};

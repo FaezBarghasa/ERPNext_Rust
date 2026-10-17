@@ -2,6 +2,7 @@ pub mod bom;
 pub mod capa;
 pub mod ebr;
 pub mod eco;
+#[cfg(feature = "experimental-mfg-opt")]
 pub mod milp_scheduler;
 pub mod mrp;
 pub mod production_plan;
@@ -14,6 +15,7 @@ pub use bom::{Bom, BomEngine, BomItem, BomOperation, ManufacturingError};
 pub use capa::{EightDPhase, EightDReport, IshikawaCategory};
 pub use ebr::{BatchStepRecord, ElectronicBatchRecord, WitnessSignature};
 pub use eco::{DispositionMode, EcoStatus, EngineeringChangeOrder};
+#[cfg(feature = "experimental-mfg-opt")]
 pub use milp_scheduler::{ProductionJob, SequenceOptimizer, WorkCenterSchedule};
 pub use mrp::{MrpEngine, OrderType, PlannedOrder, ScheduledSlot, WorkstationScheduler};
 pub use production_plan::{

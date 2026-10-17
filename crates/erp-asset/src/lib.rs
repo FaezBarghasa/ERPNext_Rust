@@ -3,6 +3,7 @@
 pub mod depreciation;
 pub mod lrs;
 pub mod mro;
+#[cfg(feature = "aerospace-lrs")]
 pub mod reliability;
 pub mod safety;
 
@@ -13,5 +14,6 @@ pub use depreciation::{
 };
 pub use lrs::{LinearMarker, LinearSegment, LrsEngine};
 pub use mro::{MroPartRequirement, PoissonMroOptimizer};
+#[cfg(feature = "aerospace-lrs")]
 pub use reliability::{FmecaRecord, WeibullParameters};
 pub use safety::{IsolationPointType, LotoTag, PermitToWork};
