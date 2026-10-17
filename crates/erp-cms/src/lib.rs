@@ -1,6 +1,7 @@
 pub mod analytics;
 pub mod block_canvas;
 pub mod builder_core;
+pub mod emdash_studio;
 pub mod luxury_storefront;
 pub mod media_library;
 pub mod print;
@@ -17,8 +18,14 @@ pub use taxonomy::{TaxonomyError, TaxonomyRegistry, TaxonomyTerm, TaxonomyType};
 pub use analytics::{AnalyticsSummary, EdgeAnalyticsEngine, PageViewEvent};
 pub use block_canvas::{CmsPage, FeatureItem, PageBlock, SsrEngine};
 pub use builder_core::{
-    BlockValueResolver, BobAgentPromptRequest, CanvasBlock, CanvasBreakpoint,
-    CanvasInteractionMode, CanvasReversionLedger,
+    BlockCssInspector, BlockValueResolver, BobAgentPromptRequest, CanvasBlock, CanvasBlockNode,
+    CanvasBlockTree, CanvasBreakpoint, CanvasInteractionMode, CanvasReversionLedger,
+    DeviceFrameSwitcher, DocTypeBindingFilter, DocTypeDataBinding,
+};
+pub use emdash_studio::{
+    CalloutStyle, CropBox, EditorialWorkflowError, EditorialWorkflowState, EmdashBlock,
+    EmdashDocument, WebPVariantMetadata, calculate_focal_crop, generate_editorial_xml_sitemap,
+    generate_responsive_webp_variants,
 };
 pub use luxury_storefront::{
     LUXURY_STOREFRONT_CSS, LUXURY_STOREFRONT_HTML, LUXURY_STOREFRONT_JS, LuxuryProduct,

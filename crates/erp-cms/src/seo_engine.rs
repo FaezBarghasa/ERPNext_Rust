@@ -7,7 +7,7 @@ use compact_str::CompactString;
 use serde::{Deserialize, Serialize};
 
 /// High-level SEO configuration and metadata container.
-#[derive(Clone, Debug, Serialize, Deserialize)]
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 pub struct SeoMetadata {
     pub title: CompactString,
     pub description: CompactString,
