@@ -297,12 +297,17 @@ async fn builder_studio_handler(page_id: Option<web::Path<String>>) -> impl Resp
     <title>RustNext Frappe Builder Studio — {target_page}</title>
     <style>
         :root {{
-            --bg-canvas: #0f111a;
-            --bg-sidebar: #1a1d29;
+            --bg-canvas: #0b0d14;
+            --bg-sidebar: #131622;
+            --bg-card: rgba(255, 255, 255, 0.04);
             --border: rgba(255, 255, 255, 0.1);
             --accent: #6366f1;
+            --accent-hover: #4f46e5;
+            --success: #10b981;
             --text-main: #f8fafc;
+            --text-muted: #94a3b8;
         }}
+        * {{ box-sizing: border-box; }}
         body {{
             margin: 0;
             padding: 0;
@@ -319,9 +324,9 @@ async fn builder_studio_handler(page_id: Option<web::Path<String>>) -> impl Resp
             border-right: 1px solid var(--border);
             display: flex;
             flex-direction: column;
-            padding: 1rem;
-            box-sizing: border-box;
+            padding: 1.25rem;
             gap: 1rem;
+            overflow-y: auto;
         }}
         .builder-workspace {{
             flex: 1;
@@ -330,7 +335,7 @@ async fn builder_studio_handler(page_id: Option<web::Path<String>>) -> impl Resp
             overflow: hidden;
         }}
         .builder-toolbar {{
-            height: 52px;
+            height: 56px;
             background: var(--bg-sidebar);
             border-bottom: 1px solid var(--border);
             display: flex;
@@ -345,23 +350,35 @@ async fn builder_studio_handler(page_id: Option<web::Path<String>>) -> impl Resp
             justify-content: center;
             align-items: flex-start;
             overflow: auto;
-            background: radial-gradient(circle, rgba(99,102,241,0.05) 1px, transparent 1px);
+            background: radial-gradient(circle, rgba(99,102,241,0.08) 1px, transparent 1px);
             background-size: 24px 24px;
         }}
         .device-frame {{
             {frame_style}
-            box-shadow: 0 20px 40px rgba(0,0,0,0.5);
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.7);
             color: #0f172a;
+            position: relative;
         }}
-        .block-card {{
-            background: rgba(255,255,255,0.05);
+        .palette-btn {{
+            background: var(--bg-card);
             border: 1px solid var(--border);
-            padding: 0.75rem;
-            border-radius: 6px;
-            cursor: grab;
+            padding: 0.75rem 1rem;
+            border-radius: 8px;
+            cursor: pointer;
             font-size: 0.875rem;
+            color: var(--text-main);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            transition: all 0.15s ease;
+            text-align: left;
+            width: 100%;
         }}
-        .btn-primary {{
+        .palette-btn:hover {{
+            background: rgba(99, 102, 241, 0.15);
+            border-color: var(--accent);
+        }}
+        .btn {{
             background: var(--accent);
             color: #fff;
             border: none;
@@ -369,6 +386,72 @@ async fn builder_studio_handler(page_id: Option<web::Path<String>>) -> impl Resp
             border-radius: 6px;
             cursor: pointer;
             font-weight: 600;
+            font-size: 0.85rem;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            transition: background 0.15s ease;
+        }}
+        .btn:hover {{ background: var(--accent-hover); }}
+        .btn-outline {{
+            background: rgba(255,255,255,0.08);
+            border: 1px solid var(--border);
+        }}
+        .btn-outline:hover {{
+            background: rgba(255,255,255,0.15);
+        }}
+        .btn-success {{ background: var(--success); }}
+        .btn-success:hover {{ background: #059669; }}
+        .canvas-node-wrapper {{
+            position: relative;
+            margin: 0.5rem 0;
+            padding: 0.5rem;
+            border: 1px dashed transparent;
+            border-radius: 4px;
+            transition: border-color 0.15s ease;
+        }}
+        .canvas-node-wrapper:hover {{
+            border-color: var(--accent);
+        }}
+        .node-actions {{
+            position: absolute;
+            top: 2px;
+            right: 2px;
+            display: none;
+            gap: 0.25rem;
+            background: rgba(15, 23, 42, 0.9);
+            padding: 2px 6px;
+            border-radius: 4px;
+            z-index: 10;
+        }}
+        .canvas-node-wrapper:hover > .node-actions {{
+            display: flex;
+        }}
+        .node-act-btn {{
+            background: transparent;
+            border: none;
+            color: #f8fafc;
+            cursor: pointer;
+            font-size: 0.75rem;
+            padding: 2px 4px;
+            border-radius: 3px;
+        }}
+        .node-act-btn:hover {{ background: rgba(255, 255, 255, 0.2); }}
+        .toast-pill {{
+            position: fixed;
+            bottom: 1.5rem;
+            right: 1.5rem;
+            background: #1e293b;
+            color: #f8fafc;
+            border: 1px solid var(--border);
+            padding: 0.75rem 1.25rem;
+            border-radius: 8px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+            display: none;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.875rem;
+            z-index: 9999;
         }}
     </style>
 </head>
@@ -377,52 +460,70 @@ async fn builder_studio_handler(page_id: Option<web::Path<String>>) -> impl Resp
         <div style="font-weight: 700; font-size: 1.1rem; display: flex; align-items: center; gap: 0.5rem;">
             <span>⚡</span> Frappe Builder Studio
         </div>
-        <div style="font-size: 0.85rem; color: #94a3b8;">Editing: <strong>{target_page}</strong></div>
+        <div style="font-size: 0.85rem; color: var(--text-muted); display: flex; justify-content: space-between;">
+            <span>Editing Page:</span>
+            <strong style="color: var(--accent);">{target_page}</strong>
+        </div>
         
-        <div style="font-weight: 600; font-size: 0.9rem; margin-top: 0.5rem;">Component Palette</div>
-        <div class="block-card" draggable="true">🏷️ Heading & Typography</div>
-        <div class="block-card" draggable="true">📦 Flexbox / Grid Container</div>
-        <div class="block-card" draggable="true">🔁 Dynamic DocType Repeater</div>
-        <div class="block-card" draggable="true">🖼️ Responsive WebP Image</div>
-        <div class="block-card" draggable="true">💳 Product Showcase Card</div>
+        <div style="font-weight: 600; font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-muted); margin-top: 0.5rem;">Palette</div>
+        <button class="palette-btn" onclick="addBlock('Heading')">🏷️ Heading <span>+</span></button>
+        <button class="palette-btn" onclick="addBlock('TextBlock')">📝 Text Paragraph <span>+</span></button>
+        <button class="palette-btn" onclick="addBlock('Section')">📦 Section Container <span>+</span></button>
+        <button class="palette-btn" onclick="addBlock('CardBlock')">💳 Product Card <span>+</span></button>
+        <button class="palette-btn" onclick="addBlock('NumberCardBlock')">🔢 KPI Metric Card <span>+</span></button>
+        <button class="palette-btn" onclick="addBlock('Navbar')">🧭 Navigation Bar <span>+</span></button>
+        <button class="palette-btn" onclick="addBlock('Footer')">⚓ Page Footer <span>+</span></button>
 
         <div style="margin-top: auto; border-top: 1px solid var(--border); padding-top: 1rem;">
-            <div style="font-size: 0.8rem; color: #94a3b8; margin-bottom: 0.5rem;">Autonomous Site Agent</div>
-            <input type="text" id="ai-prompt" placeholder="Ask Bob AI to design..." style="width: 100%; box-sizing: border-box; background: rgba(0,0,0,0.3); border: 1px solid var(--border); color: #fff; padding: 0.5rem; border-radius: 4px; margin-bottom: 0.5rem;">
-            <button class="btn-primary" style="width: 100%; font-size: 0.8rem;" onclick="callBobAi()">✨ Synthesize with Bob</button>
+            <div style="font-weight: 600; font-size: 0.85rem; color: var(--text-muted); margin-bottom: 0.5rem; display: flex; align-items: center; gap: 0.4rem;">
+                <span>✨</span> Autonomous Bob AI
+            </div>
+            <input type="text" id="ai-prompt" placeholder="e.g. Generate pricing grid..." style="width: 100%; background: rgba(0,0,0,0.4); border: 1px solid var(--border); color: #fff; padding: 0.6rem; border-radius: 6px; margin-bottom: 0.5rem; font-size: 0.85rem;">
+            <button class="btn" style="width: 100%; justify-content: center;" onclick="callBobAi()">✨ Synthesize AST</button>
         </div>
     </aside>
 
     <main class="builder-workspace">
         <header class="builder-toolbar">
             <div style="display: flex; gap: 0.5rem;">
-                <button class="btn-primary" style="background: rgba(255,255,255,0.1);" onclick="setDevice('desktop')">🖥️ Desktop</button>
-                <button class="btn-primary" style="background: rgba(255,255,255,0.1);" onclick="setDevice('tablet')">📱 Tablet</button>
-                <button class="btn-primary" style="background: rgba(255,255,255,0.1);" onclick="setDevice('mobile')">📲 Mobile</button>
+                <button class="btn btn-outline" onclick="setDevice('desktop')">🖥️ Desktop</button>
+                <button class="btn btn-outline" onclick="setDevice('tablet')">📱 Tablet</button>
+                <button class="btn btn-outline" onclick="setDevice('mobile')">📲 Mobile</button>
             </div>
-            <div>
-                <a href="/preview/{target_page}" target="_blank" class="btn-primary" style="text-decoration: none; margin-right: 0.5rem; background: #10b981;">👁️ Live Preview</a>
-                <button class="btn-primary" onclick="savePage()">💾 Publish Page</button>
+            <div style="display: flex; align-items: center; gap: 0.75rem;">
+                <span id="ast-counter" style="font-size: 0.8rem; color: var(--text-muted);">0 blocks</span>
+                <a href="/preview/{target_page}" target="_blank" class="btn btn-outline" style="text-decoration: none;">👁️ Preview</a>
+                <button class="btn btn-success" onclick="savePage()">💾 Save to SurrealDB</button>
             </div>
         </header>
 
         <section class="builder-stage">
             <div class="device-frame" id="canvas-frame">
-                <div style="padding: 3rem; text-align: center;">
-                    <h1 style="font-size: 2.5rem; margin-bottom: 1rem; color: #1e1b4b;">Crafted with Frappe Builder Pure-Rust</h1>
-                    <p style="font-size: 1.1rem; color: #475569; max-width: 600px; margin: 0 auto 2rem;">
-                        Instant visual layout manipulation, reactive data bindings with SurrealDB, and zero client hydration overhead.
-                    </p>
-                    <div style="display: flex; gap: 1rem; justify-content: center;">
-                        <button style="padding: 0.75rem 1.5rem; background: #6366f1; color: #fff; border: none; border-radius: 6px; font-weight: 600;">Explore Catalog</button>
-                        <button style="padding: 0.75rem 1.5rem; background: #e2e8f0; color: #1e293b; border: none; border-radius: 6px; font-weight: 600;">Documentation</button>
-                    </div>
+                <div id="canvas-content" style="padding: 2rem;">
+                    <!-- Rendered AST block hierarchy -->
                 </div>
             </div>
         </section>
     </main>
 
+    <div id="toast" class="toast-pill"></div>
+
     <script>
+        const targetPage = '{target_page}';
+        window.activeTree = {{
+            nodes: {{}},
+            root_ids: [],
+            next_id: 0
+        }};
+
+        function showToast(msg, isSuccess = true) {{
+            const t = document.getElementById('toast');
+            t.textContent = msg;
+            t.style.borderColor = isSuccess ? '#10b981' : '#ef4444';
+            t.style.display = 'flex';
+            setTimeout(() => {{ t.style.display = 'none'; }}, 3000);
+        }}
+
         function setDevice(device) {{
             const frame = document.getElementById('canvas-frame');
             if (device === 'mobile') {{
@@ -433,27 +534,239 @@ async fn builder_studio_handler(page_id: Option<web::Path<String>>) -> impl Resp
                 frame.style.width = '1280px';
             }}
         }}
+
+        function updateAstCounter() {{
+            const count = Object.keys(window.activeTree.nodes).length;
+            document.getElementById('ast-counter').textContent = `${{count}} AST blocks`;
+        }}
+
+        function renderCanvas() {{
+            const container = document.getElementById('canvas-content');
+            container.innerHTML = '';
+
+            if (window.activeTree.root_ids.length === 0) {{
+                container.innerHTML = `
+                    <div style="text-align: center; padding: 4rem 2rem; color: #64748b;">
+                        <h2 style="margin-bottom: 0.5rem; color: #1e293b;">Empty Canvas</h2>
+                        <p>Click a palette item or ask Bob AI to synthesize your page layout.</p>
+                    </div>`;
+                updateAstCounter();
+                return;
+            }}
+
+            for (const rootId of window.activeTree.root_ids) {{
+                container.appendChild(renderNode(rootId));
+            }}
+            updateAstCounter();
+        }}
+
+        function renderNode(nodeId) {{
+            const node = window.activeTree.nodes[nodeId];
+            if (!node) return document.createElement('div');
+
+            const wrap = document.createElement('div');
+            wrap.className = 'canvas-node-wrapper';
+            wrap.id = 'wrap_' + nodeId;
+
+            const actions = document.createElement('div');
+            actions.className = 'node-actions';
+            actions.innerHTML = `
+                <button class="node-act-btn" onclick="removeNode('${{nodeId}}')" title="Remove">✕</button>
+            `;
+            wrap.appendChild(actions);
+
+            const b = node.block;
+            if (b.block_type === 'Heading') {{
+                const el = document.createElement('h' + (b.level || 2));
+                el.textContent = b.text;
+                el.contentEditable = 'true';
+                el.onblur = (e) => {{ b.text = e.target.textContent; }};
+                wrap.appendChild(el);
+            }} else if (b.block_type === 'TextBlock') {{
+                const el = document.createElement('p');
+                el.textContent = b.content;
+                el.contentEditable = 'true';
+                el.onblur = (e) => {{ b.content = e.target.textContent; }};
+                wrap.appendChild(el);
+            }} else if (b.block_type === 'Section' || b.block_type === 'Container') {{
+                const sec = document.createElement('section');
+                sec.style.padding = '1.5rem';
+                sec.style.background = '#f8fafc';
+                sec.style.borderRadius = '8px';
+                sec.style.border = '1px solid #e2e8f0';
+                for (const cid of (node.child_ids || [])) {{
+                    sec.appendChild(renderNode(cid));
+                }}
+                wrap.appendChild(sec);
+            }} else if (b.block_type === 'CardBlock') {{
+                const card = document.createElement('div');
+                card.style.padding = '1.5rem';
+                card.style.background = '#ffffff';
+                card.style.border = '1px solid #e2e8f0';
+                card.style.borderRadius = '8px';
+                card.style.boxShadow = '0 4px 6px -1px rgba(0,0,0,0.1)';
+                card.innerHTML = `<h3 style="margin-top:0;">${{b.title}}</h3><p style="color:#64748b;">${{b.body}}</p>`;
+                wrap.appendChild(card);
+            }} else if (b.block_type === 'NumberCardBlock') {{
+                const num = document.createElement('div');
+                num.style.padding = '1.25rem';
+                num.style.background = '#eef2ff';
+                num.style.borderRadius = '8px';
+                num.style.textAlign = 'center';
+                num.innerHTML = `<div style="font-size:0.8rem;font-weight:700;color:#6366f1;">${{b.label}}</div><div style="font-size:2rem;font-weight:800;color:#1e1b4b;">99.98%</div>`;
+                wrap.appendChild(num);
+            }} else if (b.block_type === 'Navbar') {{
+                const nav = document.createElement('nav');
+                nav.style.display = 'flex';
+                nav.style.justifyContent = 'space-between';
+                nav.style.alignItems = 'center';
+                nav.style.padding = '1rem 1.5rem';
+                nav.style.background = '#1e1b4b';
+                nav.style.color = '#fff';
+                nav.style.borderRadius = '6px';
+                nav.innerHTML = `<div style="font-weight:700;">${{b.brand_title}}</div><div style="display:flex;gap:1rem;">${{(b.links || []).map(l => `<a href="${{l[1]}}" style="color:#c7d2fe;text-decoration:none;">${{l[0]}}</a>`).join('')}}</div>`;
+                wrap.appendChild(nav);
+            }} else if (b.block_type === 'Footer') {{
+                const foot = document.createElement('footer');
+                foot.style.padding = '1.5rem';
+                foot.style.textAlign = 'center';
+                foot.style.color = '#94a3b8';
+                foot.style.borderTop = '1px solid #e2e8f0';
+                foot.innerHTML = `<p style="margin:0;font-size:0.85rem;">${{b.copyright_text}}</p>`;
+                wrap.appendChild(foot);
+            }} else {{
+                const raw = document.createElement('div');
+                raw.textContent = `[${{b.block_type}}]`;
+                wrap.appendChild(raw);
+            }}
+
+            return wrap;
+        }}
+
+        function addBlock(kind) {{
+            window.activeTree.next_id++;
+            const id = 'blk_' + window.activeTree.next_id;
+            let block = null;
+
+            if (kind === 'Heading') {{
+                block = {{ block_type: 'Heading', level: 2, text: 'New Heading', data_binding: null }};
+            }} else if (kind === 'TextBlock') {{
+                block = {{ block_type: 'TextBlock', content: 'Crafted with Frappe Builder in pure Rust.', data_binding: null }};
+            }} else if (kind === 'Section') {{
+                block = {{ block_type: 'Section', id: id, children: [], css_classes: 'py-8' }};
+            }} else if (kind === 'CardBlock') {{
+                block = {{ block_type: 'CardBlock', title: 'Product Showcase', body: 'ACID transaction velocity on the cloud edge.', image_url: null }};
+            }} else if (kind === 'NumberCardBlock') {{
+                block = {{ block_type: 'NumberCardBlock', label: 'Cluster Throughput', value_data_path: 'pageData.tps', format: null }};
+            }} else if (kind === 'Navbar') {{
+                block = {{ block_type: 'Navbar', brand_title: 'Enterprise Studio', links: [['Home', '/'], ['Catalog', '/site/catalog']] }};
+            }} else if (kind === 'Footer') {{
+                block = {{ block_type: 'Footer', copyright_text: '© 2026 RustNext Enterprise. Pure Rust Engine.' }};
+            }}
+
+            if (block) {{
+                window.activeTree.nodes[id] = {{
+                    id: id,
+                    block: block,
+                    parent_id: null,
+                    child_ids: [],
+                    css_styles: null
+                }};
+                window.activeTree.root_ids.push(id);
+                renderCanvas();
+                showToast(`Added ${{kind}} block`);
+            }}
+        }}
+
+        function removeNode(nodeId) {{
+            delete window.activeTree.nodes[nodeId];
+            window.activeTree.root_ids = window.activeTree.root_ids.filter(i => i !== nodeId);
+            renderCanvas();
+            showToast('Block removed');
+        }}
+
+        async function savePage() {{
+            try {{
+                const res = await fetch('/api/v2/builder/pages/' + targetPage, {{
+                    method: 'POST',
+                    headers: {{ 'Content-Type': 'application/json' }},
+                    body: JSON.stringify({{
+                        title: targetPage,
+                        route_path: '/site/' + targetPage,
+                        tree: window.activeTree
+                    }})
+                }});
+                const data = await res.json();
+                if (res.ok) {{
+                    showToast(`✓ Page saved to SurrealDB (${{data.node_count}} nodes)`);
+                }} else {{
+                    showToast('Failed to save page', false);
+                }}
+            }} catch (e) {{
+                showToast('Error saving: ' + e.message, false);
+            }}
+        }}
+
         async function callBobAi() {{
-            const prompt = document.getElementById('ai-prompt').value;
+            const prompt = document.getElementById('ai-prompt').value.trim();
             if (!prompt) return;
-            const res = await fetch('/api/v2/builder/ai/prompt', {{
-                method: 'POST',
-                headers: {{ 'Content-Type': 'application/json' }},
-                body: JSON.stringify({{
-                    prompt,
-                    mode: 'generate',
-                    selected_block_id: null,
-                    active_theme_id: 'default',
-                    target_doctypes: ['Item'],
-                    attached_image_url: null
-                }})
-            }});
-            const data = await res.json();
-            alert('Bob AI synthesized layout: ' + JSON.stringify(data.status));
+            try {{
+                const res = await fetch('/api/v2/builder/ai/prompt', {{
+                    method: 'POST',
+                    headers: {{ 'Content-Type': 'application/json' }},
+                    body: JSON.stringify({{
+                        prompt: prompt,
+                        mode: 'generate',
+                        selected_block_id: null,
+                        active_theme_id: 'default',
+                        target_doctypes: ['Item'],
+                        attached_image_url: null
+                    }})
+                }});
+                const data = await res.json();
+                if (data.synthesized_block) {{
+                    window.activeTree.next_id++;
+                    const id = 'blk_ai_' + window.activeTree.next_id;
+                    window.activeTree.nodes[id] = {{
+                        id: id,
+                        block: data.synthesized_block,
+                        parent_id: null,
+                        child_ids: [],
+                        css_styles: null
+                    }};
+                    window.activeTree.root_ids.push(id);
+                    renderCanvas();
+                    showToast('✓ Bob AI synthesized layout added to canvas');
+                    document.getElementById('ai-prompt').value = '';
+                }}
+            }} catch (e) {{
+                showToast('Bob AI Error: ' + e.message, false);
+            }}
         }}
-        function savePage() {{
-            alert('Builder AST saved successfully to SurrealDB!');
+
+        // Initial Load
+        async function initBuilder() {{
+            try {{
+                const res = await fetch('/api/v2/builder/pages/' + targetPage);
+                if (res.ok) {{
+                    const data = await res.json();
+                    if (data.tree && data.tree.root_ids) {{
+                        window.activeTree = data.tree;
+                        renderCanvas();
+                        return;
+                    }}
+                }}
+            }} catch (_) {{}}
+            
+            // Starter default AST
+            addBlock('Navbar');
+            addBlock('Heading');
+            addBlock('TextBlock');
+            addBlock('CardBlock');
+            addBlock('Footer');
         }}
+
+        document.addEventListener('DOMContentLoaded', initBuilder);
     </script>
 </body>
 </html>"#,
@@ -486,9 +799,11 @@ async fn emdash_studio_handler(doc_id: Option<web::Path<String>>) -> impl Respon
             --bg-editor: #13151f;
             --border: rgba(255, 255, 255, 0.08);
             --accent: #10b981;
+            --accent-hover: #059669;
             --text-main: #f8fafc;
             --text-muted: #94a3b8;
         }}
+        * {{ box-sizing: border-box; }}
         body {{
             margin: 0;
             padding: 0;
@@ -511,32 +826,24 @@ async fn emdash_studio_handler(doc_id: Option<web::Path<String>>) -> impl Respon
         }}
         .editor-container {{
             flex: 1;
-            max-width: 820px;
+            max-width: 860px;
             width: 100%;
-            margin: 2rem auto;
+            margin: 1.5rem auto;
             padding: 2rem;
-            box-sizing: border-box;
             overflow-y: auto;
         }}
         .post-title {{
-            font-size: 2.5rem;
+            font-size: 2.25rem;
             font-weight: 700;
             border: none;
             background: transparent;
             color: var(--text-main);
             width: 100%;
             outline: none;
-            margin-bottom: 1.5rem;
+            margin-bottom: 1rem;
             font-family: inherit;
         }}
-        .post-body {{
-            font-size: 1.25rem;
-            line-height: 1.8;
-            color: #cbd5e1;
-            min-height: 400px;
-            outline: none;
-        }}
-        .btn-publish {{
+        .btn {{
             background: var(--accent);
             color: #fff;
             border: none;
@@ -544,14 +851,101 @@ async fn emdash_studio_handler(doc_id: Option<web::Path<String>>) -> impl Respon
             border-radius: 6px;
             cursor: pointer;
             font-weight: 600;
+            font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+            font-size: 0.85rem;
+            transition: all 0.15s ease;
         }}
+        .btn:hover {{ background: var(--accent-hover); }}
+        .btn-outline {{
+            background: rgba(255, 255, 255, 0.08);
+            border: 1px solid var(--border);
+        }}
+        .btn-outline:hover {{ background: rgba(255, 255, 255, 0.15); }}
         .meta-bar {{
             font-family: -apple-system, BlinkMacSystemFont, sans-serif;
             font-size: 0.85rem;
             color: var(--text-muted);
-            margin-bottom: 2rem;
+            margin-bottom: 1.5rem;
             display: flex;
             gap: 1.5rem;
+            align-items: center;
+            border-bottom: 1px solid var(--border);
+            padding-bottom: 1rem;
+        }}
+        .block-toolbar {{
+            display: flex;
+            gap: 0.5rem;
+            margin-bottom: 1.5rem;
+            padding: 0.5rem;
+            background: var(--bg-editor);
+            border-radius: 8px;
+            border: 1px solid var(--border);
+            font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+        }}
+        .tool-btn {{
+            background: transparent;
+            border: none;
+            color: var(--text-main);
+            cursor: pointer;
+            padding: 0.4rem 0.75rem;
+            border-radius: 4px;
+            font-size: 0.85rem;
+            font-weight: 500;
+        }}
+        .tool-btn:hover {{ background: rgba(255, 255, 255, 0.1); }}
+        .emdash-block-row {{
+            position: relative;
+            margin-bottom: 1.25rem;
+            padding: 0.75rem;
+            border-radius: 6px;
+            border: 1px solid transparent;
+            transition: border-color 0.15s ease;
+        }}
+        .emdash-block-row:hover {{ border-color: var(--border); }}
+        .block-del-btn {{
+            position: absolute;
+            top: 4px;
+            right: 4px;
+            background: transparent;
+            border: none;
+            color: #ef4444;
+            cursor: pointer;
+            display: none;
+            font-size: 0.85rem;
+        }}
+        .emdash-block-row:hover .block-del-btn {{ display: block; }}
+        .callout-box {{
+            padding: 1rem 1.25rem;
+            border-left: 4px solid var(--accent);
+            background: rgba(16, 185, 129, 0.08);
+            border-radius: 4px;
+            font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+        }}
+        .code-box {{
+            background: #0f172a;
+            color: #38bdf8;
+            padding: 1rem;
+            border-radius: 6px;
+            font-family: monospace;
+            font-size: 0.9rem;
+            white-space: pre-wrap;
+        }}
+        .toast-pill {{
+            position: fixed;
+            bottom: 1.5rem;
+            right: 1.5rem;
+            background: #1e293b;
+            color: #f8fafc;
+            border: 1px solid var(--border);
+            padding: 0.75rem 1.25rem;
+            border-radius: 8px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+            display: none;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.875rem;
+            font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+            z-index: 9999;
         }}
     </style>
 </head>
@@ -560,29 +954,218 @@ async fn emdash_studio_handler(doc_id: Option<web::Path<String>>) -> impl Respon
         <div style="font-weight: 700; display: flex; align-items: center; gap: 0.5rem;">
             <span>✍️</span> Emdash Editorial Studio
         </div>
-        <div>
-            <button class="btn-publish" style="background: rgba(255,255,255,0.1); margin-right: 0.5rem;" onclick="saveDraft()">Save Draft</button>
-            <button class="btn-publish" onclick="publishPost()">Publish Now</button>
+        <div style="display: flex; gap: 0.5rem; align-items: center;">
+            <a href="/site/{target_doc}" id="view-live-link" target="_blank" style="color: #6ee7b7; font-size: 0.85rem; text-decoration: none; margin-right: 0.5rem; display: none;">Live Link ↗</a>
+            <button class="btn btn-outline" onclick="saveDraft()">Save Draft</button>
+            <button class="btn" onclick="publishPost()">Publish Now</button>
         </div>
     </header>
+
     <main class="editor-container">
         <div class="meta-bar">
-            <span>Status: <strong style="color: #f59e0b;">Draft</strong></span>
-            <span>Estimated Reading Time: <strong>3 min</strong></span>
-            <span>SEO Score: <strong style="color: #10b981;">98/100</strong></span>
+            <span>Status: <strong id="doc-status" style="color: #f59e0b;">Draft</strong></span>
+            <span>Words: <strong id="word-count">0</strong></span>
+            <span>Reading Time: <strong id="reading-time">1 min</strong></span>
+            <span>Slug: <strong style="color: #6ee7b7;">{target_doc}</strong></span>
         </div>
-        <input class="post-title" value="Architecting Next-Generation Enterprise Systems with Pure Rust" placeholder="Article Title...">
-        <div class="post-body" contenteditable="true">
-            <p>Modern enterprise resource planning demands microsecond query execution, zero garbage collection pauses, and absolute memory safety. By combining Actix-web, SurrealDB, and embedded no_std telemetry, the architecture reaches unprecedented operational velocity...</p>
-            <blockquote style="border-left: 4px solid var(--accent); padding-left: 1rem; margin: 1.5rem 0; color: #94a3b8; font-style: italic;">
-                "Zero-allocation parsers on the warehouse floor coupled with multi-model database graphs in the cloud yield an unbreakable supply chain fabric."
-            </blockquote>
-            <p>Type <code>/</code> to insert callouts, tables, code blocks, or high-fidelity WebP imagery.</p>
+
+        <input class="post-title" id="post-title" value="Architecting Next-Generation Enterprise Systems with Pure Rust" placeholder="Article Title...">
+
+        <div class="block-toolbar">
+            <span style="font-size: 0.85rem; color: var(--text-muted); display: flex; align-items: center; margin-right: 0.5rem;">Insert:</span>
+            <button class="tool-btn" onclick="insertBlock('Paragraph')">+ Paragraph</button>
+            <button class="tool-btn" onclick="insertBlock('Heading')">+ Heading</button>
+            <button class="tool-btn" onclick="insertBlock('Quote')">+ Quote</button>
+            <button class="tool-btn" onclick="insertBlock('Callout')">+ Callout</button>
+            <button class="tool-btn" onclick="insertBlock('Code')">+ Code</button>
+        </div>
+
+        <div id="blocks-container">
+            <!-- Dynamic Emdash Blocks -->
         </div>
     </main>
+
+    <div id="toast" class="toast-pill"></div>
+
     <script>
-        function saveDraft() {{ alert('Draft saved to Emdash CMS repository.'); }}
-        function publishPost() {{ alert('Post published! XML Sitemap and OpenGraph tags automatically synchronized.'); }}
+        const docId = '{target_doc}';
+        window.emdashBlocks = [];
+
+        function showToast(msg, isSuccess = true) {{
+            const t = document.getElementById('toast');
+            t.textContent = msg;
+            t.style.borderColor = isSuccess ? '#10b981' : '#ef4444';
+            t.style.display = 'flex';
+            setTimeout(() => {{ t.style.display = 'none'; }}, 3000);
+        }}
+
+        function updateStats() {{
+            let words = 0;
+            for (const b of window.emdashBlocks) {{
+                if (b.text) words += b.text.split(/\s+/).filter(Boolean).length;
+                if (b.quote) words += b.quote.split(/\s+/).filter(Boolean).length;
+                if (b.code) words += b.code.split(/\s+/).filter(Boolean).length;
+            }}
+            document.getElementById('word-count').textContent = words;
+            document.getElementById('reading-time').textContent = Math.max(1, Math.ceil(words / 200)) + ' min';
+        }}
+
+        function renderBlocks() {{
+            const c = document.getElementById('blocks-container');
+            c.innerHTML = '';
+
+            window.emdashBlocks.forEach((b, idx) => {{
+                const row = document.createElement('div');
+                row.className = 'emdash-block-row';
+                row.innerHTML = `<button class="block-del-btn" onclick="removeBlock(${{idx}})" title="Delete Block">✕</button>`;
+
+                if (b.block_type === 'Heading') {{
+                    const h = document.createElement('h' + (b.level || 2));
+                    h.textContent = b.text;
+                    h.contentEditable = 'true';
+                    h.style.outline = 'none';
+                    h.onblur = (e) => {{ b.text = e.target.textContent; updateStats(); }};
+                    row.appendChild(h);
+                }} else if (b.block_type === 'Paragraph') {{
+                    const p = document.createElement('p');
+                    p.textContent = b.text;
+                    p.contentEditable = 'true';
+                    p.style.outline = 'none';
+                    p.style.lineHeight = '1.8';
+                    p.style.fontSize = '1.15rem';
+                    p.style.color = '#cbd5e1';
+                    p.onblur = (e) => {{ b.text = e.target.textContent; updateStats(); }};
+                    row.appendChild(p);
+                }} else if (b.block_type === 'Quote') {{
+                    const q = document.createElement('blockquote');
+                    q.style.borderLeft = '4px solid var(--accent)';
+                    q.style.paddingLeft = '1rem';
+                    q.style.color = '#94a3b8';
+                    q.style.fontStyle = 'italic';
+                    q.contentEditable = 'true';
+                    q.style.outline = 'none';
+                    q.textContent = b.quote;
+                    q.onblur = (e) => {{ b.quote = e.target.textContent; updateStats(); }};
+                    row.appendChild(q);
+                }} else if (b.block_type === 'Callout') {{
+                    const box = document.createElement('div');
+                    box.className = 'callout-box';
+                    box.contentEditable = 'true';
+                    box.style.outline = 'none';
+                    box.textContent = b.text;
+                    box.onblur = (e) => {{ b.text = e.target.textContent; updateStats(); }};
+                    row.appendChild(box);
+                }} else if (b.block_type === 'Code') {{
+                    const pre = document.createElement('pre');
+                    pre.className = 'code-box';
+                    pre.contentEditable = 'true';
+                    pre.style.outline = 'none';
+                    pre.textContent = b.code;
+                    pre.onblur = (e) => {{ b.code = e.target.textContent; updateStats(); }};
+                    row.appendChild(pre);
+                }}
+
+                c.appendChild(row);
+            }});
+            updateStats();
+        }}
+
+        function insertBlock(kind) {{
+            if (kind === 'Heading') {{
+                window.emdashBlocks.push({{ block_type: 'Heading', level: 2, text: 'New Section Header' }});
+            }} else if (kind === 'Paragraph') {{
+                window.emdashBlocks.push({{ block_type: 'Paragraph', text: 'Enter paragraph copy here...' }});
+            }} else if (kind === 'Quote') {{
+                window.emdashBlocks.push({{ block_type: 'Quote', quote: 'Zero-allocation telemetry delivers unbreakable resilience.', citation: 'RustNext Architect' }});
+            }} else if (kind === 'Callout') {{
+                window.emdashBlocks.push({{ block_type: 'Callout', style: 'Info', title: 'Note', text: 'Ensure SurrealDB schema migrations have concluded.' }});
+            }} else if (kind === 'Code') {{
+                window.emdashBlocks.push({{ block_type: 'Code', language: 'rust', code: '// Pure-Rust concurrent actor\\npub async fn run() {{ ... }}' }});
+            }}
+            renderBlocks();
+        }}
+
+        function removeBlock(idx) {{
+            window.emdashBlocks.splice(idx, 1);
+            renderBlocks();
+        }}
+
+        async function saveDraft() {{
+            const title = document.getElementById('post-title').value;
+            try {{
+                const res = await fetch('/api/v2/emdash/documents/' + docId, {{
+                    method: 'POST',
+                    headers: {{ 'Content-Type': 'application/json' }},
+                    body: JSON.stringify({{
+                        title: title,
+                        slug: docId,
+                        author: 'Lead Editor',
+                        blocks: window.emdashBlocks,
+                        tags: ['enterprise', 'rust', 'cms']
+                    }})
+                }});
+                const data = await res.json();
+                if (res.ok) {{
+                    showToast(`✓ Draft saved to SurrealDB (${{data.word_count}} words)`);
+                }} else {{
+                    showToast('Failed to save draft', false);
+                }}
+            }} catch (e) {{
+                showToast('Save error: ' + e.message, false);
+            }}
+        }}
+
+        async function publishPost() {{
+            await saveDraft();
+            try {{
+                const res = await fetch('/api/v2/emdash/documents/' + docId + '/transition', {{
+                    method: 'POST',
+                    headers: {{ 'Content-Type': 'application/json' }},
+                    body: JSON.stringify({{
+                        target_state: 'Published',
+                        timestamp: Math.floor(Date.now() / 1000)
+                    }})
+                }});
+                const data = await res.json();
+                if (res.ok) {{
+                    document.getElementById('doc-status').textContent = 'Published';
+                    document.getElementById('doc-status').style.color = '#10b981';
+                    document.getElementById('view-live-link').style.display = 'inline-block';
+                    showToast('✓ Post Published! Live at /site/' + docId);
+                }} else {{
+                    showToast('Publishing failed: ' + (data.error || 'error'), false);
+                }}
+            }} catch (e) {{
+                showToast('Publish error: ' + e.message, false);
+            }}
+        }}
+
+        async function initEmdash() {{
+            try {{
+                const res = await fetch('/api/v2/emdash/documents/' + docId);
+                if (res.ok) {{
+                    const data = await res.json();
+                    if (data.document) {{
+                        document.getElementById('post-title').value = data.document.title || 'Untitled';
+                        if (data.document.blocks && data.document.blocks.length > 0) {{
+                            window.emdashBlocks = data.document.blocks;
+                            renderBlocks();
+                            return;
+                        }}
+                    }}
+                }}
+            }} catch (_) {{}}
+
+            // Defaults
+            window.emdashBlocks = [
+                {{ block_type: 'Paragraph', text: 'Modern enterprise resource planning demands microsecond query execution, zero garbage collection pauses, and absolute memory safety.' }},
+                {{ block_type: 'Callout', style: 'Info', title: 'Architecture Note', text: 'Zero-allocation parsers on the warehouse floor coupled with multi-model database graphs in the cloud yield an unbreakable supply chain fabric.' }},
+                {{ block_type: 'Code', language: 'rust', code: 'async fn execute_workflow() -> Result<(), SystemError> {{\n    println!("Real-time transaction executed.");\n    Ok(())\n}}' }}
+            ];
+            renderBlocks();
+        }}
+
+        document.addEventListener('DOMContentLoaded', initEmdash);
     </script>
 </body>
 </html>"#,
@@ -607,10 +1190,11 @@ async fn builder_preview_handler(
     };
 
     let body_html = if let Some(tree) = lock.get(&id) {
+        let resolver = erp_cms::builder_core::BlockValueResolver::new();
+        let rendered = tree.render_html(&resolver);
         format!(
-            "<div class=\"rendered-builder-page\" style=\"padding: 2rem;\"><h1>{}</h1><p>Rendered {} AST block nodes.</p></div>",
-            id,
-            tree.nodes.len()
+            "<div class=\"rendered-builder-page\" style=\"min-height: 100vh; background: #ffffff;\">{}</div>",
+            rendered
         )
     } else {
         format!(
@@ -622,7 +1206,7 @@ async fn builder_preview_handler(
     HttpResponse::Ok()
         .content_type("text/html; charset=utf-8")
         .body(format!(
-            "<!DOCTYPE html><html><head><meta charset=\"UTF-8\"><title>Preview — {id}</title></head><body>{body_html}</body></html>"
+            "<!DOCTYPE html><html lang=\"en\"><head><meta charset=\"UTF-8\"><meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\"><title>Preview — {id}</title><style>body {{ margin: 0; font-family: -apple-system, BlinkMacSystemFont, sans-serif; }}</style></head><body>{body_html}</body></html>"
         ))
 }
 
@@ -650,7 +1234,28 @@ async fn dynamic_site_page_handler(
         }
     }
 
-    // 2. Fallback to default rendered site page with Schema.org SEO tags
+    // 2. Check if matching Builder page exists
+    if let Ok(lock) = state.builder_pages.read() {
+        if let Some(tree) = lock.get(&target_slug) {
+            let resolver = erp_cms::builder_core::BlockValueResolver::new();
+            let rendered = tree.render_html(&resolver);
+            let canonical = format!("https://rustnext.enterprise.io/site/{target_slug}");
+            let seo = erp_cms::seo_engine::SeoMetadata::new_website(
+                &format!("RustNext — {target_slug}"),
+                "Published via RustNext pure-Rust Visual Builder.",
+                &canonical,
+            );
+            let tags = seo.render_head_tags();
+            let html = format!(
+                "<!DOCTYPE html><html lang=\"en\"><head><meta charset=\"UTF-8\">{tags}<style>body {{ margin: 0; font-family: -apple-system, BlinkMacSystemFont, sans-serif; }}</style></head><body>{rendered}</body></html>"
+            );
+            return HttpResponse::Ok()
+                .content_type("text/html; charset=utf-8")
+                .body(html);
+        }
+    }
+
+    // 3. Fallback to default rendered site page with Schema.org SEO tags
     let canonical = format!("https://rustnext.enterprise.io/site/{target_slug}");
     let seo = erp_cms::seo_engine::SeoMetadata::new_website(
         &format!("RustNext — {target_slug}"),
@@ -924,11 +1529,84 @@ async fn template_detail_handler(
     }
 }
 
-async fn sitemap_xml_handler() -> impl Responder {
+pub async fn sitemap_xml_handler(
+    state: Option<web::Data<DynamicRbacState>>,
+) -> impl Responder {
     TOTAL_REQUESTS.fetch_add(1, Ordering::Relaxed);
+    let mut entries = Vec::new();
+    if let Some(st) = state {
+        if let Ok(docs) = st.emdash_documents.read() {
+            for (id, doc) in docs.iter() {
+                if matches!(doc.workflow_state, erp_cms::EditorialWorkflowState::Published { .. }) {
+                    let loc = if !doc.slug.is_empty() {
+                        format!("https://rustnext.enterprise.io/site/{}", doc.slug)
+                    } else {
+                        format!("https://rustnext.enterprise.io/site/{}", id)
+                    };
+                    entries.push(erp_cms::SitemapEntry {
+                        loc,
+                        lastmod: Some("2026-10-17".into()),
+                        changefreq: Some("weekly".into()),
+                        priority: Some(0.8),
+                    });
+                }
+            }
+        }
+        if let Ok(pages) = st.builder_pages.read() {
+            for (id, _tree) in pages.iter() {
+                entries.push(erp_cms::SitemapEntry {
+                    loc: format!("https://rustnext.enterprise.io/site/{}", id),
+                    lastmod: Some("2026-10-17".into()),
+                    changefreq: Some("daily".into()),
+                    priority: Some(0.9),
+                });
+            }
+        }
+    }
     HttpResponse::Ok()
         .content_type("application/xml; charset=utf-8")
-        .body(erp_cms::generate_sitemap_xml())
+        .body(erp_cms::generate_dynamic_sitemap_xml(&entries))
+}
+
+pub async fn rss_feed_handler(
+    state: Option<web::Data<DynamicRbacState>>,
+) -> impl Responder {
+    TOTAL_REQUESTS.fetch_add(1, Ordering::Relaxed);
+    let mut items = Vec::new();
+    if let Some(st) = state {
+        if let Ok(docs) = st.emdash_documents.read() {
+            for (id, doc) in docs.iter() {
+                if matches!(doc.workflow_state, erp_cms::EditorialWorkflowState::Published { .. }) {
+                    let link = if !doc.slug.is_empty() {
+                        format!("https://rustnext.enterprise.io/site/{}", doc.slug)
+                    } else {
+                        format!("https://rustnext.enterprise.io/site/{}", id)
+                    };
+                    let summary = doc.blocks.iter().find_map(|b| match b {
+                        erp_cms::EmdashBlock::Paragraph { text } => Some(text.to_string()),
+                        _ => None,
+                    }).unwrap_or_else(|| "Planetary ERP Editorial Publication".to_string());
+
+                    items.push(erp_cms::RssFeedItem {
+                        title: doc.title.to_string(),
+                        link,
+                        description: summary,
+                        pub_date: "Sat, 17 Oct 2026 12:00:00 GMT".into(),
+                        author: Some(doc.author.to_string()),
+                        guid: format!("emdash-{}", id),
+                    });
+                }
+            }
+        }
+    }
+    HttpResponse::Ok()
+        .content_type("application/rss+xml; charset=utf-8")
+        .body(erp_cms::generate_rss_2_xml(
+            "rustnext Enterprise Journal",
+            "https://rustnext.enterprise.io",
+            "Continuous technical publications and operational blueprints.",
+            &items,
+        ))
 }
 
 async fn robots_txt_handler() -> impl Responder {
@@ -1209,6 +1887,8 @@ pub fn configure_app(
         .route("/templates", web::get().to(templates_portal_handler))
         .route("/templates/{slug}", web::get().to(template_detail_handler))
         .route("/sitemap.xml", web::get().to(sitemap_xml_handler))
+        .route("/feed.xml", web::get().to(rss_feed_handler))
+        .route("/rss.xml", web::get().to(rss_feed_handler))
         .route("/robots.txt", web::get().to(robots_txt_handler))
         .route("/manifest.json", web::get().to(pwa_manifest_handler))
         .route("/manifest.webmanifest", web::get().to(pwa_manifest_handler))

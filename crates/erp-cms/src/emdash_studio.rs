@@ -259,6 +259,8 @@ pub struct EmdashDocument {
     pub workflow_state: EditorialWorkflowState,
     pub tags: Vec<CompactString>,
     pub seo: SeoMetadata,
+    #[serde(default)]
+    pub version: u64,
     pub created_at: u64,
     pub updated_at: u64,
 }
@@ -285,6 +287,7 @@ impl EmdashDocument {
             workflow_state: EditorialWorkflowState::Draft,
             tags: Vec::new(),
             seo,
+            version: 1,
             created_at: 0,
             updated_at: 0,
         }

@@ -373,6 +373,8 @@ const DESK_BASE_HTML: &str = r#"<!DOCTYPE html>
                 <a href="/desk/list/purchase_order" class="shortcut-chip">Purchase Orders <span class="shortcut-badge">Procurement</span></a>
                 <a href="/desk/list/item" class="shortcut-chip">Stock Ledger <span class="shortcut-badge">Inventory</span></a>
                 <a href="/desk/list/journal_entry" class="shortcut-chip">General Ledger <span class="shortcut-badge">Chart of Accounts</span></a>
+                <a href="/builder" class="shortcut-chip" style="border-color: #6366f1; color: #a5b4fc;">⚡ Builder Studio <span class="shortcut-badge" style="background: rgba(99,102,241,0.2); color: #c7d2fe;">Visual Canvas</span></a>
+                <a href="/emdash" class="shortcut-chip" style="border-color: #10b981; color: #6ee7b7;">✍️ Emdash CMS <span class="shortcut-badge" style="background: rgba(16,185,129,0.2); color: #a7f3d0;">Editorial</span></a>
                 <a href="/desk/form/sales_invoice/new" class="shortcut-chip" style="border-color:var(--accent); color:var(--accent);">+ New Invoice</a>
             </div>
 
@@ -461,6 +463,8 @@ const DESK_BASE_HTML: &str = r#"<!DOCTYPE html>
 
         // Standard AwesomeBar (Frappe 1:1 Omnibar Search Navigation)
         const awesomeItems = [
+            { label: 'Open Frappe Builder Studio', url: '/builder', group: 'Studios' },
+            { label: 'Open Emdash Editorial Studio', url: '/emdash', group: 'Studios' },
             { label: 'Open Sales Invoice List', url: '/desk/list/sales_invoice', group: 'DocTypes' },
             { label: 'Open Purchase Invoice List', url: '/desk/list/purchase_invoice', group: 'DocTypes' },
             { label: 'Open Sales Order List', url: '/desk/list/sales_order', group: 'DocTypes' },
@@ -1578,8 +1582,10 @@ mod tests {
     #[test]
     fn test_desk_workspaces_count() {
         let ws = get_desk_workspaces();
-        assert_eq!(ws.len(), 11);
+        assert_eq!(ws.len(), 13);
         assert_eq!(ws[0].id, "accounting");
+        assert!(ws.iter().any(|w| w.id == "builder"));
+        assert!(ws.iter().any(|w| w.id == "emdash"));
     }
 
     #[test]

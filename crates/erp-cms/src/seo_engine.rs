@@ -461,6 +461,8 @@ Allow: /
 Allow: /templates
 Allow: /templates/
 Allow: /storefront
+Allow: /site/
+Allow: /feed.xml
 Disallow: /api/
 Disallow: /admin/
 Disallow: /.well-known/
@@ -469,4 +471,144 @@ Disallow: /.well-known/
 Sitemap: https://rustnext.enterprise.io/sitemap.xml
 "#
     .to_string()
+}
+
+/// Represents an entry in a sitemap.
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+pub struct SitemapEntry {
+    pub loc: String,
+    pub lastmod: Option<String>,
+    pub changefreq: Option<String>,
+    pub priority: Option<f32>,
+}
+
+/// Generates an XML sitemap including default template routes and extra dynamic routes (such as published Emdash documents or Builder pages).
+#[must_use]
+pub fn generate_dynamic_sitemap_xml(extra_entries: &[SitemapEntry]) -> String {
+    let mut base_sitemap = generate_sitemap_xml();
+    if extra_entries.is_empty() {
+        return base_sitemap;
+    }
+
+    let mut extra_xml = String::new();
+    for entry in extra_entries {
+        extra_xml.push_str("  <url>\n");
+        extra_xml.push_str(&format!("    <loc>{}</loc>\n", entry.loc));
+        if let Some(ref lastmod) = entry.lastmod {
+            extra_xml.push_str(&format!("    <lastmod>{}</lastmod>\n", lastmod));
+        }
+        if let Some(ref changefreq) = entry.changefreq {
+            extra_xml.push_str(&format!("    <changefreq>{}</changefreq>\n", changefreq));
+        }
+        if let Some(priority) = entry.priority {
+            extra_xml.push_str(&format!("    <priority>{:.1}</priority>\n", priority));
+        }
+        extra_xml.push_str("  </url>\n");
+    }
+
+    if let Some(pos) = base_sitemap.rfind("</urlset>") {
+        base_sitemap.insert_str(pos, &extra_xml);
+        base_sitemap
+    } else {
+        base_sitemap
+    }
+}
+
+/// RSS Feed Item for syndicated publication.
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+pub struct RssFeedItem {
+    pub title: String,
+    pub link: String,
+    pub description: String,
+    pub pub_date: String,
+    pub author: Option<String>,
+    pub guid: String,
+}
+
+/// Generates an RSS 2.0 XML syndicated publication feed.
+#[must_use]
+pub fn generate_rss_2_xml(
+    title: &str,
+    link: &str,
+    description: &str,
+    items: &[RssFeedItem],
+) -> String {
+    let mut items_xml = String::new();
+    for item in items {
+        items_xml.push_str("    <item>\n");
+        items_xml.push_str(&format!("      <title><![CDATA[{}]]></title>\n", item.title));
+        items_xml.push_str(&format!("      <link>{}</link>\n", item.link));
+        items_xml.push_str(&format!("      <guid isPermaLink=\"false\">{}</guid>\n", item.guid));
+        items_xml.push_str(&format!("      <description><![CDATA[{}]]></description>\n", item.description));
+        items_xml.push_str(&format!("      <pubDate>{}</pubDate>\n", item.pub_date));
+        if let Some(ref author) = item.author {
+            items_xml.push_str(&format!("      <author>{}</author>\n", author));
+        }
+        items_xml.push_str("    </item>\n");
+    }
+
+    format!(
+        r#"<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title><![CDATA[{title}]]></title>
+    <link>{link}</link>
+    <description><![CDATA[{description}]]></description>
+    <atom:link href="{link}/feed.xml" rel="self" type="application/rss+xml" />
+    <language>en-us</language>
+{items_xml}  </channel>
+</rss>"#
+    )
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_dynamic_sitemap_xml_generation() {
+        let entries = vec![
+            SitemapEntry {
+                loc: "https://rustnext.enterprise.io/site/announcing-v2".into(),
+                lastmod: Some("2026-10-17".into()),
+                changefreq: Some("daily".into()),
+                priority: Some(1.0),
+            },
+            SitemapEntry {
+                loc: "https://rustnext.enterprise.io/site/pricing".into(),
+                lastmod: Some("2026-10-17".into()),
+                changefreq: Some("weekly".into()),
+                priority: Some(0.9),
+            },
+        ];
+
+        let xml = generate_dynamic_sitemap_xml(&entries);
+        assert!(xml.contains("<loc>https://rustnext.enterprise.io/site/announcing-v2</loc>"));
+        assert!(xml.contains("<loc>https://rustnext.enterprise.io/site/pricing</loc>"));
+        assert!(xml.contains("<priority>1.0</priority>"));
+        assert!(xml.contains("<priority>0.9</priority>"));
+        assert!(xml.contains("</urlset>"));
+    }
+
+    #[test]
+    fn test_rss_feed_generation() {
+        let items = vec![RssFeedItem {
+            title: "Planetary Scale Release".into(),
+            link: "https://rustnext.enterprise.io/site/release-note".into(),
+            description: "High performance ERP written in pure Rust.".into(),
+            pub_date: "Sat, 17 Oct 2026 12:00:00 GMT".into(),
+            author: Some("editor@rustnext.io".into()),
+            guid: "item-001".into(),
+        }];
+
+        let rss = generate_rss_2_xml(
+            "rustnext Journal",
+            "https://rustnext.enterprise.io",
+            "Latest news and architectural blueprints",
+            &items,
+        );
+        assert!(rss.contains("<title><![CDATA[Planetary Scale Release]]></title>"));
+        assert!(rss.contains("<guid isPermaLink=\"false\">item-001</guid>"));
+        assert!(rss.contains("https://rustnext.enterprise.io/feed.xml"));
+    }
 }

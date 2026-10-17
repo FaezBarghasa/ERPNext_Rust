@@ -4130,24 +4130,49 @@ pub async fn builder_list_pages_handler(state: web::Data<DynamicRbacState>) -> i
 pub async fn builder_get_page_handler(
     page_id: web::Path<String>,
     state: web::Data<DynamicRbacState>,
+    pool_mgr: Option<web::Data<ConnectionPoolManager>>,
 ) -> impl Responder {
     let id = page_id.into_inner();
-    let lock = match state.builder_pages.read() {
-        Ok(l) => l,
-        Err(_) => return HttpResponse::InternalServerError().body("Lock error"),
-    };
 
-    if let Some(tree) = lock.get(&id) {
-        HttpResponse::Ok().json(serde_json::json!({
-            "status": "OK",
-            "page_id": id,
-            "tree": tree
-        }))
-    } else {
-        HttpResponse::NotFound().json(serde_json::json!({
-            "error": format!("Builder page '{id}' not found")
-        }))
+    // 1. In-memory fast cache
+    if let Ok(lock) = state.builder_pages.read() {
+        if let Some(tree) = lock.get(&id) {
+            return HttpResponse::Ok().json(serde_json::json!({
+                "status": "OK",
+                "page_id": id,
+                "tree": tree
+            }));
+        }
     }
+
+    // 2. Fallback to SurrealDB persistence
+    if let Some(mgr) = pool_mgr {
+        let tenant_id = TenantId("default".into());
+        if let Ok(client) = mgr.get_or_initialize_client(&tenant_id).await {
+            let clean_id = id.replace([':', ' ', '-'], "_");
+            let sql = format!("SELECT tree FROM builder_page:{clean_id};");
+            if let Ok(mut res) = client.query(&sql).await {
+                if let Ok(Some(row)) = res.take::<Option<serde_json::Value>>(0) {
+                    if let Some(tree_val) = row.get("tree") {
+                        if let Ok(tree) = serde_json::from_value::<erp_cms::builder_core::CanvasBlockTree>(tree_val.clone()) {
+                            if let Ok(mut lock) = state.builder_pages.write() {
+                                lock.insert(id.clone(), tree.clone());
+                            }
+                            return HttpResponse::Ok().json(serde_json::json!({
+                                "status": "OK",
+                                "page_id": id,
+                                "tree": tree
+                            }));
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    HttpResponse::NotFound().json(serde_json::json!({
+        "error": format!("Builder page '{id}' not found")
+    }))
 }
 
 /// Handler: Save or create Builder page AST: `POST /api/v2/builder/pages/{id}`
@@ -4155,12 +4180,31 @@ pub async fn builder_save_page_handler(
     page_id: web::Path<String>,
     payload: web::Json<SaveBuilderPagePayload>,
     state: web::Data<DynamicRbacState>,
+    pool_mgr: Option<web::Data<ConnectionPoolManager>>,
 ) -> impl Responder {
     let id = page_id.into_inner();
     let p = payload.into_inner();
 
     if let Ok(mut lock) = state.builder_pages.write() {
         lock.insert(id.clone(), p.tree.clone());
+    }
+
+    // Persist to SurrealDB
+    if let Some(mgr) = pool_mgr {
+        let tenant_id = TenantId("default".into());
+        if let Ok(client) = mgr.get_or_initialize_client(&tenant_id).await {
+            let clean_id = id.replace([':', ' ', '-'], "_");
+            let doc_json = serde_json::json!({
+                "id": format!("builder_page:{clean_id}"),
+                "page_id": id,
+                "title": p.title,
+                "route_path": p.route_path,
+                "tree": p.tree,
+                "updated_at": Utc::now().to_rfc3339(),
+            });
+            let sql = format!("UPSERT builder_page:{clean_id} CONTENT $data;");
+            let _ = client.query(&sql).bind(("data", doc_json)).await;
+        }
     }
 
     HttpResponse::Ok().json(serde_json::json!({
@@ -4177,22 +4221,91 @@ pub async fn builder_ai_prompt_handler(
     payload: web::Json<erp_cms::builder_core::BobAgentPromptRequest>,
 ) -> impl Responder {
     let req = payload.into_inner();
+    let prompt_lower = req.prompt.to_lowercase();
 
-    // Autonomous Bob synthesizes a structured visual hero block or modifies AST
-    let synthesized_block = erp_cms::builder_core::CanvasBlock::Section {
-        id: "ai_hero_section".into(),
-        children: vec![
-            erp_cms::builder_core::CanvasBlock::Heading {
-                level: 1,
-                text: format!("AI Generated: {}", req.prompt).into(),
-                data_binding: None,
-            },
-            erp_cms::builder_core::CanvasBlock::TextBlock {
-                content: "Crafted autonomously by RustNext Bob AI Agent.".into(),
-                data_binding: None,
-            },
-        ],
-        css_classes: "hero-gradient-ai py-16 px-8 text-center".into(),
+    // Context-aware AST synthesis
+    let synthesized_block = if prompt_lower.contains("pricing") || prompt_lower.contains("plan") {
+        erp_cms::builder_core::CanvasBlock::Section {
+            id: "pricing_section".into(),
+            children: vec![
+                erp_cms::builder_core::CanvasBlock::Heading {
+                    level: 2,
+                    text: "Transparent Cloud & Enterprise Pricing".into(),
+                    data_binding: None,
+                },
+                erp_cms::builder_core::CanvasBlock::TextBlock {
+                    content: "Instant deployment, zero vendor lock-in, and sub-millisecond execution.".into(),
+                    data_binding: None,
+                },
+                erp_cms::builder_core::CanvasBlock::Container {
+                    children: vec![
+                        erp_cms::builder_core::CanvasBlock::CardBlock {
+                            title: "Developer Edition".into(),
+                            body: "Free for local & single-node clusters. Full SurrealDB integration.".into(),
+                            image_url: None,
+                        },
+                        erp_cms::builder_core::CanvasBlock::CardBlock {
+                            title: "Enterprise Grid".into(),
+                            body: "High-availability multi-tenant deployment with zero GC pauses.".into(),
+                            image_url: None,
+                        },
+                    ],
+                    max_width_px: 1100,
+                },
+            ],
+            css_classes: "pricing-tier-grid py-12 px-6 text-center".into(),
+        }
+    } else if prompt_lower.contains("card") || prompt_lower.contains("product") || prompt_lower.contains("catalog") {
+        erp_cms::builder_core::CanvasBlock::Section {
+            id: "product_showcase_section".into(),
+            children: vec![
+                erp_cms::builder_core::CanvasBlock::Heading {
+                    level: 2,
+                    text: "Curated Enterprise Catalog".into(),
+                    data_binding: None,
+                },
+                erp_cms::builder_core::CanvasBlock::Repeater {
+                    data_source_path: "pageData.products".into(),
+                    item_alias: "product".into(),
+                    template: Box::new(erp_cms::builder_core::CanvasBlock::CardBlock {
+                        title: "{{ product.name }}".into(),
+                        body: "{{ product.description }}".into(),
+                        image_url: Some("{{ product.image }}".into()),
+                    }),
+                },
+            ],
+            css_classes: "catalog-grid py-12 px-6".into(),
+        }
+    } else if prompt_lower.contains("nav") || prompt_lower.contains("header") {
+        erp_cms::builder_core::CanvasBlock::Navbar {
+            brand_title: "RustNext Enterprise".into(),
+            links: vec![
+                ("Overview".into(), "/#overview".into()),
+                ("Products".into(), "/site/catalog".into()),
+                ("Documentation".into(), "/site/docs".into()),
+                ("Desk Login".into(), "/desk".into()),
+            ],
+        }
+    } else if prompt_lower.contains("footer") {
+        erp_cms::builder_core::CanvasBlock::Footer {
+            copyright_text: "© 2026 RustNext Enterprise ERP. Powered by Pure-Rust & SurrealDB.".into(),
+        }
+    } else {
+        erp_cms::builder_core::CanvasBlock::Section {
+            id: "ai_hero_section".into(),
+            children: vec![
+                erp_cms::builder_core::CanvasBlock::Heading {
+                    level: 1,
+                    text: format!("AI Generated: {}", req.prompt).into(),
+                    data_binding: None,
+                },
+                erp_cms::builder_core::CanvasBlock::TextBlock {
+                    content: "Crafted autonomously by RustNext Bob AI Agent with real-time reactive layout synthesis.".into(),
+                    data_binding: None,
+                },
+            ],
+            css_classes: "hero-gradient-ai py-16 px-8 text-center".into(),
+        }
     };
 
     HttpResponse::Ok().json(serde_json::json!({
@@ -4253,24 +4366,56 @@ pub async fn emdash_list_documents_handler(state: web::Data<DynamicRbacState>) -
 pub async fn emdash_get_document_handler(
     doc_id: web::Path<String>,
     state: web::Data<DynamicRbacState>,
+    pool_mgr: Option<web::Data<ConnectionPoolManager>>,
 ) -> impl Responder {
     let id = doc_id.into_inner();
-    let lock = match state.emdash_documents.read() {
-        Ok(l) => l,
-        Err(_) => return HttpResponse::InternalServerError().body("Lock error"),
-    };
 
-    if let Some(doc) = lock.get(&id) {
-        HttpResponse::Ok().json(serde_json::json!({
-            "status": "OK",
-            "document": doc,
-            "rendered_html": doc.render_html()
-        }))
-    } else {
-        HttpResponse::NotFound().json(serde_json::json!({
-            "error": format!("Document '{id}' not found")
-        }))
+    // In-memory cache
+    if let Ok(lock) = state.emdash_documents.read() {
+        if let Some(doc) = lock.get(&id) {
+            return HttpResponse::Ok().json(serde_json::json!({
+                "status": "OK",
+                "document": doc,
+                "rendered_html": doc.render_html()
+            }));
+        }
     }
+
+    // SurrealDB fallback
+    if let Some(mgr) = pool_mgr {
+        let tenant_id = TenantId("default".into());
+        if let Ok(client) = mgr.get_or_initialize_client(&tenant_id).await {
+            let clean_id = id.replace([':', ' ', '-'], "_");
+            let sql = format!("SELECT * FROM emdash_article:{clean_id};");
+            if let Ok(mut res) = client.query(&sql).await {
+                if let Ok(Some(row)) = res.take::<Option<serde_json::Value>>(0) {
+                    let title = row.get("title").and_then(|v| v.as_str()).unwrap_or("Untitled").to_string();
+                    let slug = row.get("slug").and_then(|v| v.as_str()).unwrap_or(&clean_id).to_string();
+                    let author = row.get("author").and_then(|v| v.as_str()).unwrap_or("Editor").to_string();
+                    let mut doc = erp_cms::emdash_studio::EmdashDocument::new(id.clone(), title, slug, author);
+                    if let Some(blocks_val) = row.get("blocks") {
+                        if let Ok(blocks) = serde_json::from_value::<Vec<erp_cms::emdash_studio::EmdashBlock>>(blocks_val.clone()) {
+                            for b in blocks {
+                                doc.add_block(b);
+                            }
+                        }
+                    }
+                    if let Ok(mut lock) = state.emdash_documents.write() {
+                        lock.insert(id.clone(), doc.clone());
+                    }
+                    return HttpResponse::Ok().json(serde_json::json!({
+                        "status": "OK",
+                        "document": doc,
+                        "rendered_html": doc.render_html()
+                    }));
+                }
+            }
+        }
+    }
+
+    HttpResponse::NotFound().json(serde_json::json!({
+        "error": format!("Document '{id}' not found")
+    }))
 }
 
 /// Handler: Create or save Emdash editorial document: `POST /api/v2/emdash/documents/{id}`
@@ -4278,6 +4423,7 @@ pub async fn emdash_save_document_handler(
     doc_id: web::Path<String>,
     payload: web::Json<SaveEmdashDocumentPayload>,
     state: web::Data<DynamicRbacState>,
+    pool_mgr: Option<web::Data<ConnectionPoolManager>>,
 ) -> impl Responder {
     let id = doc_id.into_inner();
     let p = payload.into_inner();
@@ -4295,6 +4441,28 @@ pub async fn emdash_save_document_handler(
 
     if let Ok(mut lock) = state.emdash_documents.write() {
         lock.insert(id.clone(), doc.clone());
+    }
+
+    if let Some(mgr) = pool_mgr {
+        let tenant_id = TenantId("default".into());
+        if let Ok(client) = mgr.get_or_initialize_client(&tenant_id).await {
+            let clean_id = id.replace([':', ' ', '-'], "_");
+            let doc_json = serde_json::json!({
+                "id": format!("emdash_article:{clean_id}"),
+                "article_id": id,
+                "title": doc.title,
+                "slug": doc.slug,
+                "author": doc.author,
+                "blocks": doc.blocks,
+                "tags": doc.tags,
+                "workflow_state": doc.workflow_state,
+                "word_count": doc.word_count(),
+                "reading_time_mins": doc.reading_time_minutes(),
+                "updated_at": Utc::now().to_rfc3339(),
+            });
+            let sql = format!("UPSERT emdash_article:{clean_id} CONTENT $data;");
+            let _ = client.query(&sql).bind(("data", doc_json)).await;
+        }
     }
 
     HttpResponse::Ok().json(serde_json::json!({
@@ -7359,10 +7527,21 @@ mod tests {
             web::Path::from("landing_v1".to_string()),
             save_builder,
             state.clone(),
+            None,
         )
         .await
         .respond_to(&actix_web::test::TestRequest::default().to_http_request());
         assert_eq!(save_resp.status(), actix_web::http::StatusCode::OK);
+
+        // 1b. Builder get page
+        let get_page_resp = builder_get_page_handler(
+            web::Path::from("landing_v1".to_string()),
+            state.clone(),
+            None,
+        )
+        .await
+        .respond_to(&actix_web::test::TestRequest::default().to_http_request());
+        assert_eq!(get_page_resp.status(), actix_web::http::StatusCode::OK);
 
         // 2. Builder list pages
         let list_resp = builder_list_pages_handler(state.clone())
@@ -7398,10 +7577,21 @@ mod tests {
             web::Path::from("art_001".to_string()),
             save_doc,
             state.clone(),
+            None,
         )
         .await
         .respond_to(&actix_web::test::TestRequest::default().to_http_request());
         assert_eq!(doc_resp.status(), actix_web::http::StatusCode::OK);
+
+        // 4b. Emdash get document
+        let get_doc_resp = emdash_get_document_handler(
+            web::Path::from("art_001".to_string()),
+            state.clone(),
+            None,
+        )
+        .await
+        .respond_to(&actix_web::test::TestRequest::default().to_http_request());
+        assert_eq!(get_doc_resp.status(), actix_web::http::StatusCode::OK);
 
         // 5. Emdash transition document to InReview then Published
         let trans1 = web::Json(EmdashTransitionPayload {
@@ -7443,5 +7633,16 @@ mod tests {
             .await
             .respond_to(&actix_web::test::TestRequest::default().to_http_request());
         assert_eq!(crop_resp.status(), actix_web::http::StatusCode::OK);
+
+        // 7. Verify dynamic sitemap and RSS feed with published document and builder page
+        let sitemap_resp = crate::server::sitemap_xml_handler(Some(state.clone()))
+            .await
+            .respond_to(&actix_web::test::TestRequest::default().to_http_request());
+        assert_eq!(sitemap_resp.status(), actix_web::http::StatusCode::OK);
+
+        let rss_resp = crate::server::rss_feed_handler(Some(state.clone()))
+            .await
+            .respond_to(&actix_web::test::TestRequest::default().to_http_request());
+        assert_eq!(rss_resp.status(), actix_web::http::StatusCode::OK);
     }
 }

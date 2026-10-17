@@ -128,10 +128,17 @@ impl BlockValueResolver {
         Self::default()
     }
 
-    /// Resolves a dotted path (e.g. `pageData.items.0.title`) against the hierarchy:
-    /// `props` -> `componentData` -> `pageData`.
+    /// Resolves a dotted path (e.g. `pageData.items.0.title`, `{{ product.title }}`) against the hierarchy:
+    /// `componentData` -> `props` -> `pageData`.
     #[must_use]
-    pub fn resolve_path(&self, path: &str) -> Option<String> {
+    pub fn resolve_path(&self, raw_path: &str) -> Option<String> {
+        let clean = raw_path.trim();
+        let path = if clean.starts_with("{{") && clean.ends_with("}}") {
+            clean[2..clean.len() - 2].trim()
+        } else {
+            clean
+        };
+
         let parts: Vec<&str> = path.split('.').collect();
         if parts.is_empty() {
             return None;
@@ -140,6 +147,10 @@ impl BlockValueResolver {
         let (scope, remaining) =
             if parts.len() > 1 && matches!(parts[0], "pageData" | "componentData" | "props") {
                 (parts[0], &parts[1..])
+            } else if self.component_data.contains_key(parts[0]) {
+                ("componentData", parts.as_slice())
+            } else if self.props.contains_key(parts[0]) {
+                ("props", parts.as_slice())
             } else {
                 ("pageData", parts.as_slice())
             };
@@ -174,6 +185,26 @@ impl BlockValueResolver {
             serde_json::Value::Bool(b) => Some(b.to_string()),
             other => Some(other.to_string()),
         }
+    }
+
+    /// Interpolates multiple `{{ ... }}` placeholders inside arbitrary strings.
+    #[must_use]
+    pub fn interpolate_string(&self, text: &str) -> String {
+        if !text.contains("{{") {
+            return text.to_string();
+        }
+        let mut result = text.to_string();
+        while let Some(start) = result.find("{{") {
+            if let Some(end) = result[start..].find("}}") {
+                let full_end = start + end + 2;
+                let expr = result[start + 2..start + end].trim();
+                let replacement = self.resolve_path(expr).unwrap_or_default();
+                result.replace_range(start..full_end, &replacement);
+            } else {
+                break;
+            }
+        }
+        result
     }
 }
 
@@ -427,6 +458,112 @@ impl BlockCssInspector {
 
         props.join(" ")
     }
+
+    /// Merges overrides from another inspector if the corresponding field is `Some`.
+    pub fn merge_override(&mut self, other: &Self) {
+        if other.font_family.is_some() { self.font_family = other.font_family.clone(); }
+        if other.font_size_px.is_some() { self.font_size_px = other.font_size_px; }
+        if other.font_weight.is_some() { self.font_weight = other.font_weight; }
+        if other.line_height.is_some() { self.line_height = other.line_height; }
+        if other.text_align.is_some() { self.text_align = other.text_align.clone(); }
+        if other.color.is_some() { self.color = other.color.clone(); }
+
+        if other.margin_top_px.is_some() { self.margin_top_px = other.margin_top_px; }
+        if other.margin_right_px.is_some() { self.margin_right_px = other.margin_right_px; }
+        if other.margin_bottom_px.is_some() { self.margin_bottom_px = other.margin_bottom_px; }
+        if other.margin_left_px.is_some() { self.margin_left_px = other.margin_left_px; }
+
+        if other.padding_top_px.is_some() { self.padding_top_px = other.padding_top_px; }
+        if other.padding_right_px.is_some() { self.padding_right_px = other.padding_right_px; }
+        if other.padding_bottom_px.is_some() { self.padding_bottom_px = other.padding_bottom_px; }
+        if other.padding_left_px.is_some() { self.padding_left_px = other.padding_left_px; }
+
+        if other.display.is_some() { self.display = other.display.clone(); }
+        if other.flex_direction.is_some() { self.flex_direction = other.flex_direction.clone(); }
+        if other.justify_content.is_some() { self.justify_content = other.justify_content.clone(); }
+        if other.align_items.is_some() { self.align_items = other.align_items.clone(); }
+        if other.gap_px.is_some() { self.gap_px = other.gap_px; }
+        if other.grid_columns.is_some() { self.grid_columns = other.grid_columns.clone(); }
+
+        if other.background_color.is_some() { self.background_color = other.background_color.clone(); }
+        if other.border_width_px.is_some() { self.border_width_px = other.border_width_px; }
+        if other.border_color.is_some() { self.border_color = other.border_color.clone(); }
+        if other.border_radius_px.is_some() { self.border_radius_px = other.border_radius_px; }
+        if other.box_shadow.is_some() { self.box_shadow = other.box_shadow.clone(); }
+    }
+}
+
+/// Multi-breakpoint responsive style cascade with desktop-first inheritance.
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Default)]
+pub struct ResponsiveStyleCascade {
+    pub desktop: BlockCssInspector,
+    pub tablet: Option<BlockCssInspector>,
+    pub mobile: Option<BlockCssInspector>,
+}
+
+impl ResponsiveStyleCascade {
+    #[must_use]
+    pub fn new(desktop: BlockCssInspector) -> Self {
+        Self {
+            desktop,
+            tablet: None,
+            mobile: None,
+        }
+    }
+
+    /// Resolves effective style by cascading desktop styles down to tablet and mobile.
+    #[must_use]
+    pub fn resolve_for(&self, breakpoint: CanvasBreakpoint) -> BlockCssInspector {
+        match breakpoint {
+            CanvasBreakpoint::Desktop => self.desktop.clone(),
+            CanvasBreakpoint::Tablet => {
+                let mut base = self.desktop.clone();
+                if let Some(t) = &self.tablet {
+                    base.merge_override(t);
+                }
+                base
+            }
+            CanvasBreakpoint::Mobile => {
+                let mut base = self.desktop.clone();
+                if let Some(t) = &self.tablet {
+                    base.merge_override(t);
+                }
+                if let Some(m) = &self.mobile {
+                    base.merge_override(m);
+                }
+                base
+            }
+        }
+    }
+
+    /// Compiles CSS rules with media queries for this specific selector.
+    #[must_use]
+    pub fn compile_element_css(&self, selector: &str) -> String {
+        let mut css = String::new();
+        let base_css = self.desktop.to_inline_css();
+        if !base_css.is_empty() {
+            css.push_str(&format!("{selector} {{ {base_css} }}\n"));
+        }
+
+        if let Some(tablet) = &self.tablet {
+            let t_css = tablet.to_inline_css();
+            if !t_css.is_empty() {
+                css.push_str(&format!(
+                    "@media (max-width: 768px) {{\n  {selector} {{ {t_css} }}\n}}\n"
+                ));
+            }
+        }
+
+        if let Some(mobile) = &self.mobile {
+            let m_css = mobile.to_inline_css();
+            if !m_css.is_empty() {
+                css.push_str(&format!(
+                    "@media (max-width: 480px) {{\n  {selector} {{ {m_css} }}\n}}\n"
+                ));
+            }
+        }
+        css
+    }
 }
 
 /// Filter condition for live DocType SurrealQL query binding.
@@ -512,6 +649,10 @@ pub struct CanvasBlockNode {
     pub parent_id: Option<CompactString>,
     pub child_ids: Vec<CompactString>,
     pub css_styles: Option<BlockCssInspector>,
+    #[serde(default)]
+    pub responsive_styles: Option<ResponsiveStyleCascade>,
+    #[serde(default)]
+    pub slot: Option<CompactString>,
 }
 
 /// Hierarchical Block Canvas Tree supporting drag-and-drop insertion, removal, and reordering.
@@ -519,6 +660,10 @@ pub struct CanvasBlockNode {
 pub struct CanvasBlockTree {
     pub nodes: HashMap<CompactString, CanvasBlockNode>,
     pub root_ids: Vec<CompactString>,
+    #[serde(default)]
+    pub version: u64,
+    #[serde(default)]
+    pub updated_by: Option<CompactString>,
     next_id: usize,
 }
 
@@ -536,6 +681,7 @@ impl CanvasBlockTree {
         index: usize,
     ) -> CompactString {
         self.next_id += 1;
+        self.version += 1;
         let id: CompactString = format!("blk_{}", self.next_id).into();
         let parent = parent_id.map(CompactString::new);
 
@@ -558,6 +704,8 @@ impl CanvasBlockTree {
             parent_id: parent,
             child_ids: Vec::new(),
             css_styles: None,
+            responsive_styles: None,
+            slot: None,
         };
 
         self.nodes.insert(id.clone(), node);
@@ -585,6 +733,7 @@ impl CanvasBlockTree {
             }
         }
 
+        self.version += 1;
         Some(node.block)
     }
 
@@ -644,6 +793,7 @@ impl CanvasBlockTree {
             }
         }
 
+        self.version += 1;
         Ok(())
     }
 
@@ -657,10 +807,34 @@ impl CanvasBlockTree {
         self.nodes.get_mut(id)
     }
 
-    /// Renders the complete block tree to HTML with scoped data resolution.
+    /// Compiles all responsive and custom CSS rules into a centralized stylesheet.
+    #[must_use]
+    pub fn compile_stylesheet(&self) -> String {
+        let mut stylesheet = String::new();
+        for (id, node) in &self.nodes {
+            let selector = format!("#{id}");
+            if let Some(resp) = &node.responsive_styles {
+                stylesheet.push_str(&resp.compile_element_css(&selector));
+            } else if let Some(css) = &node.css_styles {
+                let inline = css.to_inline_css();
+                if !inline.is_empty() {
+                    stylesheet.push_str(&format!("{selector} {{ {inline} }}\n"));
+                }
+            }
+        }
+        stylesheet
+    }
+
+    /// Renders the complete block tree to HTML with scoped data resolution and responsive media queries.
     #[must_use]
     pub fn render_html(&self, resolver: &BlockValueResolver) -> String {
         let mut out = String::new();
+        let stylesheet = self.compile_stylesheet();
+        if !stylesheet.is_empty() {
+            out.push_str("<style>\n");
+            out.push_str(&stylesheet);
+            out.push_str("</style>\n");
+        }
         for root_id in &self.root_ids {
             self.render_node(root_id.as_str(), resolver, &mut out);
         }
@@ -671,10 +845,17 @@ impl CanvasBlockTree {
         let Some(node) = self.nodes.get(id) else {
             return;
         };
-        let style_attr = node
-            .css_styles
+        let style_attr = if let Some(s) = &node.css_styles {
+            format!(r#" style="{}""#, s.to_inline_css())
+        } else if let Some(resp) = &node.responsive_styles {
+            format!(r#" style="{}""#, resp.desktop.to_inline_css())
+        } else {
+            String::new()
+        };
+        let slot_attr = node
+            .slot
             .as_ref()
-            .map(|s| format!(r#" style="{}""#, s.to_inline_css()))
+            .map(|s| format!(r#" data-slot="{s}""#))
             .unwrap_or_default();
 
         match &node.block {
@@ -686,9 +867,9 @@ impl CanvasBlockTree {
                 let resolved = data_binding
                     .as_deref()
                     .and_then(|p| resolver.resolve_path(p))
-                    .unwrap_or_else(|| text.to_string());
+                    .unwrap_or_else(|| resolver.interpolate_string(text.as_str()));
                 out.push_str(&format!(
-                    "<h{level} id=\"{id}\"{style_attr}>{resolved}</h{level}>\n"
+                    "<h{level} id=\"{id}\"{slot_attr}{style_attr}>{resolved}</h{level}>\n"
                 ));
             }
             CanvasBlock::TextBlock {
@@ -698,21 +879,23 @@ impl CanvasBlockTree {
                 let resolved = data_binding
                     .as_deref()
                     .and_then(|p| resolver.resolve_path(p))
-                    .unwrap_or_else(|| content.to_string());
-                out.push_str(&format!("<p id=\"{id}\"{style_attr}>{resolved}</p>\n"));
+                    .unwrap_or_else(|| resolver.interpolate_string(content.as_str()));
+                out.push_str(&format!("<p id=\"{id}\"{slot_attr}{style_attr}>{resolved}</p>\n"));
             }
             CanvasBlock::BlockQuote { quote, author } => {
+                let q_res = resolver.interpolate_string(quote.as_str());
                 out.push_str(&format!(
-                    "<blockquote id=\"{id}\"{style_attr}><p>{quote}</p>"
+                    "<blockquote id=\"{id}\"{slot_attr}{style_attr}><p>{q_res}</p>"
                 ));
                 if let Some(a) = author {
-                    out.push_str(&format!("<footer>— <cite>{a}</cite></footer>"));
+                    let a_res = resolver.interpolate_string(a.as_str());
+                    out.push_str(&format!("<footer>— <cite>{a_res}</cite></footer>"));
                 }
                 out.push_str("</blockquote>\n");
             }
             CanvasBlock::Section { css_classes, .. } => {
                 out.push_str(&format!(
-                    "<section id=\"{id}\" class=\"{css_classes}\"{style_attr}>\n"
+                    "<section id=\"{id}\" class=\"{css_classes}\"{slot_attr}{style_attr}>\n"
                 ));
                 for cid in &node.child_ids {
                     self.render_node(cid.as_str(), resolver, out);
@@ -721,7 +904,7 @@ impl CanvasBlockTree {
             }
             CanvasBlock::Div { css_classes, .. } => {
                 out.push_str(&format!(
-                    "<div id=\"{id}\" class=\"{css_classes}\"{style_attr}>\n"
+                    "<div id=\"{id}\" class=\"{css_classes}\"{slot_attr}{style_attr}>\n"
                 ));
                 for cid in &node.child_ids {
                     self.render_node(cid.as_str(), resolver, out);
@@ -730,7 +913,7 @@ impl CanvasBlockTree {
             }
             CanvasBlock::Container { max_width_px, .. } => {
                 out.push_str(&format!(
-                    "<div id=\"{id}\" class=\"container\" style=\"max-width: {max_width_px}px; margin: 0 auto;{style_attr}\">\n"
+                    "<div id=\"{id}\" class=\"container\"{slot_attr} style=\"max-width: {max_width_px}px; margin: 0 auto;{style_attr}\">\n"
                 ));
                 for cid in &node.child_ids {
                     self.render_node(cid.as_str(), resolver, out);
@@ -739,26 +922,30 @@ impl CanvasBlockTree {
             }
             CanvasBlock::Spacer { height_px } => {
                 out.push_str(&format!(
-                    "<div id=\"{id}\" style=\"height: {height_px}px;{style_attr}\"></div>\n"
+                    "<div id=\"{id}\"{slot_attr} style=\"height: {height_px}px;{style_attr}\"></div>\n"
                 ));
             }
             CanvasBlock::Divider => {
                 out.push_str(&format!(
-                    "<hr id=\"{id}\" class=\"builder-divider\"{style_attr} />\n"
+                    "<hr id=\"{id}\" class=\"builder-divider\"{slot_attr}{style_attr} />\n"
                 ));
             }
             CanvasBlock::Navbar { brand_title, links } => {
+                let brand = resolver.interpolate_string(brand_title.as_str());
                 out.push_str(&format!(
-                    "<nav id=\"{id}\" class=\"builder-navbar\"{style_attr}><div class=\"nav-brand\">{brand_title}</div><ul class=\"nav-links\">"
+                    "<nav id=\"{id}\" class=\"builder-navbar\"{slot_attr}{style_attr}><div class=\"nav-brand\">{brand}</div><ul class=\"nav-links\">"
                 ));
                 for (lbl, url) in links {
-                    out.push_str(&format!("<li><a href=\"{url}\">{lbl}</a></li>"));
+                    let l_res = resolver.interpolate_string(lbl.as_str());
+                    let u_res = resolver.interpolate_string(url.as_str());
+                    out.push_str(&format!("<li><a href=\"{u_res}\">{l_res}</a></li>"));
                 }
                 out.push_str("</ul></nav>\n");
             }
             CanvasBlock::Footer { copyright_text } => {
+                let copy = resolver.interpolate_string(copyright_text.as_str());
                 out.push_str(&format!(
-                    "<footer id=\"{id}\" class=\"builder-footer\"{style_attr}><p>{copyright_text}</p></footer>\n"
+                    "<footer id=\"{id}\" class=\"builder-footer\"{slot_attr}{style_attr}><p>{copy}</p></footer>\n"
                 ));
             }
             CanvasBlock::CardBlock {
@@ -766,15 +953,21 @@ impl CanvasBlockTree {
                 body,
                 image_url,
             } => {
+                let title_res = resolver.interpolate_string(title.as_str());
+                let body_res = resolver.interpolate_string(body.as_str());
+                let img_res = image_url.as_ref().map(|img| resolver.interpolate_string(img.as_str()));
+
                 out.push_str(&format!(
-                    "<div id=\"{id}\" class=\"card-block\"{style_attr}>"
+                    "<div id=\"{id}\" class=\"card-block\"{slot_attr}{style_attr}>"
                 ));
-                if let Some(img) = image_url {
-                    out.push_str(&format!(
-                        "<img src=\"{img}\" alt=\"{title}\" class=\"card-img\" />"
-                    ));
+                if let Some(img) = img_res {
+                    if !img.is_empty() {
+                        out.push_str(&format!(
+                            "<img src=\"{img}\" alt=\"{title_res}\" class=\"card-img\" />"
+                        ));
+                    }
                 }
-                out.push_str(&format!("<h3>{title}</h3><p>{body}</p></div>\n"));
+                out.push_str(&format!("<h3>{title_res}</h3><p>{body_res}</p></div>\n"));
             }
             CanvasBlock::NumberCardBlock {
                 label,
@@ -784,8 +977,9 @@ impl CanvasBlockTree {
                 let val = resolver
                     .resolve_path(value_data_path.as_str())
                     .unwrap_or_else(|| "0".into());
+                let lbl = resolver.interpolate_string(label.as_str());
                 out.push_str(&format!(
-                    "<div id=\"{id}\" class=\"number-card\"{style_attr}><span class=\"number-label\">{label}</span><span class=\"number-value\">{val}</span></div>\n"
+                    "<div id=\"{id}\" class=\"number-card\"{slot_attr}{style_attr}><span class=\"number-label\">{lbl}</span><span class=\"number-value\">{val}</span></div>\n"
                 ));
             }
             CanvasBlock::ImageBlock {
@@ -794,6 +988,8 @@ impl CanvasBlockTree {
                 width_px,
                 height_px,
             } => {
+                let src_res = resolver.interpolate_string(src.as_str());
+                let alt_res = resolver.interpolate_string(alt.as_str());
                 let mut dims = String::new();
                 if let Some(w) = width_px {
                     dims.push_str(&format!(" width=\"{w}\""));
@@ -802,21 +998,48 @@ impl CanvasBlockTree {
                     dims.push_str(&format!(" height=\"{h}\""));
                 }
                 out.push_str(&format!(
-                    "<img id=\"{id}\" src=\"{src}\" alt=\"{alt}\"{dims}{style_attr} />\n"
+                    "<img id=\"{id}\" src=\"{src_res}\" alt=\"{alt_res}\"{dims}{slot_attr}{style_attr} />\n"
                 ));
             }
             CanvasBlock::RawHtml { html } => {
-                out.push_str(html.as_str());
+                let html_res = resolver.interpolate_string(html.as_str());
+                out.push_str(html_res.as_str());
                 out.push('\n');
             }
             CanvasBlock::Repeater {
-                data_source_path, ..
+                data_source_path,
+                item_alias,
+                template,
             } => {
                 out.push_str(&format!(
-                    "<div id=\"{id}\" class=\"repeater\" data-source=\"{data_source_path}\"{style_attr}>\n"
+                    "<div id=\"{id}\" class=\"repeater\" data-source=\"{data_source_path}\"{slot_attr}{style_attr}>\n"
                 ));
-                for cid in &node.child_ids {
-                    self.render_node(cid.as_str(), resolver, out);
+                let clean_path = data_source_path.trim().trim_start_matches("{{").trim_end_matches("}}").trim();
+                let parts: Vec<&str> = clean_path.split('.').collect();
+                let key = if parts.len() > 1 && parts[0] == "pageData" { parts[1] } else { parts[0] };
+                if let Some(serde_json::Value::Array(items)) = resolver.page_data.get(key) {
+                    for (idx, item) in items.iter().enumerate() {
+                        let mut item_resolver = resolver.clone();
+                        item_resolver.component_data.insert(item_alias.clone(), item.clone());
+                        let temp_id = format!("{id}_item_{idx}");
+                        let temp_node = CanvasBlockNode {
+                            id: temp_id.into(),
+                            block: (**template).clone(),
+                            parent_id: Some(id.into()),
+                            child_ids: Vec::new(),
+                            css_styles: None,
+                            responsive_styles: None,
+                            slot: None,
+                        };
+                        let mut temp_tree = CanvasBlockTree::default();
+                        temp_tree.nodes.insert(temp_node.id.clone(), temp_node.clone());
+                        temp_tree.root_ids.push(temp_node.id.clone());
+                        out.push_str(&temp_tree.render_html(&item_resolver));
+                    }
+                } else {
+                    for cid in &node.child_ids {
+                        self.render_node(cid.as_str(), resolver, out);
+                    }
                 }
                 out.push_str("</div>\n");
             }
@@ -1025,5 +1248,36 @@ mod tests {
             query,
             "SELECT item_code, item_name, standard_rate FROM item WHERE is_sales_item = true AND disabled = 0 ORDER BY item_code ASC LIMIT 25;"
         );
+    }
+
+    #[test]
+    fn test_canvas_repeater_rendering() {
+        let mut tree = CanvasBlockTree::new();
+        let _repeater_id = tree.insert_block(
+            None,
+            CanvasBlock::Repeater {
+                data_source_path: "pageData.items".into(),
+                item_alias: "item".into(),
+                template: Box::new(CanvasBlock::TextBlock {
+                    content: "Item: {{ item.name }} | Cost: {{ item.cost }}".into(),
+                    data_binding: None,
+                }),
+            },
+            0,
+        );
+
+        let mut resolver = BlockValueResolver::new();
+        resolver.page_data.insert(
+            "items".into(),
+            serde_json::json!([
+                {"name": "Titanium Gear", "cost": 150},
+                {"name": "Ceramic Bearing", "cost": 45}
+            ]),
+        );
+
+        let html = tree.render_html(&resolver);
+        assert!(html.contains("class=\"repeater\""));
+        assert!(html.contains("Item: Titanium Gear | Cost: 150"));
+        assert!(html.contains("Item: Ceramic Bearing | Cost: 45"));
     }
 }

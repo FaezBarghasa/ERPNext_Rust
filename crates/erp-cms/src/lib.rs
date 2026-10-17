@@ -33,7 +33,10 @@ pub use luxury_storefront::{
 };
 pub use print::render_invoice_html;
 pub use security::{HmacStreamingSigner, StreamingError, SvodPlaybackManager, parse_byte_range};
-pub use seo_engine::{SeoMetadata, generate_robots_txt, generate_sitemap_xml};
+pub use seo_engine::{
+    RssFeedItem, SeoMetadata, SitemapEntry, generate_dynamic_sitemap_xml, generate_robots_txt,
+    generate_rss_2_xml, generate_sitemap_xml,
+};
 pub use storefront::{
     AtomicCheckoutEngine, CheckoutError, CheckoutItem, CheckoutResult, CustomerCheckoutRequest,
 };
