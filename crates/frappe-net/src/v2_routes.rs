@@ -2276,6 +2276,8 @@ pub struct DynamicRbacState {
     pub rma_records: Arc<RwLock<HashMap<String, RmaRecord>>>,
     pub refresh_tokens: Arc<RwLock<HashMap<String, RefreshTokenRecord>>>,
     pub fifo_layers: Arc<RwLock<HashMap<String, Vec<FifoBatchItem>>>>,
+    pub builder_pages: Arc<RwLock<HashMap<String, erp_cms::builder_core::CanvasBlockTree>>>,
+    pub emdash_documents: Arc<RwLock<HashMap<String, erp_cms::emdash_studio::EmdashDocument>>>,
 }
 
 impl Default for DynamicRbacState {
@@ -2414,6 +2416,8 @@ impl Default for DynamicRbacState {
             rma_records: Arc::new(RwLock::new(HashMap::new())),
             refresh_tokens: Arc::new(RwLock::new(HashMap::new())),
             fifo_layers: Arc::new(RwLock::new(HashMap::new())),
+            builder_pages: Arc::new(RwLock::new(HashMap::new())),
+            emdash_documents: Arc::new(RwLock::new(HashMap::new())),
         }
     }
 }
@@ -4077,6 +4081,297 @@ pub async fn cms_generate_seo_handler(payload: web::Json<GenerateSeoPayload>) ->
         "status": "OK",
         "html_head_tags": tags,
         "metadata": meta,
+    }))
+}
+
+// =========================================================================
+// Frappe Builder & Emdash Editorial Studio Endpoints
+// =========================================================================
+
+/// DTO for saving/updating a Builder Canvas Page AST.
+#[derive(Debug, Deserialize)]
+pub struct SaveBuilderPagePayload {
+    pub title: String,
+    pub route_path: String,
+    pub tree: erp_cms::builder_core::CanvasBlockTree,
+}
+
+/// DTO for reverting or undoing/redoing page state.
+#[derive(Debug, Deserialize)]
+pub struct RevertBuilderPagePayload {
+    pub action: String, // "undo" | "redo"
+}
+
+/// Handler: Get or list Builder pages: `GET /api/v2/builder/pages`
+pub async fn builder_list_pages_handler(state: web::Data<DynamicRbacState>) -> impl Responder {
+    let pages = state.builder_pages.read().map(|lock| {
+        lock.iter()
+            .map(|(k, v)| {
+                serde_json::json!({
+                    "id": k,
+                    "node_count": v.nodes.len(),
+                    "root_id": v.root_id
+                })
+            })
+            .collect::<Vec<_>>()
+    }).unwrap_or_default();
+
+    HttpResponse::Ok().json(serde_json::json!({
+        "status": "OK",
+        "pages": pages
+    }))
+}
+
+/// Handler: Get single Builder page AST: `GET /api/v2/builder/pages/{id}`
+pub async fn builder_get_page_handler(
+    page_id: web::Path<String>,
+    state: web::Data<DynamicRbacState>,
+) -> impl Responder {
+    let id = page_id.into_inner();
+    let lock = match state.builder_pages.read() {
+        Ok(l) => l,
+        Err(_) => return HttpResponse::InternalServerError().body("Lock error"),
+    };
+
+    if let Some(tree) = lock.get(&id) {
+        HttpResponse::Ok().json(serde_json::json!({
+            "status": "OK",
+            "page_id": id,
+            "tree": tree
+        }))
+    } else {
+        HttpResponse::NotFound().json(serde_json::json!({
+            "error": format!("Builder page '{id}' not found")
+        }))
+    }
+}
+
+/// Handler: Save or create Builder page AST: `POST /api/v2/builder/pages/{id}`
+pub async fn builder_save_page_handler(
+    page_id: web::Path<String>,
+    payload: web::Json<SaveBuilderPagePayload>,
+    state: web::Data<DynamicRbacState>,
+) -> impl Responder {
+    let id = page_id.into_inner();
+    let p = payload.into_inner();
+
+    if let Ok(mut lock) = state.builder_pages.write() {
+        lock.insert(id.clone(), p.tree.clone());
+    }
+
+    HttpResponse::Ok().json(serde_json::json!({
+        "status": "SAVED",
+        "page_id": id,
+        "title": p.title,
+        "route_path": p.route_path,
+        "node_count": p.tree.nodes.len()
+    }))
+}
+
+/// Handler: Autonomous Site Agent ("Bob") AI Prompt: `POST /api/v2/builder/ai/prompt`
+pub async fn builder_ai_prompt_handler(
+    payload: web::Json<erp_cms::builder_core::BobAgentPromptRequest>,
+) -> impl Responder {
+    let req = payload.into_inner();
+
+    // Autonomous Bob synthesizes a structured visual hero block or modifies AST
+    let synthesized_block = erp_cms::builder_core::CanvasBlock::Section {
+        id: "ai_hero_section".into(),
+        children: vec![
+            erp_cms::builder_core::CanvasBlock::Heading {
+                level: 1,
+                text: format!("AI Generated: {}", req.prompt).into(),
+                data_binding: None,
+            },
+            erp_cms::builder_core::CanvasBlock::TextBlock {
+                content: "Crafted autonomously by RustNext Bob AI Agent.".into(),
+                data_binding: None,
+            },
+        ],
+        css_classes: "hero-gradient-ai py-16 px-8 text-center".into(),
+    };
+
+    HttpResponse::Ok().json(serde_json::json!({
+        "status": "SYNTHESIZED",
+        "mode": req.mode,
+        "prompt": req.prompt,
+        "active_theme_id": req.active_theme_id,
+        "synthesized_block": synthesized_block
+    }))
+}
+
+/// DTO for creating or updating an Emdash editorial document.
+#[derive(Debug, Deserialize)]
+pub struct SaveEmdashDocumentPayload {
+    pub title: String,
+    pub slug: String,
+    pub author: String,
+    pub blocks: Vec<erp_cms::emdash_studio::EmdashBlock>,
+    pub tags: Vec<String>,
+}
+
+/// DTO for editorial workflow transitions.
+#[derive(Debug, Deserialize)]
+pub struct EmdashTransitionPayload {
+    pub target_state: String, // "Draft", "InReview", "Scheduled", "Published", "Archived"
+    pub timestamp: Option<u64>,
+}
+
+/// Handler: List Emdash editorial documents: `GET /api/v2/emdash/documents`
+pub async fn emdash_list_documents_handler(state: web::Data<DynamicRbacState>) -> impl Responder {
+    let docs = state.emdash_documents.read().map(|lock| {
+        lock.values()
+            .map(|doc| {
+                serde_json::json!({
+                    "id": doc.id,
+                    "title": doc.title,
+                    "slug": doc.slug,
+                    "author": doc.author,
+                    "state": doc.workflow_state.state_name(),
+                    "words": doc.word_count(),
+                    "reading_time_mins": doc.reading_time_minutes(),
+                })
+            })
+            .collect::<Vec<_>>()
+    }).unwrap_or_default();
+
+    HttpResponse::Ok().json(serde_json::json!({
+        "status": "OK",
+        "documents": docs
+    }))
+}
+
+/// Handler: Get single Emdash document: `GET /api/v2/emdash/documents/{id}`
+pub async fn emdash_get_document_handler(
+    doc_id: web::Path<String>,
+    state: web::Data<DynamicRbacState>,
+) -> impl Responder {
+    let id = doc_id.into_inner();
+    let lock = match state.emdash_documents.read() {
+        Ok(l) => l,
+        Err(_) => return HttpResponse::InternalServerError().body("Lock error"),
+    };
+
+    if let Some(doc) = lock.get(&id) {
+        HttpResponse::Ok().json(serde_json::json!({
+            "status": "OK",
+            "document": doc,
+            "rendered_html": doc.render_html()
+        }))
+    } else {
+        HttpResponse::NotFound().json(serde_json::json!({
+            "error": format!("Document '{id}' not found")
+        }))
+    }
+}
+
+/// Handler: Create or save Emdash editorial document: `POST /api/v2/emdash/documents/{id}`
+pub async fn emdash_save_document_handler(
+    doc_id: web::Path<String>,
+    payload: web::Json<SaveEmdashDocumentPayload>,
+    state: web::Data<DynamicRbacState>,
+) -> impl Responder {
+    let id = doc_id.into_inner();
+    let p = payload.into_inner();
+
+    let mut doc = erp_cms::emdash_studio::EmdashDocument::new(
+        id.clone(),
+        p.title,
+        p.slug,
+        p.author,
+    );
+    for b in p.blocks {
+        doc.add_block(b);
+    }
+    doc.tags = p.tags.into_iter().map(compact_str::CompactString::from).collect();
+
+    if let Ok(mut lock) = state.emdash_documents.write() {
+        lock.insert(id.clone(), doc.clone());
+    }
+
+    HttpResponse::Ok().json(serde_json::json!({
+        "status": "SAVED",
+        "id": id,
+        "word_count": doc.word_count(),
+        "reading_time_mins": doc.reading_time_minutes(),
+    }))
+}
+
+/// Handler: Transition Emdash editorial document lifecycle: `POST /api/v2/emdash/documents/{id}/transition`
+pub async fn emdash_transition_handler(
+    doc_id: web::Path<String>,
+    payload: web::Json<EmdashTransitionPayload>,
+    state: web::Data<DynamicRbacState>,
+) -> impl Responder {
+    let id = doc_id.into_inner();
+    let p = payload.into_inner();
+    let now = p.timestamp.unwrap_or_else(|| Utc::now().timestamp() as u64);
+
+    let target_state = match p.target_state.as_str() {
+        "Draft" => erp_cms::emdash_studio::EditorialWorkflowState::Draft,
+        "InReview" => erp_cms::emdash_studio::EditorialWorkflowState::InReview,
+        "Scheduled" => erp_cms::emdash_studio::EditorialWorkflowState::Scheduled { publish_timestamp: now + 3600 },
+        "Published" => erp_cms::emdash_studio::EditorialWorkflowState::Published { published_timestamp: now },
+        "Archived" => erp_cms::emdash_studio::EditorialWorkflowState::Archived,
+        other => {
+            return HttpResponse::BadRequest().json(serde_json::json!({
+                "error": format!("Unknown editorial target state '{other}'")
+            }));
+        }
+    };
+
+    let mut lock = match state.emdash_documents.write() {
+        Ok(l) => l,
+        Err(_) => return HttpResponse::InternalServerError().body("Lock error"),
+    };
+
+    if let Some(doc) = lock.get_mut(&id) {
+        match doc.workflow_state.transition_to(target_state) {
+            Ok(new_st) => {
+                doc.workflow_state = new_st;
+                HttpResponse::Ok().json(serde_json::json!({
+                    "status": "TRANSITIONED",
+                    "id": id,
+                    "new_state": new_st.state_name(),
+                }))
+            }
+            Err(e) => {
+                HttpResponse::BadRequest().json(serde_json::json!({
+                    "error": e.to_string()
+                }))
+            }
+        }
+    } else {
+        HttpResponse::NotFound().json(serde_json::json!({
+            "error": format!("Document '{id}' not found")
+        }))
+    }
+}
+
+/// DTO for smart media focal crop calculation
+#[derive(Debug, Deserialize)]
+pub struct FocalCropPayload {
+    pub image_width: u32,
+    pub image_height: u32,
+    pub target_aspect_ratio: f32,
+    pub focal_x: f32,
+    pub focal_y: f32,
+}
+
+/// Handler: Compute smart media focal-point crop bounding box: `POST /api/v2/emdash/media/crop`
+pub async fn emdash_media_crop_handler(payload: web::Json<FocalCropPayload>) -> impl Responder {
+    let p = payload.into_inner();
+    let crop_box = erp_cms::emdash_studio::calculate_focal_crop(
+        p.image_width,
+        p.image_height,
+        p.target_aspect_ratio,
+        p.focal_x,
+        p.focal_y,
+    );
+
+    HttpResponse::Ok().json(serde_json::json!({
+        "status": "COMPUTED",
+        "crop_box": crop_box
     }))
 }
 
