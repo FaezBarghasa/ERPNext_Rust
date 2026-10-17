@@ -596,11 +596,7 @@ pub async fn v2_delete_document(
 
     // Guard: Prevent deleting submitted document (docstatus == 1)
     let check_sql = format!("SELECT docstatus FROM {table} WHERE name = $name;");
-    if let Ok(mut res) = client
-        .query(&check_sql)
-        .bind(("name", name.clone()))
-        .await
-    {
+    if let Ok(mut res) = client.query(&check_sql).bind(("name", name.clone())).await {
         let records: Vec<serde_json::Value> = res.take(0).unwrap_or_default();
         if let Some(r) = records.into_iter().next()
             && let Some(docstatus) = r.get("docstatus").and_then(|d| d.as_i64())
@@ -678,11 +674,7 @@ pub async fn v2_submit_document(
 
     // 1. Fetch current document state
     let fetch_sql = format!("SELECT * FROM {table} WHERE name = $name;");
-    let mut fetch_res = match client
-        .query(&fetch_sql)
-        .bind(("name", name.clone()))
-        .await
-    {
+    let mut fetch_res = match client.query(&fetch_sql).bind(("name", name.clone())).await {
         Ok(r) => r,
         Err(e) => return HttpResponse::InternalServerError().body(e.to_string()),
     };
@@ -1292,11 +1284,7 @@ pub async fn v2_cancel_document(
 
     // 1. Fetch current document state to verify it is currently submitted (1)
     let fetch_sql = format!("SELECT * FROM {table} WHERE name = $name;");
-    let mut fetch_res = match client
-        .query(&fetch_sql)
-        .bind(("name", name.clone()))
-        .await
-    {
+    let mut fetch_res = match client.query(&fetch_sql).bind(("name", name.clone())).await {
         Ok(r) => r,
         Err(e) => return HttpResponse::InternalServerError().body(e.to_string()),
     };
@@ -1347,7 +1335,11 @@ pub async fn v2_cancel_document(
 
     // 3. Query and generate reversing GL entries inside transaction
     let gl_query = "SELECT * FROM gl_entry WHERE voucher_no = $voucher_no;";
-    if let Ok(mut gl_res) = client.query(gl_query).bind(("voucher_no", name.clone())).await {
+    if let Ok(mut gl_res) = client
+        .query(gl_query)
+        .bind(("voucher_no", name.clone()))
+        .await
+    {
         let existing_gls: Vec<serde_json::Value> = gl_res.take(0).unwrap_or_default();
         for val in existing_gls {
             if let Ok(gl) = serde_json::from_value::<GlEntry>(val) {
@@ -1372,7 +1364,11 @@ pub async fn v2_cancel_document(
 
     // 4. Query and generate reversing Stock Ledger entries inside transaction
     let sle_query = "SELECT * FROM stock_ledger_entry WHERE voucher_no = $voucher_no;";
-    if let Ok(mut sle_res) = client.query(sle_query).bind(("voucher_no", name.clone())).await {
+    if let Ok(mut sle_res) = client
+        .query(sle_query)
+        .bind(("voucher_no", name.clone()))
+        .await
+    {
         let existing_sles: Vec<serde_json::Value> = sle_res.take(0).unwrap_or_default();
         for val in existing_sles {
             if let Ok(sle) = serde_json::from_value::<StockLedgerEntry>(val) {
@@ -1399,7 +1395,11 @@ pub async fn v2_cancel_document(
 
     // 5. Query and generate reversing Payment Ledger entries inside transaction
     let ple_query = "SELECT * FROM payment_ledger_entry WHERE voucher_no = $voucher_no;";
-    if let Ok(mut ple_res) = client.query(ple_query).bind(("voucher_no", name.clone())).await {
+    if let Ok(mut ple_res) = client
+        .query(ple_query)
+        .bind(("voucher_no", name.clone()))
+        .await
+    {
         let existing_ples: Vec<serde_json::Value> = ple_res.take(0).unwrap_or_default();
         for mut val in existing_ples {
             if let Some(obj) = val.as_object_mut() {
@@ -1476,14 +1476,9 @@ pub async fn v2_amend_document(
     };
 
     let table = doctype.to_lowercase().replace(' ', "_");
-    let sanitized_name = sanitize_surrealql_string(&name);
 
     let fetch_sql = format!("SELECT * FROM {table} WHERE name = $name;");
-    let mut res = match client
-        .query(&fetch_sql)
-        .bind(("name", name.clone()))
-        .await
-    {
+    let mut res = match client.query(&fetch_sql).bind(("name", name.clone())).await {
         Ok(r) => r,
         Err(e) => return HttpResponse::InternalServerError().body(e.to_string()),
     };
@@ -1645,11 +1640,7 @@ pub async fn download_file_handler(
     };
 
     let sql = "SELECT * FROM drive_file WHERE content_hash = $content_hash;";
-    match client
-        .query(sql)
-        .bind(("content_hash", hash.clone()))
-        .await
-    {
+    match client.query(sql).bind(("content_hash", hash.clone())).await {
         Ok(mut res) => {
             let records: Vec<serde_json::Value> = res.take(0).unwrap_or_default();
             match records.into_iter().next() {
@@ -2197,11 +2188,7 @@ pub async fn h3_stream_file_handler(
     };
 
     let sql = "SELECT * FROM drive_file WHERE content_hash = $content_hash;";
-    match client
-        .query(sql)
-        .bind(("content_hash", hash.clone()))
-        .await
-    {
+    match client.query(sql).bind(("content_hash", hash.clone())).await {
         Ok(mut res) => {
             let records: Vec<serde_json::Value> = res.take(0).unwrap_or_default();
             match records.into_iter().next() {
@@ -5554,15 +5541,18 @@ pub async fn accounting_payment_entry_handler(
                         "Partly Paid"
                     };
 
-                    let update_sql =
-                        format!("UPDATE {inv_table} MERGE $patch WHERE name = '{sanitized_inv}';");
+                    let update_sql = format!("UPDATE {inv_table} MERGE $patch WHERE name = $name;");
                     let patch = serde_json::json!({
                         "paid_amount": new_paid.to_string(),
                         "outstanding_amount": new_outstanding.to_string(),
                         "status": new_status,
                         "modified": Utc::now().to_rfc3339()
                     });
-                    let _ = client.query(&update_sql).bind(("patch", patch)).await;
+                    let _ = client
+                        .query(&update_sql)
+                        .bind(("patch", patch))
+                        .bind(("name", inv_no.to_string()))
+                        .await;
                 }
             }
         }
@@ -5740,16 +5730,19 @@ pub async fn payment_charge_handler(
                                 "Partly Paid"
                             };
 
-                            let update_sql = format!(
-                                "UPDATE sales_invoice MERGE $patch WHERE name = '{sanitized_ref}';"
-                            );
+                            let update_sql =
+                                "UPDATE sales_invoice MERGE $patch WHERE name = $name;";
                             let patch = serde_json::json!({
                                 "paid_amount": new_paid.to_string(),
                                 "outstanding_amount": new_outstanding.to_string(),
                                 "status": new_status,
                                 "modified": Utc::now().to_rfc3339()
                             });
-                            let _ = client.query(&update_sql).bind(("patch", patch)).await;
+                            let _ = client
+                                .query(update_sql)
+                                .bind(("patch", patch))
+                                .bind(("name", payload.docname.clone()))
+                                .await;
                         }
                     }
                 }

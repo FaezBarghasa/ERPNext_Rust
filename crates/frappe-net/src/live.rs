@@ -37,19 +37,58 @@ pub enum RealtimeEvent {
     },
 }
 
+/// Realtime broadcast frame containing target room and event payload.
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+pub struct RealtimeBroadcast {
+    pub room: CompactString,
+    pub event: RealtimeEvent,
+}
+
 /// In-memory Realtime Hub managing room subscriptions (`doc:<doctype>:<name>`, `user:<user>`).
-#[derive(Debug, Default, Clone)]
+/// Uses a lock-free Tokio broadcast channel for zero-contention, low-latency event distribution.
+#[derive(Debug, Clone)]
 pub struct RealtimeHub {
     // Room -> set of session IDs
     rooms: Arc<RwLock<HashMap<CompactString, HashSet<CompactString>>>>,
     // Session ID -> set of rooms subscribed
     subscriptions: Arc<RwLock<HashMap<CompactString, HashSet<CompactString>>>>,
+    // Lock-free broadcast channel for zero-contention distribution
+    broadcast_tx: tokio::sync::broadcast::Sender<RealtimeBroadcast>,
+}
+
+impl Default for RealtimeHub {
+    fn default() -> Self {
+        let (broadcast_tx, _) = tokio::sync::broadcast::channel(4096);
+        Self {
+            rooms: Arc::new(RwLock::new(HashMap::new())),
+            subscriptions: Arc::new(RwLock::new(HashMap::new())),
+            broadcast_tx,
+        }
+    }
 }
 
 impl RealtimeHub {
     #[must_use]
     pub fn new() -> Self {
         Self::default()
+    }
+
+    /// Dispatches an event to all subscribers of a room via the lock-free broadcast channel.
+    pub fn dispatch(
+        &self,
+        room: &str,
+        event: RealtimeEvent,
+    ) -> Result<usize, tokio::sync::broadcast::error::SendError<RealtimeBroadcast>> {
+        self.broadcast_tx.send(RealtimeBroadcast {
+            room: CompactString::from(room),
+            event,
+        })
+    }
+
+    /// Subscribes to the lock-free broadcast event stream.
+    #[must_use]
+    pub fn subscribe_broadcast(&self) -> tokio::sync::broadcast::Receiver<RealtimeBroadcast> {
+        self.broadcast_tx.subscribe()
     }
 
     /// Subscribes a session to a room (e.g. `doc:Sales Invoice:INV-2026-0001`).
@@ -114,13 +153,54 @@ pub async fn live_ws_handler(
     body: web::Payload,
 ) -> actix_web::Result<HttpResponse> {
     let (res, mut session, mut stream) = actix_ws::handle(&req, body)?;
+    let hub = req
+        .app_data::<web::Data<RealtimeHub>>()
+        .map(|h| h.get_ref().clone())
+        .unwrap_or_default();
+    let mut broadcast_rx = hub.subscribe_broadcast();
 
     actix_web::rt::spawn(async move {
-        while let Some(Ok(msg)) = stream.next().await {
-            if let actix_ws::Message::Text(text) = msg {
-                // In production this relays SurrealDB LIVE SELECT events or Room Subscribe frames
-                let ack_frame = format!("LIVE_EVENT:{}", text);
-                let _ = session.text(ack_frame).await;
+        let mut subscribed_rooms = HashSet::<CompactString>::new();
+        // Default wildcard subscription
+        subscribed_rooms.insert("*".into());
+
+        loop {
+            tokio::select! {
+                // Incoming message from client
+                Some(msg_res) = stream.next() => {
+                    match msg_res {
+                        Ok(actix_ws::Message::Text(text)) => {
+                            let text_str = text.trim();
+                            if let Some(room) = text_str.strip_prefix("SUBSCRIBE:") {
+                                subscribed_rooms.insert(room.trim().into());
+                                let _ = session.text(format!("ACK_SUB:{}", room.trim())).await;
+                            } else if let Some(room) = text_str.strip_prefix("UNSUBSCRIBE:") {
+                                subscribed_rooms.remove(room.trim());
+                                let _ = session.text(format!("ACK_UNSUB:{}", room.trim())).await;
+                            } else {
+                                let ack_frame = format!("LIVE_EVENT:{}", text);
+                                let _ = session.text(ack_frame).await;
+                            }
+                        }
+                        Ok(actix_ws::Message::Ping(bytes)) => {
+                            let _ = session.pong(&bytes).await;
+                        }
+                        Ok(actix_ws::Message::Close(reason)) => {
+                            let _ = session.close(reason).await;
+                            break;
+                        }
+                        _ => {}
+                    }
+                }
+                // Incoming broadcast event from server
+                Ok(broadcast) = broadcast_rx.recv() => {
+                    if subscribed_rooms.contains("*") || subscribed_rooms.contains(&broadcast.room) {
+                        if let Ok(json) = serde_json::to_string(&broadcast.event) {
+                            let _ = session.text(format!("EVENT:{}:{}", broadcast.room, json)).await;
+                        }
+                    }
+                }
+                else => break,
             }
         }
     });
@@ -181,5 +261,24 @@ mod tests {
         let json = serde_json::to_string(&event).unwrap();
         assert!(json.contains("doc_update"));
         assert!(json.contains("INV-2026-0001"));
+    }
+
+    #[tokio::test]
+    async fn test_realtime_hub_broadcast_dispatch() {
+        let hub = RealtimeHub::new();
+        let mut rx = hub.subscribe_broadcast();
+
+        let event = RealtimeEvent::TaskProgress {
+            task_id: "task-001".into(),
+            progress: 75,
+            description: "Synchronizing GL Ledger".into(),
+        };
+
+        let send_res = hub.dispatch("task:task-001", event.clone());
+        assert!(send_res.is_ok());
+
+        let received = rx.recv().await.unwrap();
+        assert_eq!(received.room.as_str(), "task:task-001");
+        assert_eq!(received.event, event);
     }
 }

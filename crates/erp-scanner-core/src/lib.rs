@@ -106,10 +106,7 @@ pub enum Gs1ParseError {
 /// Zero-allocation parser for GS1-128 bar codes with Application Identifiers.
 /// Supports parenthesized format `(01)...(10)...` and FNC1 delimiter `\x1d`.
 pub fn parse_gs1_128(payload: &str) -> Result<Gs1ParsedData, Gs1ParseError> {
-    let raw = payload
-        .strip_prefix("GS1:")
-        .unwrap_or(payload)
-        .trim_ascii();
+    let raw = payload.strip_prefix("GS1:").unwrap_or(payload).trim_ascii();
 
     if raw.is_empty() {
         return Err(Gs1ParseError::EmptyPayload);
@@ -334,10 +331,7 @@ mod tests {
         );
         assert_eq!(classify_symbology("4006381333931"), SymbologyCore::Ean13);
         assert_eq!(classify_symbology("12345678"), SymbologyCore::Ean8);
-        assert_eq!(
-            classify_symbology("ITEM:PUMP-001"),
-            SymbologyCore::QrCode
-        );
+        assert_eq!(classify_symbology("ITEM:PUMP-001"), SymbologyCore::QrCode);
         assert_eq!(classify_symbology("INV-2026-99"), SymbologyCore::Code128);
     }
 

@@ -138,6 +138,48 @@ fn compile_field_ddl(table: &str, field: &DocFieldSchema) -> Result<String, Sche
         }
     }
 
+    // Link foreign key constraint assertion
+    if let FieldType::Link { .. } = &field.fieldtype {
+        assertions
+            .push("($value == NONE OR $value == NULL OR type::is::record($value))".to_string());
+    }
+
+    // Numerical range / non-negativity invariants
+    match &field.fieldtype {
+        FieldType::Percent => {
+            assertions.push("($value == NONE OR ($value >= 0 AND $value <= 100))".to_string());
+        }
+        FieldType::Rating => {
+            assertions.push("($value == NONE OR ($value >= 0 AND $value <= 5))".to_string());
+        }
+        FieldType::Currency | FieldType::Float | FieldType::Int => {
+            let fname = field.fieldname.to_ascii_lowercase();
+            if fname == "qty"
+                || fname == "rate"
+                || fname == "standard_rate"
+                || fname == "price_list_rate"
+                || fname.ends_with("_qty")
+                || fname.ends_with("_rate")
+                || fname.starts_with("qty_")
+            {
+                assertions.push("($value == NONE OR $value >= 0)".to_string());
+            }
+        }
+        FieldType::SmallText => {
+            assertions.push("($value == NONE OR string::len($value) <= 250)".to_string());
+        }
+        FieldType::DataWithPreset { preset } => match preset {
+            crate::schema::DataPreset::Email => {
+                assertions.push("($value == NONE OR string::is::email($value))".to_string());
+            }
+            crate::schema::DataPreset::Url => {
+                assertions.push("($value == NONE OR string::is::url($value))".to_string());
+            }
+            _ => {}
+        },
+        _ => {}
+    }
+
     if !assertions.is_empty() {
         parts.push(format!("ASSERT {}", assertions.join(" AND ")));
     }
