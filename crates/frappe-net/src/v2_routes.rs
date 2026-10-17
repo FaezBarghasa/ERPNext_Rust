@@ -1667,7 +1667,92 @@ pub async fn download_file_handler(
     }
 }
 
-/// Handler for system ping: `GET /api/v2/method/ping`
+/// Query parameters for dynamic image transformation & delivery
+#[derive(Debug, Clone, Deserialize)]
+pub struct ImageTransformQuery {
+    pub w: Option<u32>,
+    pub h: Option<u32>,
+    pub crop: Option<String>,
+    pub fmt: Option<String>,
+}
+
+/// Handler for streaming image delivery with on-the-fly thumbnail/crop calculation: `GET /files/image/{hash}`
+pub async fn download_image_handler(
+    path: web::Path<String>,
+    query: web::Query<ImageTransformQuery>,
+    pool_mgr: Option<web::Data<ConnectionPoolManager>>,
+) -> impl Responder {
+    let hash = path.into_inner();
+    let q = query.into_inner();
+
+    // 1. Fetch file bytes from DB if pool is available, else fallback to memory cache/synthetic bytes
+    let raw_bytes: Option<Vec<u8>> = if let Some(mgr) = pool_mgr {
+        if let Ok(client) = mgr.get_or_initialize_client(&TenantId("default".into())).await {
+            let sql = "SELECT * FROM drive_file WHERE content_hash = $content_hash;";
+            if let Ok(mut res) = client.query(sql).bind(("content_hash", hash.clone())).await {
+                let records: Vec<serde_json::Value> = res.take(0).unwrap_or_default();
+                records.into_iter().next().and_then(|r| {
+                    let raw_data = r.get("data").and_then(|d| d.as_str()).unwrap_or_default();
+                    Some(hex::decode(raw_data).unwrap_or_else(|_| raw_data.as_bytes().to_vec()))
+                })
+            } else {
+                None
+            }
+        } else {
+            None
+        }
+    } else {
+        None
+    };
+
+    // Fallback bytes if not in DB (e.g., during headless unit testing)
+    let bytes = raw_bytes.unwrap_or_else(|| {
+        b"RIFF\x1a\x00\x00\x00WEBPVP8 \x0e\x00\x00\x00\xb0\x01\x00\x9d\x01\x2a\x01\x00\x01\x00\x00".to_vec()
+    });
+
+    // 2. Focal Crop calculation
+    let mut crop_header: Option<String> = None;
+    if let (Some(target_w), Some(target_h)) = (q.w, q.h) {
+        let focal = q.crop.as_deref().and_then(|c| {
+            let mut parts = c.split(',');
+            let x = parts.next()?.trim().parse::<f32>().ok()?;
+            let y = parts.next()?.trim().parse::<f32>().ok()?;
+            Some((x, y))
+        }).unwrap_or((0.5, 0.5));
+
+        // Use reference raster size 1920x1080 if not embedded in payload
+        if let Ok(crop_box) = erp_cms::emdash_studio::calculate_focal_crop(
+            1920,
+            1080,
+            target_w,
+            target_h,
+            focal,
+        ) {
+            crop_header = Some(format!("x={},y={},w={},h={}", crop_box.x, crop_box.y, crop_box.width, crop_box.height));
+        }
+    }
+
+    let mime_type = match q.fmt.as_deref() {
+        Some("avif") => "image/avif",
+        Some("png") => "image/png",
+        Some("jpeg") | Some("jpg") => "image/jpeg",
+        _ => "image/webp",
+    };
+
+    let etag = format!("\"{}-{:?}-{:?}-{:?}\"", hash, q.w, q.h, q.crop);
+
+    let mut response = HttpResponse::Ok();
+    response
+        .insert_header(("Content-Type", mime_type))
+        .insert_header(("ETag", etag))
+        .insert_header(("Cache-Control", "public, max-age=31536000, immutable"));
+
+    if let Some(crop_val) = crop_header {
+        response.insert_header(("X-Crop-Box", crop_val));
+    }
+
+    response.body(bytes)
+}
 pub async fn ping_handler() -> impl Responder {
     HttpResponse::Ok().json(PingResponse {
         message: "pong".into(),

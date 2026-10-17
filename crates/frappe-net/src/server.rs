@@ -33,7 +33,7 @@ use crate::v2_routes::{
     builder_save_page_handler, buying_purchase_invoice_handler, buying_purchase_order_handler,
     buying_purchase_receipt_handler, cms_create_taxonomy_handler, cms_generate_seo_handler,
     cms_list_media_handler, cms_list_taxonomies_handler, cms_upload_media_handler,
-    crm_convert_quotation_handler, download_file_handler, email_list_queue_handler,
+    crm_convert_quotation_handler, download_file_handler, download_image_handler, email_list_queue_handler,
     email_send_handler, emdash_get_document_handler, emdash_list_documents_handler,
     emdash_media_crop_handler, emdash_save_document_handler, emdash_transition_handler,
     export_dataset_handler, h3_stream_file_handler, h3_stream_telemetry_handler,
@@ -289,7 +289,7 @@ async fn builder_studio_handler(page_id: Option<web::Path<String>>) -> impl Resp
     let frame_style = switcher.frame_css_style();
 
     let html = format!(
-        r#"<!DOCTYPE html>
+        r###"<!DOCTYPE html>
 <html lang="en" data-theme="dark">
 <head>
     <meta charset="UTF-8">
@@ -319,9 +319,19 @@ async fn builder_studio_handler(page_id: Option<web::Path<String>>) -> impl Resp
             overflow: hidden;
         }}
         .builder-sidebar {{
-            width: 320px;
+            width: 300px;
             background: var(--bg-sidebar);
             border-right: 1px solid var(--border);
+            display: flex;
+            flex-direction: column;
+            padding: 1.25rem;
+            gap: 1rem;
+            overflow-y: auto;
+        }}
+        .builder-inspector-sidebar {{
+            width: 320px;
+            background: var(--bg-sidebar);
+            border-left: 1px solid var(--border);
             display: flex;
             flex-direction: column;
             padding: 1.25rem;
@@ -358,6 +368,11 @@ async fn builder_studio_handler(page_id: Option<web::Path<String>>) -> impl Resp
             box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.7);
             color: #0f172a;
             position: relative;
+            background: #ffffff;
+            min-height: 600px;
+            border-radius: 8px;
+            overflow: hidden;
+            transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
         }}
         .palette-btn {{
             background: var(--bg-card);
@@ -407,11 +422,23 @@ async fn builder_studio_handler(page_id: Option<web::Path<String>>) -> impl Resp
             margin: 0.5rem 0;
             padding: 0.5rem;
             border: 1px dashed transparent;
-            border-radius: 4px;
-            transition: border-color 0.15s ease;
+            border-radius: 6px;
+            transition: all 0.15s ease;
+            cursor: pointer;
         }}
         .canvas-node-wrapper:hover {{
             border-color: var(--accent);
+        }}
+        .canvas-node-wrapper.selected-node {{
+            outline: 2px solid var(--accent);
+            box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.25);
+            background: rgba(99, 102, 241, 0.03);
+        }}
+        .canvas-node-wrapper.dragging {{
+            opacity: 0.4;
+        }}
+        .canvas-node-wrapper.drag-over {{
+            border-top: 3px solid var(--accent) !important;
         }}
         .node-actions {{
             position: absolute;
@@ -437,6 +464,14 @@ async fn builder_studio_handler(page_id: Option<web::Path<String>>) -> impl Resp
             border-radius: 3px;
         }}
         .node-act-btn:hover {{ background: rgba(255, 255, 255, 0.2); }}
+        .drag-handle {{
+            cursor: grab;
+            margin-right: 4px;
+            color: #94a3b8;
+            font-size: 0.9rem;
+            user-select: none;
+        }}
+        .drag-handle:active {{ cursor: grabbing; }}
         .toast-pill {{
             position: fixed;
             bottom: 1.5rem;
@@ -452,6 +487,55 @@ async fn builder_studio_handler(page_id: Option<web::Path<String>>) -> impl Resp
             gap: 0.5rem;
             font-size: 0.875rem;
             z-index: 9999;
+        }}
+        .inspector-field {{
+            display: flex;
+            flex-direction: column;
+            gap: 0.35rem;
+            margin-bottom: 0.85rem;
+        }}
+        .inspector-field label {{
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            font-weight: 600;
+        }}
+        .inspector-input {{
+            background: rgba(0, 0, 0, 0.4);
+            border: 1px solid var(--border);
+            color: #fff;
+            padding: 0.5rem;
+            border-radius: 6px;
+            font-size: 0.85rem;
+            outline: none;
+        }}
+        .inspector-input:focus {{
+            border-color: var(--accent);
+        }}
+        .tab-btn-group {{
+            display: flex;
+            background: rgba(0, 0, 0, 0.3);
+            padding: 3px;
+            border-radius: 6px;
+            border: 1px solid var(--border);
+            margin-bottom: 1rem;
+        }}
+        .tab-btn {{
+            flex: 1;
+            background: transparent;
+            border: none;
+            color: var(--text-muted);
+            padding: 0.4rem;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.75rem;
+            font-weight: 600;
+            transition: all 0.15s ease;
+        }}
+        .tab-btn.active {{
+            background: var(--accent);
+            color: #fff;
         }}
     </style>
 </head>
@@ -486,12 +570,13 @@ async fn builder_studio_handler(page_id: Option<web::Path<String>>) -> impl Resp
     <main class="builder-workspace">
         <header class="builder-toolbar">
             <div style="display: flex; gap: 0.5rem;">
-                <button class="btn btn-outline" onclick="setDevice('desktop')">🖥️ Desktop</button>
-                <button class="btn btn-outline" onclick="setDevice('tablet')">📱 Tablet</button>
-                <button class="btn btn-outline" onclick="setDevice('mobile')">📲 Mobile</button>
+                <button class="btn btn-outline" id="btn-device-desktop" onclick="setDevice('desktop')">🖥️ Desktop</button>
+                <button class="btn btn-outline" id="btn-device-tablet" onclick="setDevice('tablet')">📱 Tablet</button>
+                <button class="btn btn-outline" id="btn-device-mobile" onclick="setDevice('mobile')">📲 Mobile</button>
             </div>
             <div style="display: flex; align-items: center; gap: 0.75rem;">
                 <span id="ast-counter" style="font-size: 0.8rem; color: var(--text-muted);">0 blocks</span>
+                <span id="version-badge" style="font-size: 0.75rem; background: rgba(255,255,255,0.1); padding: 2px 8px; border-radius: 12px; color: #a5b4fc;">v0</span>
                 <a href="/preview/{target_page}" target="_blank" class="btn btn-outline" style="text-decoration: none;">👁️ Preview</a>
                 <button class="btn btn-success" onclick="savePage()">💾 Save to SurrealDB</button>
             </div>
@@ -506,6 +591,25 @@ async fn builder_studio_handler(page_id: Option<web::Path<String>>) -> impl Resp
         </section>
     </main>
 
+    <aside class="builder-inspector-sidebar" id="inspector-sidebar">
+        <div style="font-weight: 700; font-size: 1.05rem; display: flex; align-items: center; justify-content: space-between;">
+            <span>⚙️ Inspector</span>
+            <span id="inspector-node-type" style="font-size: 0.75rem; background: var(--accent); padding: 2px 6px; border-radius: 4px; color: #fff;">None</span>
+        </div>
+
+        <div class="tab-btn-group">
+            <button class="tab-btn active" id="tab-desktop" onclick="setInspectorBreakpoint('Desktop')">Desktop</button>
+            <button class="tab-btn" id="tab-tablet" onclick="setInspectorBreakpoint('Tablet')">Tablet</button>
+            <button class="tab-btn" id="tab-mobile" onclick="setInspectorBreakpoint('Mobile')">Mobile</button>
+        </div>
+
+        <div id="inspector-controls">
+            <div style="color: var(--text-muted); font-size: 0.85rem; text-align: center; padding: 2rem 0;">
+                Click any block on the canvas to inspect its style cascade, slot, and properties.
+            </div>
+        </div>
+    </aside>
+
     <div id="toast" class="toast-pill"></div>
 
     <script>
@@ -513,8 +617,12 @@ async fn builder_studio_handler(page_id: Option<web::Path<String>>) -> impl Resp
         window.activeTree = {{
             nodes: {{}},
             root_ids: [],
-            next_id: 0
+            next_id: 0,
+            version: 0
         }};
+        window.selectedNodeId = null;
+        window.activeBreakpoint = 'Desktop';
+        let draggedNodeId = null;
 
         function showToast(msg, isSuccess = true) {{
             const t = document.getElementById('toast');
@@ -528,16 +636,206 @@ async fn builder_studio_handler(page_id: Option<web::Path<String>>) -> impl Resp
             const frame = document.getElementById('canvas-frame');
             if (device === 'mobile') {{
                 frame.style.width = '375px';
+                setInspectorBreakpoint('Mobile');
             }} else if (device === 'tablet') {{
                 frame.style.width = '768px';
+                setInspectorBreakpoint('Tablet');
             }} else {{
                 frame.style.width = '1280px';
+                setInspectorBreakpoint('Desktop');
             }}
+        }}
+
+        function setInspectorBreakpoint(bp) {{
+            window.activeBreakpoint = bp;
+            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+            const btn = document.getElementById('tab-' + bp.toLowerCase());
+            if (btn) btn.classList.add('active');
+            renderInspector();
         }}
 
         function updateAstCounter() {{
             const count = Object.keys(window.activeTree.nodes).length;
             document.getElementById('ast-counter').textContent = `${{count}} AST blocks`;
+            document.getElementById('version-badge').textContent = `v${{window.activeTree.version || 0}}`;
+        }}
+
+        function selectNode(nodeId, e) {{
+            if (e) e.stopPropagation();
+            window.selectedNodeId = nodeId;
+            document.querySelectorAll('.canvas-node-wrapper').forEach(w => w.classList.remove('selected-node'));
+            const targetEl = document.getElementById('wrap_' + nodeId);
+            if (targetEl) targetEl.classList.add('selected-node');
+            renderInspector();
+        }}
+
+        function renderInspector() {{
+            const container = document.getElementById('inspector-controls');
+            const typeBadge = document.getElementById('inspector-node-type');
+            if (!window.selectedNodeId || !window.activeTree.nodes[window.selectedNodeId]) {{
+                typeBadge.textContent = 'None';
+                container.innerHTML = `
+                    <div style="color: var(--text-muted); font-size: 0.85rem; text-align: center; padding: 2rem 0;">
+                        Click any block on the canvas to inspect its style cascade, slot, and properties.
+                    </div>`;
+                return;
+            }}
+
+            const node = window.activeTree.nodes[window.selectedNodeId];
+            const b = node.block;
+            typeBadge.textContent = b.block_type || 'Block';
+
+            // Ensure responsive_styles structure
+            if (!node.responsive_styles) {{
+                node.responsive_styles = {{
+                    desktop: node.css_styles || {{}},
+                    tablet: null,
+                    mobile: null
+                }};
+            }}
+            const activeStyles = (window.activeBreakpoint === 'Mobile') 
+                ? (node.responsive_styles.mobile || {{}}) 
+                : (window.activeBreakpoint === 'Tablet') 
+                ? (node.responsive_styles.tablet || {{}}) 
+                : (node.responsive_styles.desktop || {{}});
+
+            let html = `
+                <div class="inspector-field">
+                    <label>Node ID</label>
+                    <input class="inspector-input" value="${{node.id}}" readonly style="opacity: 0.6;">
+                </div>
+                <div class="inspector-field">
+                    <label>Component Slot</label>
+                    <select class="inspector-input" onchange="updateNodeSlot(this.value)">
+                        <option value="" ${{!node.slot ? 'selected' : ''}}>(Default/None)</option>
+                        <option value="header" ${{node.slot === 'header' ? 'selected' : ''}}>header</option>
+                        <option value="main" ${{node.slot === 'main' ? 'selected' : ''}}>main</option>
+                        <option value="sidebar" ${{node.slot === 'sidebar' ? 'selected' : ''}}>sidebar</option>
+                        <option value="footer" ${{node.slot === 'footer' ? 'selected' : ''}}>footer</option>
+                    </select>
+                </div>
+            `;
+
+            if (b.text !== undefined) {{
+                html += `
+                    <div class="inspector-field">
+                        <label>Content / Text</label>
+                        <input class="inspector-input" value="${{b.text}}" oninput="updateBlockText(this.value)">
+                    </div>`;
+            }} else if (b.title !== undefined) {{
+                html += `
+                    <div class="inspector-field">
+                        <label>Title</label>
+                        <input class="inspector-input" value="${{b.title}}" oninput="updateBlockTitle(this.value)">
+                    </div>`;
+            }}
+
+            html += `
+                <div style="font-weight: 600; font-size: 0.8rem; text-transform: uppercase; color: var(--text-muted); margin: 1rem 0 0.5rem 0;">
+                    CSS Style Override (${{window.activeBreakpoint}})
+                </div>
+                <div class="inspector-field">
+                    <label>Background Color</label>
+                    <input class="inspector-input" type="text" value="${{activeStyles.background_color || ''}}" placeholder="#ffffff or rgba(...)" oninput="updateStyle('background_color', this.value)">
+                </div>
+                <div class="inspector-field">
+                    <label>Text Color</label>
+                    <input class="inspector-input" type="text" value="${{activeStyles.text_color || ''}}" placeholder="#0f172a" oninput="updateStyle('text_color', this.value)">
+                </div>
+                <div class="inspector-field">
+                    <label>Padding</label>
+                    <input class="inspector-input" type="text" value="${{activeStyles.padding || ''}}" placeholder="1rem" oninput="updateStyle('padding', this.value)">
+                </div>
+                <div class="inspector-field">
+                    <label>Margin</label>
+                    <input class="inspector-input" type="text" value="${{activeStyles.margin || ''}}" placeholder="0.5rem 0" oninput="updateStyle('margin', this.value)">
+                </div>
+            `;
+
+            container.innerHTML = html;
+        }}
+
+        function updateNodeSlot(slotVal) {{
+            if (!window.selectedNodeId) return;
+            window.activeTree.nodes[window.selectedNodeId].slot = slotVal || null;
+            renderCanvas();
+        }}
+
+        function updateBlockText(textVal) {{
+            if (!window.selectedNodeId) return;
+            window.activeTree.nodes[window.selectedNodeId].block.text = textVal;
+            const targetEl = document.getElementById('inner_' + window.selectedNodeId);
+            if (targetEl) targetEl.textContent = textVal;
+        }}
+
+        function updateBlockTitle(titleVal) {{
+            if (!window.selectedNodeId) return;
+            window.activeTree.nodes[window.selectedNodeId].block.title = titleVal;
+            renderCanvas();
+        }}
+
+        function updateStyle(prop, val) {{
+            if (!window.selectedNodeId) return;
+            const node = window.activeTree.nodes[window.selectedNodeId];
+            if (!node.responsive_styles) {{
+                node.responsive_styles = {{ desktop: {{}}, tablet: null, mobile: null }};
+            }}
+            const bpKey = window.activeBreakpoint.toLowerCase();
+            if (!node.responsive_styles[bpKey]) {{
+                node.responsive_styles[bpKey] = {{}};
+            }}
+            node.responsive_styles[bpKey][prop] = val || null;
+            renderCanvas();
+        }}
+
+        // HTML5 Drag and Drop handlers
+        function handleDragStart(e, nodeId) {{
+            draggedNodeId = nodeId;
+            e.dataTransfer.setData('text/plain', nodeId);
+            e.dataTransfer.effectAllowed = 'move';
+            e.currentTarget.classList.add('dragging');
+        }}
+
+        function handleDragOver(e, nodeId) {{
+            e.preventDefault();
+            e.dataTransfer.dropEffect = 'move';
+            const wrap = document.getElementById('wrap_' + nodeId);
+            if (wrap && draggedNodeId !== nodeId) {{
+                wrap.classList.add('drag-over');
+            }}
+        }}
+
+        function handleDragLeave(e, nodeId) {{
+            const wrap = document.getElementById('wrap_' + nodeId);
+            if (wrap) wrap.classList.remove('drag-over');
+        }}
+
+        function handleDrop(e, targetNodeId) {{
+            e.preventDefault();
+            const wrap = document.getElementById('wrap_' + targetNodeId);
+            if (wrap) wrap.classList.remove('drag-over');
+
+            if (!draggedNodeId || draggedNodeId === targetNodeId) return;
+
+            const rootIds = window.activeTree.root_ids;
+            const srcIdx = rootIds.indexOf(draggedNodeId);
+            const dstIdx = rootIds.indexOf(targetNodeId);
+
+            if (srcIdx !== -1 && dstIdx !== -1) {{
+                rootIds.splice(srcIdx, 1);
+                rootIds.splice(dstIdx, 0, draggedNodeId);
+                renderCanvas();
+                showToast('Reordered canvas blocks');
+            }}
+            draggedNodeId = null;
+        }}
+
+        function handleDragEnd(e) {{
+            document.querySelectorAll('.canvas-node-wrapper').forEach(w => {{
+                w.classList.remove('dragging');
+                w.classList.remove('drag-over');
+            }});
+            draggedNodeId = null;
         }}
 
         function renderCanvas() {{
@@ -551,6 +849,7 @@ async fn builder_studio_handler(page_id: Option<web::Path<String>>) -> impl Resp
                         <p>Click a palette item or ask Bob AI to synthesize your page layout.</p>
                     </div>`;
                 updateAstCounter();
+                renderInspector();
                 return;
             }}
 
@@ -558,6 +857,7 @@ async fn builder_studio_handler(page_id: Option<web::Path<String>>) -> impl Resp
                 container.appendChild(renderNode(rootId));
             }}
             updateAstCounter();
+            renderInspector();
         }}
 
         function renderNode(nodeId) {{
@@ -565,28 +865,44 @@ async fn builder_studio_handler(page_id: Option<web::Path<String>>) -> impl Resp
             if (!node) return document.createElement('div');
 
             const wrap = document.createElement('div');
-            wrap.className = 'canvas-node-wrapper';
+            wrap.className = 'canvas-node-wrapper' + (window.selectedNodeId === nodeId ? ' selected-node' : '');
             wrap.id = 'wrap_' + nodeId;
+            wrap.draggable = true;
+
+            wrap.ondragstart = (e) => handleDragStart(e, nodeId);
+            wrap.ondragover = (e) => handleDragOver(e, nodeId);
+            wrap.ondragleave = (e) => handleDragLeave(e, nodeId);
+            wrap.ondrop = (e) => handleDrop(e, nodeId);
+            wrap.ondragend = handleDragEnd;
+            wrap.onclick = (e) => selectNode(nodeId, e);
+
+            if (node.slot) {{
+                wrap.setAttribute('data-slot', node.slot);
+            }}
 
             const actions = document.createElement('div');
             actions.className = 'node-actions';
             actions.innerHTML = `
-                <button class="node-act-btn" onclick="removeNode('${{nodeId}}')" title="Remove">✕</button>
+                <span class="drag-handle" title="Drag to reorder">⠿</span>
+                <span style="font-size: 0.7rem; color: #cbd5e1; margin-right: 4px;">${{node.slot ? `[slot: ${{node.slot}}]` : ''}}</span>
+                <button class="node-act-btn" onclick="removeNode('${{nodeId}}'); event.stopPropagation();" title="Remove">✕</button>
             `;
             wrap.appendChild(actions);
 
             const b = node.block;
             if (b.block_type === 'Heading') {{
                 const el = document.createElement('h' + (b.level || 2));
+                el.id = 'inner_' + nodeId;
                 el.textContent = b.text;
                 el.contentEditable = 'true';
-                el.onblur = (e) => {{ b.text = e.target.textContent; }};
+                el.onblur = (e) => {{ b.text = e.target.textContent; renderInspector(); }};
                 wrap.appendChild(el);
             }} else if (b.block_type === 'TextBlock') {{
                 const el = document.createElement('p');
-                el.textContent = b.content;
+                el.id = 'inner_' + nodeId;
+                el.textContent = b.content || b.text || '';
                 el.contentEditable = 'true';
-                el.onblur = (e) => {{ b.content = e.target.textContent; }};
+                el.onblur = (e) => {{ b.content = e.target.textContent; b.text = e.target.textContent; renderInspector(); }};
                 wrap.appendChild(el);
             }} else if (b.block_type === 'Section' || b.block_type === 'Container') {{
                 const sec = document.createElement('section');
@@ -670,10 +986,13 @@ async fn builder_studio_handler(page_id: Option<web::Path<String>>) -> impl Resp
                     block: block,
                     parent_id: null,
                     child_ids: [],
-                    css_styles: null
+                    css_styles: null,
+                    responsive_styles: null,
+                    slot: null
                 }};
                 window.activeTree.root_ids.push(id);
                 renderCanvas();
+                selectNode(id);
                 showToast(`Added ${{kind}} block`);
             }}
         }}
@@ -681,6 +1000,7 @@ async fn builder_studio_handler(page_id: Option<web::Path<String>>) -> impl Resp
         function removeNode(nodeId) {{
             delete window.activeTree.nodes[nodeId];
             window.activeTree.root_ids = window.activeTree.root_ids.filter(i => i !== nodeId);
+            if (window.selectedNodeId === nodeId) window.selectedNodeId = null;
             renderCanvas();
             showToast('Block removed');
         }}
@@ -693,14 +1013,22 @@ async fn builder_studio_handler(page_id: Option<web::Path<String>>) -> impl Resp
                     body: JSON.stringify({{
                         title: targetPage,
                         route_path: '/site/' + targetPage,
-                        tree: window.activeTree
+                        tree: window.activeTree,
+                        expected_version: window.activeTree.version
                     }})
                 }});
                 const data = await res.json();
+                if (res.status === 409) {{
+                    showToast('⚠️ Conflict: Concurrent update detected! Reloading latest version...', false);
+                    setTimeout(initBuilder, 1200);
+                    return;
+                }}
                 if (res.ok) {{
-                    showToast(`✓ Page saved to SurrealDB (${{data.node_count}} nodes)`);
+                    window.activeTree.version = data.tree ? data.tree.version : (window.activeTree.version + 1);
+                    updateAstCounter();
+                    showToast(`✓ Page saved to SurrealDB (v${{window.activeTree.version}})`);
                 }} else {{
-                    showToast('Failed to save page', false);
+                    showToast('Failed to save page: ' + (data.error || 'unknown error'), false);
                 }}
             }} catch (e) {{
                 showToast('Error saving: ' + e.message, false);
@@ -717,7 +1045,7 @@ async fn builder_studio_handler(page_id: Option<web::Path<String>>) -> impl Resp
                     body: JSON.stringify({{
                         prompt: prompt,
                         mode: 'generate',
-                        selected_block_id: null,
+                        selected_block_id: window.selectedNodeId,
                         active_theme_id: 'default',
                         target_doctypes: ['Item'],
                         attached_image_url: null
@@ -732,10 +1060,13 @@ async fn builder_studio_handler(page_id: Option<web::Path<String>>) -> impl Resp
                         block: data.synthesized_block,
                         parent_id: null,
                         child_ids: [],
-                        css_styles: null
+                        css_styles: null,
+                        responsive_styles: null,
+                        slot: null
                     }};
                     window.activeTree.root_ids.push(id);
                     renderCanvas();
+                    selectNode(id);
                     showToast('✓ Bob AI synthesized layout added to canvas');
                     document.getElementById('ai-prompt').value = '';
                 }}
@@ -752,6 +1083,9 @@ async fn builder_studio_handler(page_id: Option<web::Path<String>>) -> impl Resp
                     const data = await res.json();
                     if (data.tree && data.tree.root_ids) {{
                         window.activeTree = data.tree;
+                        if (data.tree.version !== undefined) {{
+                            window.activeTree.version = data.tree.version;
+                        }}
                         renderCanvas();
                         return;
                     }}
@@ -831,6 +1165,7 @@ async fn emdash_studio_handler(doc_id: Option<web::Path<String>>) -> impl Respon
             margin: 1.5rem auto;
             padding: 2rem;
             overflow-y: auto;
+            position: relative;
         }}
         .post-title {{
             font-size: 2.25rem;
@@ -930,6 +1265,19 @@ async fn emdash_studio_handler(doc_id: Option<web::Path<String>>) -> impl Respon
             font-size: 0.9rem;
             white-space: pre-wrap;
         }}
+        .media-box {{
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            overflow: hidden;
+            background: #0f172a;
+            padding: 1rem;
+            text-align: center;
+        }}
+        .media-box img {{
+            max-width: 100%;
+            height: auto;
+            border-radius: 4px;
+        }}
         .toast-pill {{
             position: fixed;
             bottom: 1.5rem;
@@ -947,6 +1295,61 @@ async fn emdash_studio_handler(doc_id: Option<web::Path<String>>) -> impl Respon
             font-family: -apple-system, BlinkMacSystemFont, sans-serif;
             z-index: 9999;
         }}
+        /* Floating Slash Command Palette */
+        #slash-palette {{
+            position: absolute;
+            background: #181b29;
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            border-radius: 8px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.7);
+            width: 240px;
+            display: none;
+            flex-direction: column;
+            z-index: 1000;
+            overflow: hidden;
+            font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+        }}
+        .slash-item {{
+            padding: 0.6rem 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            cursor: pointer;
+            color: var(--text-main);
+            font-size: 0.85rem;
+            transition: background 0.12s ease;
+        }}
+        .slash-item:hover, .slash-item.active {{
+            background: rgba(16, 185, 129, 0.2);
+            color: #6ee7b7;
+        }}
+        /* Floating Inline Format Toolbar */
+        #inline-format-toolbar {{
+            position: absolute;
+            background: #1e2235;
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            border-radius: 6px;
+            padding: 4px;
+            display: none;
+            gap: 2px;
+            z-index: 1000;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.6);
+            font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+        }}
+        .fmt-btn {{
+            background: transparent;
+            border: none;
+            color: #f8fafc;
+            padding: 4px 8px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.85rem;
+            font-weight: 600;
+            line-height: 1;
+        }}
+        .fmt-btn:hover {{
+            background: rgba(255, 255, 255, 0.15);
+        }}
     </style>
 </head>
 <body>
@@ -955,13 +1358,14 @@ async fn emdash_studio_handler(doc_id: Option<web::Path<String>>) -> impl Respon
             <span>✍️</span> Emdash Editorial Studio
         </div>
         <div style="display: flex; gap: 0.5rem; align-items: center;">
+            <span id="version-badge" style="font-size: 0.75rem; background: rgba(255,255,255,0.1); padding: 2px 8px; border-radius: 12px; color: #6ee7b7; font-family: -apple-system, sans-serif;">v0</span>
             <a href="/site/{target_doc}" id="view-live-link" target="_blank" style="color: #6ee7b7; font-size: 0.85rem; text-decoration: none; margin-right: 0.5rem; display: none;">Live Link ↗</a>
             <button class="btn btn-outline" onclick="saveDraft()">Save Draft</button>
             <button class="btn" onclick="publishPost()">Publish Now</button>
         </div>
     </header>
 
-    <main class="editor-container">
+    <main class="editor-container" id="editor-container">
         <div class="meta-bar">
             <span>Status: <strong id="doc-status" style="color: #f59e0b;">Draft</strong></span>
             <span>Words: <strong id="word-count">0</strong></span>
@@ -978,10 +1382,32 @@ async fn emdash_studio_handler(doc_id: Option<web::Path<String>>) -> impl Respon
             <button class="tool-btn" onclick="insertBlock('Quote')">+ Quote</button>
             <button class="tool-btn" onclick="insertBlock('Callout')">+ Callout</button>
             <button class="tool-btn" onclick="insertBlock('Code')">+ Code</button>
+            <button class="tool-btn" onclick="insertBlock('Image')">+ Image</button>
         </div>
 
         <div id="blocks-container">
             <!-- Dynamic Emdash Blocks -->
+        </div>
+
+        <!-- Floating Slash Command Palette -->
+        <div id="slash-palette">
+            <div class="slash-item" onclick="applySlash('Heading1')"><span>🏷️</span> Heading 1 (/h1)</div>
+            <div class="slash-item" onclick="applySlash('Heading2')"><span>🏷️</span> Heading 2 (/h2)</div>
+            <div class="slash-item" onclick="applySlash('Heading3')"><span>🏷️</span> Heading 3 (/h3)</div>
+            <div class="slash-item" onclick="applySlash('Paragraph')"><span>📝</span> Text Paragraph (/p)</div>
+            <div class="slash-item" onclick="applySlash('Quote')"><span>💬</span> Blockquote (/quote)</div>
+            <div class="slash-item" onclick="applySlash('Callout')"><span>💡</span> Callout Box (/callout)</div>
+            <div class="slash-item" onclick="applySlash('Code')"><span>💻</span> Code Snippet (/code)</div>
+            <div class="slash-item" onclick="applySlash('Image')"><span>🖼️</span> Responsive Image (/image)</div>
+        </div>
+
+        <!-- Floating Inline Format Toolbar -->
+        <div id="inline-format-toolbar">
+            <button class="fmt-btn" onclick="formatText('bold')" title="Bold"><b>B</b></button>
+            <button class="fmt-btn" onclick="formatText('italic')" title="Italic"><i>I</i></button>
+            <button class="fmt-btn" onclick="formatText('underline')" title="Underline"><u>U</u></button>
+            <button class="fmt-btn" onclick="formatText('strikeThrough')" title="Strikethrough"><s>S</s></button>
+            <button class="fmt-btn" onclick="promptLink()" title="Hyperlink">🔗</button>
         </div>
     </main>
 
@@ -990,6 +1416,8 @@ async fn emdash_studio_handler(doc_id: Option<web::Path<String>>) -> impl Respon
     <script>
         const docId = '{target_doc}';
         window.emdashBlocks = [];
+        window.documentVersion = 0;
+        let slashTargetIdx = null;
 
         function showToast(msg, isSuccess = true) {{
             const t = document.getElementById('toast');
@@ -1008,6 +1436,7 @@ async fn emdash_studio_handler(doc_id: Option<web::Path<String>>) -> impl Respon
             }}
             document.getElementById('word-count').textContent = words;
             document.getElementById('reading-time').textContent = Math.max(1, Math.ceil(words / 200)) + ' min';
+            document.getElementById('version-badge').textContent = `v${{window.documentVersion || 0}}`;
         }}
 
         function renderBlocks() {{
@@ -1017,6 +1446,7 @@ async fn emdash_studio_handler(doc_id: Option<web::Path<String>>) -> impl Respon
             window.emdashBlocks.forEach((b, idx) => {{
                 const row = document.createElement('div');
                 row.className = 'emdash-block-row';
+                row.id = 'block_row_' + idx;
                 row.innerHTML = `<button class="block-del-btn" onclick="removeBlock(${{idx}})" title="Delete Block">✕</button>`;
 
                 if (b.block_type === 'Heading') {{
@@ -1024,7 +1454,7 @@ async fn emdash_studio_handler(doc_id: Option<web::Path<String>>) -> impl Respon
                     h.textContent = b.text;
                     h.contentEditable = 'true';
                     h.style.outline = 'none';
-                    h.onblur = (e) => {{ b.text = e.target.textContent; updateStats(); }};
+                    attachInputListeners(h, idx, (val) => {{ b.text = val; }});
                     row.appendChild(h);
                 }} else if (b.block_type === 'Paragraph') {{
                     const p = document.createElement('p');
@@ -1034,7 +1464,7 @@ async fn emdash_studio_handler(doc_id: Option<web::Path<String>>) -> impl Respon
                     p.style.lineHeight = '1.8';
                     p.style.fontSize = '1.15rem';
                     p.style.color = '#cbd5e1';
-                    p.onblur = (e) => {{ b.text = e.target.textContent; updateStats(); }};
+                    attachInputListeners(p, idx, (val) => {{ b.text = val; }});
                     row.appendChild(p);
                 }} else if (b.block_type === 'Quote') {{
                     const q = document.createElement('blockquote');
@@ -1044,8 +1474,8 @@ async fn emdash_studio_handler(doc_id: Option<web::Path<String>>) -> impl Respon
                     q.style.fontStyle = 'italic';
                     q.contentEditable = 'true';
                     q.style.outline = 'none';
-                    q.textContent = b.quote;
-                    q.onblur = (e) => {{ b.quote = e.target.textContent; updateStats(); }};
+                    q.textContent = b.quote || b.text || '';
+                    attachInputListeners(q, idx, (val) => {{ b.quote = val; b.text = val; }});
                     row.appendChild(q);
                 }} else if (b.block_type === 'Callout') {{
                     const box = document.createElement('div');
@@ -1053,7 +1483,7 @@ async fn emdash_studio_handler(doc_id: Option<web::Path<String>>) -> impl Respon
                     box.contentEditable = 'true';
                     box.style.outline = 'none';
                     box.textContent = b.text;
-                    box.onblur = (e) => {{ b.text = e.target.textContent; updateStats(); }};
+                    attachInputListeners(box, idx, (val) => {{ b.text = val; }});
                     row.appendChild(box);
                 }} else if (b.block_type === 'Code') {{
                     const pre = document.createElement('pre');
@@ -1061,13 +1491,111 @@ async fn emdash_studio_handler(doc_id: Option<web::Path<String>>) -> impl Respon
                     pre.contentEditable = 'true';
                     pre.style.outline = 'none';
                     pre.textContent = b.code;
-                    pre.onblur = (e) => {{ b.code = e.target.textContent; updateStats(); }};
+                    attachInputListeners(pre, idx, (val) => {{ b.code = val; }});
                     row.appendChild(pre);
+                }} else if (b.block_type === 'Image') {{
+                    const imgBox = document.createElement('div');
+                    imgBox.className = 'media-box';
+                    const src = b.url || '/files/image/placeholder?w=800&h=400&fmt=webp';
+                    imgBox.innerHTML = `
+                        <img src="${{src}}" alt="${{b.caption || 'Editorial Media'}}">
+                        <div style="font-size:0.8rem;color:var(--text-muted);margin-top:0.5rem;" contenteditable="true" onblur="window.emdashBlocks[${{idx}}].caption = this.textContent;">${{b.caption || 'Click to edit caption...'}}</div>
+                    `;
+                    row.appendChild(imgBox);
                 }}
 
                 c.appendChild(row);
             }});
             updateStats();
+        }}
+
+        function attachInputListeners(el, idx, onUpdate) {{
+            el.onblur = (e) => {{
+                onUpdate(e.target.textContent);
+                updateStats();
+            }};
+            el.onkeyup = (e) => {{
+                const text = el.textContent;
+                if (text === '/' || text.endsWith(' /')) {{
+                    showSlashPalette(el, idx);
+                }} else if (e.key === 'Escape') {{
+                    hideSlashPalette();
+                }}
+            }};
+        }}
+
+        function showSlashPalette(targetEl, idx) {{
+            slashTargetIdx = idx;
+            const p = document.getElementById('slash-palette');
+            const rect = targetEl.getBoundingClientRect();
+            const containerRect = document.getElementById('editor-container').getBoundingClientRect();
+            
+            p.style.top = (rect.bottom - containerRect.top + 8) + 'px';
+            p.style.left = (rect.left - containerRect.left) + 'px';
+            p.style.display = 'flex';
+        }}
+
+        function hideSlashPalette() {{
+            const p = document.getElementById('slash-palette');
+            p.style.display = 'none';
+            slashTargetIdx = null;
+        }}
+
+        function applySlash(kind) {{
+            if (slashTargetIdx === null) return;
+            const idx = slashTargetIdx;
+            hideSlashPalette();
+
+            if (kind === 'Heading1') {{
+                window.emdashBlocks[idx] = {{ block_type: 'Heading', level: 1, text: 'Main Heading' }};
+            }} else if (kind === 'Heading2') {{
+                window.emdashBlocks[idx] = {{ block_type: 'Heading', level: 2, text: 'Sub Heading' }};
+            }} else if (kind === 'Heading3') {{
+                window.emdashBlocks[idx] = {{ block_type: 'Heading', level: 3, text: 'Section Heading' }};
+            }} else if (kind === 'Paragraph') {{
+                window.emdashBlocks[idx] = {{ block_type: 'Paragraph', text: 'Enter text here...' }};
+            }} else if (kind === 'Quote') {{
+                window.emdashBlocks[idx] = {{ block_type: 'Quote', quote: 'A memorable insight...', citation: 'Author' }};
+            }} else if (kind === 'Callout') {{
+                window.emdashBlocks[idx] = {{ block_type: 'Callout', style: 'Info', title: 'Note', text: 'Key takeaway message here.' }};
+            }} else if (kind === 'Code') {{
+                window.emdashBlocks[idx] = {{ block_type: 'Code', language: 'rust', code: '// Rust snippet\\nfn main() {{}}' }};
+            }} else if (kind === 'Image') {{
+                window.emdashBlocks[idx] = {{ block_type: 'Image', url: '/files/image/sample?w=800&h=450&fmt=webp', caption: 'High-resolution diagram' }};
+            }}
+            renderBlocks();
+        }}
+
+        // Inline Formatting Toolbar
+        document.addEventListener('selectionchange', () => {{
+            const sel = window.getSelection();
+            const tb = document.getElementById('inline-format-toolbar');
+            if (!sel || sel.isCollapsed || !sel.rangeCount) {{
+                tb.style.display = 'none';
+                return;
+            }}
+            const range = sel.getRangeAt(0);
+            const rect = range.getBoundingClientRect();
+            const containerRect = document.getElementById('editor-container').getBoundingClientRect();
+            
+            if (rect.width > 0) {{
+                tb.style.display = 'flex';
+                tb.style.top = (rect.top - containerRect.top - 40) + 'px';
+                tb.style.left = (rect.left - containerRect.left + (rect.width / 2) - 80) + 'px';
+            }} else {{
+                tb.style.display = 'none';
+            }}
+        }});
+
+        function formatText(cmd) {{
+            document.execCommand(cmd, false, null);
+        }}
+
+        function promptLink() {{
+            const url = prompt('Enter hyperlink URL:');
+            if (url) {{
+                document.execCommand('createLink', false, url);
+            }}
         }}
 
         function insertBlock(kind) {{
@@ -1081,6 +1609,8 @@ async fn emdash_studio_handler(doc_id: Option<web::Path<String>>) -> impl Respon
                 window.emdashBlocks.push({{ block_type: 'Callout', style: 'Info', title: 'Note', text: 'Ensure SurrealDB schema migrations have concluded.' }});
             }} else if (kind === 'Code') {{
                 window.emdashBlocks.push({{ block_type: 'Code', language: 'rust', code: '// Pure-Rust concurrent actor\\npub async fn run() {{ ... }}' }});
+            }} else if (kind === 'Image') {{
+                window.emdashBlocks.push({{ block_type: 'Image', url: '/files/image/sample?w=800&h=450&fmt=webp', caption: 'Dynamic responsive media' }});
             }}
             renderBlocks();
         }}
@@ -1101,14 +1631,22 @@ async fn emdash_studio_handler(doc_id: Option<web::Path<String>>) -> impl Respon
                         slug: docId,
                         author: 'Lead Editor',
                         blocks: window.emdashBlocks,
-                        tags: ['enterprise', 'rust', 'cms']
+                        tags: ['enterprise', 'rust', 'cms'],
+                        expected_version: window.documentVersion
                     }})
                 }});
                 const data = await res.json();
+                if (res.status === 409) {{
+                    showToast('⚠️ Conflict: Concurrent update detected! Reloading latest draft...', false);
+                    setTimeout(initEmdash, 1200);
+                    return;
+                }}
                 if (res.ok) {{
-                    showToast(`✓ Draft saved to SurrealDB (${{data.word_count}} words)`);
+                    window.documentVersion = data.document ? data.document.version : (window.documentVersion + 1);
+                    updateStats();
+                    showToast(`✓ Draft saved to SurrealDB (v${{window.documentVersion}})`);
                 }} else {{
-                    showToast('Failed to save draft', false);
+                    showToast('Failed to save draft: ' + (data.error || 'error'), false);
                 }}
             }} catch (e) {{
                 showToast('Save error: ' + e.message, false);
@@ -1147,6 +1685,9 @@ async fn emdash_studio_handler(doc_id: Option<web::Path<String>>) -> impl Respon
                     const data = await res.json();
                     if (data.document) {{
                         document.getElementById('post-title').value = data.document.title || 'Untitled';
+                        if (data.document.version !== undefined) {{
+                            window.documentVersion = data.document.version;
+                        }}
                         if (data.document.blocks && data.document.blocks.length > 0) {{
                             window.emdashBlocks = data.document.blocks;
                             renderBlocks();
@@ -1898,6 +2439,7 @@ pub fn configure_app(
         .route("/healthz/ready", web::get().to(readiness_handler))
         .route("/metrics", web::get().to(metrics_handler))
         .route("/files/{hash}", web::get().to(download_file_handler))
+        .route("/files/image/{hash}", web::get().to(download_image_handler))
         .route("/api/v1/live", web::get().to(live_ws_handler))
         .route(
             "/api/v1/desk/workspaces",
