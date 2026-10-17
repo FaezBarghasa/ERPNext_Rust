@@ -416,6 +416,60 @@ impl CommandPaletteModel {
     }
 }
 
+/// Type alias providing 1:1 parity with Frappe's global AwesomeBar.
+pub type AwesomeBarModel = CommandPaletteModel;
+pub type AwesomeBarItem = CommandPaletteItem;
+
+/// Action emitted when navigating or triggering the AwesomeBar via keyboard.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum AwesomeBarKeyboardAction {
+    Opened,
+    Closed,
+    NavigatedNext(usize),
+    NavigatedPrev(usize),
+    Triggered(CommandPaletteItem),
+    None,
+}
+
+impl CommandPaletteModel {
+    /// Handles standard desktop keyboard shortcuts for the AwesomeBar (Ctrl+K, Up, Down, Enter, Escape).
+    pub fn handle_key_event(&mut self, key: &str, ctrl_or_meta: bool) -> AwesomeBarKeyboardAction {
+        if ctrl_or_meta && (key.eq_ignore_ascii_case("k") || key.eq_ignore_ascii_case("p")) {
+            self.open();
+            return AwesomeBarKeyboardAction::Opened;
+        }
+
+        if !self.is_open {
+            return AwesomeBarKeyboardAction::None;
+        }
+
+        match key {
+            "Escape" => {
+                self.close();
+                AwesomeBarKeyboardAction::Closed
+            }
+            "ArrowDown" => {
+                self.select_next();
+                AwesomeBarKeyboardAction::NavigatedNext(self.selected_index)
+            }
+            "ArrowUp" => {
+                self.select_prev();
+                AwesomeBarKeyboardAction::NavigatedPrev(self.selected_index)
+            }
+            "Enter" => {
+                if let Some(item) = self.current_selection().cloned() {
+                    self.record_selection(item.id.clone());
+                    self.close();
+                    AwesomeBarKeyboardAction::Triggered(item)
+                } else {
+                    AwesomeBarKeyboardAction::None
+                }
+            }
+            _ => AwesomeBarKeyboardAction::None,
+        }
+    }
+}
+
 // -------------------------------------------------------------------------
 // Combobox & Advanced Select
 // -------------------------------------------------------------------------

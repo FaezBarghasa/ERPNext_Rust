@@ -203,6 +203,155 @@ impl ReportViewModel {
     }
 }
 
+/// Supported comparison operators for dynamic List View filtering.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+pub enum FilterOperator {
+    Equals,
+    NotEquals,
+    Like,
+    In,
+    GreaterThan,
+    LessThan,
+}
+
+/// An individual filter criterion on a DocType field.
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+pub struct FilterCriterion {
+    pub fieldname: CompactString,
+    pub operator: FilterOperator,
+    pub value: CompactString,
+}
+
+impl FilterCriterion {
+    #[must_use]
+    pub fn matches(&self, val: &str) -> bool {
+        match self.operator {
+            FilterOperator::Equals => val == self.value.as_str(),
+            FilterOperator::NotEquals => val != self.value.as_str(),
+            FilterOperator::Like => val
+                .to_lowercase()
+                .contains(self.value.to_lowercase().as_str()),
+            FilterOperator::In => self
+                .value
+                .split(',')
+                .map(|s| s.trim())
+                .any(|item| item.eq_ignore_ascii_case(val)),
+            FilterOperator::GreaterThan => {
+                if let (Ok(num_val), Ok(num_target)) =
+                    (val.parse::<f64>(), self.value.parse::<f64>())
+                {
+                    num_val > num_target
+                } else {
+                    val > self.value.as_str()
+                }
+            }
+            FilterOperator::LessThan => {
+                if let (Ok(num_val), Ok(num_target)) =
+                    (val.parse::<f64>(), self.value.parse::<f64>())
+                {
+                    num_val < num_target
+                } else {
+                    val < self.value.as_str()
+                }
+            }
+        }
+    }
+}
+
+/// Dynamic Filter Drawer state for List and Kanban views.
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, Default)]
+pub struct FilterDrawerModel {
+    pub filters: Vec<FilterCriterion>,
+    pub is_open: bool,
+}
+
+impl FilterDrawerModel {
+    #[must_use]
+    pub fn new() -> Self {
+        Self::default()
+    }
+
+    pub fn toggle_open(&mut self) {
+        self.is_open = !self.is_open;
+    }
+
+    pub fn add_filter(
+        &mut self,
+        fieldname: impl Into<CompactString>,
+        operator: FilterOperator,
+        value: impl Into<CompactString>,
+    ) {
+        self.filters.push(FilterCriterion {
+            fieldname: fieldname.into(),
+            operator,
+            value: value.into(),
+        });
+    }
+
+    pub fn remove_filter(&mut self, idx: usize) -> bool {
+        if idx < self.filters.len() {
+            self.filters.remove(idx);
+            true
+        } else {
+            false
+        }
+    }
+
+    pub fn clear(&mut self) {
+        self.filters.clear();
+    }
+
+    /// Evaluates all filter criteria against a record JSON object (conjunction AND).
+    #[must_use]
+    pub fn matches_record(&self, record: &serde_json::Map<String, serde_json::Value>) -> bool {
+        for f in &self.filters {
+            let field_val = match record.get(f.fieldname.as_str()) {
+                Some(serde_json::Value::String(s)) => s.clone(),
+                Some(serde_json::Value::Number(n)) => n.to_string(),
+                Some(serde_json::Value::Bool(b)) => b.to_string(),
+                _ => String::new(),
+            };
+            if !f.matches(&field_val) {
+                return false;
+            }
+        }
+        true
+    }
+}
+
+/// Supported batch actions on multiple selected rows.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+pub enum BatchActionType {
+    Delete,
+    Submit,
+    Cancel,
+    Print,
+}
+
+/// Batch action selection bar model.
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, Default)]
+pub struct BatchActionBarModel {
+    pub selected_rows: Vec<CompactString>,
+    pub is_visible: bool,
+}
+
+impl BatchActionBarModel {
+    #[must_use]
+    pub fn new() -> Self {
+        Self::default()
+    }
+
+    pub fn update_selection(&mut self, selected: Vec<CompactString>) {
+        self.is_visible = !selected.is_empty();
+        self.selected_rows = selected;
+    }
+
+    pub fn clear(&mut self) {
+        self.selected_rows.clear();
+        self.is_visible = false;
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -235,5 +384,30 @@ mod tests {
 
         // Most recent must be first
         assert_eq!(form.timeline_entries[0].id.as_str(), "2");
+    }
+
+    #[test]
+    fn test_filter_drawer_and_batch_actions() {
+        let mut drawer = FilterDrawerModel::new();
+        drawer.add_filter("status", FilterOperator::In, "Draft,Submitted");
+        drawer.add_filter("grand_total", FilterOperator::GreaterThan, "500");
+
+        let mut record_match = serde_json::Map::new();
+        record_match.insert("status".into(), serde_json::json!("Draft"));
+        record_match.insert("grand_total".into(), serde_json::json!("1000.00"));
+        assert!(drawer.matches_record(&record_match));
+
+        let mut record_mismatch = serde_json::Map::new();
+        record_mismatch.insert("status".into(), serde_json::json!("Cancelled"));
+        record_mismatch.insert("grand_total".into(), serde_json::json!("1000.00"));
+        assert!(!drawer.matches_record(&record_mismatch));
+
+        let mut batch = BatchActionBarModel::new();
+        assert!(!batch.is_visible);
+        batch.update_selection(vec!["INV-001".into(), "INV-002".into()]);
+        assert!(batch.is_visible);
+        assert_eq!(batch.selected_rows.len(), 2);
+        batch.clear();
+        assert!(!batch.is_visible);
     }
 }

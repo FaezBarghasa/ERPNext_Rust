@@ -4,7 +4,13 @@ pub mod assets;
 pub mod bank_reconciliation;
 pub mod benford;
 pub mod coa;
+pub mod controllers;
 pub mod decimal_ledger;
+
+pub use controllers::{
+    JournalEntryDocController, PaymentEntryDocController, PurchaseInvoiceDocController,
+    SalesInvoiceDocController,
+};
 pub mod exchange_revaluation;
 pub mod intercompany;
 pub mod ledger;

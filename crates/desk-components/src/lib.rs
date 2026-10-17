@@ -31,12 +31,14 @@ pub use form_engine::{
 pub use forms::{DocTypeForm, DynamicFormModel, FormFieldWidget, eval_depends_on};
 pub use gantt::{GanttDependencyLink, GanttTaskRow, GanttViewModel};
 pub use grid::{
-    CellCoordinate, CellSelectionRange, GridNavDirection, VirtualizedGridState, visible_slice,
+    CellCoordinate, CellSelectionRange, EditableChildTableGrid, GridNavDirection,
+    VirtualizedGridState, visible_slice,
 };
 pub use primitives::{
     AlertModel, AlertVariant, AttachedFile, AutocompleteModel, AutocompleteOption, AvatarModel,
-    AvatarSize, BadgeModel, BottomSheetModel, ButtonModel, ButtonVariant, CalendarEvent,
-    CalendarViewMode, CalendarViewModel, CardModel, ChartCardModel, ComboboxModel, ComboboxOption,
+    AvatarSize, AwesomeBarItem, AwesomeBarKeyboardAction, AwesomeBarModel, BadgeModel,
+    BottomSheetModel, ButtonModel, ButtonVariant, CalendarEvent, CalendarViewMode,
+    CalendarViewModel, CardModel, ChartCardModel, ComboboxModel, ComboboxOption,
     CommandPaletteItem, CommandPaletteModel, ContextMenuItem, ContextMenuModel, DashboardViewModel,
     DatePickerModel, DateTimePickerModel, DialogModel, FileUploaderModel, FilterCondition,
     FilterGroupModel, FilterLogicalOperator, KeyboardShortcutsDialogModel, MobileNavItem,
@@ -50,8 +52,9 @@ pub use resources::{
 };
 pub use spc_view::{SpcChartViewModel, SpcPointView};
 pub use views::{
-    FormTimelineEntry, FormViewModel, KanbanColumn, KanbanViewModel, ListViewColumn, ListViewModel,
-    ReportType, ReportViewModel,
+    BatchActionBarModel, BatchActionType, FilterCriterion, FilterDrawerModel, FormTimelineEntry,
+    FormViewModel, KanbanColumn, KanbanViewModel, ListViewColumn, ListViewModel, ReportType,
+    ReportViewModel,
 };
 pub use wms_view::{AmrMarkerViewModel, BinViewModel, Warehouse3DViewModel};
 

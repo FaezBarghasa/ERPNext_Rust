@@ -138,6 +138,146 @@ impl VirtualizedGridState {
     }
 }
 
+use compact_str::CompactString;
+use rust_decimal::Decimal;
+use std::str::FromStr;
+
+/// In-cell editable child table grid with row mutations, spreadsheet keyboard navigation,
+/// drag-and-drop row reordering, and real-time parent arithmetic triggers.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct EditableChildTableGrid {
+    pub child_doctype: CompactString,
+    pub rows: Vec<serde_json::Map<String, serde_json::Value>>,
+    pub nav_state: VirtualizedGridState,
+    pub is_editing: bool,
+}
+
+impl EditableChildTableGrid {
+    #[must_use]
+    pub fn new(child_doctype: impl Into<CompactString>, num_cols: usize) -> Self {
+        Self {
+            child_doctype: child_doctype.into(),
+            rows: Vec::new(),
+            nav_state: VirtualizedGridState::new(0, num_cols),
+            is_editing: false,
+        }
+    }
+
+    /// Appends a new blank or template row to the child table.
+    pub fn add_row(&mut self, mut row: serde_json::Map<String, serde_json::Value>) -> usize {
+        let idx = self.rows.len();
+        row.insert("idx".to_string(), serde_json::json!(idx + 1));
+        self.rows.push(row);
+        self.nav_state.total_rows = self.rows.len();
+        idx
+    }
+
+    /// Removes a row at the given index.
+    pub fn remove_row(&mut self, row_idx: usize) -> bool {
+        if row_idx < self.rows.len() {
+            self.rows.remove(row_idx);
+            // Re-index remaining rows
+            for (i, r) in self.rows.iter_mut().enumerate() {
+                r.insert("idx".to_string(), serde_json::json!(i + 1));
+            }
+            self.nav_state.total_rows = self.rows.len();
+            if self.nav_state.active_cell.row >= self.rows.len() && !self.rows.is_empty() {
+                self.nav_state.active_cell.row = self.rows.len() - 1;
+            }
+            true
+        } else {
+            false
+        }
+    }
+
+    /// Duplicates an existing row directly beneath it.
+    pub fn duplicate_row(&mut self, row_idx: usize) -> Option<usize> {
+        if row_idx < self.rows.len() {
+            let cloned = self.rows[row_idx].clone();
+            let insert_idx = row_idx + 1;
+            self.rows.insert(insert_idx, cloned);
+            for (i, r) in self.rows.iter_mut().enumerate() {
+                r.insert("idx".to_string(), serde_json::json!(i + 1));
+            }
+            self.nav_state.total_rows = self.rows.len();
+            Some(insert_idx)
+        } else {
+            None
+        }
+    }
+
+    /// Reorders a row via drag-and-drop from `from_idx` to `to_idx`.
+    pub fn move_row(&mut self, from_idx: usize, to_idx: usize) -> bool {
+        if from_idx < self.rows.len() && to_idx < self.rows.len() {
+            let row = self.rows.remove(from_idx);
+            self.rows.insert(to_idx, row);
+            for (i, r) in self.rows.iter_mut().enumerate() {
+                r.insert("idx".to_string(), serde_json::json!(i + 1));
+            }
+            true
+        } else {
+            false
+        }
+    }
+
+    /// Recalculates line amounts and returns `(net_total, tax_amount, grand_total)`.
+    pub fn recalculate_totals(
+        &mut self,
+        qty_field: &str,
+        rate_field: &str,
+        amount_field: &str,
+        tax_rate_pct: Decimal,
+    ) -> (Decimal, Decimal, Decimal) {
+        let mut net_total = Decimal::ZERO;
+
+        for r in &mut self.rows {
+            let qty = r
+                .get(qty_field)
+                .and_then(|v| {
+                    if let Some(s) = v.as_str() {
+                        Decimal::from_str(s).ok()
+                    } else if let Some(n) = v.as_i64() {
+                        Some(Decimal::from(n))
+                    } else {
+                        v.as_f64()
+                            .and_then(|f| Decimal::from_str(&format!("{f:.4}")).ok())
+                    }
+                })
+                .unwrap_or(Decimal::ZERO);
+
+            let rate = r
+                .get(rate_field)
+                .and_then(|v| {
+                    if let Some(s) = v.as_str() {
+                        Decimal::from_str(s).ok()
+                    } else if let Some(n) = v.as_i64() {
+                        Some(Decimal::from(n))
+                    } else {
+                        v.as_f64()
+                            .and_then(|f| Decimal::from_str(&format!("{f:.4}")).ok())
+                    }
+                })
+                .unwrap_or(Decimal::ZERO);
+
+            let amount = qty * rate;
+            r.insert(
+                amount_field.to_string(),
+                serde_json::json!(amount.to_string()),
+            );
+            net_total += amount;
+        }
+
+        let tax_amount = (net_total * tax_rate_pct) / Decimal::from(100);
+        let grand_total = net_total + tax_amount;
+        (net_total, tax_amount, grand_total)
+    }
+
+    /// Navigates cell selection.
+    pub fn navigate(&mut self, dir: GridNavDirection, extend_selection: bool) {
+        self.nav_state.navigate(dir, extend_selection);
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -169,5 +309,48 @@ mod tests {
         assert!(sel.contains(CellCoordinate { row: 1, col: 1 }));
         assert!(sel.contains(CellCoordinate { row: 2, col: 1 }));
         assert!(!sel.contains(CellCoordinate { row: 0, col: 1 }));
+    }
+
+    #[test]
+    fn test_editable_child_table_mutations_and_recalc() {
+        use rust_decimal_macros::dec;
+
+        let mut grid = EditableChildTableGrid::new("Sales Invoice Item", 4);
+        assert_eq!(grid.rows.len(), 0);
+
+        let mut row1 = serde_json::Map::new();
+        row1.insert("item_code".into(), serde_json::json!("LAPTOP"));
+        row1.insert("qty".into(), serde_json::json!("2"));
+        row1.insert("rate".into(), serde_json::json!("1000.00"));
+        grid.add_row(row1);
+
+        let mut row2 = serde_json::Map::new();
+        row2.insert("item_code".into(), serde_json::json!("MOUSE"));
+        row2.insert("qty".into(), serde_json::json!("1"));
+        row2.insert("rate".into(), serde_json::json!("50.00"));
+        grid.add_row(row2);
+
+        assert_eq!(grid.rows.len(), 2);
+        assert_eq!(grid.rows[0].get("idx").unwrap(), 1);
+        assert_eq!(grid.rows[1].get("idx").unwrap(), 2);
+
+        // Test real-time calculation triggers
+        let (net, tax, grand) = grid.recalculate_totals("qty", "rate", "amount", dec!(10.0));
+        assert_eq!(net, dec!(2050.00));
+        assert_eq!(tax, dec!(205.00));
+        assert_eq!(grand, dec!(2255.00));
+
+        // Duplicate row 1
+        let dup_idx = grid.duplicate_row(0).expect("duplicated");
+        assert_eq!(dup_idx, 1);
+        assert_eq!(grid.rows.len(), 3);
+
+        // Move row 2 to 0
+        assert!(grid.move_row(2, 0));
+        assert_eq!(grid.rows[0].get("item_code").unwrap(), "MOUSE");
+
+        // Remove row
+        assert!(grid.remove_row(0));
+        assert_eq!(grid.rows.len(), 2);
     }
 }
