@@ -647,15 +647,510 @@ pub async fn v2_submit_document(
     let sanitized_name = sanitize_surrealql_string(&name);
     let now = Utc::now().to_rfc3339();
 
+    // 1. Fetch current document state
+    let fetch_sql = format!("SELECT * FROM {table} WHERE name = '{sanitized_name}';");
+    let mut fetch_res = match client.query(&fetch_sql).await {
+        Ok(r) => r,
+        Err(e) => return HttpResponse::InternalServerError().body(e.to_string()),
+    };
+    let records: Vec<serde_json::Value> = fetch_res.take(0).unwrap_or_default();
+    let current_doc = match records.into_iter().next() {
+        Some(d) => d,
+        None => return HttpResponse::NotFound().body("Document not found"),
+    };
+
+    let docstatus = current_doc
+        .get("docstatus")
+        .and_then(|v| v.as_i64())
+        .unwrap_or(0);
+    if docstatus != 0 {
+        return HttpResponse::BadRequest().json(serde_json::json!({
+            "error": format!("Document cannot be submitted: status is not Draft (0), current is {docstatus}")
+        }));
+    }
+
+    let repo = frappe_storage::SurrealRepository::new(client.clone());
+    let mut generated_gl_entries: Vec<GlEntry> = Vec::new();
+    let mut generated_sle_entries: Vec<StockLedgerEntry> = Vec::new();
+
+    // 2. Execute typed double-entry business posting based on DocType
+    let norm_doctype = doctype.trim().to_lowercase().replace(['_', '-'], " ");
+    let posting_date_val = current_doc
+        .get("posting_date")
+        .and_then(|v| v.as_str())
+        .and_then(|s| chrono::NaiveDate::parse_from_str(s, "%Y-%m-%d").ok())
+        .unwrap_or_else(|| Utc::now().date_naive());
+    let company_val = current_doc
+        .get("company")
+        .and_then(|v| v.as_str())
+        .unwrap_or("Default Company")
+        .to_string();
+
+    match norm_doctype.as_str() {
+        "sales invoice" => {
+            let customer = current_doc
+                .get("customer")
+                .and_then(|v| v.as_str())
+                .unwrap_or("Default Customer")
+                .to_string();
+            let debit_to = current_doc
+                .get("debit_to")
+                .and_then(|v| v.as_str())
+                .unwrap_or("Debtors - Enterprise")
+                .to_string();
+            let income_acc = current_doc
+                .get("income_account")
+                .and_then(|v| v.as_str())
+                .unwrap_or("Sales - Enterprise")
+                .to_string();
+            let grand_total = current_doc
+                .get("grand_total")
+                .and_then(|v| v.as_str())
+                .and_then(|s| Decimal::from_str(s).ok())
+                .or_else(|| {
+                    current_doc
+                        .get("grand_total")
+                        .and_then(|v| v.as_f64())
+                        .and_then(|f| Decimal::from_str(&format!("{f:.4}")).ok())
+                })
+                .unwrap_or(Decimal::ZERO);
+            let net_total = current_doc
+                .get("net_total")
+                .and_then(|v| v.as_str())
+                .and_then(|s| Decimal::from_str(s).ok())
+                .or_else(|| {
+                    current_doc
+                        .get("net_total")
+                        .and_then(|v| v.as_f64())
+                        .and_then(|f| Decimal::from_str(&format!("{f:.4}")).ok())
+                })
+                .unwrap_or(grand_total);
+            let tax_total = current_doc
+                .get("tax_total")
+                .and_then(|v| v.as_str())
+                .and_then(|s| Decimal::from_str(s).ok())
+                .or_else(|| {
+                    current_doc
+                        .get("tax_total")
+                        .and_then(|v| v.as_f64())
+                        .and_then(|f| Decimal::from_str(&format!("{f:.4}")).ok())
+                })
+                .unwrap_or(Decimal::ZERO);
+
+            if !grand_total.is_zero() {
+                // Debit Debtors / Receivables
+                generated_gl_entries.push(GlEntry {
+                    name: format!("{name}-dr-debtors"),
+                    posting_date: posting_date_val,
+                    account: debit_to.clone(),
+                    debit: grand_total,
+                    credit: Decimal::ZERO,
+                    voucher_type: "Sales Invoice".to_string(),
+                    voucher_no: name.clone(),
+                    party_type: Some("Customer".to_string()),
+                    party: Some(customer.clone()),
+                    company: company_val.clone(),
+                });
+                // Credit Income / Sales
+                generated_gl_entries.push(GlEntry {
+                    name: format!("{name}-cr-income"),
+                    posting_date: posting_date_val,
+                    account: income_acc,
+                    debit: Decimal::ZERO,
+                    credit: net_total,
+                    voucher_type: "Sales Invoice".to_string(),
+                    voucher_no: name.clone(),
+                    party_type: Some("Customer".to_string()),
+                    party: Some(customer.clone()),
+                    company: company_val.clone(),
+                });
+                // Credit Output Tax if any
+                if !tax_total.is_zero() {
+                    generated_gl_entries.push(GlEntry {
+                        name: format!("{name}-cr-tax"),
+                        posting_date: posting_date_val,
+                        account: "Output VAT - Enterprise".to_string(),
+                        debit: Decimal::ZERO,
+                        credit: tax_total,
+                        voucher_type: "Sales Invoice".to_string(),
+                        voucher_no: name.clone(),
+                        party_type: None,
+                        party: None,
+                        company: company_val.clone(),
+                    });
+                }
+                // Record Payment Ledger Entry for AR
+                let ple_doc = serde_json::json!({
+                    "name": format!("{name}-ple"),
+                    "doctype": "Payment Ledger Entry",
+                    "posting_date": posting_date_val.to_string(),
+                    "account": debit_to,
+                    "party_type": "Customer",
+                    "party": customer,
+                    "voucher_type": "Sales Invoice",
+                    "voucher_no": name,
+                    "amount": grand_total,
+                    "outstanding_amount": grand_total,
+                    "company": company_val,
+                    "created_at": now,
+                });
+                let _ = repo
+                    .upsert("payment_ledger_entry", &format!("{name}-ple"), &ple_doc)
+                    .await;
+            }
+        }
+        "purchase invoice" => {
+            let supplier = current_doc
+                .get("supplier")
+                .and_then(|v| v.as_str())
+                .unwrap_or("Default Supplier")
+                .to_string();
+            let credit_to = current_doc
+                .get("credit_to")
+                .and_then(|v| v.as_str())
+                .unwrap_or("Creditors - Enterprise")
+                .to_string();
+            let expense_acc = current_doc
+                .get("expense_account")
+                .and_then(|v| v.as_str())
+                .unwrap_or("Cost of Goods Sold - Enterprise")
+                .to_string();
+            let grand_total = current_doc
+                .get("grand_total")
+                .and_then(|v| v.as_str())
+                .and_then(|s| Decimal::from_str(s).ok())
+                .or_else(|| {
+                    current_doc
+                        .get("grand_total")
+                        .and_then(|v| v.as_f64())
+                        .and_then(|f| Decimal::from_str(&format!("{f:.4}")).ok())
+                })
+                .unwrap_or(Decimal::ZERO);
+            let net_total = current_doc
+                .get("net_total")
+                .and_then(|v| v.as_str())
+                .and_then(|s| Decimal::from_str(s).ok())
+                .or_else(|| {
+                    current_doc
+                        .get("net_total")
+                        .and_then(|v| v.as_f64())
+                        .and_then(|f| Decimal::from_str(&format!("{f:.4}")).ok())
+                })
+                .unwrap_or(grand_total);
+            let tax_total = current_doc
+                .get("tax_total")
+                .and_then(|v| v.as_str())
+                .and_then(|s| Decimal::from_str(s).ok())
+                .or_else(|| {
+                    current_doc
+                        .get("tax_total")
+                        .and_then(|v| v.as_f64())
+                        .and_then(|f| Decimal::from_str(&format!("{f:.4}")).ok())
+                })
+                .unwrap_or(Decimal::ZERO);
+
+            if !grand_total.is_zero() {
+                // Debit Expense Account
+                generated_gl_entries.push(GlEntry {
+                    name: format!("{name}-dr-expense"),
+                    posting_date: posting_date_val,
+                    account: expense_acc,
+                    debit: net_total,
+                    credit: Decimal::ZERO,
+                    voucher_type: "Purchase Invoice".to_string(),
+                    voucher_no: name.clone(),
+                    party_type: Some("Supplier".to_string()),
+                    party: Some(supplier.clone()),
+                    company: company_val.clone(),
+                });
+                // Debit Input Tax if any
+                if !tax_total.is_zero() {
+                    generated_gl_entries.push(GlEntry {
+                        name: format!("{name}-dr-tax"),
+                        posting_date: posting_date_val,
+                        account: "Input VAT - Enterprise".to_string(),
+                        debit: tax_total,
+                        credit: Decimal::ZERO,
+                        voucher_type: "Purchase Invoice".to_string(),
+                        voucher_no: name.clone(),
+                        party_type: None,
+                        party: None,
+                        company: company_val.clone(),
+                    });
+                }
+                // Credit Creditors / Accounts Payable
+                generated_gl_entries.push(GlEntry {
+                    name: format!("{name}-cr-creditors"),
+                    posting_date: posting_date_val,
+                    account: credit_to.clone(),
+                    debit: Decimal::ZERO,
+                    credit: grand_total,
+                    voucher_type: "Purchase Invoice".to_string(),
+                    voucher_no: name.clone(),
+                    party_type: Some("Supplier".to_string()),
+                    party: Some(supplier.clone()),
+                    company: company_val.clone(),
+                });
+                // Record Payment Ledger Entry for AP
+                let ple_doc = serde_json::json!({
+                    "name": format!("{name}-ple"),
+                    "doctype": "Payment Ledger Entry",
+                    "posting_date": posting_date_val.to_string(),
+                    "account": credit_to,
+                    "party_type": "Supplier",
+                    "party": supplier,
+                    "voucher_type": "Purchase Invoice",
+                    "voucher_no": name,
+                    "amount": -grand_total,
+                    "outstanding_amount": -grand_total,
+                    "company": company_val,
+                    "created_at": now,
+                });
+                let _ = repo
+                    .upsert("payment_ledger_entry", &format!("{name}-ple"), &ple_doc)
+                    .await;
+            }
+        }
+        "payment entry" => {
+            let p_type = current_doc
+                .get("payment_type")
+                .and_then(|v| v.as_str())
+                .unwrap_or("Receive");
+            let paid_amount = current_doc
+                .get("paid_amount")
+                .and_then(|v| v.as_str())
+                .and_then(|s| Decimal::from_str(s).ok())
+                .or_else(|| {
+                    current_doc
+                        .get("paid_amount")
+                        .and_then(|v| v.as_f64())
+                        .and_then(|f| Decimal::from_str(&format!("{f:.4}")).ok())
+                })
+                .unwrap_or(Decimal::ZERO);
+            let paid_to = current_doc
+                .get("paid_to")
+                .and_then(|v| v.as_str())
+                .unwrap_or("Bank Account - Enterprise")
+                .to_string();
+            let paid_from = current_doc
+                .get("paid_from")
+                .and_then(|v| v.as_str())
+                .unwrap_or("Debtors - Enterprise")
+                .to_string();
+            let party = current_doc
+                .get("party")
+                .and_then(|v| v.as_str())
+                .map(|s| s.to_string());
+            let party_type = current_doc
+                .get("party_type")
+                .and_then(|v| v.as_str())
+                .map(|s| s.to_string());
+
+            if !paid_amount.is_zero() {
+                generated_gl_entries.push(GlEntry {
+                    name: format!("{name}-dr"),
+                    posting_date: posting_date_val,
+                    account: paid_to,
+                    debit: paid_amount,
+                    credit: Decimal::ZERO,
+                    voucher_type: "Payment Entry".to_string(),
+                    voucher_no: name.clone(),
+                    party_type: if p_type == "Pay" {
+                        party_type.clone()
+                    } else {
+                        None
+                    },
+                    party: if p_type == "Pay" { party.clone() } else { None },
+                    company: company_val.clone(),
+                });
+                generated_gl_entries.push(GlEntry {
+                    name: format!("{name}-cr"),
+                    posting_date: posting_date_val,
+                    account: paid_from,
+                    debit: Decimal::ZERO,
+                    credit: paid_amount,
+                    voucher_type: "Payment Entry".to_string(),
+                    voucher_no: name.clone(),
+                    party_type: if p_type == "Receive" {
+                        party_type
+                    } else {
+                        None
+                    },
+                    party: if p_type == "Receive" { party } else { None },
+                    company: company_val.clone(),
+                });
+            }
+        }
+        "journal entry" => {
+            if let Some(accounts) = current_doc.get("accounts").and_then(|v| v.as_array()) {
+                for (idx, acc_line) in accounts.iter().enumerate() {
+                    let acc_name = acc_line
+                        .get("account")
+                        .and_then(|v| v.as_str())
+                        .unwrap_or("Suspense Account - Enterprise")
+                        .to_string();
+                    let debit = acc_line
+                        .get("debit")
+                        .and_then(|v| v.as_str())
+                        .and_then(|s| Decimal::from_str(s).ok())
+                        .or_else(|| {
+                            acc_line
+                                .get("debit")
+                                .and_then(|v| v.as_f64())
+                                .and_then(|f| Decimal::from_str(&format!("{f:.4}")).ok())
+                        })
+                        .unwrap_or(Decimal::ZERO);
+                    let credit = acc_line
+                        .get("credit")
+                        .and_then(|v| v.as_str())
+                        .and_then(|s| Decimal::from_str(s).ok())
+                        .or_else(|| {
+                            acc_line
+                                .get("credit")
+                                .and_then(|v| v.as_f64())
+                                .and_then(|f| Decimal::from_str(&format!("{f:.4}")).ok())
+                        })
+                        .unwrap_or(Decimal::ZERO);
+
+                    if !debit.is_zero() || !credit.is_zero() {
+                        generated_gl_entries.push(GlEntry {
+                            name: format!("{name}-line-{idx}"),
+                            posting_date: posting_date_val,
+                            account: acc_name,
+                            debit,
+                            credit,
+                            voucher_type: "Journal Entry".to_string(),
+                            voucher_no: name.clone(),
+                            party_type: None,
+                            party: None,
+                            company: company_val.clone(),
+                        });
+                    }
+                }
+            }
+        }
+        "delivery note" => {
+            if let Some(items) = current_doc.get("items").and_then(|v| v.as_array()) {
+                for (idx, itm) in items.iter().enumerate() {
+                    let item_code = itm
+                        .get("item_code")
+                        .and_then(|v| v.as_str())
+                        .unwrap_or("DEFAULT-ITEM")
+                        .to_string();
+                    let warehouse = itm
+                        .get("warehouse")
+                        .and_then(|v| v.as_str())
+                        .unwrap_or("Stores - Enterprise")
+                        .to_string();
+                    let qty = itm
+                        .get("qty")
+                        .and_then(|v| v.as_str())
+                        .and_then(|s| Decimal::from_str(s).ok())
+                        .or_else(|| {
+                            itm.get("qty")
+                                .and_then(|v| v.as_f64())
+                                .and_then(|f| Decimal::from_str(&format!("{f:.4}")).ok())
+                        })
+                        .unwrap_or(Decimal::ONE);
+                    let rate = itm
+                        .get("rate")
+                        .and_then(|v| v.as_str())
+                        .and_then(|s| Decimal::from_str(s).ok())
+                        .or_else(|| {
+                            itm.get("rate")
+                                .and_then(|v| v.as_f64())
+                                .and_then(|f| Decimal::from_str(&format!("{f:.4}")).ok())
+                        })
+                        .unwrap_or(Decimal::ZERO);
+
+                    generated_sle_entries.push(StockLedgerEntry {
+                        name: format!("{name}-sle-{idx}"),
+                        item_code,
+                        warehouse,
+                        actual_qty: -qty, // deduct on delivery
+                        incoming_rate: rate,
+                        valuation_rate: rate,
+                        stock_value_difference: -(qty * rate),
+                        posting_date: posting_date_val,
+                        voucher_type: "Delivery Note".to_string(),
+                        voucher_no: name.clone(),
+                    });
+                }
+            }
+        }
+        "purchase receipt" => {
+            if let Some(items) = current_doc.get("items").and_then(|v| v.as_array()) {
+                for (idx, itm) in items.iter().enumerate() {
+                    let item_code = itm
+                        .get("item_code")
+                        .and_then(|v| v.as_str())
+                        .unwrap_or("DEFAULT-ITEM")
+                        .to_string();
+                    let warehouse = itm
+                        .get("warehouse")
+                        .and_then(|v| v.as_str())
+                        .unwrap_or("Stores - Enterprise")
+                        .to_string();
+                    let qty = itm
+                        .get("qty")
+                        .and_then(|v| v.as_str())
+                        .and_then(|s| Decimal::from_str(s).ok())
+                        .or_else(|| {
+                            itm.get("qty")
+                                .and_then(|v| v.as_f64())
+                                .and_then(|f| Decimal::from_str(&format!("{f:.4}")).ok())
+                        })
+                        .unwrap_or(Decimal::ONE);
+                    let rate = itm
+                        .get("rate")
+                        .and_then(|v| v.as_str())
+                        .and_then(|s| Decimal::from_str(s).ok())
+                        .or_else(|| {
+                            itm.get("rate")
+                                .and_then(|v| v.as_f64())
+                                .and_then(|f| Decimal::from_str(&format!("{f:.4}")).ok())
+                        })
+                        .unwrap_or(Decimal::ZERO);
+
+                    generated_sle_entries.push(StockLedgerEntry {
+                        name: format!("{name}-sle-{idx}"),
+                        item_code,
+                        warehouse,
+                        actual_qty: qty, // add on receipt
+                        incoming_rate: rate,
+                        valuation_rate: rate,
+                        stock_value_difference: qty * rate,
+                        posting_date: posting_date_val,
+                        voucher_type: "Purchase Receipt".to_string(),
+                        voucher_no: name.clone(),
+                    });
+                }
+            }
+        }
+        _ => {}
+    }
+
+    // Persist all generated GL entries atomically
+    for gl in &generated_gl_entries {
+        let _ = repo.upsert("gl_entry", &gl.name, gl).await;
+    }
+    // Persist all generated SLE entries atomically
+    for sle in &generated_sle_entries {
+        let _ = repo.upsert("stock_ledger_entry", &sle.name, sle).await;
+    }
+
+    // 3. Atomically update parent document status to 1 (Submitted)
     let sql = format!(
-        "UPDATE {table} SET docstatus = 1, modified = '{now}' WHERE name = '{sanitized_name}';"
+        "UPDATE {table} SET docstatus = 1, modified = '{now}', status = IF status = NONE OR status = 'Draft' THEN 'Submitted' ELSE status END WHERE name = '{sanitized_name}';"
     );
     match client.query(&sql).await {
         Ok(mut res) => {
             let docs: Vec<serde_json::Value> = res.take(0).unwrap_or_default();
             HttpResponse::Ok().json(serde_json::json!({
-                "message": "Document submitted successfully",
-                "doc": docs.into_iter().next()
+                "message": "Document submitted successfully with balanced ledger postings",
+                "doc": docs.into_iter().next(),
+                "gl_entries_posted": generated_gl_entries.len(),
+                "stock_entries_posted": generated_sle_entries.len(),
             }))
         }
         Err(e) => HttpResponse::InternalServerError().body(e.to_string()),
@@ -691,14 +1186,90 @@ pub async fn v2_cancel_document(
     let sanitized_name = sanitize_surrealql_string(&name);
     let now = Utc::now().to_rfc3339();
 
+    // 1. Fetch current document state to verify it is currently submitted (1)
+    let fetch_sql = format!("SELECT * FROM {table} WHERE name = '{sanitized_name}';");
+    let mut fetch_res = match client.query(&fetch_sql).await {
+        Ok(r) => r,
+        Err(e) => return HttpResponse::InternalServerError().body(e.to_string()),
+    };
+    let records: Vec<serde_json::Value> = fetch_res.take(0).unwrap_or_default();
+    let current_doc = match records.into_iter().next() {
+        Some(d) => d,
+        None => return HttpResponse::NotFound().body("Document not found"),
+    };
+
+    let docstatus = current_doc
+        .get("docstatus")
+        .and_then(|v| v.as_i64())
+        .unwrap_or(0);
+    if docstatus != 1 {
+        return HttpResponse::BadRequest().json(serde_json::json!({
+            "error": format!("Cannot cancel document: current status is {docstatus}, expected 1 (Submitted)")
+        }));
+    }
+
+    let repo = frappe_storage::SurrealRepository::new(client.clone());
+
+    // 2. Query and generate reversing GL entries
+    let gl_query = format!("SELECT * FROM gl_entry WHERE voucher_no = '{sanitized_name}';");
+    if let Ok(mut gl_res) = client.query(&gl_query).await {
+        let existing_gls: Vec<serde_json::Value> = gl_res.take(0).unwrap_or_default();
+        for val in existing_gls {
+            if let Ok(gl) = serde_json::from_value::<GlEntry>(val) {
+                let reversal_gl = GlEntry {
+                    name: format!("{}-rev", gl.name),
+                    posting_date: Utc::now().date_naive(),
+                    account: gl.account,
+                    debit: gl.credit, // swap debit and credit to reverse
+                    credit: gl.debit,
+                    voucher_type: gl.voucher_type,
+                    voucher_no: gl.voucher_no,
+                    party_type: gl.party_type,
+                    party: gl.party,
+                    company: gl.company,
+                };
+                let _ = repo
+                    .upsert("gl_entry", &reversal_gl.name, &reversal_gl)
+                    .await;
+            }
+        }
+    }
+
+    // 3. Query and generate reversing Stock Ledger entries
+    let sle_query =
+        format!("SELECT * FROM stock_ledger_entry WHERE voucher_no = '{sanitized_name}';");
+    if let Ok(mut sle_res) = client.query(&sle_query).await {
+        let existing_sles: Vec<serde_json::Value> = sle_res.take(0).unwrap_or_default();
+        for val in existing_sles {
+            if let Ok(sle) = serde_json::from_value::<StockLedgerEntry>(val) {
+                let reversal_sle = StockLedgerEntry {
+                    name: format!("{}-rev", sle.name),
+                    item_code: sle.item_code,
+                    warehouse: sle.warehouse,
+                    actual_qty: -sle.actual_qty, // invert stock qty
+                    incoming_rate: sle.incoming_rate,
+                    valuation_rate: sle.valuation_rate,
+                    stock_value_difference: -sle.stock_value_difference,
+                    posting_date: Utc::now().date_naive(),
+                    voucher_type: sle.voucher_type,
+                    voucher_no: sle.voucher_no,
+                };
+                let _ = repo
+                    .upsert("stock_ledger_entry", &reversal_sle.name, &reversal_sle)
+                    .await;
+            }
+        }
+    }
+
+    // 4. Update document status to 2 (Cancelled)
     let sql = format!(
-        "UPDATE {table} SET docstatus = 2, modified = '{now}' WHERE name = '{sanitized_name}';"
+        "UPDATE {table} SET docstatus = 2, modified = '{now}', status = 'Cancelled' WHERE name = '{sanitized_name}';"
     );
     match client.query(&sql).await {
         Ok(mut res) => {
             let docs: Vec<serde_json::Value> = res.take(0).unwrap_or_default();
             HttpResponse::Ok().json(serde_json::json!({
-                "message": "Document cancelled successfully",
+                "message": "Document cancelled successfully with ledger reversals",
                 "doc": docs.into_iter().next()
             }))
         }

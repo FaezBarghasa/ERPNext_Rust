@@ -124,13 +124,20 @@ impl ControllerRegistry {
         self.controllers.is_empty()
     }
 
-    /// Pre-populates the registry with the complete suite of canonical upstream submittable document controllers (all 86).
+    /// Pre-populates the registry with the complete suite of canonical upstream submittable document controllers (all 86) plus core business controllers.
     #[must_use]
     pub fn with_standard_submittables() -> Self {
         let mut reg = Self::new();
         for &doctype in ALL_SUBMITTABLE_DOCTYPES {
             reg.register(doctype, StandardSubmittableController);
         }
+        reg.register("Sales Invoice", SalesInvoiceController);
+        reg.register("Purchase Invoice", PurchaseInvoiceController);
+        reg.register("Payment Entry", PaymentEntryController);
+        reg.register("Journal Entry", JournalEntryController);
+        reg.register("Stock Entry", StockEntryController);
+        reg.register("Delivery Note", DeliveryNoteController);
+        reg.register("Purchase Receipt", PurchaseReceiptController);
         reg
     }
 }
@@ -172,6 +179,238 @@ impl DocController for StandardSubmittableController {
     fn on_cancel(&self, doc: &mut Document, _schema: &DocTypeSchema) -> Result<(), DocumentError> {
         doc.docstatus = 2;
         Ok(())
+    }
+}
+
+/// Typed controller for Sales Invoice.
+#[derive(Debug, Clone, Copy, Default)]
+pub struct SalesInvoiceController;
+
+impl DocController for SalesInvoiceController {
+    fn validate(&self, doc: &mut Document, _schema: &DocTypeSchema) -> Result<(), DocumentError> {
+        if let Some(items) = doc.data.get("items").and_then(|v| v.as_array())
+            && items.is_empty()
+        {
+            return Err(DocumentError::ValidationFailed(
+                "Sales Invoice must have at least one line item".to_string(),
+            ));
+        }
+        Ok(())
+    }
+
+    fn before_submit(
+        &self,
+        doc: &mut Document,
+        schema: &DocTypeSchema,
+    ) -> Result<(), DocumentError> {
+        StandardSubmittableController.before_submit(doc, schema)
+    }
+
+    fn on_submit(&self, doc: &mut Document, schema: &DocTypeSchema) -> Result<(), DocumentError> {
+        StandardSubmittableController.on_submit(doc, schema)
+    }
+
+    fn before_cancel(
+        &self,
+        doc: &mut Document,
+        schema: &DocTypeSchema,
+    ) -> Result<(), DocumentError> {
+        StandardSubmittableController.before_cancel(doc, schema)
+    }
+
+    fn on_cancel(&self, doc: &mut Document, schema: &DocTypeSchema) -> Result<(), DocumentError> {
+        StandardSubmittableController.on_cancel(doc, schema)
+    }
+}
+
+/// Typed controller for Purchase Invoice.
+#[derive(Debug, Clone, Copy, Default)]
+pub struct PurchaseInvoiceController;
+
+impl DocController for PurchaseInvoiceController {
+    fn validate(&self, doc: &mut Document, _schema: &DocTypeSchema) -> Result<(), DocumentError> {
+        if let Some(items) = doc.data.get("items").and_then(|v| v.as_array())
+            && items.is_empty()
+        {
+            return Err(DocumentError::ValidationFailed(
+                "Purchase Invoice must have at least one line item".to_string(),
+            ));
+        }
+        Ok(())
+    }
+
+    fn before_submit(
+        &self,
+        doc: &mut Document,
+        schema: &DocTypeSchema,
+    ) -> Result<(), DocumentError> {
+        StandardSubmittableController.before_submit(doc, schema)
+    }
+
+    fn on_submit(&self, doc: &mut Document, schema: &DocTypeSchema) -> Result<(), DocumentError> {
+        StandardSubmittableController.on_submit(doc, schema)
+    }
+
+    fn before_cancel(
+        &self,
+        doc: &mut Document,
+        schema: &DocTypeSchema,
+    ) -> Result<(), DocumentError> {
+        StandardSubmittableController.before_cancel(doc, schema)
+    }
+
+    fn on_cancel(&self, doc: &mut Document, schema: &DocTypeSchema) -> Result<(), DocumentError> {
+        StandardSubmittableController.on_cancel(doc, schema)
+    }
+}
+
+/// Typed controller for Payment Entry.
+#[derive(Debug, Clone, Copy, Default)]
+pub struct PaymentEntryController;
+
+impl DocController for PaymentEntryController {
+    fn before_submit(
+        &self,
+        doc: &mut Document,
+        schema: &DocTypeSchema,
+    ) -> Result<(), DocumentError> {
+        StandardSubmittableController.before_submit(doc, schema)
+    }
+
+    fn on_submit(&self, doc: &mut Document, schema: &DocTypeSchema) -> Result<(), DocumentError> {
+        StandardSubmittableController.on_submit(doc, schema)
+    }
+
+    fn before_cancel(
+        &self,
+        doc: &mut Document,
+        schema: &DocTypeSchema,
+    ) -> Result<(), DocumentError> {
+        StandardSubmittableController.before_cancel(doc, schema)
+    }
+
+    fn on_cancel(&self, doc: &mut Document, schema: &DocTypeSchema) -> Result<(), DocumentError> {
+        StandardSubmittableController.on_cancel(doc, schema)
+    }
+}
+
+/// Typed controller for Journal Entry.
+#[derive(Debug, Clone, Copy, Default)]
+pub struct JournalEntryController;
+
+impl DocController for JournalEntryController {
+    fn before_submit(
+        &self,
+        doc: &mut Document,
+        schema: &DocTypeSchema,
+    ) -> Result<(), DocumentError> {
+        StandardSubmittableController.before_submit(doc, schema)
+    }
+
+    fn on_submit(&self, doc: &mut Document, schema: &DocTypeSchema) -> Result<(), DocumentError> {
+        StandardSubmittableController.on_submit(doc, schema)
+    }
+
+    fn before_cancel(
+        &self,
+        doc: &mut Document,
+        schema: &DocTypeSchema,
+    ) -> Result<(), DocumentError> {
+        StandardSubmittableController.before_cancel(doc, schema)
+    }
+
+    fn on_cancel(&self, doc: &mut Document, schema: &DocTypeSchema) -> Result<(), DocumentError> {
+        StandardSubmittableController.on_cancel(doc, schema)
+    }
+}
+
+/// Typed controller for Stock Entry.
+#[derive(Debug, Clone, Copy, Default)]
+pub struct StockEntryController;
+
+impl DocController for StockEntryController {
+    fn before_submit(
+        &self,
+        doc: &mut Document,
+        schema: &DocTypeSchema,
+    ) -> Result<(), DocumentError> {
+        StandardSubmittableController.before_submit(doc, schema)
+    }
+
+    fn on_submit(&self, doc: &mut Document, schema: &DocTypeSchema) -> Result<(), DocumentError> {
+        StandardSubmittableController.on_submit(doc, schema)
+    }
+
+    fn before_cancel(
+        &self,
+        doc: &mut Document,
+        schema: &DocTypeSchema,
+    ) -> Result<(), DocumentError> {
+        StandardSubmittableController.before_cancel(doc, schema)
+    }
+
+    fn on_cancel(&self, doc: &mut Document, schema: &DocTypeSchema) -> Result<(), DocumentError> {
+        StandardSubmittableController.on_cancel(doc, schema)
+    }
+}
+
+/// Typed controller for Delivery Note.
+#[derive(Debug, Clone, Copy, Default)]
+pub struct DeliveryNoteController;
+
+impl DocController for DeliveryNoteController {
+    fn before_submit(
+        &self,
+        doc: &mut Document,
+        schema: &DocTypeSchema,
+    ) -> Result<(), DocumentError> {
+        StandardSubmittableController.before_submit(doc, schema)
+    }
+
+    fn on_submit(&self, doc: &mut Document, schema: &DocTypeSchema) -> Result<(), DocumentError> {
+        StandardSubmittableController.on_submit(doc, schema)
+    }
+
+    fn before_cancel(
+        &self,
+        doc: &mut Document,
+        schema: &DocTypeSchema,
+    ) -> Result<(), DocumentError> {
+        StandardSubmittableController.before_cancel(doc, schema)
+    }
+
+    fn on_cancel(&self, doc: &mut Document, schema: &DocTypeSchema) -> Result<(), DocumentError> {
+        StandardSubmittableController.on_cancel(doc, schema)
+    }
+}
+
+/// Typed controller for Purchase Receipt.
+#[derive(Debug, Clone, Copy, Default)]
+pub struct PurchaseReceiptController;
+
+impl DocController for PurchaseReceiptController {
+    fn before_submit(
+        &self,
+        doc: &mut Document,
+        schema: &DocTypeSchema,
+    ) -> Result<(), DocumentError> {
+        StandardSubmittableController.before_submit(doc, schema)
+    }
+
+    fn on_submit(&self, doc: &mut Document, schema: &DocTypeSchema) -> Result<(), DocumentError> {
+        StandardSubmittableController.on_submit(doc, schema)
+    }
+
+    fn before_cancel(
+        &self,
+        doc: &mut Document,
+        schema: &DocTypeSchema,
+    ) -> Result<(), DocumentError> {
+        StandardSubmittableController.before_cancel(doc, schema)
+    }
+
+    fn on_cancel(&self, doc: &mut Document, schema: &DocTypeSchema) -> Result<(), DocumentError> {
+        StandardSubmittableController.on_cancel(doc, schema)
     }
 }
 
