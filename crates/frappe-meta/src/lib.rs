@@ -58,7 +58,8 @@ pub use rbac::{
     Permission, ROLE_ACCOUNTANT_USER, ROLE_ADMINISTRATOR, ROLE_CONTENT_CREATOR, ROLE_HR_MANAGER,
     ROLE_MANUFACTURING_USER, ROLE_MARKETING_ADMIN, ROLE_PURCHASE_USER, ROLE_SALES_USER,
     ROLE_SYSTEM_MANAGER, ROLE_WAREHOUSE_MANAGER, ROLE_WEBSITE_UPDATER, ROLE_WORKER_USER, Role,
-    STANDARD_ROLES, User, UserRecord, check_permission, compile_rls_policy,
+    STANDARD_ROLES, User, UserPermission, DocShare, UserPermissionEngine, UserRecord,
+    check_permission, compile_rls_policy,
 };
 pub use registry::{DocTypeRegistry, standard_erpnext_schemas};
 pub use role_tools::{RoleEvaluator, RoleReplicationBundle};

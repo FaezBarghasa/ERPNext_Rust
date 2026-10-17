@@ -688,6 +688,163 @@ pub fn check_permission(
     })
 }
 
+/// Explicit User Permission rule restricting records by link field (e.g. `Company`, `Cost Center`, `Warehouse`, `Customer`).
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+pub struct UserPermission {
+    pub user: String,
+    pub allow_doctype: String,
+    pub for_value: String,
+    pub is_default: bool,
+    pub applicable_for_doctype: Option<String>,
+}
+
+/// Ad-hoc document sharing rule (`tabDocShare`).
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+pub struct DocShare {
+    pub user: String,
+    pub share_doctype: String,
+    pub share_name: String,
+    pub read: bool,
+    pub write: bool,
+    pub submit: bool,
+    pub share: bool,
+}
+
+/// Dynamic Row-Level Security Engine evaluating `User Permission`, `DocShare`, and role constraints.
+#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+pub struct UserPermissionEngine {
+    pub user_permissions: Vec<UserPermission>,
+    pub doc_shares: Vec<DocShare>,
+}
+
+impl UserPermissionEngine {
+    #[must_use]
+    pub fn new() -> Self {
+        Self::default()
+    }
+
+    /// Add a user permission rule.
+    pub fn add_user_permission(
+        &mut self,
+        user: impl Into<String>,
+        allow_doctype: impl Into<String>,
+        for_value: impl Into<String>,
+        is_default: bool,
+        applicable_for: Option<String>,
+    ) {
+        self.user_permissions.push(UserPermission {
+            user: user.into(),
+            allow_doctype: allow_doctype.into(),
+            for_value: for_value.into(),
+            is_default,
+            applicable_for_doctype: applicable_for,
+        });
+    }
+
+    /// Share a document with another user.
+    pub fn share_document(
+        &mut self,
+        user: impl Into<String>,
+        doctype: impl Into<String>,
+        name: impl Into<String>,
+        read: bool,
+        write: bool,
+        submit: bool,
+        share: bool,
+    ) {
+        self.doc_shares.push(DocShare {
+            user: user.into(),
+            share_doctype: doctype.into(),
+            share_name: name.into(),
+            read,
+            write,
+            submit,
+            share,
+        });
+    }
+
+    /// Check if user has explicit ad-hoc document share permission.
+    #[must_use]
+    pub fn has_doc_share(
+        &self,
+        user: &str,
+        doctype: &str,
+        name: &str,
+        action: Permission,
+    ) -> bool {
+        self.doc_shares.iter().any(|s| {
+            s.user == user
+                && s.share_doctype == doctype
+                && s.share_name == name
+                && match action {
+                    Permission::Read | Permission::Report | Permission::Export => s.read,
+                    Permission::Write | Permission::Execute => s.write,
+                    Permission::Submit => s.submit,
+                    _ => false,
+                }
+        })
+    }
+
+    /// Compiles SQL/SurrealDB WHERE clause filters for a given user and target DocType.
+    #[must_use]
+    pub fn compile_user_permission_filters(
+        &self,
+        user: &str,
+        target_doctype: &str,
+    ) -> Vec<(String, Vec<String>)> {
+        let mut grouped: std::collections::HashMap<String, Vec<String>> =
+            std::collections::HashMap::new();
+
+        for perm in &self.user_permissions {
+            if perm.user == user {
+                if let Some(app) = &perm.applicable_for_doctype {
+                    if app != target_doctype {
+                        continue;
+                    }
+                }
+                // Group by allow_doctype (e.g. "Company", "Cost Center")
+                grouped
+                    .entry(perm.allow_doctype.clone())
+                    .or_default()
+                    .push(perm.for_value.clone());
+            }
+        }
+
+        grouped.into_iter().collect()
+    }
+
+    /// Builds a SurrealDB/SQL filter string enforcing row-level constraints.
+    #[must_use]
+    pub fn build_where_clause(
+        &self,
+        user: &str,
+        target_doctype: &str,
+        is_system_manager: bool,
+    ) -> String {
+        if is_system_manager || user == "Administrator" {
+            return String::new();
+        }
+
+        let filters = self.compile_user_permission_filters(user, target_doctype);
+        if filters.is_empty() {
+            return String::new();
+        }
+
+        let mut parts = Vec::new();
+        for (field, values) in filters {
+            let field_col = field.to_lowercase().replace(' ', "_");
+            let vals = values
+                .iter()
+                .map(|v| format!("\"{v}\""))
+                .collect::<Vec<_>>()
+                .join(", ");
+            parts.push(format!("({field_col} IN [{vals}] OR {field_col} IS NULL)"));
+        }
+
+        parts.join(" AND ")
+    }
+}
+
 /// Generates SurrealDB Row-Level Security (RLS) predicate for a table.
 #[must_use]
 pub fn compile_rls_policy(
@@ -767,5 +924,66 @@ mod tests {
 
         user.remove_role(ROLE_WAREHOUSE_MANAGER);
         assert!(!user.has_role(ROLE_WAREHOUSE_MANAGER));
+    }
+
+    #[test]
+    fn test_user_permission_engine_where_clause() {
+        let mut engine = UserPermissionEngine::new();
+        engine.add_user_permission("alice@example.com", "Company", "Acme Inc", true, None);
+        engine.add_user_permission(
+            "alice@example.com",
+            "Cost Center",
+            "Sales - AI",
+            false,
+            Some("Sales Invoice".into()),
+        );
+
+        let where_clause =
+            engine.build_where_clause("alice@example.com", "Sales Invoice", false);
+        assert!(where_clause.contains("company IN [\"Acme Inc\"]"));
+        assert!(where_clause.contains("cost_center IN [\"Sales - AI\"]"));
+
+        // Admin bypass returns empty clause
+        assert_eq!(
+            engine.build_where_clause("alice@example.com", "Sales Invoice", true),
+            ""
+        );
+        assert_eq!(
+            engine.build_where_clause("Administrator", "Sales Invoice", false),
+            ""
+        );
+    }
+
+    #[test]
+    fn test_doc_share_evaluation() {
+        let mut engine = UserPermissionEngine::new();
+        engine.share_document(
+            "bob@example.com",
+            "Sales Order",
+            "SO-2026-0001",
+            true,
+            false,
+            false,
+            false,
+        );
+
+        assert!(engine.has_doc_share(
+            "bob@example.com",
+            "Sales Order",
+            "SO-2026-0001",
+            Permission::Read
+        ));
+        assert!(!engine.has_doc_share(
+            "bob@example.com",
+            "Sales Order",
+            "SO-2026-0001",
+            Permission::Write
+        ));
+        assert!(!engine.has_doc_share(
+            "bob@example.com",
+            "Sales Order",
+            "SO-2026-0002",
+            Permission::Read
+        ));
     }
 }
