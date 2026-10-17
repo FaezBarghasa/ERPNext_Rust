@@ -29,16 +29,16 @@ use crate::v2_routes::{
     admin_unlock_target_handler, admin_update_permission_handler, admin_update_user_roles_handler,
     auth_forgot_password_handler, auth_mfa_activate_handler, auth_mfa_disable_handler,
     auth_mfa_enroll_handler, auth_refresh_token_handler, auth_reset_password_handler,
-    buying_purchase_invoice_handler, buying_purchase_order_handler,
+    builder_ai_prompt_handler, builder_get_page_handler, builder_list_pages_handler,
+    builder_save_page_handler, buying_purchase_invoice_handler, buying_purchase_order_handler,
     buying_purchase_receipt_handler, cms_create_taxonomy_handler, cms_generate_seo_handler,
     cms_list_media_handler, cms_list_taxonomies_handler, cms_upload_media_handler,
-    builder_list_pages_handler, builder_get_page_handler, builder_save_page_handler,
-    builder_ai_prompt_handler, emdash_list_documents_handler, emdash_get_document_handler,
-    emdash_save_document_handler, emdash_transition_handler, emdash_media_crop_handler,
     crm_convert_quotation_handler, download_file_handler, email_list_queue_handler,
-    email_send_handler, export_dataset_handler, h3_stream_file_handler,
-    h3_stream_telemetry_handler, hr_process_payroll_handler, inventory_stock_balance_handler,
-    inventory_stock_entry_handler, inventory_variant_matrix_handler, login_handler, logout_handler,
+    email_send_handler, emdash_get_document_handler, emdash_list_documents_handler,
+    emdash_media_crop_handler, emdash_save_document_handler, emdash_transition_handler,
+    export_dataset_handler, h3_stream_file_handler, h3_stream_telemetry_handler,
+    hr_process_payroll_handler, inventory_stock_balance_handler, inventory_stock_entry_handler,
+    inventory_variant_matrix_handler, login_handler, logout_handler,
     manufacturing_complete_work_order_handler, manufacturing_work_order_handler,
     notifications_dispatch_handler, notifications_get_inbox_handler, payment_charge_handler,
     payment_webhook_handler, ping_handler, portal_customer_dashboard_handler,
@@ -279,7 +279,9 @@ async fn storefront_handler() -> impl Responder {
 /// Frappe Builder Studio Visual Interface: `GET /builder` and `GET /builder/{page_id}`
 async fn builder_studio_handler(page_id: Option<web::Path<String>>) -> impl Responder {
     TOTAL_REQUESTS.fetch_add(1, Ordering::Relaxed);
-    let target_page = page_id.map(|p| p.into_inner()).unwrap_or_else(|| "home".into());
+    let target_page = page_id
+        .map(|p| p.into_inner())
+        .unwrap_or_else(|| "home".into());
     let switcher = erp_cms::builder_core::DeviceFrameSwitcher {
         breakpoint: erp_cms::builder_core::CanvasBreakpoint::Desktop,
         is_landscape: false,
@@ -467,7 +469,9 @@ async fn builder_studio_handler(page_id: Option<web::Path<String>>) -> impl Resp
 /// Emdash Editorial Studio Web Interface: `GET /emdash` and `GET /emdash/editor/{id}`
 async fn emdash_studio_handler(doc_id: Option<web::Path<String>>) -> impl Responder {
     TOTAL_REQUESTS.fetch_add(1, Ordering::Relaxed);
-    let target_doc = doc_id.map(|p| p.into_inner()).unwrap_or_else(|| "new-post".into());
+    let target_doc = doc_id
+        .map(|p| p.into_inner())
+        .unwrap_or_else(|| "new-post".into());
 
     let html = format!(
         r#"<!DOCTYPE html>
@@ -639,7 +643,9 @@ async fn dynamic_site_page_handler(
                     "<!DOCTYPE html><html lang=\"en\"><head><meta charset=\"UTF-8\">{seo_tags}</head><body style=\"font-family: Georgia, serif; max-width: 800px; margin: 3rem auto; padding: 0 1rem; line-height: 1.8;\">{}</body></html>",
                     doc.render_html()
                 );
-                return HttpResponse::Ok().content_type("text/html; charset=utf-8").body(html);
+                return HttpResponse::Ok()
+                    .content_type("text/html; charset=utf-8")
+                    .body(html);
             }
         }
     }
@@ -1194,6 +1200,12 @@ pub fn configure_app(
         .route("/approvals", web::get().to(approvals_handler))
         .route("/admin", web::get().to(admin_handler))
         .route("/storefront", web::get().to(storefront_handler))
+        .route("/builder", web::get().to(builder_studio_handler))
+        .route("/builder/{page_id}", web::get().to(builder_studio_handler))
+        .route("/emdash", web::get().to(emdash_studio_handler))
+        .route("/emdash/editor/{id}", web::get().to(emdash_studio_handler))
+        .route("/preview/{page_id}", web::get().to(builder_preview_handler))
+        .route("/site/{slug}", web::get().to(dynamic_site_page_handler))
         .route("/templates", web::get().to(templates_portal_handler))
         .route("/templates/{slug}", web::get().to(template_detail_handler))
         .route("/sitemap.xml", web::get().to(sitemap_xml_handler))
@@ -1491,6 +1503,44 @@ pub fn configure_app(
         .route(
             "/api/v2/cms/seo/generate",
             web::post().to(cms_generate_seo_handler),
+        )
+        // V2 Frappe Builder Visual Canvas APIs
+        .route(
+            "/api/v2/builder/pages",
+            web::get().to(builder_list_pages_handler),
+        )
+        .route(
+            "/api/v2/builder/pages/{id}",
+            web::get().to(builder_get_page_handler),
+        )
+        .route(
+            "/api/v2/builder/pages/{id}",
+            web::post().to(builder_save_page_handler),
+        )
+        .route(
+            "/api/v2/builder/ai/prompt",
+            web::post().to(builder_ai_prompt_handler),
+        )
+        // V2 Emdash Editorial Studio APIs
+        .route(
+            "/api/v2/emdash/documents",
+            web::get().to(emdash_list_documents_handler),
+        )
+        .route(
+            "/api/v2/emdash/documents/{id}",
+            web::get().to(emdash_get_document_handler),
+        )
+        .route(
+            "/api/v2/emdash/documents/{id}",
+            web::post().to(emdash_save_document_handler),
+        )
+        .route(
+            "/api/v2/emdash/documents/{id}/transition",
+            web::post().to(emdash_transition_handler),
+        )
+        .route(
+            "/api/v2/emdash/media/crop",
+            web::post().to(emdash_media_crop_handler),
         )
         // V2 Approval Workflow & Versioning Endpoints
         .route(

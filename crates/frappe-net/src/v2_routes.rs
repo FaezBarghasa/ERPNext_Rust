@@ -4104,17 +4104,21 @@ pub struct RevertBuilderPagePayload {
 
 /// Handler: Get or list Builder pages: `GET /api/v2/builder/pages`
 pub async fn builder_list_pages_handler(state: web::Data<DynamicRbacState>) -> impl Responder {
-    let pages = state.builder_pages.read().map(|lock| {
-        lock.iter()
-            .map(|(k, v)| {
-                serde_json::json!({
-                    "id": k,
-                    "node_count": v.nodes.len(),
-                    "root_id": v.root_id
+    let pages = state
+        .builder_pages
+        .read()
+        .map(|lock| {
+            lock.iter()
+                .map(|(k, v)| {
+                    serde_json::json!({
+                        "id": k,
+                        "node_count": v.nodes.len(),
+                        "root_ids": v.root_ids
+                    })
                 })
-            })
-            .collect::<Vec<_>>()
-    }).unwrap_or_default();
+                .collect::<Vec<_>>()
+        })
+        .unwrap_or_default();
 
     HttpResponse::Ok().json(serde_json::json!({
         "status": "OK",
@@ -4219,21 +4223,25 @@ pub struct EmdashTransitionPayload {
 
 /// Handler: List Emdash editorial documents: `GET /api/v2/emdash/documents`
 pub async fn emdash_list_documents_handler(state: web::Data<DynamicRbacState>) -> impl Responder {
-    let docs = state.emdash_documents.read().map(|lock| {
-        lock.values()
-            .map(|doc| {
-                serde_json::json!({
-                    "id": doc.id,
-                    "title": doc.title,
-                    "slug": doc.slug,
-                    "author": doc.author,
-                    "state": doc.workflow_state.state_name(),
-                    "words": doc.word_count(),
-                    "reading_time_mins": doc.reading_time_minutes(),
+    let docs = state
+        .emdash_documents
+        .read()
+        .map(|lock| {
+            lock.values()
+                .map(|doc| {
+                    serde_json::json!({
+                        "id": doc.id,
+                        "title": doc.title,
+                        "slug": doc.slug,
+                        "author": doc.author,
+                        "state": doc.workflow_state.state_name(),
+                        "words": doc.word_count(),
+                        "reading_time_mins": doc.reading_time_minutes(),
+                    })
                 })
-            })
-            .collect::<Vec<_>>()
-    }).unwrap_or_default();
+                .collect::<Vec<_>>()
+        })
+        .unwrap_or_default();
 
     HttpResponse::Ok().json(serde_json::json!({
         "status": "OK",
@@ -4274,16 +4282,16 @@ pub async fn emdash_save_document_handler(
     let id = doc_id.into_inner();
     let p = payload.into_inner();
 
-    let mut doc = erp_cms::emdash_studio::EmdashDocument::new(
-        id.clone(),
-        p.title,
-        p.slug,
-        p.author,
-    );
+    let mut doc =
+        erp_cms::emdash_studio::EmdashDocument::new(id.clone(), p.title, p.slug, p.author);
     for b in p.blocks {
         doc.add_block(b);
     }
-    doc.tags = p.tags.into_iter().map(compact_str::CompactString::from).collect();
+    doc.tags = p
+        .tags
+        .into_iter()
+        .map(compact_str::CompactString::from)
+        .collect();
 
     if let Ok(mut lock) = state.emdash_documents.write() {
         lock.insert(id.clone(), doc.clone());
@@ -4310,8 +4318,12 @@ pub async fn emdash_transition_handler(
     let target_state = match p.target_state.as_str() {
         "Draft" => erp_cms::emdash_studio::EditorialWorkflowState::Draft,
         "InReview" => erp_cms::emdash_studio::EditorialWorkflowState::InReview,
-        "Scheduled" => erp_cms::emdash_studio::EditorialWorkflowState::Scheduled { publish_timestamp: now + 3600 },
-        "Published" => erp_cms::emdash_studio::EditorialWorkflowState::Published { published_timestamp: now },
+        "Scheduled" => erp_cms::emdash_studio::EditorialWorkflowState::Scheduled {
+            publish_timestamp: now + 3600,
+        },
+        "Published" => erp_cms::emdash_studio::EditorialWorkflowState::Published {
+            published_timestamp: now,
+        },
         "Archived" => erp_cms::emdash_studio::EditorialWorkflowState::Archived,
         other => {
             return HttpResponse::BadRequest().json(serde_json::json!({
@@ -4335,11 +4347,9 @@ pub async fn emdash_transition_handler(
                     "new_state": new_st.state_name(),
                 }))
             }
-            Err(e) => {
-                HttpResponse::BadRequest().json(serde_json::json!({
-                    "error": e.to_string()
-                }))
-            }
+            Err(e) => HttpResponse::BadRequest().json(serde_json::json!({
+                "error": e.to_string()
+            })),
         }
     } else {
         HttpResponse::NotFound().json(serde_json::json!({
@@ -4353,7 +4363,8 @@ pub async fn emdash_transition_handler(
 pub struct FocalCropPayload {
     pub image_width: u32,
     pub image_height: u32,
-    pub target_aspect_ratio: f32,
+    pub target_width: u32,
+    pub target_height: u32,
     pub focal_x: f32,
     pub focal_y: f32,
 }
@@ -4361,18 +4372,21 @@ pub struct FocalCropPayload {
 /// Handler: Compute smart media focal-point crop bounding box: `POST /api/v2/emdash/media/crop`
 pub async fn emdash_media_crop_handler(payload: web::Json<FocalCropPayload>) -> impl Responder {
     let p = payload.into_inner();
-    let crop_box = erp_cms::emdash_studio::calculate_focal_crop(
+    match erp_cms::emdash_studio::calculate_focal_crop(
         p.image_width,
         p.image_height,
-        p.target_aspect_ratio,
-        p.focal_x,
-        p.focal_y,
-    );
-
-    HttpResponse::Ok().json(serde_json::json!({
-        "status": "COMPUTED",
-        "crop_box": crop_box
-    }))
+        p.target_width,
+        p.target_height,
+        (p.focal_x, p.focal_y),
+    ) {
+        Ok(crop_box) => HttpResponse::Ok().json(serde_json::json!({
+            "status": "COMPUTED",
+            "crop_box": crop_box
+        })),
+        Err(e) => HttpResponse::BadRequest().json(serde_json::json!({
+            "error": e.to_string()
+        })),
+    }
 }
 
 // =========================================================================
@@ -7329,5 +7343,105 @@ mod tests {
             .await
             .respond_to(&actix_web::test::TestRequest::default().to_http_request());
         assert_eq!(list_resp.status(), actix_web::http::StatusCode::OK);
+    }
+
+    #[tokio::test]
+    async fn test_builder_and_emdash_studio_flow() {
+        let state = web::Data::new(DynamicRbacState::default());
+
+        // 1. Builder save page
+        let save_builder = web::Json(SaveBuilderPagePayload {
+            title: "Landing Page".into(),
+            route_path: "/landing".into(),
+            tree: erp_cms::builder_core::CanvasBlockTree::default(),
+        });
+        let save_resp = builder_save_page_handler(
+            web::Path::from("landing_v1".to_string()),
+            save_builder,
+            state.clone(),
+        )
+        .await
+        .respond_to(&actix_web::test::TestRequest::default().to_http_request());
+        assert_eq!(save_resp.status(), actix_web::http::StatusCode::OK);
+
+        // 2. Builder list pages
+        let list_resp = builder_list_pages_handler(state.clone())
+            .await
+            .respond_to(&actix_web::test::TestRequest::default().to_http_request());
+        assert_eq!(list_resp.status(), actix_web::http::StatusCode::OK);
+
+        // 3. Bob AI Prompt
+        let bob_req = web::Json(erp_cms::builder_core::BobAgentPromptRequest {
+            prompt: "Modern enterprise hero".into(),
+            mode: "generate".into(),
+            selected_block_id: None,
+            active_theme_id: "default".into(),
+            target_doctypes: vec!["Item".into()],
+            attached_image_url: None,
+        });
+        let bob_resp = builder_ai_prompt_handler(bob_req)
+            .await
+            .respond_to(&actix_web::test::TestRequest::default().to_http_request());
+        assert_eq!(bob_resp.status(), actix_web::http::StatusCode::OK);
+
+        // 4. Emdash save document
+        let save_doc = web::Json(SaveEmdashDocumentPayload {
+            title: "RustNext Release".into(),
+            slug: "rustnext-release".into(),
+            author: "Administrator".into(),
+            blocks: vec![erp_cms::emdash_studio::EmdashBlock::Paragraph {
+                text: "Version 1.0 is live!".into(),
+            }],
+            tags: vec!["announcements".into()],
+        });
+        let doc_resp = emdash_save_document_handler(
+            web::Path::from("art_001".to_string()),
+            save_doc,
+            state.clone(),
+        )
+        .await
+        .respond_to(&actix_web::test::TestRequest::default().to_http_request());
+        assert_eq!(doc_resp.status(), actix_web::http::StatusCode::OK);
+
+        // 5. Emdash transition document to InReview then Published
+        let trans1 = web::Json(EmdashTransitionPayload {
+            target_state: "InReview".into(),
+            timestamp: None,
+        });
+        let trans1_resp = emdash_transition_handler(
+            web::Path::from("art_001".to_string()),
+            trans1,
+            state.clone(),
+        )
+        .await
+        .respond_to(&actix_web::test::TestRequest::default().to_http_request());
+        assert_eq!(trans1_resp.status(), actix_web::http::StatusCode::OK);
+
+        let trans2 = web::Json(EmdashTransitionPayload {
+            target_state: "Published".into(),
+            timestamp: None,
+        });
+        let trans2_resp = emdash_transition_handler(
+            web::Path::from("art_001".to_string()),
+            trans2,
+            state.clone(),
+        )
+        .await
+        .respond_to(&actix_web::test::TestRequest::default().to_http_request());
+        assert_eq!(trans2_resp.status(), actix_web::http::StatusCode::OK);
+
+        // 6. Emdash media focal crop
+        let crop_req = web::Json(FocalCropPayload {
+            image_width: 1920,
+            image_height: 1080,
+            target_width: 800,
+            target_height: 600,
+            focal_x: 0.5,
+            focal_y: 0.5,
+        });
+        let crop_resp = emdash_media_crop_handler(crop_req)
+            .await
+            .respond_to(&actix_web::test::TestRequest::default().to_http_request());
+        assert_eq!(crop_resp.status(), actix_web::http::StatusCode::OK);
     }
 }
