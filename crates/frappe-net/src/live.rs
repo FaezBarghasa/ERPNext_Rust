@@ -44,6 +44,11 @@ pub struct RealtimeBroadcast {
     pub event: RealtimeEvent,
 }
 
+/// Error occurred during lock-free broadcast dispatch.
+#[derive(Debug, Clone, PartialEq, Eq, thiserror::Error)]
+#[error("Broadcast channel closed or full: {0}")]
+pub struct BroadcastError(pub CompactString);
+
 /// In-memory Realtime Hub managing room subscriptions (`doc:<doctype>:<name>`, `user:<user>`).
 /// Uses a lock-free Tokio broadcast channel for zero-contention, low-latency event distribution.
 #[derive(Debug, Clone)]
@@ -74,15 +79,13 @@ impl RealtimeHub {
     }
 
     /// Dispatches an event to all subscribers of a room via the lock-free broadcast channel.
-    pub fn dispatch(
-        &self,
-        room: &str,
-        event: RealtimeEvent,
-    ) -> Result<usize, tokio::sync::broadcast::error::SendError<RealtimeBroadcast>> {
-        self.broadcast_tx.send(RealtimeBroadcast {
-            room: CompactString::from(room),
-            event,
-        })
+    pub fn dispatch(&self, room: &str, event: RealtimeEvent) -> Result<usize, BroadcastError> {
+        self.broadcast_tx
+            .send(RealtimeBroadcast {
+                room: CompactString::from(room),
+                event,
+            })
+            .map_err(|e| BroadcastError(e.0.room))
     }
 
     /// Subscribes to the lock-free broadcast event stream.
@@ -194,10 +197,10 @@ pub async fn live_ws_handler(
                 }
                 // Incoming broadcast event from server
                 Ok(broadcast) = broadcast_rx.recv() => {
-                    if subscribed_rooms.contains("*") || subscribed_rooms.contains(&broadcast.room) {
-                        if let Ok(json) = serde_json::to_string(&broadcast.event) {
-                            let _ = session.text(format!("EVENT:{}:{}", broadcast.room, json)).await;
-                        }
+                    if (subscribed_rooms.contains("*") || subscribed_rooms.contains(&broadcast.room))
+                        && let Ok(json) = serde_json::to_string(&broadcast.event)
+                    {
+                        let _ = session.text(format!("EVENT:{}:{}", broadcast.room, json)).await;
                     }
                 }
                 else => break,

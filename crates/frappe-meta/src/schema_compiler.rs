@@ -141,7 +141,7 @@ fn compile_field_ddl(table: &str, field: &DocFieldSchema) -> Result<String, Sche
     // Link foreign key constraint assertion
     if let FieldType::Link { .. } = &field.fieldtype {
         assertions
-            .push("($value == NONE OR $value == NULL OR type::is::record($value))".to_string());
+            .push("($value == NONE OR $value == NULL OR type::is_record($value))".to_string());
     }
 
     // Numerical range / non-negativity invariants
