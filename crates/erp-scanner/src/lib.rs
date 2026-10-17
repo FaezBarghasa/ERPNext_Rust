@@ -13,6 +13,11 @@ pub mod laser_wedge;
 pub use android_intent::{AndroidIntentParser, DecodedHardwareIntent, ScannerHardwareVendor};
 pub use camera_wasm::{CameraFrameBuffer, CameraWasmScanner};
 pub use classifier::{RawScanSignal, ScanClassifier, ScanSource, Symbology};
+pub use erp_scanner_core as core;
+pub use erp_scanner_core::{
+    Gs1Element, Gs1ParseError, Gs1ParsedData, NoStdLaserWedge, SymbologyCore,
+    classify_symbology as classify_symbology_core, parse_gs1_128,
+};
 pub use intent_router::{IntentRouter, ScanIntent};
 pub use laser_wedge::LaserWedgeInterceptor;
 

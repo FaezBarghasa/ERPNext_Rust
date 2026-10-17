@@ -1,0 +1,15 @@
+[package]
+name = "erp-scanner-core"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+license.workspace = true
+description = "Zero-allocation #![no_std] GS1-128 and barcode symbology classification engine for industrial handhelds and microcontrollers"
+
+[dependencies]
+heapless = { workspace = true }
+serde = { workspace = true, optional = true }
+
+[features]
+default = []
+serde = ["dep:serde", "heapless/serde"]

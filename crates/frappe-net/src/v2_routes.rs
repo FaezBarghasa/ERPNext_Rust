@@ -344,9 +344,8 @@ pub async fn v2_get_document(
         return HttpResponse::BadRequest().body("Invalid doctype identifier");
     }
 
-    let sanitized_name = sanitize_surrealql_string(&name);
-    let sql = format!("SELECT * FROM {table} WHERE name = '{sanitized_name}';");
-    match client.query(&sql).await {
+    let sql = format!("SELECT * FROM {table} WHERE name = $name;");
+    match client.query(&sql).bind(("name", name.clone())).await {
         Ok(mut res) => {
             let records: Vec<serde_json::Value> = res.take(0).unwrap_or_default();
             match records.into_iter().next() {
@@ -419,9 +418,8 @@ pub async fn v2_print_document(
         return HttpResponse::BadRequest().body("Invalid doctype identifier");
     }
 
-    let sanitized_name = sanitize_surrealql_string(&name);
-    let sql = format!("SELECT * FROM {table} WHERE name = '{sanitized_name}';");
-    match client.query(&sql).await {
+    let sql = format!("SELECT * FROM {table} WHERE name = $name;");
+    match client.query(&sql).bind(("name", name.clone())).await {
         Ok(mut res) => {
             let records: Vec<serde_json::Value> = res.take(0).unwrap_or_default();
             match records.into_iter().next() {
@@ -596,11 +594,13 @@ pub async fn v2_delete_document(
         return HttpResponse::BadRequest().body("Invalid doctype identifier");
     }
 
-    let sanitized_name = sanitize_surrealql_string(&name);
-
     // Guard: Prevent deleting submitted document (docstatus == 1)
-    let check_sql = format!("SELECT docstatus FROM {table} WHERE name = '{sanitized_name}';");
-    if let Ok(mut res) = client.query(&check_sql).await {
+    let check_sql = format!("SELECT docstatus FROM {table} WHERE name = $name;");
+    if let Ok(mut res) = client
+        .query(&check_sql)
+        .bind(("name", name.clone()))
+        .await
+    {
         let records: Vec<serde_json::Value> = res.take(0).unwrap_or_default();
         if let Some(r) = records.into_iter().next()
             && let Some(docstatus) = r.get("docstatus").and_then(|d| d.as_i64())
@@ -612,8 +612,8 @@ pub async fn v2_delete_document(
         }
     }
 
-    let sql = format!("DELETE {table} WHERE name = '{sanitized_name}';");
-    match client.query(&sql).await {
+    let sql = format!("DELETE {table} WHERE name = $name;");
+    match client.query(&sql).bind(("name", name.clone())).await {
         Ok(_) => HttpResponse::Ok().json(serde_json::json!({
             "message": "Document deleted successfully",
             "name": name
@@ -677,8 +677,12 @@ pub async fn v2_submit_document(
     let now = Utc::now().to_rfc3339();
 
     // 1. Fetch current document state
-    let fetch_sql = format!("SELECT * FROM {table} WHERE name = '{sanitized_name}';");
-    let mut fetch_res = match client.query(&fetch_sql).await {
+    let fetch_sql = format!("SELECT * FROM {table} WHERE name = $name;");
+    let mut fetch_res = match client
+        .query(&fetch_sql)
+        .bind(("name", name.clone()))
+        .await
+    {
         Ok(r) => r,
         Err(e) => return HttpResponse::InternalServerError().body(e.to_string()),
     };
@@ -1211,8 +1215,12 @@ pub async fn v2_submit_document(
         }));
     }
 
-    let fetch_updated_sql = format!("SELECT * FROM {table} WHERE name = '{sanitized_name}';");
-    let updated_doc = match client.query(&fetch_updated_sql).await {
+    let fetch_updated_sql = format!("SELECT * FROM {table} WHERE name = $name;");
+    let updated_doc = match client
+        .query(&fetch_updated_sql)
+        .bind(("name", name.clone()))
+        .await
+    {
         Ok(mut res) => {
             let docs: Vec<serde_json::Value> = res.take(0).unwrap_or_default();
             docs.into_iter().next()
@@ -1283,8 +1291,12 @@ pub async fn v2_cancel_document(
     let now = Utc::now().to_rfc3339();
 
     // 1. Fetch current document state to verify it is currently submitted (1)
-    let fetch_sql = format!("SELECT * FROM {table} WHERE name = '{sanitized_name}';");
-    let mut fetch_res = match client.query(&fetch_sql).await {
+    let fetch_sql = format!("SELECT * FROM {table} WHERE name = $name;");
+    let mut fetch_res = match client
+        .query(&fetch_sql)
+        .bind(("name", name.clone()))
+        .await
+    {
         Ok(r) => r,
         Err(e) => return HttpResponse::InternalServerError().body(e.to_string()),
     };
@@ -1334,8 +1346,8 @@ pub async fn v2_cancel_document(
     ));
 
     // 3. Query and generate reversing GL entries inside transaction
-    let gl_query = format!("SELECT * FROM gl_entry WHERE voucher_no = '{sanitized_name}';");
-    if let Ok(mut gl_res) = client.query(&gl_query).await {
+    let gl_query = "SELECT * FROM gl_entry WHERE voucher_no = $voucher_no;";
+    if let Ok(mut gl_res) = client.query(gl_query).bind(("voucher_no", name.clone())).await {
         let existing_gls: Vec<serde_json::Value> = gl_res.take(0).unwrap_or_default();
         for val in existing_gls {
             if let Ok(gl) = serde_json::from_value::<GlEntry>(val) {
@@ -1359,9 +1371,8 @@ pub async fn v2_cancel_document(
     }
 
     // 4. Query and generate reversing Stock Ledger entries inside transaction
-    let sle_query =
-        format!("SELECT * FROM stock_ledger_entry WHERE voucher_no = '{sanitized_name}';");
-    if let Ok(mut sle_res) = client.query(&sle_query).await {
+    let sle_query = "SELECT * FROM stock_ledger_entry WHERE voucher_no = $voucher_no;";
+    if let Ok(mut sle_res) = client.query(sle_query).bind(("voucher_no", name.clone())).await {
         let existing_sles: Vec<serde_json::Value> = sle_res.take(0).unwrap_or_default();
         for val in existing_sles {
             if let Ok(sle) = serde_json::from_value::<StockLedgerEntry>(val) {
@@ -1387,9 +1398,8 @@ pub async fn v2_cancel_document(
     }
 
     // 5. Query and generate reversing Payment Ledger entries inside transaction
-    let ple_query =
-        format!("SELECT * FROM payment_ledger_entry WHERE voucher_no = '{sanitized_name}';");
-    if let Ok(mut ple_res) = client.query(&ple_query).await {
+    let ple_query = "SELECT * FROM payment_ledger_entry WHERE voucher_no = $voucher_no;";
+    if let Ok(mut ple_res) = client.query(ple_query).bind(("voucher_no", name.clone())).await {
         let existing_ples: Vec<serde_json::Value> = ple_res.take(0).unwrap_or_default();
         for mut val in existing_ples {
             if let Some(obj) = val.as_object_mut() {
@@ -1421,8 +1431,12 @@ pub async fn v2_cancel_document(
         }));
     }
 
-    let fetch_updated_sql = format!("SELECT * FROM {table} WHERE name = '{sanitized_name}';");
-    let updated_doc = match client.query(&fetch_updated_sql).await {
+    let fetch_updated_sql = format!("SELECT * FROM {table} WHERE name = $name;");
+    let updated_doc = match client
+        .query(&fetch_updated_sql)
+        .bind(("name", name.clone()))
+        .await
+    {
         Ok(mut res) => {
             let docs: Vec<serde_json::Value> = res.take(0).unwrap_or_default();
             docs.into_iter().next()
@@ -1464,8 +1478,12 @@ pub async fn v2_amend_document(
     let table = doctype.to_lowercase().replace(' ', "_");
     let sanitized_name = sanitize_surrealql_string(&name);
 
-    let fetch_sql = format!("SELECT * FROM {table} WHERE name = '{sanitized_name}';");
-    let mut res = match client.query(&fetch_sql).await {
+    let fetch_sql = format!("SELECT * FROM {table} WHERE name = $name;");
+    let mut res = match client
+        .query(&fetch_sql)
+        .bind(("name", name.clone()))
+        .await
+    {
         Ok(r) => r,
         Err(e) => return HttpResponse::InternalServerError().body(e.to_string()),
     };
@@ -1626,9 +1644,12 @@ pub async fn download_file_handler(
         Err(e) => return HttpResponse::InternalServerError().body(e.to_string()),
     };
 
-    let sanitized_hash = sanitize_surrealql_string(&hash);
-    let sql = format!("SELECT * FROM drive_file WHERE content_hash = '{sanitized_hash}';");
-    match client.query(&sql).await {
+    let sql = "SELECT * FROM drive_file WHERE content_hash = $content_hash;";
+    match client
+        .query(sql)
+        .bind(("content_hash", hash.clone()))
+        .await
+    {
         Ok(mut res) => {
             let records: Vec<serde_json::Value> = res.take(0).unwrap_or_default();
             match records.into_iter().next() {
@@ -2175,9 +2196,12 @@ pub async fn h3_stream_file_handler(
         Err(e) => return HttpResponse::InternalServerError().body(e.to_string()),
     };
 
-    let sanitized_hash = sanitize_surrealql_string(&hash);
-    let sql = format!("SELECT * FROM drive_file WHERE content_hash = '{sanitized_hash}';");
-    match client.query(&sql).await {
+    let sql = "SELECT * FROM drive_file WHERE content_hash = $content_hash;";
+    match client
+        .query(sql)
+        .bind(("content_hash", hash.clone()))
+        .await
+    {
         Ok(mut res) => {
             let records: Vec<serde_json::Value> = res.take(0).unwrap_or_default();
             match records.into_iter().next() {
@@ -3310,9 +3334,9 @@ pub async fn trade_apply_coupon_handler(
             .unwrap_or_else(|| TenantId("default".into()));
         if let Ok(client) = mgr.get_or_initialize_client(&tenant_id).await {
             let code_upper = p.code.to_uppercase();
-            let sanitized = sanitize_surrealql_string(&code_upper);
             if let Ok(mut res) = client
-                .query(format!("SELECT * FROM coupons WHERE code = '{sanitized}';"))
+                .query("SELECT * FROM coupons WHERE code = $code;")
+                .bind(("code", code_upper.clone()))
                 .await
             {
                 let rows: Vec<serde_json::Value> = res.take(0).unwrap_or_default();
@@ -5487,9 +5511,12 @@ pub async fn accounting_payment_entry_handler(
             } else {
                 "purchase_invoice"
             };
-            let sanitized_inv = sanitize_surrealql_string(inv_no);
-            let select_sql = format!("SELECT * FROM {inv_table} WHERE name = '{sanitized_inv}';");
-            if let Ok(mut res) = client.query(&select_sql).await {
+            let select_sql = format!("SELECT * FROM {inv_table} WHERE name = $name;");
+            if let Ok(mut res) = client
+                .query(&select_sql)
+                .bind(("name", inv_no.to_string()))
+                .await
+            {
                 let records: Vec<serde_json::Value> = res.take(0).unwrap_or_default();
                 if let Some(inv_doc) = records.into_iter().next() {
                     let current_outstanding = inv_doc
@@ -5670,10 +5697,12 @@ pub async fn payment_charge_handler(
                 if payload.doctype.eq_ignore_ascii_case("sales_invoice")
                     || payload.doctype.eq_ignore_ascii_case("sales invoice")
                 {
-                    let sanitized_ref = sanitize_surrealql_string(&payload.docname);
-                    let select_sql =
-                        format!("SELECT * FROM sales_invoice WHERE name = '{sanitized_ref}';");
-                    if let Ok(mut res) = client.query(&select_sql).await {
+                    let select_sql = "SELECT * FROM sales_invoice WHERE name = $name;";
+                    if let Ok(mut res) = client
+                        .query(select_sql)
+                        .bind(("name", payload.docname.clone()))
+                        .await
+                    {
                         let records: Vec<serde_json::Value> = res.take(0).unwrap_or_default();
                         if let Some(inv_doc) = records.into_iter().next() {
                             let current_outstanding = inv_doc

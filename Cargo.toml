@@ -23,6 +23,7 @@ members = [
     "crates/erpnext-plugin-sdk",
     "tools/stealth-scraper",
     "crates/erp-scanner",
+    "crates/erp-scanner-core",
     "crates/erp-importer",
     "crates/erp-quality",
     "crates/rbench",
@@ -55,6 +56,7 @@ erp-manufacturing = { path = "crates/erp-manufacturing" }
 erp-ppm = { path = "crates/erp-ppm" }
 erp-quality = { path = "crates/erp-quality" }
 erp-scanner = { path = "crates/erp-scanner" }
+erp-scanner-core = { path = "crates/erp-scanner-core" }
 erp-software = { path = "crates/erp-software" }
 erp-stealth-scraper = { path = "tools/stealth-scraper" }
 erp-support = { path = "crates/erp-support" }
@@ -76,6 +78,7 @@ compact_str = { version = "0.10.0", features = ["serde"] }
 futures-util = "0.3.34"
 hex = "0.4.3"
 hmac = "0.13.0"
+heapless = { version = "0.8", default-features = false }
 rand = "0.10.3"
 rand_distr = "0.6.0"
 rayon = "1.12.0"

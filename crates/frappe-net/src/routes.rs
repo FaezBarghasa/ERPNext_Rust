@@ -53,8 +53,13 @@ pub async fn list_resource(
     let limit = query.limit.unwrap_or(20);
     let offset = query.offset.unwrap_or(0);
 
-    let sql = format!("SELECT * FROM {table} LIMIT {limit} START {offset};");
-    match client.query(&sql).await {
+    let sql = format!("SELECT * FROM {table} LIMIT $limit START $offset;");
+    match client
+        .query(&sql)
+        .bind(("limit", limit))
+        .bind(("offset", offset))
+        .await
+    {
         Ok(mut res) => {
             let records: Vec<serde_json::Value> = res.take(0).unwrap_or_default();
             HttpResponse::Ok().json(records)
@@ -93,8 +98,8 @@ pub async fn get_resource(
         return HttpResponse::BadRequest().body("Invalid identifier");
     }
 
-    let sql = format!("SELECT * FROM {table}:{id};");
-    match client.query(&sql).await {
+    let sql = format!("SELECT * FROM {table} WHERE name = $name;");
+    match client.query(&sql).bind(("name", id)).await {
         Ok(mut res) => {
             let record: Option<serde_json::Value> = res.take(0).unwrap_or(None);
             match record {
@@ -208,8 +213,8 @@ pub async fn delete_resource(
         return HttpResponse::BadRequest().body("Invalid identifier");
     }
 
-    let sql = format!("DELETE {table}:{id};");
-    match client.query(&sql).await {
+    let sql = format!("DELETE FROM {table} WHERE name = $name;");
+    match client.query(&sql).bind(("name", id)).await {
         Ok(_) => HttpResponse::NoContent().finish(),
         Err(e) => HttpResponse::InternalServerError().body(e.to_string()),
     }

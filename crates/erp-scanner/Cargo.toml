@@ -14,3 +14,4 @@ compact_str = { workspace = true }
 chrono = { workspace = true }
 tracing = { workspace = true }
 regex = { workspace = true }
+erp-scanner-core = { workspace = true, features = ["serde"] }
