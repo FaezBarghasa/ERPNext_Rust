@@ -1,10 +1,9 @@
 use actix_web::{HttpRequest, HttpResponse, web};
 use compact_str::CompactString;
 use futures_util::StreamExt as _;
-use parking_lot::RwLock;
 use serde::{Deserialize, Serialize};
 use std::collections::{HashMap, HashSet};
-use std::sync::Arc;
+use std::sync::{Arc, RwLock};
 
 /// Realtime message payloads matching upstream `frappe.realtime`.
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
@@ -58,33 +57,38 @@ impl RealtimeHub {
         let s_id = CompactString::from(session_id);
         let r_name = CompactString::from(room);
 
-        self.rooms
-            .write()
-            .entry(r_name.clone())
-            .or_default()
-            .insert(s_id.clone());
+        if let Ok(mut rooms) = self.rooms.write() {
+            rooms
+                .entry(r_name.clone())
+                .or_default()
+                .insert(s_id.clone());
+        }
 
-        self.subscriptions
-            .write()
-            .entry(s_id)
-            .or_default()
-            .insert(r_name);
+        if let Ok(mut subs) = self.subscriptions.write() {
+            subs.entry(s_id).or_default().insert(r_name);
+        }
     }
 
     /// Unsubscribes a session from a room.
     pub fn unsubscribe(&self, session_id: &str, room: &str) {
-        if let Some(sessions) = self.rooms.write().get_mut(room) {
+        if let Ok(mut rooms) = self.rooms.write()
+            && let Some(sessions) = rooms.get_mut(room)
+        {
             sessions.remove(session_id);
         }
-        if let Some(rooms) = self.subscriptions.write().get_mut(session_id) {
+        if let Ok(mut subs) = self.subscriptions.write()
+            && let Some(rooms) = subs.get_mut(session_id)
+        {
             rooms.remove(room);
         }
     }
 
     /// Cleans up all subscriptions when a session disconnects.
     pub fn remove_session(&self, session_id: &str) {
-        if let Some(rooms) = self.subscriptions.write().remove(session_id) {
-            let mut rooms_map = self.rooms.write();
+        if let Ok(mut subs) = self.subscriptions.write()
+            && let Some(rooms) = subs.remove(session_id)
+            && let Ok(mut rooms_map) = self.rooms.write()
+        {
             for r in rooms {
                 if let Some(sessions) = rooms_map.get_mut(&r) {
                     sessions.remove(session_id);
@@ -98,8 +102,8 @@ impl RealtimeHub {
     pub fn get_subscribers(&self, room: &str) -> Vec<CompactString> {
         self.rooms
             .read()
-            .get(room)
-            .map(|s| s.iter().cloned().collect())
+            .ok()
+            .and_then(|r| r.get(room).map(|s| s.iter().cloned().collect()))
             .unwrap_or_default()
     }
 }

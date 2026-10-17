@@ -705,6 +705,96 @@ pub struct MobileShellModel {
     pub offline_indicator: bool,
 }
 
+// -------------------------------------------------------------------------
+// Extended Frappe UI Suite Components
+// -------------------------------------------------------------------------
+
+/// Activity & Audit Log Timeline thread model (`frappe-ui::Timeline`).
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+pub enum TimelineEventType {
+    Comment,
+    Email,
+    VersionDiff,
+    StatusChange,
+    Attachment,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+pub struct TimelineItem {
+    pub id: CompactString,
+    pub event_type: TimelineEventType,
+    pub user: CompactString,
+    pub content: CompactString,
+    pub timestamp_iso: CompactString,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, Default)]
+pub struct TimelineModel {
+    pub items: Vec<TimelineItem>,
+}
+
+/// Advanced Nested Filter Group Builder model for List and Report views.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+pub enum FilterLogicalOperator {
+    And,
+    Or,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+pub struct FilterCondition {
+    pub fieldname: CompactString,
+    pub operator: CompactString, // "=", "!=", "like", "in", ">", "<", "between"
+    pub value: CompactString,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+pub struct FilterGroupModel {
+    pub logical_operator: FilterLogicalOperator,
+    pub conditions: Vec<FilterCondition>,
+}
+
+/// Colored tag pill input with autocomplete typeahead.
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, Default)]
+pub struct TagInputModel {
+    pub tags: Vec<CompactString>,
+    pub input_text: CompactString,
+}
+
+impl TagInputModel {
+    pub fn add_tag(&mut self, tag: impl Into<CompactString>) {
+        let t = tag.into();
+        if !t.is_empty() && !self.tags.contains(&t) {
+            self.tags.push(t);
+        }
+    }
+
+    pub fn remove_tag(&mut self, tag: &str) {
+        self.tags.retain(|t| t != tag);
+    }
+}
+
+/// Mobile/Tablet responsive bottom action sheet modal.
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, Default)]
+pub struct BottomSheetModel {
+    pub is_open: bool,
+    pub title: CompactString,
+    pub actions: Vec<CompactString>,
+}
+
+/// Hotkeys & Shortcuts helper overlay dialog (`?` key overlay).
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+pub struct ShortcutGuideItem {
+    pub key_combination: CompactString,
+    pub description: CompactString,
+    pub scope: CompactString, // "Global", "Form", "List"
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, Default)]
+pub struct KeyboardShortcutsDialogModel {
+    pub is_open: bool,
+    pub shortcuts: Vec<ShortcutGuideItem>,
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -789,5 +879,41 @@ mod tests {
         });
         assert_eq!(ws.shortcuts.len(), 1);
         assert_eq!(ws.number_cards.len(), 1);
+    }
+
+    #[test]
+    fn test_extended_frappe_ui_components() {
+        let mut combo = ComboboxModel::new(
+            "Select Tax",
+            vec![
+                ComboboxOption {
+                    value: "TAX-01".into(),
+                    label: "Value Added Tax (15%)".into(),
+                    description: None,
+                },
+                ComboboxOption {
+                    value: "FREIGHT".into(),
+                    label: "Standard Shipping".into(),
+                    description: None,
+                },
+            ],
+        );
+        combo.query = "tax".into();
+        assert_eq!(combo.filtered_options().len(), 1);
+        assert_eq!(combo.filtered_options()[0].value.as_str(), "TAX-01");
+
+        let mut tags = TagInputModel::default();
+        tags.add_tag("Urgent");
+        tags.add_tag("VIP");
+        assert_eq!(tags.tags.len(), 2);
+        tags.remove_tag("VIP");
+        assert_eq!(tags.tags.len(), 1);
+
+        let rating = RatingModel {
+            score: 4.5,
+            max: 5,
+            is_readonly: true,
+        };
+        assert_eq!(rating.score, 4.5);
     }
 }

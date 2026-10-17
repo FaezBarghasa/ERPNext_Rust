@@ -17,6 +17,7 @@ pub mod print_format;
 pub mod report_engine;
 pub mod saga;
 pub mod scripting;
+pub mod settings;
 pub mod social;
 pub mod typestate;
 pub mod wasmtime_sandbox;
@@ -45,6 +46,9 @@ pub use print_format::{InvoicePrintContext, PrintEngine, PrintLineItem, ReceiptP
 pub use report_engine::{
     PivotAggregate, PivotTableResult, ReportColumn, ReportEngine, ReportError, ReportResult,
     ReportSummaryCard,
+};
+pub use settings::{
+    AccountsSettings, ManufacturingSettings, SingleDocumentRegistry, StockSettings, SystemSettings,
 };
 pub use social::{
     AssignmentRecord, CommentRecord, CommentType, FieldDelta, SocialEngine, VersionRecord,
