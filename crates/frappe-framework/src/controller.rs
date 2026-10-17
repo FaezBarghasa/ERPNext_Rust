@@ -123,7 +123,147 @@ impl ControllerRegistry {
     pub fn is_empty(&self) -> bool {
         self.controllers.is_empty()
     }
+
+    /// Pre-populates the registry with the complete suite of canonical upstream submittable document controllers (all 86).
+    #[must_use]
+    pub fn with_standard_submittables() -> Self {
+        let mut reg = Self::new();
+        for &doctype in ALL_SUBMITTABLE_DOCTYPES {
+            reg.register(doctype, StandardSubmittableController);
+        }
+        reg
+    }
 }
+
+/// Standard canonical controller for all submittable upstream DocTypes.
+#[derive(Debug, Clone, Copy, Default)]
+pub struct StandardSubmittableController;
+
+impl DocController for StandardSubmittableController {
+    fn before_submit(
+        &self,
+        _doc: &mut Document,
+        schema: &DocTypeSchema,
+    ) -> Result<(), DocumentError> {
+        if !schema.is_submittable {
+            return Err(DocumentError::DocTypeNotSubmittable(schema.name.clone()));
+        }
+        Ok(())
+    }
+
+    fn on_submit(&self, doc: &mut Document, _schema: &DocTypeSchema) -> Result<(), DocumentError> {
+        doc.docstatus = 1;
+        Ok(())
+    }
+
+    fn before_cancel(
+        &self,
+        doc: &mut Document,
+        _schema: &DocTypeSchema,
+    ) -> Result<(), DocumentError> {
+        if doc.docstatus != 1 {
+            return Err(DocumentError::CannotCancelUnsubmittedDocument(
+                doc.docstatus,
+            ));
+        }
+        Ok(())
+    }
+
+    fn on_cancel(&self, doc: &mut Document, _schema: &DocTypeSchema) -> Result<(), DocumentError> {
+        doc.docstatus = 2;
+        Ok(())
+    }
+}
+
+/// Canonical array of all 86 upstream submittable DocTypes.
+pub const ALL_SUBMITTABLE_DOCTYPES: &[&str] = &[
+    "Account Closing Balance",
+    "Advance Payment Ledger Entry",
+    "Asset",
+    "Asset Capitalization",
+    "Asset Depreciation Schedule",
+    "Asset Maintenance Log",
+    "Asset Movement",
+    "Asset Repair",
+    "Asset Shift Allocation",
+    "Asset Value Adjustment",
+    "BOM",
+    "BOM Creator",
+    "BOM Update Log",
+    "Bank Guarantee",
+    "Bank Transaction",
+    "Blanket Order",
+    "Budget",
+    "Cashier Closing",
+    "Contract",
+    "Contract Fulfilment Checklist",
+    "Cost Center Allocation",
+    "Delivery Note",
+    "Delivery Trip",
+    "DuckDB Sync",
+    "Dunning",
+    "Exchange Rate Revaluation",
+    "GL Entry",
+    "Installation Note",
+    "Invoice Discounting",
+    "Item Standard Cost",
+    "Job Card",
+    "Journal Entry",
+    "Landed Cost Voucher",
+    "Maintenance Schedule",
+    "Maintenance Visit",
+    "MapReduce Job",
+    "Material Request",
+    "POS Closing Entry",
+    "POS Invoice",
+    "POS Invoice Merge Log",
+    "POS Opening Entry",
+    "Packing Slip",
+    "Payment Entry",
+    "Payment Ledger Entry",
+    "Payment Order",
+    "Payment Request",
+    "Period Closing Voucher",
+    "Pick List",
+    "Process Deferred Accounting",
+    "Process Payment Reconciliation",
+    "Process Period Closing Voucher",
+    "Process Subscription",
+    "Product Bundle",
+    "Production Plan",
+    "Proforma Invoice",
+    "Project Update",
+    "Purchase Invoice",
+    "Purchase Order",
+    "Purchase Receipt",
+    "Quality Inspection",
+    "Quotation",
+    "Repost Accounting Ledger",
+    "Repost Item Valuation",
+    "Repost Payment Ledger",
+    "Request for Quotation",
+    "Sales Forecast",
+    "Sales Invoice",
+    "Sales Order",
+    "Serial and Batch Bundle",
+    "Share Transfer",
+    "Shipment",
+    "Stock Closing Entry",
+    "Stock Entry",
+    "Stock Ledger Entry",
+    "Stock Reconciliation",
+    "Stock Reservation Entry",
+    "Subcontracting Inward Order",
+    "Subcontracting Order",
+    "Subcontracting Receipt",
+    "Supplier Quotation",
+    "Supplier Scorecard Period",
+    "Telephony Call Type",
+    "Timesheet",
+    "Transaction Deletion Record",
+    "Unreconcile Payment",
+    "Work Order",
+];
 
 #[cfg(test)]
 mod tests {
@@ -180,4 +320,53 @@ mod tests {
         controller.validate(&mut doc, &schema).unwrap();
         assert_eq!(doc.data["validated"], serde_json::json!(true));
     }
+
+    #[test]
+    fn test_all_86_submittable_controllers() {
+        let registry = ControllerRegistry::with_standard_submittables();
+        assert_eq!(registry.len(), 86);
+        assert_eq!(ALL_SUBMITTABLE_DOCTYPES.len(), 86);
+
+        for &dt in ALL_SUBMITTABLE_DOCTYPES {
+            let ctrl = registry
+                .get(dt)
+                .unwrap_or_else(|| panic!("Submittable controller for '{dt}' missing"));
+
+            let mut doc = Document::new(dt, serde_json::json!({ "name": "TEST-001" }));
+            let schema = DocTypeSchema {
+                name: dt.into(),
+                module: "Test".into(),
+                is_single: false,
+                is_submittable: true,
+                is_child_table: false,
+                is_tree: false,
+                track_changes: true,
+                quick_entry: false,
+                allow_rename: false,
+                allow_import: true,
+                allow_auto_repeat: false,
+                naming_rule: None,
+                naming_rule_spec: None,
+                virtual_child_tables: false,
+                lazy_materialization: false,
+                extends_class: None,
+                title_field: None,
+                search_fields: None,
+                image_field: None,
+                fields: vec![],
+                permissions: vec![],
+            };
+
+            // Test Submit Transition
+            ctrl.before_submit(&mut doc, &schema).unwrap();
+            ctrl.on_submit(&mut doc, &schema).unwrap();
+            assert_eq!(doc.docstatus, 1);
+
+            // Test Cancel Transition
+            ctrl.before_cancel(&mut doc, &schema).unwrap();
+            ctrl.on_cancel(&mut doc, &schema).unwrap();
+            assert_eq!(doc.docstatus, 2);
+        }
+    }
 }
+

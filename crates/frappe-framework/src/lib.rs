@@ -64,7 +64,9 @@ pub use ai_tools::{
 pub use bpmn::{
     ActivityType, BpmnEngine, BpmnProcessDefinition, FlowNode, ProcessInstance, SequenceFlow,
 };
-pub use controller::{ControllerRegistry, DocController};
+pub use controller::{
+    ControllerRegistry, DocController, StandardSubmittableController, ALL_SUBMITTABLE_DOCTYPES,
+};
 pub use dmn::{ConditionOp, DecisionRule, DecisionTable, HitPolicy};
 pub use jalali::JalaliDate;
 pub use lifecycle::{Document, DocumentController, DocumentError, WorkflowTransition};

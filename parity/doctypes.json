@@ -1,8 +1,8 @@
 {
   "total_upstream": 841,
-  "total_registered_standard": 50,
+  "total_registered_standard": 111,
   "total_registered_v16_full": 841,
-  "coverage_standard_pct": 5.945303210463734,
+  "coverage_standard_pct": 13.198573127229487,
   "coverage_v16_full_pct": 100.0,
   "doctypes": [
     {
@@ -147,9 +147,9 @@
         "Period Closing Voucher"
       ],
       "child_tables": [],
-      "registered_in_rust_standard": false,
+      "registered_in_rust_standard": true,
       "registered_in_rust_v16_full": true,
-      "status": "Full"
+      "status": "Canonical"
     },
     {
       "name": "Accounting Dimension",
@@ -263,9 +263,9 @@
       "child_tables": [
         "Repost Allowed Types"
       ],
-      "registered_in_rust_standard": false,
+      "registered_in_rust_standard": true,
       "registered_in_rust_v16_full": true,
-      "status": "Full"
+      "status": "Canonical"
     },
     {
       "name": "Activity Cost",
@@ -391,9 +391,9 @@
         "Company"
       ],
       "child_tables": [],
-      "registered_in_rust_standard": false,
+      "registered_in_rust_standard": true,
       "registered_in_rust_v16_full": true,
-      "status": "Full"
+      "status": "Canonical"
     },
     {
       "name": "Advance Taxes and Charges",
@@ -645,9 +645,9 @@
         "Asset Capitalization Asset Item",
         "Asset Capitalization Service Item"
       ],
-      "registered_in_rust_standard": false,
+      "registered_in_rust_standard": true,
       "registered_in_rust_v16_full": true,
-      "status": "Full"
+      "status": "Canonical"
     },
     {
       "name": "Asset Capitalization Asset Item",
@@ -788,9 +788,9 @@
       "child_tables": [
         "Depreciation Schedule"
       ],
-      "registered_in_rust_standard": false,
+      "registered_in_rust_standard": true,
       "registered_in_rust_v16_full": true,
-      "status": "Full"
+      "status": "Canonical"
     },
     {
       "name": "Asset Finance Book",
@@ -855,9 +855,9 @@
         "Asset Maintenance Log"
       ],
       "child_tables": [],
-      "registered_in_rust_standard": false,
+      "registered_in_rust_standard": true,
       "registered_in_rust_v16_full": true,
-      "status": "Full"
+      "status": "Canonical"
     },
     {
       "name": "Asset Maintenance Task",
@@ -922,9 +922,9 @@
       "child_tables": [
         "Asset Movement Item"
       ],
-      "registered_in_rust_standard": false,
+      "registered_in_rust_standard": true,
       "registered_in_rust_v16_full": true,
-      "status": "Full"
+      "status": "Canonical"
     },
     {
       "name": "Asset Movement Item",
@@ -974,9 +974,9 @@
         "Asset Repair Consumed Item",
         "Asset Repair Purchase Invoice"
       ],
-      "registered_in_rust_standard": false,
+      "registered_in_rust_standard": true,
       "registered_in_rust_v16_full": true,
-      "status": "Full"
+      "status": "Canonical"
     },
     {
       "name": "Asset Repair Consumed Item",
@@ -1042,9 +1042,9 @@
       "child_tables": [
         "Depreciation Schedule"
       ],
-      "registered_in_rust_standard": false,
+      "registered_in_rust_standard": true,
       "registered_in_rust_v16_full": true,
-      "status": "Full"
+      "status": "Canonical"
     },
     {
       "name": "Asset Shift Factor",
@@ -1086,9 +1086,9 @@
         "Account"
       ],
       "child_tables": [],
-      "registered_in_rust_standard": false,
+      "registered_in_rust_standard": true,
       "registered_in_rust_v16_full": true,
-      "status": "Full"
+      "status": "Canonical"
     },
     {
       "name": "Assignment Rule",
@@ -1528,9 +1528,9 @@
       "child_tables": [
         "BOM Creator Item"
       ],
-      "registered_in_rust_standard": false,
+      "registered_in_rust_standard": true,
       "registered_in_rust_v16_full": true,
-      "status": "Full"
+      "status": "Canonical"
     },
     {
       "name": "BOM Creator Item",
@@ -1694,9 +1694,9 @@
       "child_tables": [
         "BOM Update Batch"
       ],
-      "registered_in_rust_standard": false,
+      "registered_in_rust_standard": true,
       "registered_in_rust_v16_full": true,
-      "status": "Full"
+      "status": "Canonical"
     },
     {
       "name": "BOM Update Tool",
@@ -1950,9 +1950,9 @@
         "Bank Guarantee"
       ],
       "child_tables": [],
-      "registered_in_rust_standard": false,
+      "registered_in_rust_standard": true,
       "registered_in_rust_v16_full": true,
-      "status": "Full"
+      "status": "Canonical"
     },
     {
       "name": "Bank Reconciliation Tool",
@@ -2063,9 +2063,9 @@
       "child_tables": [
         "Bank Transaction Payments"
       ],
-      "registered_in_rust_standard": false,
+      "registered_in_rust_standard": true,
       "registered_in_rust_v16_full": true,
-      "status": "Full"
+      "status": "Canonical"
     },
     {
       "name": "Bank Transaction Mapping",
@@ -2285,9 +2285,9 @@
       "child_tables": [
         "Blanket Order Item"
       ],
-      "registered_in_rust_standard": false,
+      "registered_in_rust_standard": true,
       "registered_in_rust_v16_full": true,
-      "status": "Full"
+      "status": "Canonical"
     },
     {
       "name": "Blanket Order Item",
@@ -2390,9 +2390,9 @@
       "child_tables": [
         "Budget Distribution"
       ],
-      "registered_in_rust_standard": false,
+      "registered_in_rust_standard": true,
       "registered_in_rust_v16_full": true,
-      "status": "Full"
+      "status": "Canonical"
     },
     {
       "name": "Budget Account",
@@ -2678,9 +2678,9 @@
       "child_tables": [
         "Cashier Closing Payments"
       ],
-      "registered_in_rust_standard": false,
+      "registered_in_rust_standard": true,
       "registered_in_rust_v16_full": true,
-      "status": "Full"
+      "status": "Canonical"
     },
     {
       "name": "Cashier Closing Payments",
@@ -3250,9 +3250,9 @@
       "child_tables": [
         "Contract Fulfilment Checklist"
       ],
-      "registered_in_rust_standard": false,
+      "registered_in_rust_standard": true,
       "registered_in_rust_v16_full": true,
-      "status": "Full"
+      "status": "Canonical"
     },
     {
       "name": "Contract Fulfilment Checklist",
@@ -3270,9 +3270,9 @@
         "Contract Fulfilment Checklist"
       ],
       "child_tables": [],
-      "registered_in_rust_standard": false,
+      "registered_in_rust_standard": true,
       "registered_in_rust_v16_full": true,
-      "status": "Full"
+      "status": "Canonical"
     },
     {
       "name": "Contract Template",
@@ -3354,9 +3354,9 @@
       "child_tables": [
         "Cost Center Allocation Percentage"
       ],
-      "registered_in_rust_standard": false,
+      "registered_in_rust_standard": true,
       "registered_in_rust_v16_full": true,
-      "status": "Full"
+      "status": "Canonical"
     },
     {
       "name": "Cost Center Allocation Percentage",
@@ -5104,9 +5104,9 @@
       "child_tables": [
         "DuckDB Sync Item"
       ],
-      "registered_in_rust_standard": false,
+      "registered_in_rust_standard": true,
       "registered_in_rust_v16_full": true,
-      "status": "Full"
+      "status": "Canonical"
     },
     {
       "name": "DuckDB Sync Item",
@@ -5155,9 +5155,9 @@
       "child_tables": [
         "Overdue Payment"
       ],
-      "registered_in_rust_standard": false,
+      "registered_in_rust_standard": true,
       "registered_in_rust_v16_full": true,
-      "status": "Full"
+      "status": "Canonical"
     },
     {
       "name": "Dunning Letter Text",
@@ -5722,9 +5722,9 @@
       "child_tables": [
         "Exchange Rate Revaluation Account"
       ],
-      "registered_in_rust_standard": false,
+      "registered_in_rust_standard": true,
       "registered_in_rust_v16_full": true,
-      "status": "Full"
+      "status": "Canonical"
     },
     {
       "name": "Exchange Rate Revaluation Account",
@@ -6381,9 +6381,9 @@
       "child_tables": [
         "Installation Note Item"
       ],
-      "registered_in_rust_standard": false,
+      "registered_in_rust_standard": true,
       "registered_in_rust_v16_full": true,
-      "status": "Full"
+      "status": "Canonical"
     },
     {
       "name": "Installation Note Item",
@@ -6510,9 +6510,9 @@
       "child_tables": [
         "Discounted Invoice"
       ],
-      "registered_in_rust_standard": false,
+      "registered_in_rust_standard": true,
       "registered_in_rust_v16_full": true,
-      "status": "Full"
+      "status": "Canonical"
     },
     {
       "name": "Issue",
@@ -6939,9 +6939,9 @@
         "Item Standard Cost"
       ],
       "child_tables": [],
-      "registered_in_rust_standard": false,
+      "registered_in_rust_standard": true,
       "registered_in_rust_v16_full": true,
-      "status": "Full"
+      "status": "Canonical"
     },
     {
       "name": "Item Supplier",
@@ -7614,9 +7614,9 @@
         "Landed Cost Taxes and Charges",
         "Landed Cost Vendor Invoice"
       ],
-      "registered_in_rust_standard": false,
+      "registered_in_rust_standard": true,
       "registered_in_rust_v16_full": true,
-      "status": "Full"
+      "status": "Canonical"
     },
     {
       "name": "Language",
@@ -8108,9 +8108,9 @@
         "Maintenance Schedule Item",
         "Maintenance Schedule Detail"
       ],
-      "registered_in_rust_standard": false,
+      "registered_in_rust_standard": true,
       "registered_in_rust_v16_full": true,
-      "status": "Full"
+      "status": "Canonical"
     },
     {
       "name": "Maintenance Schedule Detail",
@@ -8204,9 +8204,9 @@
       "child_tables": [
         "Maintenance Visit Purpose"
       ],
-      "registered_in_rust_standard": false,
+      "registered_in_rust_standard": true,
       "registered_in_rust_v16_full": true,
-      "status": "Full"
+      "status": "Canonical"
     },
     {
       "name": "Maintenance Visit Purpose",
@@ -8265,9 +8265,9 @@
       "fields_count": 35,
       "link_fields": [],
       "child_tables": [],
-      "registered_in_rust_standard": false,
+      "registered_in_rust_standard": true,
       "registered_in_rust_v16_full": true,
-      "status": "Full"
+      "status": "Canonical"
     },
     {
       "name": "MapReduce Job",
@@ -8286,9 +8286,9 @@
         "DocType"
       ],
       "child_tables": [],
-      "registered_in_rust_standard": false,
+      "registered_in_rust_standard": true,
       "registered_in_rust_v16_full": true,
-      "status": "Full"
+      "status": "Canonical"
     },
     {
       "name": "MapReduce Task",
@@ -9628,9 +9628,9 @@
       "child_tables": [
         "POS Invoice Reference"
       ],
-      "registered_in_rust_standard": false,
+      "registered_in_rust_standard": true,
       "registered_in_rust_v16_full": true,
-      "status": "Full"
+      "status": "Canonical"
     },
     {
       "name": "POS Invoice Reference",
@@ -10294,9 +10294,9 @@
         "Finance Book"
       ],
       "child_tables": [],
-      "registered_in_rust_standard": false,
+      "registered_in_rust_standard": true,
       "registered_in_rust_v16_full": true,
-      "status": "Full"
+      "status": "Canonical"
     },
     {
       "name": "Payment Order",
@@ -10320,9 +10320,9 @@
       "child_tables": [
         "Payment Order Reference"
       ],
-      "registered_in_rust_standard": false,
+      "registered_in_rust_standard": true,
       "registered_in_rust_v16_full": true,
-      "status": "Full"
+      "status": "Canonical"
     },
     {
       "name": "Payment Order Reference",
@@ -10499,9 +10499,9 @@
         "Subscription Plan Detail",
         "Payment Reference"
       ],
-      "registered_in_rust_standard": false,
+      "registered_in_rust_standard": true,
       "registered_in_rust_v16_full": true,
-      "status": "Full"
+      "status": "Canonical"
     },
     {
       "name": "Payment Schedule",
@@ -10645,9 +10645,9 @@
         "Account"
       ],
       "child_tables": [],
-      "registered_in_rust_standard": false,
+      "registered_in_rust_standard": true,
       "registered_in_rust_v16_full": true,
-      "status": "Full"
+      "status": "Canonical"
     },
     {
       "name": "Permission Inspector",
@@ -11251,9 +11251,9 @@
         "Company"
       ],
       "child_tables": [],
-      "registered_in_rust_standard": false,
+      "registered_in_rust_standard": true,
       "registered_in_rust_v16_full": true,
-      "status": "Full"
+      "status": "Canonical"
     },
     {
       "name": "Process Payment Reconciliation",
@@ -11277,9 +11277,9 @@
         "Account"
       ],
       "child_tables": [],
-      "registered_in_rust_standard": false,
+      "registered_in_rust_standard": true,
       "registered_in_rust_v16_full": true,
-      "status": "Full"
+      "status": "Canonical"
     },
     {
       "name": "Process Payment Reconciliation Log",
@@ -11346,9 +11346,9 @@
         "Process Period Closing Voucher Detail",
         "Process Period Closing Voucher Detail"
       ],
-      "registered_in_rust_standard": false,
+      "registered_in_rust_standard": true,
       "registered_in_rust_v16_full": true,
-      "status": "Full"
+      "status": "Canonical"
     },
     {
       "name": "Process Period Closing Voucher Detail",
@@ -11461,9 +11461,9 @@
         "Subscription"
       ],
       "child_tables": [],
-      "registered_in_rust_standard": false,
+      "registered_in_rust_standard": true,
       "registered_in_rust_v16_full": true,
-      "status": "Full"
+      "status": "Canonical"
     },
     {
       "name": "Product Bundle",
@@ -11484,9 +11484,9 @@
       "child_tables": [
         "Product Bundle Item"
       ],
-      "registered_in_rust_standard": false,
+      "registered_in_rust_standard": true,
       "registered_in_rust_v16_full": true,
-      "status": "Full"
+      "status": "Canonical"
     },
     {
       "name": "Product Bundle Item",
@@ -11729,9 +11729,9 @@
       "child_tables": [
         "Proforma Invoice Item"
       ],
-      "registered_in_rust_standard": false,
+      "registered_in_rust_standard": true,
       "registered_in_rust_v16_full": true,
-      "status": "Full"
+      "status": "Canonical"
     },
     {
       "name": "Proforma Invoice Item",
@@ -11862,9 +11862,9 @@
       "child_tables": [
         "Project User"
       ],
-      "registered_in_rust_standard": false,
+      "registered_in_rust_standard": true,
       "registered_in_rust_v16_full": true,
-      "status": "Full"
+      "status": "Canonical"
     },
     {
       "name": "Project User",
@@ -13364,9 +13364,9 @@
       "child_tables": [
         "Repost Accounting Ledger Items"
       ],
-      "registered_in_rust_standard": false,
+      "registered_in_rust_standard": true,
       "registered_in_rust_v16_full": true,
-      "status": "Full"
+      "status": "Canonical"
     },
     {
       "name": "Repost Accounting Ledger Items",
@@ -13428,9 +13428,9 @@
         "DocType"
       ],
       "child_tables": [],
-      "registered_in_rust_standard": false,
+      "registered_in_rust_standard": true,
       "registered_in_rust_v16_full": true,
-      "status": "Full"
+      "status": "Canonical"
     },
     {
       "name": "Repost Payment Ledger",
@@ -13452,9 +13452,9 @@
       "child_tables": [
         "Repost Payment Ledger Items"
       ],
-      "registered_in_rust_standard": false,
+      "registered_in_rust_standard": true,
       "registered_in_rust_v16_full": true,
-      "status": "Full"
+      "status": "Canonical"
     },
     {
       "name": "Repost Payment Ledger Items",
@@ -13505,9 +13505,9 @@
         "Request for Quotation Supplier",
         "Request for Quotation Item"
       ],
-      "registered_in_rust_standard": false,
+      "registered_in_rust_standard": true,
       "registered_in_rust_v16_full": true,
-      "status": "Full"
+      "status": "Canonical"
     },
     {
       "name": "Request for Quotation Item",
@@ -13781,9 +13781,9 @@
         "Sales Forecast Item",
         "Sales Forecast Item"
       ],
-      "registered_in_rust_standard": false,
+      "registered_in_rust_standard": true,
       "registered_in_rust_v16_full": true,
-      "status": "Full"
+      "status": "Canonical"
     },
     {
       "name": "Sales Forecast Item",
@@ -14506,9 +14506,9 @@
       "child_tables": [
         "Serial and Batch Entry"
       ],
-      "registered_in_rust_standard": false,
+      "registered_in_rust_standard": true,
       "registered_in_rust_v16_full": true,
-      "status": "Full"
+      "status": "Canonical"
     },
     {
       "name": "Serial and Batch Entry",
@@ -14703,9 +14703,9 @@
         "Share Transfer"
       ],
       "child_tables": [],
-      "registered_in_rust_standard": false,
+      "registered_in_rust_standard": true,
       "registered_in_rust_v16_full": true,
-      "status": "Full"
+      "status": "Canonical"
     },
     {
       "name": "Share Type",
@@ -14779,9 +14779,9 @@
         "Shipment Parcel",
         "Shipment Delivery Note"
       ],
-      "registered_in_rust_standard": false,
+      "registered_in_rust_standard": true,
       "registered_in_rust_v16_full": true,
-      "status": "Full"
+      "status": "Canonical"
     },
     {
       "name": "Shipment Delivery Note",
@@ -15082,9 +15082,9 @@
         "Stock Closing Entry"
       ],
       "child_tables": [],
-      "registered_in_rust_standard": false,
+      "registered_in_rust_standard": true,
       "registered_in_rust_v16_full": true,
-      "status": "Full"
+      "status": "Canonical"
     },
     {
       "name": "Stock Entry",
@@ -15241,9 +15241,9 @@
       "child_tables": [
         "Stock Reconciliation Item"
       ],
-      "registered_in_rust_standard": false,
+      "registered_in_rust_standard": true,
       "registered_in_rust_v16_full": true,
-      "status": "Full"
+      "status": "Canonical"
     },
     {
       "name": "Stock Reconciliation Item",
@@ -15338,9 +15338,9 @@
         "Role"
       ],
       "child_tables": [],
-      "registered_in_rust_standard": false,
+      "registered_in_rust_standard": true,
       "registered_in_rust_v16_full": true,
-      "status": "Full"
+      "status": "Canonical"
     },
     {
       "name": "Sub Operation",
@@ -15413,9 +15413,9 @@
         "Subcontracting Inward Order Received Item",
         "Subcontracting Inward Order Secondary Item"
       ],
-      "registered_in_rust_standard": false,
+      "registered_in_rust_standard": true,
       "registered_in_rust_v16_full": true,
-      "status": "Full"
+      "status": "Canonical"
     },
     {
       "name": "Subcontracting Inward Order Item",
@@ -16039,9 +16039,9 @@
         "Purchase Taxes and Charges",
         "Item Wise Tax Detail"
       ],
-      "registered_in_rust_standard": false,
+      "registered_in_rust_standard": true,
       "registered_in_rust_v16_full": true,
-      "status": "Full"
+      "status": "Canonical"
     },
     {
       "name": "Supplier Quotation Item",
@@ -16139,9 +16139,9 @@
         "Supplier Scorecard Scoring Criteria",
         "Supplier Scorecard Scoring Variable"
       ],
-      "registered_in_rust_standard": false,
+      "registered_in_rust_standard": true,
       "registered_in_rust_v16_full": true,
-      "status": "Full"
+      "status": "Canonical"
     },
     {
       "name": "Supplier Scorecard Scoring Criteria",
@@ -16438,9 +16438,9 @@
         "Currency"
       ],
       "child_tables": [],
-      "registered_in_rust_standard": false,
+      "registered_in_rust_standard": true,
       "registered_in_rust_v16_full": true,
-      "status": "Full"
+      "status": "Canonical"
     },
     {
       "name": "Tag",
@@ -16741,9 +16741,9 @@
         "Telephony Call Type"
       ],
       "child_tables": [],
-      "registered_in_rust_standard": false,
+      "registered_in_rust_standard": true,
       "registered_in_rust_v16_full": true,
-      "status": "Full"
+      "status": "Canonical"
     },
     {
       "name": "Terms and Conditions",
@@ -16946,9 +16946,9 @@
         "Transaction Deletion Record To Delete",
         "Transaction Deletion Record Item"
       ],
-      "registered_in_rust_standard": false,
+      "registered_in_rust_standard": true,
       "registered_in_rust_v16_full": true,
-      "status": "Full"
+      "status": "Canonical"
     },
     {
       "name": "Transaction Deletion Record Details",
@@ -17246,9 +17246,9 @@
       "child_tables": [
         "Unreconcile Payment Entries"
       ],
-      "registered_in_rust_standard": false,
+      "registered_in_rust_standard": true,
       "registered_in_rust_v16_full": true,
-      "status": "Full"
+      "status": "Canonical"
     },
     {
       "name": "Unreconcile Payment Entries",
@@ -18990,7 +18990,7 @@
   "module_breakdown": {
     "Accounts": {
       "upstream_total": 191,
-      "standard_registered": 9,
+      "standard_registered": 33,
       "v16_full_registered": 191,
       "istable_count": 99,
       "submittable_count": 31,
@@ -18999,7 +18999,7 @@
     },
     "Assets": {
       "upstream_total": 26,
-      "standard_registered": 2,
+      "standard_registered": 9,
       "v16_full_registered": 26,
       "istable_count": 12,
       "submittable_count": 8,
@@ -19026,7 +19026,7 @@
     },
     "Buying": {
       "upstream_total": 19,
-      "standard_registered": 2,
+      "standard_registered": 5,
       "v16_full_registered": 19,
       "istable_count": 9,
       "submittable_count": 4,
@@ -19035,7 +19035,7 @@
     },
     "CRM": {
       "upstream_total": 28,
-      "standard_registered": 2,
+      "standard_registered": 4,
       "v16_full_registered": 28,
       "istable_count": 13,
       "submittable_count": 2,
@@ -19062,7 +19062,7 @@
     },
     "Core": {
       "upstream_total": 113,
-      "standard_registered": 2,
+      "standard_registered": 5,
       "v16_full_registered": 113,
       "istable_count": 43,
       "submittable_count": 2,
@@ -19134,16 +19134,16 @@
     },
     "Maintenance": {
       "upstream_total": 5,
-      "standard_registered": 0,
+      "standard_registered": 2,
       "v16_full_registered": 5,
       "istable_count": 3,
       "submittable_count": 2,
       "single_count": 0,
-      "status": "Missing"
+      "status": "Partial"
     },
     "Manufacturing": {
       "upstream_total": 49,
-      "standard_registered": 6,
+      "standard_registered": 11,
       "v16_full_registered": 49,
       "istable_count": 30,
       "submittable_count": 8,
@@ -19170,7 +19170,7 @@
     },
     "Projects": {
       "upstream_total": 15,
-      "standard_registered": 3,
+      "standard_registered": 4,
       "v16_full_registered": 15,
       "istable_count": 5,
       "submittable_count": 2,
@@ -19197,7 +19197,7 @@
     },
     "Selling": {
       "upstream_total": 20,
-      "standard_registered": 3,
+      "standard_registered": 6,
       "v16_full_registered": 20,
       "istable_count": 8,
       "submittable_count": 5,
@@ -19206,7 +19206,7 @@
     },
     "Setup": {
       "upstream_total": 40,
-      "standard_registered": 4,
+      "standard_registered": 5,
       "v16_full_registered": 40,
       "istable_count": 12,
       "submittable_count": 1,
@@ -19215,7 +19215,7 @@
     },
     "Stock": {
       "upstream_total": 78,
-      "standard_registered": 15,
+      "standard_registered": 23,
       "v16_full_registered": 78,
       "istable_count": 33,
       "submittable_count": 17,
@@ -19224,7 +19224,7 @@
     },
     "Subcontracting": {
       "upstream_total": 13,
-      "standard_registered": 2,
+      "standard_registered": 3,
       "v16_full_registered": 13,
       "istable_count": 9,
       "submittable_count": 3,
@@ -19242,12 +19242,12 @@
     },
     "Telephony": {
       "upstream_total": 5,
-      "standard_registered": 0,
+      "standard_registered": 1,
       "v16_full_registered": 5,
       "istable_count": 1,
       "submittable_count": 1,
       "single_count": 0,
-      "status": "Missing"
+      "status": "Partial"
     },
     "Utilities": {
       "upstream_total": 4,
