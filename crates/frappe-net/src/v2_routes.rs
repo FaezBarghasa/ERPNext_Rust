@@ -4094,6 +4094,8 @@ pub struct SaveBuilderPagePayload {
     pub title: String,
     pub route_path: String,
     pub tree: erp_cms::builder_core::CanvasBlockTree,
+    #[serde(default)]
+    pub expected_version: Option<u64>,
 }
 
 /// DTO for reverting or undoing/redoing page state.
@@ -4113,7 +4115,8 @@ pub async fn builder_list_pages_handler(state: web::Data<DynamicRbacState>) -> i
                     serde_json::json!({
                         "id": k,
                         "node_count": v.nodes.len(),
-                        "root_ids": v.root_ids
+                        "root_ids": v.root_ids,
+                        "version": v.version
                     })
                 })
                 .collect::<Vec<_>>()
@@ -4137,11 +4140,14 @@ pub async fn builder_get_page_handler(
     // 1. In-memory fast cache
     if let Ok(lock) = state.builder_pages.read() {
         if let Some(tree) = lock.get(&id) {
-            return HttpResponse::Ok().json(serde_json::json!({
-                "status": "OK",
-                "page_id": id,
-                "tree": tree
-            }));
+            return HttpResponse::Ok()
+                .insert_header(("ETag", format!("\"{}\"", tree.version)))
+                .json(serde_json::json!({
+                    "status": "OK",
+                    "page_id": id,
+                    "version": tree.version,
+                    "tree": tree
+                }));
         }
     }
 
@@ -4158,11 +4164,14 @@ pub async fn builder_get_page_handler(
                             if let Ok(mut lock) = state.builder_pages.write() {
                                 lock.insert(id.clone(), tree.clone());
                             }
-                            return HttpResponse::Ok().json(serde_json::json!({
-                                "status": "OK",
-                                "page_id": id,
-                                "tree": tree
-                            }));
+                            return HttpResponse::Ok()
+                                .insert_header(("ETag", format!("\"{}\"", tree.version)))
+                                .json(serde_json::json!({
+                                    "status": "OK",
+                                    "page_id": id,
+                                    "version": tree.version,
+                                    "tree": tree
+                                }));
                         }
                     }
                 }
@@ -4183,7 +4192,25 @@ pub async fn builder_save_page_handler(
     pool_mgr: Option<web::Data<ConnectionPoolManager>>,
 ) -> impl Responder {
     let id = page_id.into_inner();
-    let p = payload.into_inner();
+    let mut p = payload.into_inner();
+
+    // Optimistic Concurrency Control
+    if let Some(expected_ver) = p.expected_version {
+        if let Ok(lock) = state.builder_pages.read() {
+            if let Some(current) = lock.get(&id) {
+                if current.version > 0 && current.version != expected_ver {
+                    return HttpResponse::Conflict().json(serde_json::json!({
+                        "error": "Conflict: page has been modified concurrently",
+                        "current_version": current.version,
+                        "expected_version": expected_ver
+                    }));
+                }
+            }
+        }
+    }
+
+    p.tree.version += 1;
+    let saved_version = p.tree.version;
 
     if let Ok(mut lock) = state.builder_pages.write() {
         lock.insert(id.clone(), p.tree.clone());
@@ -4200,6 +4227,7 @@ pub async fn builder_save_page_handler(
                 "title": p.title,
                 "route_path": p.route_path,
                 "tree": p.tree,
+                "version": saved_version,
                 "updated_at": Utc::now().to_rfc3339(),
             });
             let sql = format!("UPSERT builder_page:{clean_id} CONTENT $data;");
@@ -4207,13 +4235,16 @@ pub async fn builder_save_page_handler(
         }
     }
 
-    HttpResponse::Ok().json(serde_json::json!({
-        "status": "SAVED",
-        "page_id": id,
-        "title": p.title,
-        "route_path": p.route_path,
-        "node_count": p.tree.nodes.len()
-    }))
+    HttpResponse::Ok()
+        .insert_header(("ETag", format!("\"{saved_version}\"")))
+        .json(serde_json::json!({
+            "status": "SAVED",
+            "page_id": id,
+            "title": p.title,
+            "route_path": p.route_path,
+            "version": saved_version,
+            "node_count": p.tree.nodes.len()
+        }))
 }
 
 /// Handler: Autonomous Site Agent ("Bob") AI Prompt: `POST /api/v2/builder/ai/prompt`
@@ -4325,6 +4356,8 @@ pub struct SaveEmdashDocumentPayload {
     pub author: String,
     pub blocks: Vec<erp_cms::emdash_studio::EmdashBlock>,
     pub tags: Vec<String>,
+    #[serde(default)]
+    pub expected_version: Option<u64>,
 }
 
 /// DTO for editorial workflow transitions.
@@ -4347,6 +4380,7 @@ pub async fn emdash_list_documents_handler(state: web::Data<DynamicRbacState>) -
                         "title": doc.title,
                         "slug": doc.slug,
                         "author": doc.author,
+                        "version": doc.version,
                         "state": doc.workflow_state.state_name(),
                         "words": doc.word_count(),
                         "reading_time_mins": doc.reading_time_minutes(),
@@ -4373,11 +4407,14 @@ pub async fn emdash_get_document_handler(
     // In-memory cache
     if let Ok(lock) = state.emdash_documents.read() {
         if let Some(doc) = lock.get(&id) {
-            return HttpResponse::Ok().json(serde_json::json!({
-                "status": "OK",
-                "document": doc,
-                "rendered_html": doc.render_html()
-            }));
+            return HttpResponse::Ok()
+                .insert_header(("ETag", format!("\"{}\"", doc.version)))
+                .json(serde_json::json!({
+                    "status": "OK",
+                    "document": doc,
+                    "version": doc.version,
+                    "rendered_html": doc.render_html()
+                }));
         }
     }
 
@@ -4393,6 +4430,9 @@ pub async fn emdash_get_document_handler(
                     let slug = row.get("slug").and_then(|v| v.as_str()).unwrap_or(&clean_id).to_string();
                     let author = row.get("author").and_then(|v| v.as_str()).unwrap_or("Editor").to_string();
                     let mut doc = erp_cms::emdash_studio::EmdashDocument::new(id.clone(), title, slug, author);
+                    if let Some(ver) = row.get("version").and_then(|v| v.as_u64()) {
+                        doc.version = ver;
+                    }
                     if let Some(blocks_val) = row.get("blocks") {
                         if let Ok(blocks) = serde_json::from_value::<Vec<erp_cms::emdash_studio::EmdashBlock>>(blocks_val.clone()) {
                             for b in blocks {
@@ -4403,11 +4443,14 @@ pub async fn emdash_get_document_handler(
                     if let Ok(mut lock) = state.emdash_documents.write() {
                         lock.insert(id.clone(), doc.clone());
                     }
-                    return HttpResponse::Ok().json(serde_json::json!({
-                        "status": "OK",
-                        "document": doc,
-                        "rendered_html": doc.render_html()
-                    }));
+                    return HttpResponse::Ok()
+                        .insert_header(("ETag", format!("\"{}\"", doc.version)))
+                        .json(serde_json::json!({
+                            "status": "OK",
+                            "document": doc,
+                            "version": doc.version,
+                            "rendered_html": doc.render_html()
+                        }));
                 }
             }
         }
@@ -4428,8 +4471,33 @@ pub async fn emdash_save_document_handler(
     let id = doc_id.into_inner();
     let p = payload.into_inner();
 
+    // Optimistic Concurrency Control
+    let next_version = if let Some(expected_ver) = p.expected_version {
+        if let Ok(lock) = state.emdash_documents.read() {
+            if let Some(current) = lock.get(&id) {
+                if current.version > 0 && current.version != expected_ver {
+                    return HttpResponse::Conflict().json(serde_json::json!({
+                        "error": "Conflict: document has been modified concurrently",
+                        "current_version": current.version,
+                        "expected_version": expected_ver
+                    }));
+                }
+                current.version + 1
+            } else {
+                1
+            }
+        } else {
+            1
+        }
+    } else if let Ok(lock) = state.emdash_documents.read() {
+        lock.get(&id).map(|d| d.version + 1).unwrap_or(1)
+    } else {
+        1
+    };
+
     let mut doc =
         erp_cms::emdash_studio::EmdashDocument::new(id.clone(), p.title, p.slug, p.author);
+    doc.version = next_version;
     for b in p.blocks {
         doc.add_block(b);
     }
@@ -4456,6 +4524,7 @@ pub async fn emdash_save_document_handler(
                 "blocks": doc.blocks,
                 "tags": doc.tags,
                 "workflow_state": doc.workflow_state,
+                "version": doc.version,
                 "word_count": doc.word_count(),
                 "reading_time_mins": doc.reading_time_minutes(),
                 "updated_at": Utc::now().to_rfc3339(),
@@ -4465,12 +4534,15 @@ pub async fn emdash_save_document_handler(
         }
     }
 
-    HttpResponse::Ok().json(serde_json::json!({
-        "status": "SAVED",
-        "id": id,
-        "word_count": doc.word_count(),
-        "reading_time_mins": doc.reading_time_minutes(),
-    }))
+    HttpResponse::Ok()
+        .insert_header(("ETag", format!("\"{next_version}\"")))
+        .json(serde_json::json!({
+            "status": "SAVED",
+            "id": id,
+            "version": next_version,
+            "word_count": doc.word_count(),
+            "reading_time_mins": doc.reading_time_minutes(),
+        }))
 }
 
 /// Handler: Transition Emdash editorial document lifecycle: `POST /api/v2/emdash/documents/{id}/transition`
@@ -7522,6 +7594,7 @@ mod tests {
             title: "Landing Page".into(),
             route_path: "/landing".into(),
             tree: erp_cms::builder_core::CanvasBlockTree::default(),
+            expected_version: None,
         });
         let save_resp = builder_save_page_handler(
             web::Path::from("landing_v1".to_string()),
@@ -7542,6 +7615,24 @@ mod tests {
         .await
         .respond_to(&actix_web::test::TestRequest::default().to_http_request());
         assert_eq!(get_page_resp.status(), actix_web::http::StatusCode::OK);
+        assert!(get_page_resp.headers().contains_key("ETag"));
+
+        // 1c. Builder optimistic concurrency conflict
+        let stale_save = web::Json(SaveBuilderPagePayload {
+            title: "Stale update".into(),
+            route_path: "/landing".into(),
+            tree: erp_cms::builder_core::CanvasBlockTree::default(),
+            expected_version: Some(999),
+        });
+        let conflict_resp = builder_save_page_handler(
+            web::Path::from("landing_v1".to_string()),
+            stale_save,
+            state.clone(),
+            None,
+        )
+        .await
+        .respond_to(&actix_web::test::TestRequest::default().to_http_request());
+        assert_eq!(conflict_resp.status(), actix_web::http::StatusCode::CONFLICT);
 
         // 2. Builder list pages
         let list_resp = builder_list_pages_handler(state.clone())
@@ -7572,6 +7663,7 @@ mod tests {
                 text: "Version 1.0 is live!".into(),
             }],
             tags: vec!["announcements".into()],
+            expected_version: None,
         });
         let doc_resp = emdash_save_document_handler(
             web::Path::from("art_001".to_string()),
@@ -7592,6 +7684,26 @@ mod tests {
         .await
         .respond_to(&actix_web::test::TestRequest::default().to_http_request());
         assert_eq!(get_doc_resp.status(), actix_web::http::StatusCode::OK);
+        assert!(get_doc_resp.headers().contains_key("ETag"));
+
+        // 4c. Emdash optimistic concurrency conflict
+        let stale_doc = web::Json(SaveEmdashDocumentPayload {
+            title: "Stale Doc".into(),
+            slug: "rustnext-release".into(),
+            author: "Administrator".into(),
+            blocks: vec![],
+            tags: vec![],
+            expected_version: Some(999),
+        });
+        let doc_conflict_resp = emdash_save_document_handler(
+            web::Path::from("art_001".to_string()),
+            stale_doc,
+            state.clone(),
+            None,
+        )
+        .await
+        .respond_to(&actix_web::test::TestRequest::default().to_http_request());
+        assert_eq!(doc_conflict_resp.status(), actix_web::http::StatusCode::CONFLICT);
 
         // 5. Emdash transition document to InReview then Published
         let trans1 = web::Json(EmdashTransitionPayload {
