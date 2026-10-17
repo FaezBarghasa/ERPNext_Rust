@@ -22,7 +22,9 @@ pub enum StockReconciliationError {
     EmptyItems,
     #[error("Cannot submit document with status {0}, expected Draft (0)")]
     InvalidDocStatus(i32),
-    #[error("Negative inventory count prohibited for item '{item_code}' in warehouse '{warehouse}': count={qty}")]
+    #[error(
+        "Negative inventory count prohibited for item '{item_code}' in warehouse '{warehouse}': count={qty}"
+    )]
     NegativeCountProhibited {
         item_code: CompactString,
         warehouse: CompactString,
@@ -35,7 +37,9 @@ pub enum StockReconciliationError {
     },
     #[error("Warehouse account not found for warehouse '{0}'")]
     WarehouseAccountNotFound(CompactString),
-    #[error("Unbalanced GL double-entries: total debit {total_debit} != total credit {total_credit}")]
+    #[error(
+        "Unbalanced GL double-entries: total debit {total_debit} != total credit {total_credit}"
+    )]
     UnbalancedGlEntries {
         total_debit: Decimal,
         total_credit: Decimal,
@@ -145,8 +149,7 @@ impl StockReconciliation {
 
         for (idx, item) in self.items.iter().enumerate() {
             // Only generate an SLE if there is a quantity or valuation difference
-            if item.quantity_difference != Decimal::ZERO
-                || item.amount_difference != Decimal::ZERO
+            if item.quantity_difference != Decimal::ZERO || item.amount_difference != Decimal::ZERO
             {
                 sles.push(StockLedgerEntry {
                     name: format!("{}-sle-{}", self.name, idx + 1),
@@ -351,7 +354,9 @@ mod tests {
         let gl_entries = rec
             .generate_gl_entries(|wh| match wh {
                 "Stores - ACME" => Ok("1300 - Stock In Hand".into()),
-                _ => Err(StockReconciliationError::WarehouseAccountNotFound(wh.into())),
+                _ => Err(StockReconciliationError::WarehouseAccountNotFound(
+                    wh.into(),
+                )),
             })
             .expect("GL entries generation failed");
 

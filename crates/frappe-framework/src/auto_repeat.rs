@@ -83,25 +83,41 @@ impl AutoRepeatEngine {
         match frequency {
             AutoRepeatFrequency::Daily => date.checked_add_days(Days::new(1)).unwrap_or(date),
             AutoRepeatFrequency::Weekly => date + Duration::weeks(1),
-            AutoRepeatFrequency::Monthly => date.checked_add_months(Months::new(1)).unwrap_or_else(|| {
-                // Fallback day clamp if month addition overflows (e.g. Jan 31 -> Feb 28)
-                let year = if date.month() == 12 { date.year() + 1 } else { date.year() };
-                let month = if date.month() == 12 { 1 } else { date.month() + 1 };
-                NaiveDate::from_ymd_opt(year, month, 28).unwrap_or(date)
-            }),
-            AutoRepeatFrequency::Quarterly => date.checked_add_months(Months::new(3)).unwrap_or_else(|| {
-                let month = (date.month() + 2) % 12 + 1;
-                let year = date.year() + (date.month() + 2) as i32 / 12;
-                NaiveDate::from_ymd_opt(year, month, 28).unwrap_or(date)
-            }),
-            AutoRepeatFrequency::HalfYearly => date.checked_add_months(Months::new(6)).unwrap_or_else(|| {
-                let month = (date.month() + 5) % 12 + 1;
-                let year = date.year() + (date.month() + 5) as i32 / 12;
-                NaiveDate::from_ymd_opt(year, month, 28).unwrap_or(date)
-            }),
-            AutoRepeatFrequency::Yearly => date.checked_add_months(Months::new(12)).unwrap_or_else(|| {
-                NaiveDate::from_ymd_opt(date.year() + 1, date.month(), 28).unwrap_or(date)
-            }),
+            AutoRepeatFrequency::Monthly => {
+                date.checked_add_months(Months::new(1)).unwrap_or_else(|| {
+                    // Fallback day clamp if month addition overflows (e.g. Jan 31 -> Feb 28)
+                    let year = if date.month() == 12 {
+                        date.year() + 1
+                    } else {
+                        date.year()
+                    };
+                    let month = if date.month() == 12 {
+                        1
+                    } else {
+                        date.month() + 1
+                    };
+                    NaiveDate::from_ymd_opt(year, month, 28).unwrap_or(date)
+                })
+            }
+            AutoRepeatFrequency::Quarterly => {
+                date.checked_add_months(Months::new(3)).unwrap_or_else(|| {
+                    let month = (date.month() + 2) % 12 + 1;
+                    let year = date.year() + (date.month() + 2) as i32 / 12;
+                    NaiveDate::from_ymd_opt(year, month, 28).unwrap_or(date)
+                })
+            }
+            AutoRepeatFrequency::HalfYearly => {
+                date.checked_add_months(Months::new(6)).unwrap_or_else(|| {
+                    let month = (date.month() + 5) % 12 + 1;
+                    let year = date.year() + (date.month() + 5) as i32 / 12;
+                    NaiveDate::from_ymd_opt(year, month, 28).unwrap_or(date)
+                })
+            }
+            AutoRepeatFrequency::Yearly => {
+                date.checked_add_months(Months::new(12)).unwrap_or_else(|| {
+                    NaiveDate::from_ymd_opt(date.year() + 1, date.month(), 28).unwrap_or(date)
+                })
+            }
         }
     }
 
@@ -114,8 +130,13 @@ impl AutoRepeatEngine {
                 continue;
             }
 
-            while record.next_schedule_date <= current_date && record.status == AutoRepeatStatus::Active {
-                if record.end_date.is_some_and(|end| record.next_schedule_date > end) {
+            while record.next_schedule_date <= current_date
+                && record.status == AutoRepeatStatus::Active
+            {
+                if record
+                    .end_date
+                    .is_some_and(|end| record.next_schedule_date > end)
+                {
                     record.status = AutoRepeatStatus::Completed;
                     break;
                 }
@@ -135,7 +156,10 @@ impl AutoRepeatEngine {
                         serde_json::Value::String(record.name.to_string()),
                     );
                     let docstatus = if record.submit_on_creation { 1 } else { 0 };
-                    map.insert("docstatus".into(), serde_json::Value::Number(docstatus.into()));
+                    map.insert(
+                        "docstatus".into(),
+                        serde_json::Value::Number(docstatus.into()),
+                    );
                 }
 
                 let generated_doc = GeneratedDocument {
@@ -212,16 +236,28 @@ mod tests {
         // 1. Process as of Jan 15 -> Generates Jan 1 invoice, advances to Feb 1
         let gen_jan = engine.process_due_records(NaiveDate::from_ymd_opt(2026, 1, 15).unwrap());
         assert_eq!(gen_jan.len(), 1);
-        assert_eq!(gen_jan[0].posting_date, NaiveDate::from_ymd_opt(2026, 1, 1).unwrap());
+        assert_eq!(
+            gen_jan[0].posting_date,
+            NaiveDate::from_ymd_opt(2026, 1, 1).unwrap()
+        );
         assert_eq!(gen_jan[0].docstatus, 1);
-        assert_eq!(engine.records()[0].next_schedule_date, NaiveDate::from_ymd_opt(2026, 2, 1).unwrap());
+        assert_eq!(
+            engine.records()[0].next_schedule_date,
+            NaiveDate::from_ymd_opt(2026, 2, 1).unwrap()
+        );
         assert_eq!(engine.records()[0].status, AutoRepeatStatus::Active);
 
         // 2. Process as of April 15 -> Generates Feb 1 and Mar 1 invoices, then completes!
         let gen_rem = engine.process_due_records(NaiveDate::from_ymd_opt(2026, 4, 15).unwrap());
         assert_eq!(gen_rem.len(), 2);
-        assert_eq!(gen_rem[0].posting_date, NaiveDate::from_ymd_opt(2026, 2, 1).unwrap());
-        assert_eq!(gen_rem[1].posting_date, NaiveDate::from_ymd_opt(2026, 3, 1).unwrap());
+        assert_eq!(
+            gen_rem[0].posting_date,
+            NaiveDate::from_ymd_opt(2026, 2, 1).unwrap()
+        );
+        assert_eq!(
+            gen_rem[1].posting_date,
+            NaiveDate::from_ymd_opt(2026, 3, 1).unwrap()
+        );
         assert_eq!(engine.records()[0].status, AutoRepeatStatus::Completed);
         assert_eq!(engine.generated().len(), 3);
     }

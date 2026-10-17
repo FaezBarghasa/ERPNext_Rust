@@ -751,7 +751,11 @@ mod tests {
         assert!(uploader.validate_file("malicious.exe", 1024).is_err());
 
         // File too large (> 5MB)
-        assert!(uploader.validate_file("large.pdf", 6 * 1024 * 1024).is_err());
+        assert!(
+            uploader
+                .validate_file("large.pdf", 6 * 1024 * 1024)
+                .is_err()
+        );
 
         // Valid image
         let attach_res = uploader.attach_file("invoice.png", 50000, "/files/invoice.png");

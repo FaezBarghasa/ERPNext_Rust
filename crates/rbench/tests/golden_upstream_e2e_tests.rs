@@ -20,12 +20,8 @@ use erp_accounting::{
     PaymentLedgerEntry, PaymentType, PeriodClosingLog, PurchaseInvoice, PurchaseInvoiceItem,
     PurchaseTaxItem, RootType,
 };
-use erp_asset::{
-    Asset, AssetStatus, DepreciationMethod,
-};
-use erp_inventory::{
-    StockEntry, StockEntryAdditionalCost, StockEntryItem, StockEntryPurpose,
-};
+use erp_asset::{Asset, AssetStatus, DepreciationMethod};
+use erp_inventory::{StockEntry, StockEntryAdditionalCost, StockEntryItem, StockEntryPurpose};
 use erp_manufacturing::{
     Bom, BomItem, BomOperation, ProductionPlan, ProductionPlanItem, WorkOrder, WorkOrderItem,
     WorkOrderOperation, WorkOrderStatus,
@@ -228,7 +224,10 @@ fn test_golden_cycle_1_order_to_cash_full_lifecycle() {
     };
 
     let post_res = posting_engine.post_journal_entry(&jv, invoice_no);
-    assert!(post_res.is_ok(), "Sales Invoice GL posting must succeed and balance");
+    assert!(
+        post_res.is_ok(),
+        "Sales Invoice GL posting must succeed and balance"
+    );
 
     // Establish Payment Ledger Entry (PLE) for the invoice
     ple_engine.record_entry(PaymentLedgerEntry {
@@ -280,7 +279,9 @@ fn test_golden_cycle_1_order_to_cash_full_lifecycle() {
         remarks: Some("Full settlement of invoice".into()),
     };
 
-    let pe_gl = pe.generate_gl_entries("Main Plant").expect("Payment Entry GL must succeed");
+    let pe_gl = pe
+        .generate_gl_entries("Main Plant")
+        .expect("Payment Entry GL must succeed");
     assert_eq!(pe_gl.len(), 2);
     let pe_debit: Decimal = pe_gl.iter().map(|e| e.debit).sum();
     let pe_credit: Decimal = pe_gl.iter().map(|e| e.credit).sum();
@@ -295,7 +296,11 @@ fn test_golden_cycle_1_order_to_cash_full_lifecycle() {
 
     // Outstanding must now be EXACTLY ZERO
     let outstanding_after = ple_engine.calculate_outstanding("Sales Invoice", invoice_no);
-    assert_eq!(outstanding_after, Decimal::ZERO, "Invoice must be fully settled with 0 drift");
+    assert_eq!(
+        outstanding_after,
+        Decimal::ZERO,
+        "Invoice must be fully settled with 0 drift"
+    );
 }
 
 #[test]
@@ -339,7 +344,8 @@ fn test_golden_cycle_2_procure_to_pay_full_lifecycle() {
         remarks: Some("Steel ingots for motor manufacture".into()),
     };
 
-    pi.submit(dec!(1.0)).expect("Purchase invoice 3-way match validation passed");
+    pi.submit(dec!(1.0))
+        .expect("Purchase invoice 3-way match validation passed");
     assert_eq!(pi.net_total, dec!(5000.00));
     assert_eq!(pi.grand_total, dec!(5500.00));
 
@@ -377,7 +383,9 @@ fn test_golden_cycle_2_procure_to_pay_full_lifecycle() {
         remarks: Some("Payment of PINV-2026-9001".into()),
     };
 
-    let pe_gl = pe.generate_gl_entries("Main Plant").expect("Payment Entry GL generated");
+    let pe_gl = pe
+        .generate_gl_entries("Main Plant")
+        .expect("Payment Entry GL generated");
     let pe_debit: Decimal = pe_gl.iter().map(|e| e.debit).sum();
     let pe_credit: Decimal = pe_gl.iter().map(|e| e.credit).sum();
     assert_eq!(pe_debit, pe_credit);
@@ -555,7 +563,8 @@ fn test_golden_cycle_3_manufacturing_full_lifecycle() {
         remarks: Some("Production batch for 10 electric motors".into()),
     };
 
-    se.submit().expect("Manufacture stock entry submit must succeed");
+    se.submit()
+        .expect("Manufacture stock entry submit must succeed");
     assert_eq!(se.total_outgoing_value, dec!(2300.00));
     assert_eq!(se.total_additional_costs, dec!(1000.00));
     assert_eq!(se.total_incoming_value, dec!(3300.00));
@@ -566,10 +575,9 @@ fn test_golden_cycle_3_manufacturing_full_lifecycle() {
     // Credit 1500 - Stock In Hand (RM): $2,300
     // Credit 5400 - Expenses Included In Valuation: $1,000
     let se_gl = se
-        .generate_gl_entries(
-            "5400 - Expenses Included In Valuation",
-            |_wh| Ok(CompactString::new("1500 - Stock In Hand")),
-        )
+        .generate_gl_entries("5400 - Expenses Included In Valuation", |_wh| {
+            Ok(CompactString::new("1500 - Stock In Hand"))
+        })
         .expect("SE GL entries generated");
 
     let total_debit: Decimal = se_gl.iter().map(|e| e.debit).sum();
@@ -599,7 +607,9 @@ fn test_golden_cycle_4_period_close_and_zero_drift_reconciliation() {
         schedules: Vec::new(),
     };
 
-    asset.calculate_depreciation_schedule().expect("Schedule calculated");
+    asset
+        .calculate_depreciation_schedule()
+        .expect("Schedule calculated");
     assert_eq!(asset.schedules.len(), 60);
 
     let dep_gl = asset
@@ -688,7 +698,10 @@ fn test_golden_cycle_4_period_close_and_zero_drift_reconciliation() {
     };
 
     let closed_err = posting_engine.post_journal_entry(&past_jv, "JV-PAST-001");
-    assert!(closed_err.is_err(), "Posting into a closed accounting period must be rejected");
+    assert!(
+        closed_err.is_err(),
+        "Posting into a closed accounting period must be rejected"
+    );
 
     // 4. Zero-Drift Financial Balance Proof:
     // Total debits across all posted period vouchers must exactly equal credits

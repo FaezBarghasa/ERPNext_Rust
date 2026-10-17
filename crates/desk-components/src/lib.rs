@@ -37,11 +37,10 @@ pub use primitives::{
     AlertModel, AlertVariant, AttachedFile, AutocompleteModel, AutocompleteOption, AvatarModel,
     AvatarSize, BadgeModel, ButtonModel, ButtonVariant, CalendarEvent, CalendarViewMode,
     CalendarViewModel, CardModel, ChartCardModel, ComboboxModel, ComboboxOption,
-    CommandPaletteItem, CommandPaletteModel, ContextMenuItem, ContextMenuModel,
-    DashboardViewModel, DatePickerModel, DateTimePickerModel, DialogModel, FileUploaderModel,
-    MobileNavItem, MobileShellModel, MultiSelectModel, NumberCardModel, RatingModel, SliderModel,
-    TimePickerModel, ToastModel, TooltipModel, TreeNode, TreeViewModel, WorkspaceDesktopModel,
-    WorkspaceShortcut,
+    CommandPaletteItem, CommandPaletteModel, ContextMenuItem, ContextMenuModel, DashboardViewModel,
+    DatePickerModel, DateTimePickerModel, DialogModel, FileUploaderModel, MobileNavItem,
+    MobileShellModel, MultiSelectModel, NumberCardModel, RatingModel, SliderModel, TimePickerModel,
+    ToastModel, TooltipModel, TreeNode, TreeViewModel, WorkspaceDesktopModel, WorkspaceShortcut,
 };
 pub use resources::{
     ColorScheme, DocumentResourceState, KeyboardShortcutConfig, ListResourceState,

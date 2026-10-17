@@ -32,7 +32,9 @@ pub enum SubcontractingError {
     MissingSuppliedItems(CompactString),
     #[error("Warehouse GL account not found for warehouse '{0}'")]
     WarehouseAccountNotFound(CompactString),
-    #[error("Unbalanced GL double-entries: total debit {total_debit} != total credit {total_credit}")]
+    #[error(
+        "Unbalanced GL double-entries: total debit {total_debit} != total credit {total_credit}"
+    )]
     UnbalancedGlEntries {
         total_debit: Decimal,
         total_credit: Decimal,
@@ -394,7 +396,8 @@ mod tests {
             remarks: Some("Motor winding subcontracting contract".into()),
         };
 
-        sco.submit().expect("Subcontracting order submission failed");
+        sco.submit()
+            .expect("Subcontracting order submission failed");
         assert_eq!(sco.docstatus, 1);
         assert_eq!(sco.total_service_cost, dec!(1500.00));
 
@@ -466,14 +469,11 @@ mod tests {
 
         // Verify balanced GL entries
         let gl_entries = scr
-            .generate_gl_entries(
-                "2120 - Stock Received But Not Billed",
-                |wh| match wh {
-                    "Apex Warehouse - ACME" => Ok("1310 - Subcontractor Stock".into()),
-                    "Finished Goods - ACME" => Ok("1320 - Finished Goods Inventory".into()),
-                    _ => Err(SubcontractingError::WarehouseAccountNotFound(wh.into())),
-                },
-            )
+            .generate_gl_entries("2120 - Stock Received But Not Billed", |wh| match wh {
+                "Apex Warehouse - ACME" => Ok("1310 - Subcontractor Stock".into()),
+                "Finished Goods - ACME" => Ok("1320 - Finished Goods Inventory".into()),
+                _ => Err(SubcontractingError::WarehouseAccountNotFound(wh.into())),
+            })
             .expect("GL generation failed");
 
         assert_eq!(gl_entries.len(), 3);

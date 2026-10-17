@@ -75,8 +75,8 @@ impl DynamicFormEvaluator {
         doc: &Value,
     ) -> DynamicFieldState {
         let is_visible = depends_on.is_none_or(|c| Self::evaluate_condition(c, doc));
-        let is_mandatory = default_reqd
-            || mandatory_depends_on.is_some_and(|c| Self::evaluate_condition(c, doc));
+        let is_mandatory =
+            default_reqd || mandatory_depends_on.is_some_and(|c| Self::evaluate_condition(c, doc));
         let is_read_only = default_read_only
             || read_only_depends_on.is_some_and(|c| Self::evaluate_condition(c, doc));
         let value = doc.get(fieldname).cloned().unwrap_or(Value::Null);
@@ -163,11 +163,7 @@ impl ClientScriptEngine {
     }
 
     /// Executes `validate` client script hook on document mutation.
-    pub fn run_validate(
-        &self,
-        doctype: &str,
-        doc: &mut Value,
-    ) -> Result<(), ClientScriptError> {
+    pub fn run_validate(&self, doctype: &str, doc: &mut Value) -> Result<(), ClientScriptError> {
         let Some(script) = self.scripts.get(doctype) else {
             return Ok(());
         };
@@ -280,8 +276,14 @@ mod tests {
         ));
 
         // 2. Simple truthiness
-        assert!(DynamicFormEvaluator::evaluate_condition("has_discount", &doc));
-        assert!(!DynamicFormEvaluator::evaluate_condition("discount_code", &doc));
+        assert!(DynamicFormEvaluator::evaluate_condition(
+            "has_discount",
+            &doc
+        ));
+        assert!(!DynamicFormEvaluator::evaluate_condition(
+            "discount_code",
+            &doc
+        ));
 
         // 3. Full dynamic field state
         let state = DynamicFormEvaluator::evaluate_field_state(
