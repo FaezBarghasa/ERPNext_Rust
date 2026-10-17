@@ -145,11 +145,26 @@ impl StockEntry {
             }
 
             // Fill default warehouses if omitted at item level
-            if item.s_warehouse.is_none() && self.from_warehouse.is_some() {
-                item.s_warehouse = self.from_warehouse.clone();
-            }
-            if item.t_warehouse.is_none() && self.to_warehouse.is_some() {
-                item.t_warehouse = self.to_warehouse.clone();
+            if self.purpose == StockEntryPurpose::Manufacture {
+                if (item.is_finished_item || item.is_scrap_item)
+                    && item.t_warehouse.is_none()
+                    && self.to_warehouse.is_some()
+                {
+                    item.t_warehouse = self.to_warehouse.clone();
+                } else if !item.is_finished_item
+                    && !item.is_scrap_item
+                    && item.s_warehouse.is_none()
+                    && self.from_warehouse.is_some()
+                {
+                    item.s_warehouse = self.from_warehouse.clone();
+                }
+            } else {
+                if item.s_warehouse.is_none() && self.from_warehouse.is_some() {
+                    item.s_warehouse = self.from_warehouse.clone();
+                }
+                if item.t_warehouse.is_none() && self.to_warehouse.is_some() {
+                    item.t_warehouse = self.to_warehouse.clone();
+                }
             }
 
             match self.purpose {
