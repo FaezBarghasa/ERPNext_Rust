@@ -3,6 +3,7 @@ pub mod batches;
 pub mod catch_weight;
 pub mod fifo;
 pub mod landed_cost_voucher;
+pub mod logistics;
 pub mod reconciliation;
 pub mod reposting;
 pub mod reservation;
@@ -12,6 +13,11 @@ pub mod stock_entry;
 pub mod stock_reconciliation;
 pub mod valuation;
 pub mod warehouse;
+
+pub use logistics::{
+    DeliveryStop, DeliveryTrip, MaterialRequest, MaterialRequestItem, MaterialRequestType,
+    PackingSlip, PickList, PickListItem,
+};
 
 pub use ageing::{AgeingBucket, StockAgeingEngine, StockAgeingSummary, StockReceiptLayer};
 pub use batches::{Batch, SerialNo, SerialStatus};

@@ -17,7 +17,7 @@ pub use ai_oauth::{
 };
 pub use cache::{CachedFiscalYear, CachedPricingRule, TenantMemoryCache};
 pub use cli::{BenchmarkArgs, Cli, Commands, MigrateArgs, StartArgs, TenantArgs, TenantCommands};
-pub use live::{live_query, live_ws_handler};
+pub use live::{RealtimeEvent, RealtimeHub, live_query, live_ws_handler};
 pub use mail_queue::{EmailMessage, MailQueueError, MailQueueManager};
 pub use queue::{
     BackgroundJob, PriorityLevel, PriorityTaskDispatcher, QueueError, ReportDownloadJob,

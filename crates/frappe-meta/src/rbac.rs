@@ -742,6 +742,7 @@ impl UserPermissionEngine {
     }
 
     /// Share a document with another user.
+    #[allow(clippy::too_many_arguments)]
     pub fn share_document(
         &mut self,
         user: impl Into<String>,
@@ -765,13 +766,7 @@ impl UserPermissionEngine {
 
     /// Check if user has explicit ad-hoc document share permission.
     #[must_use]
-    pub fn has_doc_share(
-        &self,
-        user: &str,
-        doctype: &str,
-        name: &str,
-        action: Permission,
-    ) -> bool {
+    pub fn has_doc_share(&self, user: &str, doctype: &str, name: &str, action: Permission) -> bool {
         self.doc_shares.iter().any(|s| {
             s.user == user
                 && s.share_doctype == doctype
@@ -797,10 +792,10 @@ impl UserPermissionEngine {
 
         for perm in &self.user_permissions {
             if perm.user == user {
-                if let Some(app) = &perm.applicable_for_doctype {
-                    if app != target_doctype {
-                        continue;
-                    }
+                if let Some(app) = &perm.applicable_for_doctype
+                    && app != target_doctype
+                {
+                    continue;
                 }
                 // Group by allow_doctype (e.g. "Company", "Cost Center")
                 grouped
@@ -938,8 +933,7 @@ mod tests {
             Some("Sales Invoice".into()),
         );
 
-        let where_clause =
-            engine.build_where_clause("alice@example.com", "Sales Invoice", false);
+        let where_clause = engine.build_where_clause("alice@example.com", "Sales Invoice", false);
         assert!(where_clause.contains("company IN [\"Acme Inc\"]"));
         assert!(where_clause.contains("cost_center IN [\"Sales - AI\"]"));
 

@@ -125,20 +125,23 @@ impl POSInvoice {
         let posting = self.posting_date.date_naive();
 
         // 1. Credit Income accounts
-        for item in &self.items {
+        for (idx, item) in self.items.iter().enumerate() {
             entries.push(GlEntry {
+                name: format!("{}-GL-REV-{}", self.name, idx + 1),
                 posting_date: posting,
                 account: item.income_account.to_string(),
                 debit: Decimal::ZERO,
                 credit: item.amount,
                 voucher_type: "POS Invoice".into(),
                 voucher_no: self.name.to_string(),
-                remarks: format!("Sales: {} x {}", item.item_code, item.qty),
+                party_type: Some("Customer".into()),
+                party: Some(self.customer.to_string()),
+                company: self.company.to_string(),
             });
         }
 
         // 2. Debit Payments / Cash / Bank accounts
-        for payment in &self.payments {
+        for (idx, payment) in self.payments.iter().enumerate() {
             // Deduct change from primary cash mode if applicable
             let net_payment = if payment.mode_of_payment == "Cash" {
                 payment.amount - self.change_amount
@@ -147,13 +150,16 @@ impl POSInvoice {
             };
 
             entries.push(GlEntry {
+                name: format!("{}-GL-PAY-{}", self.name, idx + 1),
                 posting_date: posting,
                 account: payment.account.to_string(),
                 debit: net_payment,
                 credit: Decimal::ZERO,
                 voucher_type: "POS Invoice".into(),
                 voucher_no: self.name.to_string(),
-                remarks: format!("Payment via {}", payment.mode_of_payment),
+                party_type: None,
+                party: None,
+                company: self.company.to_string(),
             });
         }
 

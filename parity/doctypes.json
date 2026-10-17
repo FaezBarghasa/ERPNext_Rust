@@ -1,8 +1,8 @@
 {
   "total_upstream": 841,
-  "total_registered_standard": 38,
+  "total_registered_standard": 50,
   "total_registered_v16_full": 841,
-  "coverage_standard_pct": 4.5184304399524375,
+  "coverage_standard_pct": 5.945303210463734,
   "coverage_v16_full_pct": 100.0,
   "doctypes": [
     {
@@ -4343,9 +4343,9 @@
       "child_tables": [
         "Delivery Stop"
       ],
-      "registered_in_rust_standard": false,
+      "registered_in_rust_standard": true,
       "registered_in_rust_v16_full": true,
-      "status": "Full"
+      "status": "Canonical"
     },
     {
       "name": "Department",
@@ -7166,9 +7166,9 @@
         "Job Card Scheduled Time",
         "Job Card Secondary Item"
       ],
-      "registered_in_rust_standard": false,
+      "registered_in_rust_standard": true,
       "registered_in_rust_v16_full": true,
-      "status": "Full"
+      "status": "Canonical"
     },
     {
       "name": "Job Card Item",
@@ -8407,9 +8407,9 @@
       "child_tables": [
         "Material Request Item"
       ],
-      "registered_in_rust_standard": false,
+      "registered_in_rust_standard": true,
       "registered_in_rust_v16_full": true,
-      "status": "Full"
+      "status": "Canonical"
     },
     {
       "name": "Material Request Item",
@@ -9410,9 +9410,9 @@
         "POS Invoice Reference",
         "Sales Invoice Reference"
       ],
-      "registered_in_rust_standard": false,
+      "registered_in_rust_standard": true,
       "registered_in_rust_v16_full": true,
-      "status": "Full"
+      "status": "Canonical"
     },
     {
       "name": "POS Closing Entry Detail",
@@ -9560,9 +9560,9 @@
         "Sales Team",
         "Item Wise Tax Detail"
       ],
-      "registered_in_rust_standard": false,
+      "registered_in_rust_standard": true,
       "registered_in_rust_v16_full": true,
-      "status": "Full"
+      "status": "Canonical"
     },
     {
       "name": "POS Invoice Item",
@@ -9695,9 +9695,9 @@
       "child_tables": [
         "POS Opening Entry Detail"
       ],
-      "registered_in_rust_standard": false,
+      "registered_in_rust_standard": true,
       "registered_in_rust_v16_full": true,
-      "status": "Full"
+      "status": "Canonical"
     },
     {
       "name": "POS Opening Entry Detail",
@@ -9990,9 +9990,9 @@
       "child_tables": [
         "Packing Slip Item"
       ],
-      "registered_in_rust_standard": false,
+      "registered_in_rust_standard": true,
       "registered_in_rust_v16_full": true,
-      "status": "Full"
+      "status": "Canonical"
     },
     {
       "name": "Packing Slip Item",
@@ -10794,9 +10794,9 @@
       "child_tables": [
         "Pick List Item"
       ],
-      "registered_in_rust_standard": false,
+      "registered_in_rust_standard": true,
       "registered_in_rust_v16_full": true,
-      "status": "Full"
+      "status": "Canonical"
     },
     {
       "name": "Pick List Item",
@@ -11541,9 +11541,9 @@
         "Production Plan Item Reference",
         "Production Plan Sub Assembly Item"
       ],
-      "registered_in_rust_standard": false,
+      "registered_in_rust_standard": true,
       "registered_in_rust_v16_full": true,
-      "status": "Full"
+      "status": "Canonical"
     },
     {
       "name": "Production Plan Item",
@@ -15314,9 +15314,9 @@
       "child_tables": [
         "Serial and Batch Entry"
       ],
-      "registered_in_rust_standard": false,
+      "registered_in_rust_standard": true,
       "registered_in_rust_v16_full": true,
-      "status": "Full"
+      "status": "Canonical"
     },
     {
       "name": "Stock Settings",
@@ -15544,9 +15544,9 @@
         "Subcontracting Order Supplied Item",
         "Landed Cost Taxes and Charges"
       ],
-      "registered_in_rust_standard": false,
+      "registered_in_rust_standard": true,
       "registered_in_rust_v16_full": true,
-      "status": "Full"
+      "status": "Canonical"
     },
     {
       "name": "Subcontracting Order Item",
@@ -15658,9 +15658,9 @@
         "Subcontracting Receipt Supplied Item",
         "Landed Cost Taxes and Charges"
       ],
-      "registered_in_rust_standard": false,
+      "registered_in_rust_standard": true,
       "registered_in_rust_v16_full": true,
-      "status": "Full"
+      "status": "Canonical"
     },
     {
       "name": "Subcontracting Receipt Item",
@@ -18990,7 +18990,7 @@
   "module_breakdown": {
     "Accounts": {
       "upstream_total": 191,
-      "standard_registered": 6,
+      "standard_registered": 9,
       "v16_full_registered": 191,
       "istable_count": 99,
       "submittable_count": 31,
@@ -19143,7 +19143,7 @@
     },
     "Manufacturing": {
       "upstream_total": 49,
-      "standard_registered": 4,
+      "standard_registered": 6,
       "v16_full_registered": 49,
       "istable_count": 30,
       "submittable_count": 8,
@@ -19215,7 +19215,7 @@
     },
     "Stock": {
       "upstream_total": 78,
-      "standard_registered": 10,
+      "standard_registered": 15,
       "v16_full_registered": 78,
       "istable_count": 33,
       "submittable_count": 17,
@@ -19224,12 +19224,12 @@
     },
     "Subcontracting": {
       "upstream_total": 13,
-      "standard_registered": 0,
+      "standard_registered": 2,
       "v16_full_registered": 13,
       "istable_count": 9,
       "submittable_count": 3,
       "single_count": 0,
-      "status": "Missing"
+      "status": "Partial"
     },
     "Support": {
       "upstream_total": 11,

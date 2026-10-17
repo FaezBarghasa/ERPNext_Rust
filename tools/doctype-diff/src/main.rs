@@ -146,6 +146,18 @@ fn canonical_rust_doctypes() -> BTreeSet<&'static str> {
         "CAPA",
         "Asset",
         "Asset Category",
+        "POS Invoice",
+        "POS Opening Entry",
+        "POS Closing Entry",
+        "Material Request",
+        "Pick List",
+        "Packing Slip",
+        "Delivery Trip",
+        "Stock Reservation Entry",
+        "Subcontracting Order",
+        "Subcontracting Receipt",
+        "Job Card",
+        "Production Plan",
     ]
     .into_iter()
     .collect()

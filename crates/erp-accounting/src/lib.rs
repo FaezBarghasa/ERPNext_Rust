@@ -21,12 +21,12 @@ pub mod tax_engine;
 pub mod tax_withholding;
 pub mod treasury;
 
+pub use payment_entry::{
+    PaymentEntry, PaymentEntryDeduction, PaymentEntryError, PaymentEntryReference, PaymentType,
+};
 pub use pos::{
     POSClosingEntry, POSClosingPaymentReconciliation, POSInvoice, POSInvoiceItem,
     POSInvoicePayment, POSOpeningEntry, POSShiftStatus,
-};
-pub use payment_entry::{
-    PaymentEntry, PaymentEntryDeduction, PaymentEntryError, PaymentEntryReference, PaymentType,
 };
 pub use purchase_invoice::{
     PurchaseInvoice, PurchaseInvoiceError, PurchaseInvoiceItem, PurchaseTaxItem,

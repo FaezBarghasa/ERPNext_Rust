@@ -64,10 +64,7 @@ impl NamingSeriesParser {
             let num = format!("{:04}", seq);
             out = out.replace("{####}", &num);
         } else if let Some(start_hash) = out.find('#') {
-            let hash_count = out[start_hash..]
-                .chars()
-                .take_while(|&c| c == '#')
-                .count();
+            let hash_count = out[start_hash..].chars().take_while(|&c| c == '#').count();
             if hash_count > 0 {
                 let num = format!("{:0>width$}", seq, width = hash_count);
                 out.replace_range(start_hash..start_hash + hash_count, &num);

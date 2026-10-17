@@ -1,14 +1,14 @@
 # ERPNext v16 Pure-Rust Parity Status
 
 **Upstream Canonical DocTypes:** 841  
-**Rust Hand-Written Canonical:** 38 (4.52%)  
+**Rust Hand-Written Canonical:** 50 (5.95%)  
 **Rust Compiled v16 Full:** 841 (100.00%)
 
 ## Module Breakdown
 
 | Module | Upstream Total | Standard Canonical | v16 Full Compiled | Canonical Status | Child Tables | Submittable | Singles |
 |---|---|---|---|---|---|---|---|
-| Accounts | 191 | 6 | 191 | **Partial** | 99 | 31 | 12 |
+| Accounts | 191 | 9 | 191 | **Partial** | 99 | 31 | 12 |
 | Assets | 26 | 2 | 26 | **Partial** | 12 | 8 | 0 |
 | Automation | 16 | 0 | 16 | **Missing** | 6 | 0 | 1 |
 | Bulk Transaction | 2 | 0 | 2 | **Missing** | 0 | 0 | 0 |
@@ -25,7 +25,7 @@
 | Geo | 2 | 0 | 2 | **Missing** | 0 | 0 | 0 |
 | Integrations | 24 | 0 | 24 | **Missing** | 6 | 0 | 6 |
 | Maintenance | 5 | 0 | 5 | **Missing** | 3 | 2 | 0 |
-| Manufacturing | 49 | 4 | 49 | **Partial** | 30 | 8 | 2 |
+| Manufacturing | 49 | 6 | 49 | **Partial** | 30 | 8 | 2 |
 | Portal | 2 | 0 | 2 | **Missing** | 2 | 0 | 0 |
 | Printing | 8 | 0 | 8 | **Missing** | 0 | 0 | 1 |
 | Projects | 15 | 3 | 15 | **Partial** | 5 | 2 | 1 |
@@ -33,8 +33,8 @@
 | Regional | 5 | 0 | 5 | **Missing** | 1 | 0 | 0 |
 | Selling | 20 | 3 | 20 | **Partial** | 8 | 5 | 2 |
 | Setup | 40 | 4 | 40 | **Partial** | 12 | 1 | 2 |
-| Stock | 78 | 10 | 78 | **Partial** | 33 | 17 | 5 |
-| Subcontracting | 13 | 0 | 13 | **Missing** | 9 | 3 | 0 |
+| Stock | 78 | 15 | 78 | **Partial** | 33 | 17 | 5 |
+| Subcontracting | 13 | 2 | 13 | **Partial** | 9 | 3 | 0 |
 | Support | 11 | 0 | 11 | **Missing** | 5 | 0 | 1 |
 | Telephony | 5 | 0 | 5 | **Missing** | 1 | 1 | 0 |
 | Utilities | 4 | 0 | 4 | **Missing** | 1 | 0 | 2 |
