@@ -48,7 +48,9 @@ pub use report_engine::{
     ReportSummaryCard,
 };
 pub use settings::{
-    AccountsSettings, ManufacturingSettings, SingleDocumentRegistry, StockSettings, SystemSettings,
+    ALL_SINGLE_DOCTYPES, AccountsSettings, BuyingSettings, CrmSettings, GlobalDefaults,
+    ManufacturingSettings, SecuritySettings, SellingSettings, SingleDocumentRegistry,
+    StockSettings, SupportSettings, SystemSettings,
 };
 pub use social::{
     AssignmentRecord, CommentRecord, CommentType, FieldDelta, SocialEngine, VersionRecord,
@@ -65,7 +67,7 @@ pub use bpmn::{
     ActivityType, BpmnEngine, BpmnProcessDefinition, FlowNode, ProcessInstance, SequenceFlow,
 };
 pub use controller::{
-    ControllerRegistry, DocController, StandardSubmittableController, ALL_SUBMITTABLE_DOCTYPES,
+    ALL_SUBMITTABLE_DOCTYPES, ControllerRegistry, DocController, StandardSubmittableController,
 };
 pub use dmn::{ConditionOp, DecisionRule, DecisionTable, HitPolicy};
 pub use jalali::JalaliDate;
