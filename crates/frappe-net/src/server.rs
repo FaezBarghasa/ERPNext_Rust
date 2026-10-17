@@ -784,7 +784,9 @@ pub fn configure_app(
     acme_gateway: Option<AcmeGateway>,
 ) {
     cfg.app_data(web::Data::new(pool_mgr))
-        .app_data(web::Data::new(ControllerRegistry::with_standard_submittables()))
+        .app_data(web::Data::new(
+            ControllerRegistry::with_standard_submittables(),
+        ))
         .app_data(web::Data::new(DynamicRbacState::default()))
         .app_data(web::Data::new(erp_cms::EdgeAnalyticsEngine::new()))
         .app_data(web::PayloadConfig::new(topology.max_payload_bytes))

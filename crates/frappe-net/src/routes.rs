@@ -132,30 +132,29 @@ pub async fn create_resource(
         Err(e) => return HttpResponse::InternalServerError().body(e.to_string()),
     };
 
-    let schema = frappe_meta::lookup_schema(&doctype)
-        .unwrap_or_else(|| DocTypeSchema {
-            name: doctype.clone(),
-            module: "Core".to_string(),
-            is_single: false,
-            is_submittable: false,
-            is_child_table: false,
-            is_tree: false,
-            track_changes: true,
-            quick_entry: false,
-            allow_rename: false,
-            allow_import: true,
-            allow_auto_repeat: false,
-            naming_rule: None,
-            naming_rule_spec: None,
-            virtual_child_tables: false,
-            lazy_materialization: false,
-            extends_class: None,
-            title_field: None,
-            search_fields: None,
-            image_field: None,
-            fields: vec![],
-            permissions: vec![],
-        });
+    let schema = frappe_meta::lookup_schema(&doctype).unwrap_or_else(|| DocTypeSchema {
+        name: doctype.clone(),
+        module: "Core".to_string(),
+        is_single: false,
+        is_submittable: false,
+        is_child_table: false,
+        is_tree: false,
+        track_changes: true,
+        quick_entry: false,
+        allow_rename: false,
+        allow_import: true,
+        allow_auto_repeat: false,
+        naming_rule: None,
+        naming_rule_spec: None,
+        virtual_child_tables: false,
+        lazy_materialization: false,
+        extends_class: None,
+        title_field: None,
+        search_fields: None,
+        image_field: None,
+        fields: vec![],
+        permissions: vec![],
+    });
 
     let mut doc = Document::new(&doctype, body.into_inner());
     let controller = DocumentController::new();

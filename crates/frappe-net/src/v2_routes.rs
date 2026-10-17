@@ -34,7 +34,9 @@ use erp_trade::order_lifecycle::{
 use erp_trade::reviews::{ProductReview, ReviewManager, ReviewStatus};
 use erp_trade::shipping::{ShippingCalculator, ShippingMethod, ShippingZone};
 use erp_trade::wishlist::{Wishlist, WishlistItem};
+use frappe_framework::controller::ControllerRegistry;
 use frappe_framework::export_engine::{DocumentExporter, ExportColumn, ExportFormat};
+use frappe_framework::lifecycle::Document;
 use frappe_framework::notification::{
     NotificationChannel, NotificationDispatcher, NotificationInboxRegistry, NotificationMessage,
     NotificationPriority, UserNotificationPreferences,
@@ -58,8 +60,6 @@ use frappe_meta::rbac::{
     ROLE_CONTENT_CREATOR, ROLE_MARKETING_ADMIN, ROLE_SYSTEM_MANAGER, ROLE_WAREHOUSE_MANAGER,
     ROLE_WEBSITE_UPDATER, ROLE_WORKER_USER, STANDARD_ROLES, UserRecord, check_permission,
 };
-use frappe_framework::controller::ControllerRegistry;
-use frappe_framework::lifecycle::Document;
 use frappe_meta::security_rules::{
     DetectedFileType, generate_password_reset_token, sanitize_svg, validate_file_upload,
     validate_password_complexity, verify_password_reset_token,
@@ -704,9 +704,7 @@ pub async fn v2_submit_document(
         .as_ref()
         .and_then(|r| r.get(&doctype))
         .or_else(|| default_reg.get(&doctype))
-        .unwrap_or_else(|| {
-            Arc::new(frappe_framework::controller::StandardSubmittableController)
-        });
+        .unwrap_or_else(|| Arc::new(frappe_framework::controller::StandardSubmittableController));
 
     let mut framework_doc = Document::new(&doctype, current_doc.clone());
     framework_doc.name = name.clone();
@@ -1195,12 +1193,16 @@ pub async fn v2_submit_document(
     for sle in &generated_sle_entries {
         let clean_id = sle.name.replace([':', ' ', '-'], "_");
         let val_json = serde_json::to_string(sle).unwrap_or_default();
-        tx_stmts.push(format!("UPSERT stock_ledger_entry:{clean_id} CONTENT {val_json};"));
+        tx_stmts.push(format!(
+            "UPSERT stock_ledger_entry:{clean_id} CONTENT {val_json};"
+        ));
     }
     for (ple_name, ple_doc) in &generated_ple_entries {
         let clean_id = ple_name.replace([':', ' ', '-'], "_");
         let val_json = serde_json::to_string(ple_doc).unwrap_or_default();
-        tx_stmts.push(format!("UPSERT payment_ledger_entry:{clean_id} CONTENT {val_json};"));
+        tx_stmts.push(format!(
+            "UPSERT payment_ledger_entry:{clean_id} CONTENT {val_json};"
+        ));
     }
 
     if let Err(e) = execute_transaction(&client, &tx_stmts).await {
@@ -1308,9 +1310,7 @@ pub async fn v2_cancel_document(
         .as_ref()
         .and_then(|r| r.get(&doctype))
         .or_else(|| default_reg.get(&doctype))
-        .unwrap_or_else(|| {
-            Arc::new(frappe_framework::controller::StandardSubmittableController)
-        });
+        .unwrap_or_else(|| Arc::new(frappe_framework::controller::StandardSubmittableController));
 
     let mut framework_doc = Document::new(&doctype, current_doc.clone());
     framework_doc.name = name.clone();
@@ -1379,7 +1379,9 @@ pub async fn v2_cancel_document(
                 };
                 let clean_id = reversal_sle.name.replace([':', ' ', '-'], "_");
                 let val_json = serde_json::to_string(&reversal_sle).unwrap_or_default();
-                tx_stmts.push(format!("UPSERT stock_ledger_entry:{clean_id} CONTENT {val_json};"));
+                tx_stmts.push(format!(
+                    "UPSERT stock_ledger_entry:{clean_id} CONTENT {val_json};"
+                ));
             }
         }
     }
@@ -1406,7 +1408,9 @@ pub async fn v2_cancel_document(
                 }
                 let clean_id = rev_name.replace([':', ' ', '-'], "_");
                 let val_json = serde_json::to_string(obj).unwrap_or_default();
-                tx_stmts.push(format!("UPSERT payment_ledger_entry:{clean_id} CONTENT {val_json};"));
+                tx_stmts.push(format!(
+                    "UPSERT payment_ledger_entry:{clean_id} CONTENT {val_json};"
+                ));
             }
         }
     }

@@ -21,7 +21,7 @@ members = [
     "crates/desk-components",
     "crates/erp-software",
     "crates/erpnext-plugin-sdk",
-    "crates/erp-stealth-scraper",
+    "tools/stealth-scraper",
     "crates/erp-scanner",
     "crates/erp-importer",
     "crates/erp-quality",
@@ -56,7 +56,7 @@ erp-ppm = { path = "crates/erp-ppm" }
 erp-quality = { path = "crates/erp-quality" }
 erp-scanner = { path = "crates/erp-scanner" }
 erp-software = { path = "crates/erp-software" }
-erp-stealth-scraper = { path = "crates/erp-stealth-scraper" }
+erp-stealth-scraper = { path = "tools/stealth-scraper" }
 erp-support = { path = "crates/erp-support" }
 erp-trade = { path = "crates/erp-trade" }
 erp-wms = { path = "crates/erp-wms" }
