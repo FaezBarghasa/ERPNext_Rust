@@ -53,7 +53,13 @@ impl DocTypeRegistry {
     /// Retrieves a reference to a registered DocType schema by name.
     #[must_use]
     pub fn get(&self, name: &str) -> Option<&DocTypeSchema> {
-        self.doctypes.get(name)
+        if let Some(schema) = self.doctypes.get(name) {
+            return Some(schema);
+        }
+        self.doctypes
+            .iter()
+            .find(|(k, _)| k.eq_ignore_ascii_case(name))
+            .map(|(_, v)| v)
     }
 
     /// Returns the number of registered DocTypes.
@@ -138,6 +144,15 @@ pub fn standard_erpnext_schemas() -> Vec<DocTypeSchema> {
         v16_schemas::schema_quality_inspection(),
         v16_schemas::schema_quality_inspection_template(),
     ]
+}
+
+static V16_REGISTRY: std::sync::LazyLock<DocTypeRegistry> =
+    std::sync::LazyLock::new(DocTypeRegistry::new_v16_full);
+
+/// Looks up a DocType schema by name across all standard and v16 ERPNext schemas.
+#[must_use]
+pub fn lookup_schema(name: &str) -> Option<DocTypeSchema> {
+    V16_REGISTRY.get(name).cloned()
 }
 
 #[cfg(test)]

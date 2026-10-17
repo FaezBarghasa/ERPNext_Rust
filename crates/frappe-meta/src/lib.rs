@@ -61,7 +61,7 @@ pub use rbac::{
     ROLE_WORKER_USER, Role, STANDARD_ROLES, User, UserPermission, UserPermissionEngine, UserRecord,
     check_permission, compile_rls_policy,
 };
-pub use registry::{DocTypeRegistry, standard_erpnext_schemas};
+pub use registry::{DocTypeRegistry, lookup_schema, standard_erpnext_schemas};
 pub use role_tools::{RoleEvaluator, RoleReplicationBundle};
 pub use schema::{
     DataPreset, DocFieldSchema, DocPermSchema, DocTypeSchema, FieldType, NamingRule, SchemaError,

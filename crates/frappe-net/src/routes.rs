@@ -132,9 +132,7 @@ pub async fn create_resource(
         Err(e) => return HttpResponse::InternalServerError().body(e.to_string()),
     };
 
-    let schema = frappe_meta::registry::standard_erpnext_schemas()
-        .into_iter()
-        .find(|s| s.name.eq_ignore_ascii_case(&doctype))
+    let schema = frappe_meta::lookup_schema(&doctype)
         .unwrap_or_else(|| DocTypeSchema {
             name: doctype.clone(),
             module: "Core".to_string(),
