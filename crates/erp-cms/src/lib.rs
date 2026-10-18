@@ -53,14 +53,18 @@ pub use theme_engine::{
     CompiledTheme, DesignTokens, RenderEngineKind, SlotDefinition, ThemeManifest, ThemeRegistry,
     ThemeVariant, WorkTypeClassification,
 };
-pub use hls_engine::{HlsMasterPlaylist, HlsMediaPlaylist, HlsMediaSegment, HlsVariant};
+pub use hls_engine::{
+    HlsAudioRendition, HlsMasterPlaylist, HlsMediaPlaylist, HlsMediaSegment, HlsSegmentCache,
+    HlsSubtitleRendition, HlsVariant,
+};
 pub use rtmp_ingest::{RtmpError, RtmpIngestManager, RtmpStreamSession, RtmpStreamStatus};
 pub use transcode_pipeline::{
     HardwareAccelType, ResumableChunkEngine, ResumableUploadSession, TranscodeError, TranscodeJob,
 };
 pub use video_streaming::{
-    AudioCodec, ClientDeviceProfile, MediaContainer, MediaStreamInfo, PlayMethod,
-    PlaybackDecisionEngine, VideoCodec,
+    AudioChannels, AudioCodec, ClientDeviceProfile, ColorRange, MediaContainer, MediaStreamInfo,
+    PlayMethod, PlaybackDecisionEngine, SubtitleDelivery, SubtitleFormat, SubtitleTrackInfo,
+    VideoCodec,
 };
 pub use erp_cms_core as core;
 

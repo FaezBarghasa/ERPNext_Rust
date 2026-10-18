@@ -550,4 +550,59 @@ mod tests {
         assert_eq!(EdgeBreakpoint::Tablet.default_columns(), 40);
         assert_eq!(EdgeBreakpoint::Mobile.default_columns(), 20);
     }
+
+    #[test]
+    fn test_video_playback_packet_roundtrip() {
+        let mut user_id = heapless::String::new();
+        user_id.push_str("usr_8829").unwrap();
+        let mut media_id = heapless::String::new();
+        media_id.push_str("vid_4412").unwrap();
+
+        let packet = VideoPlaybackPacket {
+            user_id,
+            media_id,
+            playhead_sec: 1420,
+            duration_sec: 7200,
+            buffered_sec: 60,
+            is_paused: false,
+        };
+
+        let mut buf = [0u8; 128];
+        let bytes = packet.serialize(&mut buf).unwrap();
+        assert_eq!(bytes.len(), 79);
+        assert_eq!(&bytes[0..4], b"VODP");
+
+        let decoded = VideoPlaybackPacket::decode(bytes).unwrap();
+        assert_eq!(decoded.user_id.as_str(), "usr_8829");
+        assert_eq!(decoded.media_id.as_str(), "vid_4412");
+        assert_eq!(decoded.playhead_sec, 1420);
+        assert_eq!(decoded.duration_sec, 7200);
+        assert_eq!(decoded.buffered_sec, 60);
+        assert!(!decoded.is_paused);
+    }
+
+    #[test]
+    fn test_rtmp_telemetry_packet_roundtrip() {
+        let mut channel_id = heapless::String::new();
+        channel_id.push_str("live_stream_prime").unwrap();
+
+        let packet = RtmpStreamTelemetryPacket {
+            channel_id,
+            ingress_bitrate_kbps: 4500,
+            viewer_count: 1240,
+            is_live: true,
+        };
+
+        let mut buf = [0u8; 64];
+        let bytes = packet.serialize(&mut buf).unwrap();
+        assert_eq!(bytes.len(), 45);
+        assert_eq!(&bytes[0..4], b"RTMP");
+
+        let decoded = RtmpStreamTelemetryPacket::decode(bytes).unwrap();
+        assert_eq!(decoded.channel_id.as_str(), "live_stream_prime");
+        assert_eq!(decoded.ingress_bitrate_kbps, 4500);
+        assert_eq!(decoded.viewer_count, 1240);
+        assert!(decoded.is_live);
+    }
 }
+
