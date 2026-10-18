@@ -287,6 +287,156 @@ impl<const CAP: usize> EdgeCanvasLayout<CAP> {
     }
 }
 
+/// Zero-allocation video playback telemetry packet for edge signage and warehouse terminals.
+///
+/// Wire format:
+/// `[0..4]`   Magic: `b"VODP"`
+/// `[4..36]`  User ID (32 bytes UTF-8 null-padded)
+/// `[36..68]` Media ID (32 bytes UTF-8 null-padded)
+/// `[68..72]` Playhead position (u32 LE seconds)
+/// `[72..76]` Total duration (u32 LE seconds)
+/// `[76..78]` Buffered seconds (u16 LE)
+/// `[78]`     Playback state: 0 = playing, 1 = paused
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct VideoPlaybackPacket {
+    pub user_id: heapless::String<32>,
+    pub media_id: heapless::String<32>,
+    pub playhead_sec: u32,
+    pub duration_sec: u32,
+    pub buffered_sec: u16,
+    pub is_paused: bool,
+}
+
+impl VideoPlaybackPacket {
+    /// Serializes playback telemetry into a fixed 79-byte slice.
+    pub fn serialize<'a>(&self, buf: &'a mut [u8]) -> Result<&'a [u8], EdgeCmsError> {
+        if buf.len() < 79 {
+            return Err(EdgeCmsError::BufferTooSmall);
+        }
+        buf[0..4].copy_from_slice(b"VODP");
+
+        // Pad User ID to 32 bytes
+        buf[4..36].fill(0);
+        let u_bytes = self.user_id.as_bytes();
+        let u_len = u_bytes.len().min(32);
+        buf[4..4 + u_len].copy_from_slice(&u_bytes[..u_len]);
+
+        // Pad Media ID to 32 bytes
+        buf[36..68].fill(0);
+        let m_bytes = self.media_id.as_bytes();
+        let m_len = m_bytes.len().min(32);
+        buf[36..36 + m_len].copy_from_slice(&m_bytes[..m_len]);
+
+        buf[68..72].copy_from_slice(&self.playhead_sec.to_le_bytes());
+        buf[72..76].copy_from_slice(&self.duration_sec.to_le_bytes());
+        buf[76..78].copy_from_slice(&self.buffered_sec.to_le_bytes());
+        buf[78] = if self.is_paused { 1 } else { 0 };
+
+        Ok(&buf[..79])
+    }
+
+    /// Decodes a 79-byte buffer into a `VideoPlaybackPacket`.
+    pub fn decode(buf: &[u8]) -> Result<Self, EdgeCmsError> {
+        if buf.len() < 79 {
+            return Err(EdgeCmsError::PayloadTruncated);
+        }
+        if &buf[0..4] != b"VODP" {
+            return Err(EdgeCmsError::InvalidMagic);
+        }
+
+        let u_slice = &buf[4..36];
+        let u_end = u_slice.iter().position(|&b| b == 0).unwrap_or(32);
+        let u_str = core::str::from_utf8(&u_slice[..u_end]).map_err(|_| EdgeCmsError::InvalidUtf8)?;
+        let mut user_id = heapless::String::new();
+        let _ = user_id.push_str(u_str);
+
+        let m_slice = &buf[36..68];
+        let m_end = m_slice.iter().position(|&b| b == 0).unwrap_or(32);
+        let m_str = core::str::from_utf8(&m_slice[..m_end]).map_err(|_| EdgeCmsError::InvalidUtf8)?;
+        let mut media_id = heapless::String::new();
+        let _ = media_id.push_str(m_str);
+
+        let playhead_sec = u32::from_le_bytes([buf[68], buf[69], buf[70], buf[71]]);
+        let duration_sec = u32::from_le_bytes([buf[72], buf[73], buf[74], buf[75]]);
+        let buffered_sec = u16::from_le_bytes([buf[76], buf[77]]);
+        let is_paused = buf[78] == 1;
+
+        Ok(Self {
+            user_id,
+            media_id,
+            playhead_sec,
+            duration_sec,
+            buffered_sec,
+            is_paused,
+        })
+    }
+}
+
+/// Zero-allocation RTMP broadcast telemetry packet for edge signage and warehouse terminals.
+///
+/// Wire format:
+/// `[0..4]`   Magic: `b"RTMP"`
+/// `[4..36]`  Channel ID (32 bytes UTF-8 null-padded)
+/// `[36..40]` Ingress bitrate (u32 LE kbps)
+/// `[40..44]` Viewer count (u32 LE)
+/// `[44]`     Status: 1 = live, 0 = offline
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct RtmpStreamTelemetryPacket {
+    pub channel_id: heapless::String<32>,
+    pub ingress_bitrate_kbps: u32,
+    pub viewer_count: u32,
+    pub is_live: bool,
+}
+
+impl RtmpStreamTelemetryPacket {
+    /// Serializes RTMP broadcast telemetry into a fixed 45-byte slice.
+    pub fn serialize<'a>(&self, buf: &'a mut [u8]) -> Result<&'a [u8], EdgeCmsError> {
+        if buf.len() < 45 {
+            return Err(EdgeCmsError::BufferTooSmall);
+        }
+        buf[0..4].copy_from_slice(b"RTMP");
+
+        // Pad Channel ID to 32 bytes
+        buf[4..36].fill(0);
+        let c_bytes = self.channel_id.as_bytes();
+        let c_len = c_bytes.len().min(32);
+        buf[4..4 + c_len].copy_from_slice(&c_bytes[..c_len]);
+
+        buf[36..40].copy_from_slice(&self.ingress_bitrate_kbps.to_le_bytes());
+        buf[40..44].copy_from_slice(&self.viewer_count.to_le_bytes());
+        buf[44] = if self.is_live { 1 } else { 0 };
+
+        Ok(&buf[..45])
+    }
+
+    /// Decodes a 45-byte buffer into an `RtmpStreamTelemetryPacket`.
+    pub fn decode(buf: &[u8]) -> Result<Self, EdgeCmsError> {
+        if buf.len() < 45 {
+            return Err(EdgeCmsError::PayloadTruncated);
+        }
+        if &buf[0..4] != b"RTMP" {
+            return Err(EdgeCmsError::InvalidMagic);
+        }
+
+        let c_slice = &buf[4..36];
+        let c_end = c_slice.iter().position(|&b| b == 0).unwrap_or(32);
+        let c_str = core::str::from_utf8(&c_slice[..c_end]).map_err(|_| EdgeCmsError::InvalidUtf8)?;
+        let mut channel_id = heapless::String::new();
+        let _ = channel_id.push_str(c_str);
+
+        let ingress_bitrate_kbps = u32::from_le_bytes([buf[36], buf[37], buf[38], buf[39]]);
+        let viewer_count = u32::from_le_bytes([buf[40], buf[41], buf[42], buf[43]]);
+        let is_live = buf[44] == 1;
+
+        Ok(Self {
+            channel_id,
+            ingress_bitrate_kbps,
+            viewer_count,
+            is_live,
+        })
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

@@ -2,15 +2,19 @@ pub mod analytics;
 pub mod block_canvas;
 pub mod builder_core;
 pub mod emdash_studio;
+pub mod hls_engine;
 pub mod luxury_storefront;
 pub mod media_library;
 pub mod print;
+pub mod rtmp_ingest;
 pub mod security;
 pub mod seo_engine;
 pub mod storefront;
 pub mod taxonomy;
 pub mod template_catalog;
 pub mod theme_engine;
+pub mod transcode_pipeline;
+pub mod video_streaming;
 
 pub use media_library::{MediaAsset, MediaError, MediaLibraryRegistry};
 pub use taxonomy::{TaxonomyError, TaxonomyRegistry, TaxonomyTerm, TaxonomyType};
@@ -48,6 +52,15 @@ pub use template_catalog::{
 pub use theme_engine::{
     CompiledTheme, DesignTokens, RenderEngineKind, SlotDefinition, ThemeManifest, ThemeRegistry,
     ThemeVariant, WorkTypeClassification,
+};
+pub use hls_engine::{HlsMasterPlaylist, HlsMediaPlaylist, HlsMediaSegment, HlsVariant};
+pub use rtmp_ingest::{RtmpError, RtmpIngestManager, RtmpStreamSession, RtmpStreamStatus};
+pub use transcode_pipeline::{
+    HardwareAccelType, ResumableChunkEngine, ResumableUploadSession, TranscodeError, TranscodeJob,
+};
+pub use video_streaming::{
+    AudioCodec, ClientDeviceProfile, MediaContainer, MediaStreamInfo, PlayMethod,
+    PlaybackDecisionEngine, VideoCodec,
 };
 pub use erp_cms_core as core;
 

@@ -2069,6 +2069,7 @@ dependencies = [
  "frappe-framework",
  "frappe-meta",
  "frappe-storage",
+ "hex",
  "hmac 0.13.0",
  "rust_decimal",
  "rust_decimal_macros",
