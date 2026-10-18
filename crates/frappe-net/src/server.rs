@@ -27,8 +27,10 @@ use crate::v2_routes::{
     admin_list_ip_rules_handler, admin_list_lockouts_handler, admin_list_roles_handler,
     admin_list_users_handler, admin_query_handler, admin_status_handler,
     admin_unlock_target_handler, admin_update_permission_handler, admin_update_user_roles_handler,
-    audio_add_comment_handler, audio_crossfade_handler, audio_get_comments_handler,
-    audio_normalize_handler, audio_sleep_soundboard_handler, audio_sleep_timer_handler,
+    audio_add_comment_handler, audio_crossfade_handler, audio_eq_filter_handler,
+    audio_flac_compress_handler, audio_get_comments_handler, audio_lyrics_current_handler,
+    audio_lyrics_parse_handler, audio_music_info_handler, audio_normalize_handler,
+    audio_recommend_handler, audio_sleep_soundboard_handler, audio_sleep_timer_handler,
     audio_waveform_handler, auth_forgot_password_handler, auth_mfa_activate_handler,
     auth_mfa_disable_handler, auth_mfa_enroll_handler, auth_refresh_token_handler,
     auth_reset_password_handler, builder_ai_prompt_handler, builder_get_page_handler,
@@ -3236,6 +3238,30 @@ pub fn configure_app(
             web::get().to(subsonic_get_song_handler),
         )
         .route("/rest/stream.view", web::get().to(subsonic_stream_handler))
+        .route(
+            "/api/v2/audio/flac/compress",
+            web::post().to(audio_flac_compress_handler),
+        )
+        .route(
+            "/api/v2/audio/eq/filter",
+            web::post().to(audio_eq_filter_handler),
+        )
+        .route(
+            "/api/v2/audio/lyrics/parse",
+            web::post().to(audio_lyrics_parse_handler),
+        )
+        .route(
+            "/api/v2/audio/lyrics/current",
+            web::post().to(audio_lyrics_current_handler),
+        )
+        .route(
+            "/api/v2/audio/music/info",
+            web::post().to(audio_music_info_handler),
+        )
+        .route(
+            "/api/v2/audio/recommend",
+            web::post().to(audio_recommend_handler),
+        )
         // V2 Approval Workflow & Versioning Endpoints
         .route(
             "/api/v2/workflow/evaluate",

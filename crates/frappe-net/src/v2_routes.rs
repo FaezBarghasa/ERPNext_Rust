@@ -2469,6 +2469,7 @@ pub struct DynamicRbacState {
     pub subsonic_controller: Arc<erp_cms::audio_subsonic::SubsonicController>,
     pub audio_timelines:
         Arc<RwLock<HashMap<String, erp_cms::audio_waveform::TimedCommentTimeline>>>,
+    pub music_catalog: Arc<RwLock<HashMap<String, erp_cms::audio_intelligence::TrackLinerNotes>>>,
 }
 
 impl Default for DynamicRbacState {
@@ -2631,6 +2632,7 @@ impl Default for DynamicRbacState {
             user_cache_registry: Arc::new(erp_cms::resilient_streaming::UserCacheRegistry::new()),
             subsonic_controller: Arc::new(erp_cms::audio_subsonic::SubsonicController::new()),
             audio_timelines: Arc::new(RwLock::new(HashMap::new())),
+            music_catalog: Arc::new(RwLock::new(HashMap::new())),
         }
     }
 }
@@ -6154,6 +6156,201 @@ pub async fn subsonic_stream_handler(
             HttpResponse::Ok().json(env)
         }
     }
+}
+
+/// DTO for FLAC compression request
+#[derive(Debug, Deserialize)]
+pub struct AudioFlacCompressPayload {
+    pub input_path: String,
+    pub output_flac_path: String,
+    pub input_format: String,
+    pub sample_rate: u32,
+    pub bit_depth: u8,
+    pub compression_level: Option<u8>,
+    pub tags: Option<erp_cms::audio_flac_pipeline::FlacMetadataTags>,
+}
+
+/// Handler: Plan FLAC compression & quality classification: `POST /api/v2/audio/flac/compress`
+pub async fn audio_flac_compress_handler(
+    payload: web::Json<AudioFlacCompressPayload>,
+) -> impl Responder {
+    let p = payload.into_inner();
+    let config =
+        p.compression_level
+            .map(|lvl| erp_cms::audio_flac_pipeline::FlacCompressionConfig {
+                compression_level: lvl,
+                ..Default::default()
+            });
+
+    let plan = erp_cms::audio_flac_pipeline::FlacPipelineEngine::plan_flac_compression(
+        &p.input_path,
+        &p.output_flac_path,
+        &p.input_format,
+        p.sample_rate,
+        p.bit_depth,
+        p.tags.as_ref(),
+        config,
+    );
+
+    HttpResponse::Ok().json(serde_json::json!({
+        "status": "success",
+        "plan": plan,
+        "quality_badge": plan.quality_tier.badge(),
+    }))
+}
+
+/// DTO for EQ filter generation request
+#[derive(Debug, Deserialize)]
+pub struct AudioEqFilterPayload {
+    pub preset: Option<String>,
+    pub custom_bands: Option<Vec<erp_cms::audio_dsp_eq::EqBand>>,
+    pub preamp_gain_db: Option<f32>,
+}
+
+/// Handler: Generate audio EQ filter graph: `POST /api/v2/audio/eq/filter`
+pub async fn audio_eq_filter_handler(payload: web::Json<AudioEqFilterPayload>) -> impl Responder {
+    let p = payload.into_inner();
+    let mut eq = if let Some(ref pr) = p.preset {
+        let preset_enum = match pr.to_lowercase().as_str() {
+            "bass_boost" | "bassboost" => erp_cms::audio_dsp_eq::EqPreset::BassBoost,
+            "bass_reducer" => erp_cms::audio_dsp_eq::EqPreset::BassReducer,
+            "vocal_boost" | "vocal" => erp_cms::audio_dsp_eq::EqPreset::VocalBoost,
+            "acoustic" => erp_cms::audio_dsp_eq::EqPreset::Acoustic,
+            "electronic" => erp_cms::audio_dsp_eq::EqPreset::Electronic,
+            "rock" => erp_cms::audio_dsp_eq::EqPreset::Rock,
+            "classical" => erp_cms::audio_dsp_eq::EqPreset::Classical,
+            "podcast" | "speech" => erp_cms::audio_dsp_eq::EqPreset::PodcastSpeech,
+            "sleep" | "relax" => erp_cms::audio_dsp_eq::EqPreset::SleepRelax,
+            _ => erp_cms::audio_dsp_eq::EqPreset::Flat,
+        };
+        erp_cms::audio_dsp_eq::AudioEqualizer::from_preset(preset_enum)
+    } else {
+        erp_cms::audio_dsp_eq::AudioEqualizer::default()
+    };
+
+    if let Some(bands) = p.custom_bands {
+        for b in bands {
+            if let Some(idx) = eq
+                .bands
+                .iter()
+                .position(|eb| eb.frequency_hz == b.frequency_hz)
+            {
+                eq.set_band_gain(idx, b.gain_db);
+            }
+        }
+    }
+
+    if let Some(preamp) = p.preamp_gain_db {
+        eq.preamp_gain_db = preamp;
+    }
+
+    let filter = eq.build_ffmpeg_filter();
+
+    HttpResponse::Ok().json(serde_json::json!({
+        "status": "success",
+        "preamp_gain_db": eq.preamp_gain_db,
+        "bands": eq.bands,
+        "ffmpeg_filter": filter,
+    }))
+}
+
+/// DTO for parsing lyrics LRC
+#[derive(Debug, Deserialize)]
+pub struct AudioLyricsParsePayload {
+    pub lrc_content: String,
+}
+
+/// Handler: Parse LRC synchronized and karaoke lyrics: `POST /api/v2/audio/lyrics/parse`
+pub async fn audio_lyrics_parse_handler(
+    payload: web::Json<AudioLyricsParsePayload>,
+) -> impl Responder {
+    let p = payload.into_inner();
+    let doc = erp_cms::audio_lyrics::LyricsDocument::parse_lrc(&p.lrc_content);
+    HttpResponse::Ok().json(serde_json::json!({
+        "status": "success",
+        "document": doc,
+    }))
+}
+
+/// DTO for querying active lyric line at timestamp
+#[derive(Debug, Deserialize)]
+pub struct AudioLyricsCurrentPayload {
+    pub lrc_content: String,
+    pub position_ms: u32,
+}
+
+/// Handler: Resolve active lyrics line and syllable: `POST /api/v2/audio/lyrics/current`
+pub async fn audio_lyrics_current_handler(
+    payload: web::Json<AudioLyricsCurrentPayload>,
+) -> impl Responder {
+    let p = payload.into_inner();
+    let doc = erp_cms::audio_lyrics::LyricsDocument::parse_lrc(&p.lrc_content);
+    let snapshot = doc.get_active_snapshot(p.position_ms);
+    HttpResponse::Ok().json(serde_json::json!({
+        "status": "success",
+        "snapshot": snapshot,
+    }))
+}
+
+/// DTO for registering or updating track technical liner notes
+#[derive(Debug, Deserialize)]
+pub struct AudioLinerNotesPayload {
+    pub liner_notes: erp_cms::audio_intelligence::TrackLinerNotes,
+}
+
+/// Handler: Save music liner notes / information: `POST /api/v2/audio/music/info`
+pub async fn audio_music_info_handler(
+    state: web::Data<DynamicRbacState>,
+    payload: web::Json<AudioLinerNotesPayload>,
+) -> impl Responder {
+    let p = payload.into_inner();
+    let track_id = p.liner_notes.track_id.clone();
+    let mut catalog = state.music_catalog.write().unwrap();
+    catalog.insert(track_id.clone(), p.liner_notes.clone());
+
+    HttpResponse::Ok().json(serde_json::json!({
+        "status": "success",
+        "track_id": track_id,
+        "liner_notes": p.liner_notes,
+    }))
+}
+
+/// DTO for transcription-based music recommendations
+#[derive(Debug, Deserialize)]
+pub struct AudioRecommendPayload {
+    pub current_track: erp_cms::audio_intelligence::TrackLinerNotes,
+    pub candidates: Option<Vec<erp_cms::audio_intelligence::TrackLinerNotes>>,
+    pub limit: Option<usize>,
+}
+
+/// Handler: Suggest next tracks based on real lyrics transcription + Camelot harmonic key: `POST /api/v2/audio/recommend`
+pub async fn audio_recommend_handler(
+    state: web::Data<DynamicRbacState>,
+    payload: web::Json<AudioRecommendPayload>,
+) -> impl Responder {
+    let p = payload.into_inner();
+    let limit = p.limit.unwrap_or(5);
+
+    let candidates = match p.candidates {
+        Some(list) => list,
+        None => {
+            let catalog = state.music_catalog.read().unwrap();
+            catalog.values().cloned().collect()
+        }
+    };
+
+    let recommendations =
+        erp_cms::audio_intelligence::MusicIntelligenceEngine::recommend_next_tracks(
+            &p.current_track,
+            &candidates,
+            limit,
+        );
+
+    HttpResponse::Ok().json(serde_json::json!({
+        "status": "success",
+        "current_track_id": p.current_track.track_id,
+        "recommendations": recommendations,
+    }))
 }
 
 // =========================================================================

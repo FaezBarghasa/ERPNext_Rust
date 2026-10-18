@@ -1156,3 +1156,244 @@ async fn test_audio_streaming_cms_and_subsonic_end_to_end() {
             .contains("stream:song_777")
     );
 }
+
+#[actix_web::test]
+async fn test_audio_flac_eq_lyrics_and_transcription_recommendations() {
+    let pool_mgr = ConnectionPoolManager::in_memory(Duration::from_secs(300));
+    let topology = MicroTopologyConfig::default();
+
+    let app = test::init_service(
+        App::new().configure(|cfg| configure_app(cfg, pool_mgr.clone(), topology.clone(), None)),
+    )
+    .await;
+
+    // 1. Lossless Audio Ingestion & FLAC Compression Pipeline
+    let flac_payload = json!({
+        "input_path": "/var/media/raw_master_recording.wav",
+        "output_flac_path": "/var/media/archive/master_recording.flac",
+        "input_format": "wav",
+        "sample_rate": 96000,
+        "bit_depth": 24,
+        "compression_level": 8,
+        "tags": {
+            "title": "Starlight Odyssey",
+            "artist": "Cosmic Drift",
+            "album": "Infinity Horizon",
+            "year": 2026,
+            "isrc": "USX122600001",
+            "lyrics": "Lost in the starlight adrift across the cosmos"
+        }
+    });
+    let req = test::TestRequest::post()
+        .uri("/api/v2/audio/flac/compress")
+        .set_json(&flac_payload)
+        .to_request();
+    let resp = test::call_service(&app, req).await;
+    assert_eq!(resp.status(), 200);
+    let flac_res: serde_json::Value = test::read_body_json(resp).await;
+    assert_eq!(flac_res["status"], "success");
+    assert_eq!(
+        flac_res["quality_badge"],
+        "FLAC 24-bit/96kHz+ [Hi-Res Lossless]"
+    );
+    let cmd = flac_res["plan"]["ffmpeg_command"].as_str().unwrap();
+    assert!(cmd.contains("-c:a flac"));
+    assert!(cmd.contains("-compression_level 8"));
+    assert!(cmd.contains("title=\"Starlight Odyssey\""));
+    assert!(cmd.contains("isrc=\"USX122600001\""));
+
+    // 2. Parametric & Graphic Equalizer Presets
+    let eq_payload = json!({
+        "preset": "bass_boost",
+        "custom_bands": [
+            { "frequency_hz": 1000, "gain_db": 3.0, "q_factor": 1.414 }
+        ]
+    });
+    let req = test::TestRequest::post()
+        .uri("/api/v2/audio/eq/filter")
+        .set_json(&eq_payload)
+        .to_request();
+    let resp = test::call_service(&app, req).await;
+    assert_eq!(resp.status(), 200);
+    let eq_res: serde_json::Value = test::read_body_json(resp).await;
+    assert_eq!(eq_res["status"], "success");
+    assert_eq!(eq_res["preamp_gain_db"], -6.0);
+    let filter = eq_res["ffmpeg_filter"].as_str().unwrap();
+    assert!(filter.contains("volume=volume=-6.0dB"));
+    assert!(filter.contains("equalizer=f=31:width_type=q:w=1.414:g=6.0"));
+    assert!(filter.contains("equalizer=f=1000:width_type=q:w=1.414:g=3.0"));
+
+    // 3. Synchronized & Karaoke Lyrics Parsing & Live Playhead Resolver
+    let sample_lrc = r#"
+[ti:Starlight Odyssey]
+[ar:Cosmic Drift]
+[00:04.00]<00:04.00>Lost <00:04.50>in <00:04.80>the <00:05.20>starlight
+[00:08.00]Adrift across the cosmos
+"#;
+    let lrc_payload = json!({
+        "lrc_content": sample_lrc
+    });
+    let req = test::TestRequest::post()
+        .uri("/api/v2/audio/lyrics/parse")
+        .set_json(&lrc_payload)
+        .to_request();
+    let resp = test::call_service(&app, req).await;
+    assert_eq!(resp.status(), 200);
+    let lrc_res: serde_json::Value = test::read_body_json(resp).await;
+    assert_eq!(lrc_res["status"], "success");
+    assert_eq!(lrc_res["document"]["is_karaoke"], true);
+    assert_eq!(lrc_res["document"]["lines"].as_array().unwrap().len(), 2);
+
+    // Query active lyric snapshot at 5000ms (inside "the" on line 0)
+    let current_lrc_payload = json!({
+        "lrc_content": sample_lrc,
+        "position_ms": 5000
+    });
+    let req = test::TestRequest::post()
+        .uri("/api/v2/audio/lyrics/current")
+        .set_json(&current_lrc_payload)
+        .to_request();
+    let resp = test::call_service(&app, req).await;
+    assert_eq!(resp.status(), 200);
+    let snap_res: serde_json::Value = test::read_body_json(resp).await;
+    assert_eq!(snap_res["status"], "success");
+    assert_eq!(snap_res["snapshot"]["current_line_idx"], 0);
+    assert_eq!(
+        snap_res["snapshot"]["current_line_text"],
+        "Lost in the starlight"
+    );
+    assert_eq!(snap_res["snapshot"]["active_syllable_idx"], 2); // word "the"
+    assert_eq!(
+        snap_res["snapshot"]["next_line_text"],
+        "Adrift across the cosmos"
+    );
+
+    // 4. Music Technical Information / Liner Notes
+    let liner_notes_payload = json!({
+        "liner_notes": {
+            "track_id": "trk_synth_01",
+            "title": "Midnight Drive",
+            "artist": "Synthwave Master",
+            "album": "Neon Dreams",
+            "release_year": 2026,
+            "genre": "Synthwave",
+            "record_label": "Cyber Records",
+            "isrc": "USCYB2600001",
+            "upc": null,
+            "tempo_bpm": 120.0,
+            "time_signature": "4/4",
+            "musical_key": "A Minor",
+            "camelot_key": {
+                "number": 8,
+                "is_minor": true
+            },
+            "contributors": [
+                { "name": "Elena Rostova", "role": "Analog Synthesizers" },
+                { "name": "Marcus Vance", "role": "Mastering Engineer" }
+            ],
+            "transcription_text": "Neon highway electric night driving through the city skyline shadows",
+            "acoustic_energy": 0.78
+        }
+    });
+    let req = test::TestRequest::post()
+        .uri("/api/v2/audio/music/info")
+        .set_json(&liner_notes_payload)
+        .to_request();
+    let resp = test::call_service(&app, req).await;
+    assert_eq!(resp.status(), 200);
+
+    // 5. Semantic Transcription-Based Music Recommendation Engine
+    let rec_payload = json!({
+        "current_track": {
+            "track_id": "trk_synth_01",
+            "title": "Midnight Drive",
+            "artist": "Synthwave Master",
+            "album": "Neon Dreams",
+            "release_year": 2026,
+            "genre": "Synthwave",
+            "record_label": "Cyber Records",
+            "isrc": "USCYB2600001",
+            "upc": null,
+            "tempo_bpm": 120.0,
+            "time_signature": "4/4",
+            "musical_key": "A Minor",
+            "camelot_key": {
+                "number": 8,
+                "is_minor": true
+            },
+            "contributors": [],
+            "transcription_text": "Neon highway electric night driving through the city skyline shadows",
+            "acoustic_energy": 0.78
+        },
+        "candidates": [
+            {
+                "track_id": "trk_synth_02",
+                "title": "Overdrive Neon",
+                "artist": "Retro Runner",
+                "album": "Velocity",
+                "release_year": 2026,
+                "genre": "Synthwave",
+                "record_label": "Cyber Records",
+                "isrc": "USCYB2600002",
+                "upc": null,
+                "tempo_bpm": 122.0,
+                "time_signature": "4/4",
+                "musical_key": "E Minor",
+                "camelot_key": {
+                    "number": 9,
+                    "is_minor": true
+                },
+                "contributors": [],
+                "transcription_text": "Fast cars electric neon night city skyline highway glow",
+                "acoustic_energy": 0.82
+            },
+            {
+                "track_id": "trk_folk_01",
+                "title": "Acoustic Campfire",
+                "artist": "Old Pine",
+                "album": "Woods",
+                "release_year": 2022,
+                "genre": "Folk",
+                "record_label": null,
+                "isrc": null,
+                "upc": null,
+                "tempo_bpm": 76.0,
+                "time_signature": "3/4",
+                "musical_key": "E-Flat Minor",
+                "camelot_key": {
+                    "number": 2,
+                    "is_minor": true
+                },
+                "contributors": [],
+                "transcription_text": "Morning wood cabin coffee dirt farm tractor campfire",
+                "acoustic_energy": 0.25
+            }
+        ],
+        "limit": 5
+    });
+    let req = test::TestRequest::post()
+        .uri("/api/v2/audio/recommend")
+        .set_json(&rec_payload)
+        .to_request();
+    let resp = test::call_service(&app, req).await;
+    assert_eq!(resp.status(), 200);
+    let rec_res: serde_json::Value = test::read_body_json(resp).await;
+    assert_eq!(rec_res["status"], "success");
+    let recs = rec_res["recommendations"].as_array().unwrap();
+    assert_eq!(recs.len(), 2);
+    // Highest match must be trk_synth_02 because of lyric transcription overlap + Camelot 8A -> 9A + 120 -> 122 BPM
+    assert_eq!(recs[0]["candidate_track_id"], "trk_synth_02");
+    assert!(recs[0]["composite_score"].as_f64().unwrap() > 0.65);
+    assert!(
+        recs[0]["explanation"]
+            .as_str()
+            .unwrap()
+            .contains("Harmonic key transition")
+    );
+    assert!(
+        recs[0]["explanation"]
+            .as_str()
+            .unwrap()
+            .contains("Tempo match")
+    );
+}
