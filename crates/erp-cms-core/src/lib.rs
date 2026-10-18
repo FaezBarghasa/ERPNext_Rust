@@ -370,6 +370,26 @@ impl VideoPlaybackPacket {
             is_paused,
         })
     }
+
+    /// Renders zero-allocation ANSI playback status bar for character LCD / serial terminals.
+    pub fn render_ansi(&self, w: &mut impl core::fmt::Write) -> core::fmt::Result {
+        let pct = (self.playhead_sec * 100)
+            .checked_div(self.duration_sec)
+            .unwrap_or(0);
+        let status_icon = if self.is_paused { "||" } else { ">" };
+        let p_h = self.playhead_sec / 3600;
+        let p_m = (self.playhead_sec % 3600) / 60;
+        let p_s = self.playhead_sec % 60;
+        let d_h = self.duration_sec / 3600;
+        let d_m = (self.duration_sec % 3600) / 60;
+        let d_s = self.duration_sec % 60;
+
+        write!(
+            w,
+            "\x1b[1;36m[{status_icon} {:02}:{:02}:{:02} / {:02}:{:02}:{:02}]\x1b[0m \x1b[32m[{}%]\x1b[0m (buf: {}s)",
+            p_h, p_m, p_s, d_h, d_m, d_s, pct, self.buffered_sec
+        )
+    }
 }
 
 /// Zero-allocation RTMP broadcast telemetry packet for edge signage and warehouse terminals.
@@ -381,6 +401,7 @@ impl VideoPlaybackPacket {
 /// `[40..44]` Viewer count (u32 LE)
 /// `[44]`     Status: 1 = live, 0 = offline
 #[derive(Debug, Clone, PartialEq, Eq)]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct RtmpStreamTelemetryPacket {
     pub channel_id: heapless::String<32>,
     pub ingress_bitrate_kbps: u32,
@@ -434,6 +455,127 @@ impl RtmpStreamTelemetryPacket {
             viewer_count,
             is_live,
         })
+    }
+
+    /// Renders zero-allocation ANSI broadcast status badge for serial terminal HUDs.
+    pub fn render_ansi(&self, w: &mut impl core::fmt::Write) -> core::fmt::Result {
+        if self.is_live {
+            write!(
+                w,
+                "\x1b[1;31m[LIVE: {}]\x1b[0m \x1b[33m[{} kbps]\x1b[0m \x1b[32m[viewers: {}]\x1b[0m",
+                self.channel_id.as_str(),
+                self.ingress_bitrate_kbps,
+                self.viewer_count
+            )
+        } else {
+            write!(
+                w,
+                "\x1b[90m[OFFLINE: {}]\x1b[0m",
+                self.channel_id.as_str()
+            )
+        }
+    }
+}
+
+/// Zero-allocation FAST linear channel playout status packet for edge signage.
+///
+/// Wire format:
+/// `[0..4]`   Magic: `b"FAST"`
+/// `[4..36]`  Channel ID (32 bytes UTF-8 null-padded)
+/// `[36..84]` Program Title (48 bytes UTF-8 null-padded)
+/// `[84..88]` Remaining seconds (u32 LE)
+/// `[88..92]` Viewer count (u32 LE)
+/// `[92]`     Is ad break active: 1 = yes, 0 = no
+#[derive(Debug, Clone, PartialEq, Eq)]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+pub struct FastChannelStatusPacket {
+    pub channel_id: heapless::String<32>,
+    pub program_title: heapless::String<48>,
+    pub remaining_sec: u32,
+    pub viewer_count: u32,
+    pub is_ad_break: bool,
+}
+
+impl FastChannelStatusPacket {
+    /// Serializes FAST channel telemetry into a fixed 93-byte slice.
+    pub fn serialize<'a>(&self, buf: &'a mut [u8]) -> Result<&'a [u8], EdgeCmsError> {
+        if buf.len() < 93 {
+            return Err(EdgeCmsError::BufferTooSmall);
+        }
+        buf[0..4].copy_from_slice(b"FAST");
+
+        // Pad Channel ID to 32 bytes
+        buf[4..36].fill(0);
+        let c_bytes = self.channel_id.as_bytes();
+        let c_len = c_bytes.len().min(32);
+        buf[4..4 + c_len].copy_from_slice(&c_bytes[..c_len]);
+
+        // Pad Program Title to 48 bytes
+        buf[36..84].fill(0);
+        let p_bytes = self.program_title.as_bytes();
+        let p_len = p_bytes.len().min(48);
+        buf[36..36 + p_len].copy_from_slice(&p_bytes[..p_len]);
+
+        buf[84..88].copy_from_slice(&self.remaining_sec.to_le_bytes());
+        buf[88..92].copy_from_slice(&self.viewer_count.to_le_bytes());
+        buf[92] = if self.is_ad_break { 1 } else { 0 };
+
+        Ok(&buf[..93])
+    }
+
+    /// Decodes a 93-byte buffer into a `FastChannelStatusPacket`.
+    pub fn decode(buf: &[u8]) -> Result<Self, EdgeCmsError> {
+        if buf.len() < 93 {
+            return Err(EdgeCmsError::PayloadTruncated);
+        }
+        if &buf[0..4] != b"FAST" {
+            return Err(EdgeCmsError::InvalidMagic);
+        }
+
+        let c_slice = &buf[4..36];
+        let c_end = c_slice.iter().position(|&b| b == 0).unwrap_or(32);
+        let c_str = core::str::from_utf8(&c_slice[..c_end]).map_err(|_| EdgeCmsError::InvalidUtf8)?;
+        let mut channel_id = heapless::String::new();
+        let _ = channel_id.push_str(c_str);
+
+        let p_slice = &buf[36..84];
+        let p_end = p_slice.iter().position(|&b| b == 0).unwrap_or(48);
+        let p_str = core::str::from_utf8(&p_slice[..p_end]).map_err(|_| EdgeCmsError::InvalidUtf8)?;
+        let mut program_title = heapless::String::new();
+        let _ = program_title.push_str(p_str);
+
+        let remaining_sec = u32::from_le_bytes([buf[84], buf[85], buf[86], buf[87]]);
+        let viewer_count = u32::from_le_bytes([buf[88], buf[89], buf[90], buf[91]]);
+        let is_ad_break = buf[92] == 1;
+
+        Ok(Self {
+            channel_id,
+            program_title,
+            remaining_sec,
+            viewer_count,
+            is_ad_break,
+        })
+    }
+
+    /// Renders zero-allocation ANSI linear channel status for edge signage and terminals.
+    pub fn render_ansi(&self, w: &mut impl core::fmt::Write) -> core::fmt::Result {
+        let ad_tag = if self.is_ad_break {
+            "\x1b[1;33m[AD BREAK]\x1b[0m"
+        } else {
+            "\x1b[1;32m[PROGRAM]\x1b[0m"
+        };
+        let rem_m = self.remaining_sec / 60;
+        let rem_s = self.remaining_sec % 60;
+
+        write!(
+            w,
+            "\x1b[1;35m[FAST: {}]\x1b[0m {ad_tag} \x1b[36m[{}]\x1b[0m (rem: {:02}:{:02}) [viewers: {}]",
+            self.channel_id.as_str(),
+            self.program_title.as_str(),
+            rem_m,
+            rem_s,
+            self.viewer_count
+        )
     }
 }
 
@@ -603,6 +745,87 @@ mod tests {
         assert_eq!(decoded.ingress_bitrate_kbps, 4500);
         assert_eq!(decoded.viewer_count, 1240);
         assert!(decoded.is_live);
+    }
+
+    #[test]
+    fn test_fast_channel_status_packet_roundtrip() {
+        let mut channel_id = heapless::String::new();
+        channel_id.push_str("ch_action_movies").unwrap();
+        let mut program_title = heapless::String::new();
+        program_title.push_str("Die Hard 2 - Midnight Feature").unwrap();
+
+        let packet = FastChannelStatusPacket {
+            channel_id,
+            program_title,
+            remaining_sec: 1845,
+            viewer_count: 5210,
+            is_ad_break: false,
+        };
+
+        let mut buf = [0u8; 128];
+        let bytes = packet.serialize(&mut buf).unwrap();
+        assert_eq!(bytes.len(), 93);
+        assert_eq!(&bytes[0..4], b"FAST");
+
+        let decoded = FastChannelStatusPacket::decode(bytes).unwrap();
+        assert_eq!(decoded.channel_id.as_str(), "ch_action_movies");
+        assert_eq!(decoded.program_title.as_str(), "Die Hard 2 - Midnight Feature");
+        assert_eq!(decoded.remaining_sec, 1845);
+        assert_eq!(decoded.viewer_count, 5210);
+        assert!(!decoded.is_ad_break);
+    }
+
+    #[test]
+    fn test_ansi_rendering_edge_dashboards() {
+        // 1. Video playback ANSI
+        let mut u_id = heapless::String::new();
+        u_id.push_str("u1").unwrap();
+        let mut m_id = heapless::String::new();
+        m_id.push_str("m1").unwrap();
+        let v_pkt = VideoPlaybackPacket {
+            user_id: u_id,
+            media_id: m_id,
+            playhead_sec: 3661, // 01:01:01
+            duration_sec: 7200, // 02:00:00
+            buffered_sec: 45,
+            is_paused: false,
+        };
+        let mut v_out = heapless::String::<128>::new();
+        v_pkt.render_ansi(&mut v_out).unwrap();
+        assert!(v_out.contains("01:01:01 / 02:00:00"));
+        assert!(v_out.contains("50%"));
+
+        // 2. RTMP telemetry ANSI
+        let mut c_id = heapless::String::new();
+        c_id.push_str("gaming").unwrap();
+        let r_pkt = RtmpStreamTelemetryPacket {
+            channel_id: c_id,
+            ingress_bitrate_kbps: 6000,
+            viewer_count: 950,
+            is_live: true,
+        };
+        let mut r_out = heapless::String::<128>::new();
+        r_pkt.render_ansi(&mut r_out).unwrap();
+        assert!(r_out.contains("LIVE: gaming"));
+        assert!(r_out.contains("6000 kbps"));
+
+        // 3. FAST channel ANSI
+        let mut f_cid = heapless::String::new();
+        f_cid.push_str("retro").unwrap();
+        let mut f_title = heapless::String::new();
+        f_title.push_str("Classic Cartoons").unwrap();
+        let f_pkt = FastChannelStatusPacket {
+            channel_id: f_cid,
+            program_title: f_title,
+            remaining_sec: 300,
+            viewer_count: 420,
+            is_ad_break: true,
+        };
+        let mut f_out = heapless::String::<128>::new();
+        f_pkt.render_ansi(&mut f_out).unwrap();
+        assert!(f_out.contains("FAST: retro"));
+        assert!(f_out.contains("AD BREAK"));
+        assert!(f_out.contains("Classic Cartoons"));
     }
 }
 
