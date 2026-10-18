@@ -50,7 +50,9 @@ pub enum SsaiError {
     #[error("Cue break duration missing or zero")]
     MissingBreakDuration,
 
-    #[error("Stitching target time {target_time_sec}s exceeds playlist duration {playlist_duration_sec}s")]
+    #[error(
+        "Stitching target time {target_time_sec}s exceeds playlist duration {playlist_duration_sec}s"
+    )]
     PlacementOutOfBounds {
         target_time_sec: u64,
         playlist_duration_sec: u64,
@@ -585,7 +587,10 @@ impl HlsDateRange {
     /// Compiles into an RFC 8216 compliant `#EXT-X-DATERANGE` tag string.
     #[must_use]
     pub fn format_tag(&self) -> String {
-        let mut out = format!("#EXT-X-DATERANGE:ID=\"{}\",START-DATE=\"{}\"", self.id, self.start_date);
+        let mut out = format!(
+            "#EXT-X-DATERANGE:ID=\"{}\",START-DATE=\"{}\"",
+            self.id, self.start_date
+        );
 
         if let Some(ref cls) = self.class_name {
             out.push_str(&format!(",CLASS=\"{cls}\""));
@@ -813,8 +818,14 @@ impl SsaiManifestStitcher {
         let mut out = String::with_capacity(2048);
         out.push_str("#EXTM3U\n");
         out.push_str("#EXT-X-VERSION:4\n");
-        out.push_str(&format!("#EXT-X-TARGETDURATION:{}\n", playlist.target_duration));
-        out.push_str(&format!("#EXT-X-MEDIA-SEQUENCE:{}\n", playlist.media_sequence));
+        out.push_str(&format!(
+            "#EXT-X-TARGETDURATION:{}\n",
+            playlist.target_duration
+        ));
+        out.push_str(&format!(
+            "#EXT-X-MEDIA-SEQUENCE:{}\n",
+            playlist.media_sequence
+        ));
 
         if !playlist.is_live {
             out.push_str("#EXT-X-PLAYLIST-TYPE:VOD\n");
@@ -834,7 +845,10 @@ impl SsaiManifestStitcher {
             if seg.has_discontinuity {
                 out.push_str("#EXT-X-DISCONTINUITY\n");
             }
-            out.push_str(&format!("#EXTINF:{:.3},\n{}\n", seg.duration_seconds, seg.uri));
+            out.push_str(&format!(
+                "#EXTINF:{:.3},\n{}\n",
+                seg.duration_seconds, seg.uri
+            ));
         }
 
         if !playlist.is_live {
@@ -980,8 +994,16 @@ fn base64_encode(input: &[u8]) -> String {
     let mut i = 0;
     while i < input.len() {
         let b0 = input[i] as usize;
-        let b1 = if i + 1 < input.len() { input[i + 1] as usize } else { 0 };
-        let b2 = if i + 2 < input.len() { input[i + 2] as usize } else { 0 };
+        let b1 = if i + 1 < input.len() {
+            input[i + 1] as usize
+        } else {
+            0
+        };
+        let b2 = if i + 2 < input.len() {
+            input[i + 2] as usize
+        } else {
+            0
+        };
 
         let triple = (b0 << 16) | (b1 << 8) | b2;
 
@@ -1082,7 +1104,9 @@ mod tests {
         let parsed = Scte35Cue::parse_bytes(&bytes).expect("Failed to parse SCTE-35 bytes");
         assert_eq!(parsed.command_type, Scte35CommandType::SpliceInsert);
 
-        let insert = parsed.splice_insert.expect("Expected splice_insert payload");
+        let insert = parsed
+            .splice_insert
+            .expect("Expected splice_insert payload");
         assert_eq!(insert.splice_event_id, 1001);
         assert!(insert.out_of_network_indicator);
         assert_eq!(insert.pts_time, Some(pts));
@@ -1092,12 +1116,18 @@ mod tests {
         let hex_str = cue.to_hex();
         assert!(hex_str.starts_with("0x"));
         let from_hex = Scte35Cue::from_hex(&hex_str).expect("Failed to parse hex cue");
-        assert_eq!(from_hex.splice_insert.as_ref().unwrap().splice_event_id, 1001);
+        assert_eq!(
+            from_hex.splice_insert.as_ref().unwrap().splice_event_id,
+            1001
+        );
 
         // Base64 roundtrip
         let b64_str = cue.to_base64();
         let from_b64 = Scte35Cue::from_base64(&b64_str).expect("Failed to parse base64 cue");
-        assert_eq!(from_b64.splice_insert.as_ref().unwrap().splice_event_id, 1001);
+        assert_eq!(
+            from_b64.splice_insert.as_ref().unwrap().splice_event_id,
+            1001
+        );
     }
 
     #[test]
@@ -1130,8 +1160,9 @@ mod tests {
         ad_pod.add_creative(AdCreative::preset_15s("ad-nike-1", "Nike"));
 
         let cue = Scte35Cue::new_splice_insert_cue_out(2001, 0, 15.0);
-        let (stitched, result) = SsaiManifestStitcher::stitch_preroll(&playlist, &ad_pod, Some(&cue))
-            .expect("Failed to stitch preroll");
+        let (stitched, result) =
+            SsaiManifestStitcher::stitch_preroll(&playlist, &ad_pod, Some(&cue))
+                .expect("Failed to stitch preroll");
 
         assert_eq!(result.original_segment_count, 5);
         assert_eq!(result.inserted_ad_segments_count, 3);
@@ -1171,8 +1202,9 @@ mod tests {
         ad_pod.add_creative(AdCreative::preset_15s("ad-coca-cola", "Coca-Cola"));
 
         let cue = Scte35Cue::new_splice_insert_cue_out(3001, Scte35Cue::seconds_to_pts(24.0), 15.0);
-        let (stitched, result) = SsaiManifestStitcher::stitch_midroll(&playlist, 24.0, &ad_pod, Some(&cue))
-            .expect("Failed to stitch midroll");
+        let (stitched, result) =
+            SsaiManifestStitcher::stitch_midroll(&playlist, 24.0, &ad_pod, Some(&cue))
+                .expect("Failed to stitch midroll");
 
         assert_eq!(result.original_segment_count, 10);
         assert_eq!(result.inserted_ad_segments_count, 3);

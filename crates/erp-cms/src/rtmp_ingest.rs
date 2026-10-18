@@ -104,7 +104,10 @@ impl RtmpIngestManager {
         channel_id: impl Into<String>,
         stream_key: impl Into<String>,
     ) -> Result<(), RtmpError> {
-        let mut keys = self.registered_keys.write().map_err(|_| RtmpError::LockError)?;
+        let mut keys = self
+            .registered_keys
+            .write()
+            .map_err(|_| RtmpError::LockError)?;
         keys.insert(stream_key.into(), channel_id.into());
         Ok(())
     }
@@ -115,7 +118,10 @@ impl RtmpIngestManager {
         channel_id: &str,
         new_stream_key: impl Into<String>,
     ) -> Result<String, RtmpError> {
-        let mut keys = self.registered_keys.write().map_err(|_| RtmpError::LockError)?;
+        let mut keys = self
+            .registered_keys
+            .write()
+            .map_err(|_| RtmpError::LockError)?;
         let prev_key = keys
             .iter()
             .find(|(_, cid)| cid.as_str() == channel_id)
@@ -134,7 +140,10 @@ impl RtmpIngestManager {
 
     /// Revokes an existing stream key immediately.
     pub fn revoke_stream_key(&self, stream_key: &str) -> Result<(), RtmpError> {
-        let mut keys = self.registered_keys.write().map_err(|_| RtmpError::LockError)?;
+        let mut keys = self
+            .registered_keys
+            .write()
+            .map_err(|_| RtmpError::LockError)?;
         if keys.remove(stream_key).is_some() {
             Ok(())
         } else {
@@ -150,12 +159,18 @@ impl RtmpIngestManager {
         stream_key: &str,
         client_ip: &str,
     ) -> Result<RtmpStreamSession, RtmpError> {
-        let keys = self.registered_keys.read().map_err(|_| RtmpError::LockError)?;
+        let keys = self
+            .registered_keys
+            .read()
+            .map_err(|_| RtmpError::LockError)?;
         let channel_id = keys
             .get(stream_key)
             .ok_or_else(|| RtmpError::UnauthorizedStreamKey(stream_key.to_string()))?;
 
-        let mut sessions = self.active_sessions.write().map_err(|_| RtmpError::LockError)?;
+        let mut sessions = self
+            .active_sessions
+            .write()
+            .map_err(|_| RtmpError::LockError)?;
         if let Some(existing) = sessions.get(stream_key)
             && existing.status == RtmpStreamStatus::Live
         {
@@ -195,7 +210,10 @@ impl RtmpIngestManager {
         viewer_count: u32,
         ingress_bitrate_kbps: u32,
     ) -> Result<RtmpStreamSession, RtmpError> {
-        let mut sessions = self.active_sessions.write().map_err(|_| RtmpError::LockError)?;
+        let mut sessions = self
+            .active_sessions
+            .write()
+            .map_err(|_| RtmpError::LockError)?;
         let session = sessions
             .get_mut(stream_key)
             .ok_or_else(|| RtmpError::SessionNotFound(stream_key.to_string()))?;
@@ -207,7 +225,10 @@ impl RtmpIngestManager {
 
     /// Handles `on_publish_done` webhook when broadcaster stops streaming.
     pub fn handle_on_publish_done(&self, stream_key: &str) -> Result<RtmpStreamSession, RtmpError> {
-        let mut sessions = self.active_sessions.write().map_err(|_| RtmpError::LockError)?;
+        let mut sessions = self
+            .active_sessions
+            .write()
+            .map_err(|_| RtmpError::LockError)?;
         let session = sessions
             .get_mut(stream_key)
             .ok_or_else(|| RtmpError::SessionNotFound(stream_key.to_string()))?;
@@ -225,7 +246,10 @@ impl RtmpIngestManager {
         stream_key: &str,
         raw_recording_path: &str,
     ) -> Result<(RtmpStreamSession, String), RtmpError> {
-        let mut sessions = self.active_sessions.write().map_err(|_| RtmpError::LockError)?;
+        let mut sessions = self
+            .active_sessions
+            .write()
+            .map_err(|_| RtmpError::LockError)?;
         let session = sessions
             .get_mut(stream_key)
             .ok_or_else(|| RtmpError::SessionNotFound(stream_key.to_string()))?;
@@ -258,7 +282,10 @@ impl RtmpIngestManager {
         vod_asset_id: impl Into<String>,
         vod_url: impl Into<String>,
     ) -> Result<RtmpStreamSession, RtmpError> {
-        let mut sessions = self.active_sessions.write().map_err(|_| RtmpError::LockError)?;
+        let mut sessions = self
+            .active_sessions
+            .write()
+            .map_err(|_| RtmpError::LockError)?;
         let session = sessions
             .get_mut(stream_key)
             .ok_or_else(|| RtmpError::SessionNotFound(stream_key.to_string()))?;
@@ -275,18 +302,27 @@ impl RtmpIngestManager {
         stream_key: &str,
         base_url: &str,
     ) -> Result<String, RtmpError> {
-        let sessions = self.active_sessions.read().map_err(|_| RtmpError::LockError)?;
+        let sessions = self
+            .active_sessions
+            .read()
+            .map_err(|_| RtmpError::LockError)?;
         let session = sessions
             .get(stream_key)
             .ok_or_else(|| RtmpError::SessionNotFound(stream_key.to_string()))?;
 
         let clean_base = base_url.trim_end_matches('/');
-        Ok(format!("{clean_base}/live/{}/index.m3u8", session.channel_id))
+        Ok(format!(
+            "{clean_base}/live/{}/index.m3u8",
+            session.channel_id
+        ))
     }
 
     /// Returns all currently active `Live` broadcast sessions.
     pub fn list_active_streams(&self) -> Result<Vec<RtmpStreamSession>, RtmpError> {
-        let sessions = self.active_sessions.read().map_err(|_| RtmpError::LockError)?;
+        let sessions = self
+            .active_sessions
+            .read()
+            .map_err(|_| RtmpError::LockError)?;
         Ok(sessions
             .values()
             .filter(|s| s.status == RtmpStreamStatus::Live)
@@ -296,7 +332,10 @@ impl RtmpIngestManager {
 
     /// Returns the session status for a given stream key.
     pub fn get_session(&self, stream_key: &str) -> Result<Option<RtmpStreamSession>, RtmpError> {
-        let sessions = self.active_sessions.read().map_err(|_| RtmpError::LockError)?;
+        let sessions = self
+            .active_sessions
+            .read()
+            .map_err(|_| RtmpError::LockError)?;
         Ok(sessions.get(stream_key).cloned())
     }
 
@@ -353,7 +392,9 @@ mod tests {
         assert!(matches!(dup, Err(RtmpError::ChannelAlreadyActive(_))));
 
         // 4. Successful on_publish_done teardown
-        let ended_session = manager.handle_on_publish_done("live_secret_key_8842").unwrap();
+        let ended_session = manager
+            .handle_on_publish_done("live_secret_key_8842")
+            .unwrap();
         assert_eq!(ended_session.status, RtmpStreamStatus::Ended);
         assert!(ended_session.ended_at.is_some());
 
@@ -401,13 +442,18 @@ mod tests {
         // Revoke key
         manager.revoke_stream_key("key_v2_fresh").unwrap();
         let res_revoked = manager.handle_on_publish("key_v2_fresh", "10.0.0.1");
-        assert!(matches!(res_revoked, Err(RtmpError::UnauthorizedStreamKey(_))));
+        assert!(matches!(
+            res_revoked,
+            Err(RtmpError::UnauthorizedStreamKey(_))
+        ));
     }
 
     #[test]
     fn test_payload_handlers_and_telemetry_packet() {
         let manager = RtmpIngestManager::new();
-        manager.register_channel("chan-gaming", "gamers_pass").unwrap();
+        manager
+            .register_channel("chan-gaming", "gamers_pass")
+            .unwrap();
 
         // 1. Publish with Nginx payload
         let pub_payload = NginxRtmpPublishPayload {
@@ -429,16 +475,20 @@ mod tests {
         assert_eq!(packet.ingress_bitrate_kbps, 6000);
         assert!(packet.is_live);
 
-        // 4. Wire serialize packet
-        let mut buf = [0u8; 45];
+        // 4. Wire serialize packet (47 bytes with CRC16)
+        let mut buf = [0u8; 47];
         let bytes = packet.serialize(&mut buf).unwrap();
+        assert_eq!(bytes.len(), 47);
         assert_eq!(&bytes[0..4], b"RTMP");
 
         // 5. Query live HLS URL
         let hls_url = manager
             .get_live_hls_manifest_url("gamers_pass", "https://stream.erp.local/api/v2")
             .unwrap();
-        assert_eq!(hls_url, "https://stream.erp.local/api/v2/live/chan-gaming/index.m3u8");
+        assert_eq!(
+            hls_url,
+            "https://stream.erp.local/api/v2/live/chan-gaming/index.m3u8"
+        );
 
         // 6. Record payload
         let rec_payload = NginxRtmpRecordPayload {

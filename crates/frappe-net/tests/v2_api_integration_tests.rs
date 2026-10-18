@@ -620,8 +620,14 @@ async fn test_v2_streaming_ott_endpoints_lifecycle() {
     let resp = test::call_service(&app, req).await;
     assert!(resp.status().is_success());
     let auth_res: serde_json::Value = test::read_body_json(resp).await;
-    assert_eq!(auth_res.get("status").and_then(|v| v.as_str()), Some("authorized"));
-    assert_eq!(auth_res.get("channel_id").and_then(|v| v.as_str()), Some("live_main"));
+    assert_eq!(
+        auth_res.get("status").and_then(|v| v.as_str()),
+        Some("authorized")
+    );
+    assert_eq!(
+        auth_res.get("channel_id").and_then(|v| v.as_str()),
+        Some("live_main")
+    );
 
     // 6. RTMP Done Webhook (Teardown)
     let done_payload = serde_json::json!({
@@ -648,7 +654,10 @@ async fn test_v2_streaming_ott_endpoints_lifecycle() {
     let resp = test::call_service(&app, req).await;
     assert!(resp.status().is_success());
     let chunk_res: serde_json::Value = test::read_body_json(resp).await;
-    assert_eq!(chunk_res.get("status").and_then(|v| v.as_str()), Some("complete"));
+    assert_eq!(
+        chunk_res.get("status").and_then(|v| v.as_str()),
+        Some("complete")
+    );
     assert!(chunk_res.get("sha256").is_some());
 
     // 8. Playback Progress Telemetry & Concurrency Heartbeat
@@ -668,8 +677,14 @@ async fn test_v2_streaming_ott_endpoints_lifecycle() {
     let resp = test::call_service(&app, req).await;
     assert!(resp.status().is_success());
     let prog_res: serde_json::Value = test::read_body_json(resp).await;
-    assert_eq!(prog_res.get("status").and_then(|v| v.as_str()), Some("recorded"));
-    assert_eq!(prog_res.get("playhead_sec").and_then(|v| v.as_u64()), Some(120));
+    assert_eq!(
+        prog_res.get("status").and_then(|v| v.as_str()),
+        Some("recorded")
+    );
+    assert_eq!(
+        prog_res.get("playhead_sec").and_then(|v| v.as_u64()),
+        Some(120)
+    );
 
     // 9. HTML5 Player Studio Page
     let req = test::TestRequest::get()
@@ -677,9 +692,275 @@ async fn test_v2_streaming_ott_endpoints_lifecycle() {
         .to_request();
     let resp = test::call_service(&app, req).await;
     assert!(resp.status().is_success());
-    assert_eq!(resp.headers().get("Content-Type").unwrap(), "text/html; charset=utf-8");
+    assert_eq!(
+        resp.headers().get("Content-Type").unwrap(),
+        "text/html; charset=utf-8"
+    );
     let html_body = test::read_body(resp).await;
     let html_str = String::from_utf8(html_body.to_vec()).unwrap();
     assert!(html_str.contains("RustNext OTT Video Player Studio"));
     assert!(html_str.contains("/api/v2/streaming/videos/vid-demo-99/master.m3u8"));
+
+    // 10. X-Ray Interactive Metadata Query (t = 25.0s)
+    let req = test::TestRequest::get()
+        .uri("/api/v2/streaming/videos/video_demo_1/xray?time=25.0")
+        .to_request();
+    let resp = test::call_service(&app, req).await;
+    assert!(resp.status().is_success());
+    let xray_res: serde_json::Value = test::read_body_json(resp).await;
+    assert_eq!(
+        xray_res.get("status").and_then(|v| v.as_str()),
+        Some("success")
+    );
+    let snap = xray_res.get("snapshot").unwrap();
+    assert_eq!(
+        snap.get("active_actors")
+            .and_then(|a| a.as_array())
+            .map(|a| a.len()),
+        Some(2)
+    );
+    assert_eq!(
+        snap.get("active_music")
+            .and_then(|m| m.as_array())
+            .map(|m| m.len()),
+        Some(1)
+    );
+    assert_eq!(
+        snap.get("active_products")
+            .and_then(|p| p.as_array())
+            .map(|p| p.len()),
+        Some(1)
+    );
+
+    // 11. X-Ray WebVTT Metadata Track
+    let req = test::TestRequest::get()
+        .uri("/api/v2/streaming/videos/video_demo_1/xray.vtt")
+        .to_request();
+    let resp = test::call_service(&app, req).await;
+    assert!(resp.status().is_success());
+    assert_eq!(resp.headers().get("Content-Type").unwrap(), "text/vtt");
+    let vtt_body = test::read_body(resp).await;
+    let vtt_str = String::from_utf8(vtt_body.to_vec()).unwrap();
+    assert!(vtt_str.starts_with("WEBVTT\n"));
+    assert!(vtt_str.contains("The Rebel Path"));
+    assert!(vtt_str.contains("Samurai Bomber Jacket"));
+
+    // 12. FAST 24/7 Linear Live HLS Manifest
+    let req = test::TestRequest::get()
+        .uri("/api/v2/streaming/fast/fast_scifi/live.m3u8?variant=720p")
+        .to_request();
+    let resp = test::call_service(&app, req).await;
+    assert!(resp.status().is_success());
+    assert_eq!(
+        resp.headers().get("Content-Type").unwrap(),
+        "application/vnd.apple.mpegurl"
+    );
+    let live_body = test::read_body(resp).await;
+    let live_m3u8 = String::from_utf8(live_body.to_vec()).unwrap();
+    assert!(live_m3u8.contains("#EXTM3U"));
+    assert!(live_m3u8.contains("#EXT-X-TARGETDURATION:6"));
+    assert!(live_m3u8.contains("#EXT-X-MEDIA-SEQUENCE:"));
+    assert!(!live_m3u8.contains("#EXT-X-ENDLIST")); // Live 24/7 continuous stream invariant
+    assert!(live_m3u8.contains("cyberpunk_s01e"));
+
+    // 13. FAST Real-Time Playout & Edge Telemetry Wire Packet Status
+    let req = test::TestRequest::get()
+        .uri("/api/v2/streaming/fast/fast_scifi/status")
+        .to_request();
+    let resp = test::call_service(&app, req).await;
+    assert!(resp.status().is_success());
+    let status_json: serde_json::Value = test::read_body_json(resp).await;
+    assert_eq!(
+        status_json.get("status").and_then(|v| v.as_str()),
+        Some("success")
+    );
+    assert_eq!(
+        status_json.get("channel_id").and_then(|v| v.as_str()),
+        Some("fast_scifi")
+    );
+    assert!(status_json.get("program_title").is_some());
+    assert_eq!(
+        status_json.get("wire_bytes").and_then(|v| v.as_u64()),
+        Some(95)
+    );
+
+    // 14. FAST Electronic Program Guide (EPG)
+    let req = test::TestRequest::get()
+        .uri("/api/v2/streaming/fast/fast_scifi/epg.json")
+        .to_request();
+    let resp = test::call_service(&app, req).await;
+    assert!(resp.status().is_success());
+    let epg_json: serde_json::Value = test::read_body_json(resp).await;
+    assert_eq!(
+        epg_json.get("status").and_then(|v| v.as_str()),
+        Some("success")
+    );
+    let epg = epg_json.get("epg").unwrap();
+    assert_eq!(
+        epg.get("channel_id").and_then(|v| v.as_str()),
+        Some("fast_scifi")
+    );
+    assert!(epg.get("current_program").is_some());
+    assert!(
+        !epg.get("upcoming_programs")
+            .unwrap()
+            .as_array()
+            .unwrap()
+            .is_empty()
+    );
+
+    // 15. Stremio Addon Protocol v3 Manifest
+    let req = test::TestRequest::get()
+        .uri("/api/v2/streaming/addon/manifest.json")
+        .to_request();
+    let resp = test::call_service(&app, req).await;
+    assert!(resp.status().is_success());
+    let manifest: serde_json::Value = test::read_body_json(resp).await;
+    assert_eq!(
+        manifest.get("id").and_then(|v| v.as_str()),
+        Some("org.erpnext.ott.addon")
+    );
+    assert_eq!(
+        manifest.get("version").and_then(|v| v.as_str()),
+        Some("1.0.0")
+    );
+    let resources = manifest.get("resources").unwrap().as_array().unwrap();
+    assert!(resources.iter().any(|r| r.as_str() == Some("stream")));
+
+    // 16. Stremio Catalog Resolution with Genre Filter
+    let req = test::TestRequest::get()
+        .uri("/api/v2/streaming/addon/catalog/movie/erp_movies.json?genre=Sci-Fi")
+        .to_request();
+    let resp = test::call_service(&app, req).await;
+    assert!(resp.status().is_success());
+    let cat_json: serde_json::Value = test::read_body_json(resp).await;
+    let metas = cat_json.get("metas").unwrap().as_array().unwrap();
+    assert_eq!(metas.len(), 1);
+    assert_eq!(
+        metas[0].get("name").and_then(|v| v.as_str()),
+        Some("Cyberpunk: Neon Horizons")
+    );
+
+    // 17. Stremio Deep Metadata Detail
+    let req = test::TestRequest::get()
+        .uri("/api/v2/streaming/addon/meta/movie/erp_movie_cyberpunk.json")
+        .to_request();
+    let resp = test::call_service(&app, req).await;
+    assert!(resp.status().is_success());
+    let meta_json: serde_json::Value = test::read_body_json(resp).await;
+    let meta = meta_json.get("meta").unwrap();
+    assert_eq!(
+        meta.get("name").and_then(|v| v.as_str()),
+        Some("Cyberpunk: Neon Horizons")
+    );
+    let cast = meta.get("cast").unwrap().as_array().unwrap();
+    assert!(cast.iter().any(|c| c.as_str() == Some("Keanu Reeves")));
+
+    // 18. Stremio Stream Source Resolution
+    let req = test::TestRequest::get()
+        .uri("/api/v2/streaming/addon/stream/movie/erp_movie_cyberpunk.json")
+        .to_request();
+    let resp = test::call_service(&app, req).await;
+    assert!(resp.status().is_success());
+    let stream_json: serde_json::Value = test::read_body_json(resp).await;
+    let streams = stream_json.get("streams").unwrap().as_array().unwrap();
+    assert!(!streams.is_empty());
+    assert!(
+        streams[0]
+            .get("url")
+            .and_then(|v| v.as_str())
+            .unwrap()
+            .contains("master.m3u8")
+    );
+
+    // 19. Stremio Subtitles Resolution
+    let req = test::TestRequest::get()
+        .uri("/api/v2/streaming/addon/subtitles/movie/erp_movie_cyberpunk.json")
+        .to_request();
+    let resp = test::call_service(&app, req).await;
+    assert!(resp.status().is_success());
+    let subs_json: serde_json::Value = test::read_body_json(resp).await;
+    let subs = subs_json.get("subtitles").unwrap().as_array().unwrap();
+    assert_eq!(subs.len(), 2);
+    assert_eq!(subs[0].get("lang").and_then(|v| v.as_str()), Some("eng"));
+    assert_eq!(subs[1].get("lang").and_then(|v| v.as_str()), Some("x-ray"));
+}
+
+#[actix_web::test]
+async fn test_v2_autonaming_and_rma_persistence() {
+    let pool_mgr = ConnectionPoolManager::in_memory(Duration::from_secs(300));
+    let topology = MicroTopologyConfig::default();
+
+    let app = test::init_service(
+        App::new().configure(|cfg| configure_app(cfg, pool_mgr.clone(), topology.clone(), None)),
+    )
+    .await;
+
+    // 1. Create document WITHOUT 'name' to verify NamingEngine series generation
+    let create_payload = json!({
+        "customer": "Global Robotics Corp",
+        "grand_total": 92000.0,
+        "status": "Draft"
+    });
+    let req = test::TestRequest::post()
+        .uri("/api/v2/document/quotation")
+        .insert_header(("X-Frappe-Site-Name", "default"))
+        .set_json(&create_payload)
+        .to_request();
+    let resp = test::call_service(&app, req).await;
+    assert_eq!(resp.status(), 201);
+    let doc_json: serde_json::Value = test::read_body_json(resp).await;
+    let generated_name = doc_json
+        .get("doc")
+        .and_then(|d| d.get("name"))
+        .and_then(|n| n.as_str())
+        .expect("Generated document must have a valid name");
+
+    // Must match either series pattern or fallback pattern, not empty or null
+    assert!(generated_name.starts_with("QUOTATION-") || generated_name.starts_with("quotation-"));
+
+    // 2. Submit an RMA and retrieve it via GET /api/v2/trade/rma/{rma_id}
+    let rma_payload = json!({
+        "order_id": "ORD-99120",
+        "customer_id": "CUST-4410",
+        "items": [
+            {
+                "item_code": "ROBOT-ARM-01",
+                "qty": "1.0",
+                "condition": "Defective",
+                "reason": "Defective servo motor",
+                "unit_refund_rate": "450.0"
+            }
+        ],
+        "reason": "Hardware failure during warranty"
+    });
+    let req = test::TestRequest::post()
+        .uri("/api/v2/trade/rma")
+        .insert_header(("X-Frappe-Site-Name", "default"))
+        .set_json(&rma_payload)
+        .to_request();
+    let resp = test::call_service(&app, req).await;
+    assert_eq!(resp.status(), 201);
+    let rma_res: serde_json::Value = test::read_body_json(resp).await;
+    let rma_id = rma_res
+        .get("rma")
+        .and_then(|r| r.get("rma_id"))
+        .and_then(|id| id.as_str())
+        .expect("RMA must have rma_id");
+
+    // 3. Query RMA
+    let req = test::TestRequest::get()
+        .uri(&format!("/api/v2/trade/rma/{rma_id}"))
+        .insert_header(("X-Frappe-Site-Name", "default"))
+        .to_request();
+    let resp = test::call_service(&app, req).await;
+    assert_eq!(resp.status(), 200);
+    let get_rma_res: serde_json::Value = test::read_body_json(resp).await;
+    assert_eq!(
+        get_rma_res
+            .get("rma")
+            .and_then(|r| r.get("order_id"))
+            .and_then(|v| v.as_str()),
+        Some("ORD-99120")
+    );
 }

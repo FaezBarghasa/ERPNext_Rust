@@ -325,7 +325,11 @@ impl VideoXRayCatalog {
             character_name: "Johnny Silverhand".into(),
             profile_image_url: Some("/static/actors/keanu.webp".into()),
             bio: Some("Legendary rockerboy and rebel fighter in Night City.".into()),
-            filmography: vec!["The Matrix".into(), "John Wick".into(), "Constantine".into()],
+            filmography: vec![
+                "The Matrix".into(),
+                "John Wick".into(),
+                "Constantine".into(),
+            ],
             time_range: XRayTimeRange::new(10.0, 45.0),
         });
 
@@ -341,8 +345,14 @@ impl VideoXRayCatalog {
 
         // Music
         let mut urls = HashMap::new();
-        urls.insert("spotify".into(), "https://open.spotify.com/track/4cOdK2wGLETKBW3PvgPWqT".into());
-        urls.insert("apple_music".into(), "https://music.apple.com/us/album/rebel-path".into());
+        urls.insert(
+            "spotify".into(),
+            "https://open.spotify.com/track/4cOdK2wGLETKBW3PvgPWqT".into(),
+        );
+        urls.insert(
+            "apple_music".into(),
+            "https://music.apple.com/us/album/rebel-path".into(),
+        );
 
         catalog.add_music(MusicTrackInfo {
             track_id: "mus-201".into(),
@@ -497,7 +507,10 @@ mod tests {
         assert_eq!(snap55.active_actors.len(), 1);
         assert_eq!(snap55.active_actors[0].name, "Ana de Armas");
         assert_eq!(snap55.active_trivia.len(), 1);
-        assert_eq!(snap55.active_trivia[0].category, SceneTriviaCategory::EasterEgg);
+        assert_eq!(
+            snap55.active_trivia[0].category,
+            SceneTriviaCategory::EasterEgg
+        );
     }
 
     #[test]

@@ -24,6 +24,7 @@ pub enum EdgeCmsError {
     InvalidMagic,
     InvalidUtf8,
     PayloadTruncated,
+    ChecksumMismatch,
 }
 
 impl core::fmt::Display for EdgeCmsError {
@@ -34,8 +35,34 @@ impl core::fmt::Display for EdgeCmsError {
             Self::InvalidMagic => write!(f, "Invalid magic packet header (expected ERPC)"),
             Self::InvalidUtf8 => write!(f, "Invalid UTF-8 sequence in packet title"),
             Self::PayloadTruncated => write!(f, "Packet payload is truncated"),
+            Self::ChecksumMismatch => write!(
+                f,
+                "Packet CRC16-CCITT checksum mismatch (corrupted wire frame)"
+            ),
         }
     }
+}
+
+/// Computes CRC16-CCITT (poly 0x1021, init 0xFFFF) across byte slice with zero allocations.
+#[inline]
+#[must_use]
+pub const fn crc16_ccitt(bytes: &[u8]) -> u16 {
+    let mut crc = 0xFFFFu16;
+    let mut i = 0;
+    while i < bytes.len() {
+        crc ^= (bytes[i] as u16) << 8;
+        let mut bit = 0;
+        while bit < 8 {
+            if (crc & 0x8000) != 0 {
+                crc = (crc << 1) ^ 0x1021;
+            } else {
+                crc <<= 1;
+            }
+            bit += 1;
+        }
+        i += 1;
+    }
+    crc
 }
 
 /// Supported responsive viewports for edge displays.
@@ -161,7 +188,9 @@ impl<const CAP: usize> EdgeCanvasLayout<CAP> {
 
     /// Appends a block node to the layout. Returns `Err(EdgeCmsError::CapacityExceeded)` if capacity exceeded.
     pub fn add_block(&mut self, node: EdgeBlockNode) -> Result<(), EdgeCmsError> {
-        self.blocks.push(node).map_err(|_| EdgeCmsError::CapacityExceeded)
+        self.blocks
+            .push(node)
+            .map_err(|_| EdgeCmsError::CapacityExceeded)
     }
 
     /// Renders layout to standard plain text (e.g. for monochrome character LCD / UART).
@@ -190,7 +219,12 @@ impl<const CAP: usize> EdgeCanvasLayout<CAP> {
                     writeln!(out, "[{}: {}]", label.as_str(), value.as_str())?;
                 }
                 EdgeBlockType::Barcode { payload, symbology } => {
-                    writeln!(out, "[*BARCODE: {} ({})*]", payload.as_str(), symbology.as_str())?;
+                    writeln!(
+                        out,
+                        "[*BARCODE: {} ({})*]",
+                        payload.as_str(),
+                        symbology.as_str()
+                    )?;
                 }
                 EdgeBlockType::Callout { title, text } => {
                     writeln!(out, "! [{}] {}", title.as_str(), text.as_str())?;
@@ -213,7 +247,11 @@ impl<const CAP: usize> EdgeCanvasLayout<CAP> {
     /// Renders layout with ANSI escape sequences (colors, bold, inverse) for VT100 terminals.
     pub fn render_ansi<W: core::fmt::Write>(&self, out: &mut W) -> core::fmt::Result {
         // Clear screen & header
-        writeln!(out, "\x1b[1;36m=== {} (v{}) ===\x1b[0m", self.title, self.version)?;
+        writeln!(
+            out,
+            "\x1b[1;36m=== {} (v{}) ===\x1b[0m",
+            self.title, self.version
+        )?;
         for node in &self.blocks {
             match &node.block {
                 EdgeBlockType::Heading { level, text } => {
@@ -227,16 +265,34 @@ impl<const CAP: usize> EdgeCanvasLayout<CAP> {
                     writeln!(out, "{}", content.as_str())?;
                 }
                 EdgeBlockType::MetricCard { label, value } => {
-                    writeln!(out, "\x1b[7m {} \x1b[0m \x1b[1;32m{}\x1b[0m", label.as_str(), value.as_str())?;
+                    writeln!(
+                        out,
+                        "\x1b[7m {} \x1b[0m \x1b[1;32m{}\x1b[0m",
+                        label.as_str(),
+                        value.as_str()
+                    )?;
                 }
                 EdgeBlockType::Barcode { payload, symbology } => {
-                    writeln!(out, "\x1b[35m|||| {} [{}] ||||\x1b[0m", payload.as_str(), symbology.as_str())?;
+                    writeln!(
+                        out,
+                        "\x1b[35m|||| {} [{}] ||||\x1b[0m",
+                        payload.as_str(),
+                        symbology.as_str()
+                    )?;
                 }
                 EdgeBlockType::Callout { title, text } => {
-                    writeln!(out, "\x1b[1;31m[!] {}\x1b[0m: {}", title.as_str(), text.as_str())?;
+                    writeln!(
+                        out,
+                        "\x1b[1;31m[!] {}\x1b[0m: {}",
+                        title.as_str(),
+                        text.as_str()
+                    )?;
                 }
                 EdgeBlockType::Divider => {
-                    writeln!(out, "\x1b[90m----------------------------------------\x1b[0m")?;
+                    writeln!(
+                        out,
+                        "\x1b[90m----------------------------------------\x1b[0m"
+                    )?;
                 }
             }
         }
@@ -282,7 +338,8 @@ impl<const CAP: usize> EdgeCanvasLayout<CAP> {
         if buf.len() < 10 + t_len {
             return Err(EdgeCmsError::PayloadTruncated);
         }
-        let title = core::str::from_utf8(&buf[10..10 + t_len]).map_err(|_| EdgeCmsError::InvalidUtf8)?;
+        let title =
+            core::str::from_utf8(&buf[10..10 + t_len]).map_err(|_| EdgeCmsError::InvalidUtf8)?;
         Ok((version, block_count, title))
     }
 }
@@ -308,9 +365,9 @@ pub struct VideoPlaybackPacket {
 }
 
 impl VideoPlaybackPacket {
-    /// Serializes playback telemetry into a fixed 79-byte slice.
+    /// Serializes playback telemetry into a fixed 81-byte slice (including 2-byte CRC16-CCITT).
     pub fn serialize<'a>(&self, buf: &'a mut [u8]) -> Result<&'a [u8], EdgeCmsError> {
-        if buf.len() < 79 {
+        if buf.len() < 81 {
             return Err(EdgeCmsError::BufferTooSmall);
         }
         buf[0..4].copy_from_slice(b"VODP");
@@ -332,27 +389,38 @@ impl VideoPlaybackPacket {
         buf[76..78].copy_from_slice(&self.buffered_sec.to_le_bytes());
         buf[78] = if self.is_paused { 1 } else { 0 };
 
-        Ok(&buf[..79])
+        let crc = crc16_ccitt(&buf[0..79]);
+        buf[79..81].copy_from_slice(&crc.to_le_bytes());
+
+        Ok(&buf[..81])
     }
 
-    /// Decodes a 79-byte buffer into a `VideoPlaybackPacket`.
+    /// Decodes an 81-byte buffer into a `VideoPlaybackPacket` after validating CRC16-CCITT.
     pub fn decode(buf: &[u8]) -> Result<Self, EdgeCmsError> {
-        if buf.len() < 79 {
+        if buf.len() < 81 {
             return Err(EdgeCmsError::PayloadTruncated);
         }
         if &buf[0..4] != b"VODP" {
             return Err(EdgeCmsError::InvalidMagic);
         }
 
+        let computed_crc = crc16_ccitt(&buf[0..79]);
+        let expected_crc = u16::from_le_bytes([buf[79], buf[80]]);
+        if computed_crc != expected_crc {
+            return Err(EdgeCmsError::ChecksumMismatch);
+        }
+
         let u_slice = &buf[4..36];
         let u_end = u_slice.iter().position(|&b| b == 0).unwrap_or(32);
-        let u_str = core::str::from_utf8(&u_slice[..u_end]).map_err(|_| EdgeCmsError::InvalidUtf8)?;
+        let u_str =
+            core::str::from_utf8(&u_slice[..u_end]).map_err(|_| EdgeCmsError::InvalidUtf8)?;
         let mut user_id = heapless::String::new();
         let _ = user_id.push_str(u_str);
 
         let m_slice = &buf[36..68];
         let m_end = m_slice.iter().position(|&b| b == 0).unwrap_or(32);
-        let m_str = core::str::from_utf8(&m_slice[..m_end]).map_err(|_| EdgeCmsError::InvalidUtf8)?;
+        let m_str =
+            core::str::from_utf8(&m_slice[..m_end]).map_err(|_| EdgeCmsError::InvalidUtf8)?;
         let mut media_id = heapless::String::new();
         let _ = media_id.push_str(m_str);
 
@@ -410,9 +478,9 @@ pub struct RtmpStreamTelemetryPacket {
 }
 
 impl RtmpStreamTelemetryPacket {
-    /// Serializes RTMP broadcast telemetry into a fixed 45-byte slice.
+    /// Serializes RTMP broadcast telemetry into a fixed 47-byte slice (including 2-byte CRC16-CCITT).
     pub fn serialize<'a>(&self, buf: &'a mut [u8]) -> Result<&'a [u8], EdgeCmsError> {
-        if buf.len() < 45 {
+        if buf.len() < 47 {
             return Err(EdgeCmsError::BufferTooSmall);
         }
         buf[0..4].copy_from_slice(b"RTMP");
@@ -427,21 +495,31 @@ impl RtmpStreamTelemetryPacket {
         buf[40..44].copy_from_slice(&self.viewer_count.to_le_bytes());
         buf[44] = if self.is_live { 1 } else { 0 };
 
-        Ok(&buf[..45])
+        let crc = crc16_ccitt(&buf[0..45]);
+        buf[45..47].copy_from_slice(&crc.to_le_bytes());
+
+        Ok(&buf[..47])
     }
 
-    /// Decodes a 45-byte buffer into an `RtmpStreamTelemetryPacket`.
+    /// Decodes a 47-byte buffer into an `RtmpStreamTelemetryPacket` after validating CRC16-CCITT.
     pub fn decode(buf: &[u8]) -> Result<Self, EdgeCmsError> {
-        if buf.len() < 45 {
+        if buf.len() < 47 {
             return Err(EdgeCmsError::PayloadTruncated);
         }
         if &buf[0..4] != b"RTMP" {
             return Err(EdgeCmsError::InvalidMagic);
         }
 
+        let computed_crc = crc16_ccitt(&buf[0..45]);
+        let expected_crc = u16::from_le_bytes([buf[45], buf[46]]);
+        if computed_crc != expected_crc {
+            return Err(EdgeCmsError::ChecksumMismatch);
+        }
+
         let c_slice = &buf[4..36];
         let c_end = c_slice.iter().position(|&b| b == 0).unwrap_or(32);
-        let c_str = core::str::from_utf8(&c_slice[..c_end]).map_err(|_| EdgeCmsError::InvalidUtf8)?;
+        let c_str =
+            core::str::from_utf8(&c_slice[..c_end]).map_err(|_| EdgeCmsError::InvalidUtf8)?;
         let mut channel_id = heapless::String::new();
         let _ = channel_id.push_str(c_str);
 
@@ -468,11 +546,7 @@ impl RtmpStreamTelemetryPacket {
                 self.viewer_count
             )
         } else {
-            write!(
-                w,
-                "\x1b[90m[OFFLINE: {}]\x1b[0m",
-                self.channel_id.as_str()
-            )
+            write!(w, "\x1b[90m[OFFLINE: {}]\x1b[0m", self.channel_id.as_str())
         }
     }
 }
@@ -486,6 +560,7 @@ impl RtmpStreamTelemetryPacket {
 /// `[84..88]` Remaining seconds (u32 LE)
 /// `[88..92]` Viewer count (u32 LE)
 /// `[92]`     Is ad break active: 1 = yes, 0 = no
+/// `[93..95]` CRC16-CCITT (u16 LE)
 #[derive(Debug, Clone, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct FastChannelStatusPacket {
@@ -497,9 +572,9 @@ pub struct FastChannelStatusPacket {
 }
 
 impl FastChannelStatusPacket {
-    /// Serializes FAST channel telemetry into a fixed 93-byte slice.
+    /// Serializes FAST channel telemetry into a fixed 95-byte slice (including 2-byte CRC16-CCITT).
     pub fn serialize<'a>(&self, buf: &'a mut [u8]) -> Result<&'a [u8], EdgeCmsError> {
-        if buf.len() < 93 {
+        if buf.len() < 95 {
             return Err(EdgeCmsError::BufferTooSmall);
         }
         buf[0..4].copy_from_slice(b"FAST");
@@ -520,27 +595,38 @@ impl FastChannelStatusPacket {
         buf[88..92].copy_from_slice(&self.viewer_count.to_le_bytes());
         buf[92] = if self.is_ad_break { 1 } else { 0 };
 
-        Ok(&buf[..93])
+        let crc = crc16_ccitt(&buf[0..93]);
+        buf[93..95].copy_from_slice(&crc.to_le_bytes());
+
+        Ok(&buf[..95])
     }
 
-    /// Decodes a 93-byte buffer into a `FastChannelStatusPacket`.
+    /// Decodes a 95-byte buffer into a `FastChannelStatusPacket` after validating CRC16-CCITT.
     pub fn decode(buf: &[u8]) -> Result<Self, EdgeCmsError> {
-        if buf.len() < 93 {
+        if buf.len() < 95 {
             return Err(EdgeCmsError::PayloadTruncated);
         }
         if &buf[0..4] != b"FAST" {
             return Err(EdgeCmsError::InvalidMagic);
         }
 
+        let computed_crc = crc16_ccitt(&buf[0..93]);
+        let expected_crc = u16::from_le_bytes([buf[93], buf[94]]);
+        if computed_crc != expected_crc {
+            return Err(EdgeCmsError::ChecksumMismatch);
+        }
+
         let c_slice = &buf[4..36];
         let c_end = c_slice.iter().position(|&b| b == 0).unwrap_or(32);
-        let c_str = core::str::from_utf8(&c_slice[..c_end]).map_err(|_| EdgeCmsError::InvalidUtf8)?;
+        let c_str =
+            core::str::from_utf8(&c_slice[..c_end]).map_err(|_| EdgeCmsError::InvalidUtf8)?;
         let mut channel_id = heapless::String::new();
         let _ = channel_id.push_str(c_str);
 
         let p_slice = &buf[36..84];
         let p_end = p_slice.iter().position(|&b| b == 0).unwrap_or(48);
-        let p_str = core::str::from_utf8(&p_slice[..p_end]).map_err(|_| EdgeCmsError::InvalidUtf8)?;
+        let p_str =
+            core::str::from_utf8(&p_slice[..p_end]).map_err(|_| EdgeCmsError::InvalidUtf8)?;
         let mut program_title = heapless::String::new();
         let _ = program_title.push_str(p_str);
 
@@ -711,7 +797,7 @@ mod tests {
 
         let mut buf = [0u8; 128];
         let bytes = packet.serialize(&mut buf).unwrap();
-        assert_eq!(bytes.len(), 79);
+        assert_eq!(bytes.len(), 81);
         assert_eq!(&bytes[0..4], b"VODP");
 
         let decoded = VideoPlaybackPacket::decode(bytes).unwrap();
@@ -721,6 +807,15 @@ mod tests {
         assert_eq!(decoded.duration_sec, 7200);
         assert_eq!(decoded.buffered_sec, 60);
         assert!(!decoded.is_paused);
+
+        // Verification of CRC16 corruption rejection
+        let mut corrupted = [0u8; 81];
+        corrupted.copy_from_slice(bytes);
+        corrupted[10] ^= 0xFF;
+        assert_eq!(
+            VideoPlaybackPacket::decode(&corrupted),
+            Err(EdgeCmsError::ChecksumMismatch)
+        );
     }
 
     #[test]
@@ -737,7 +832,7 @@ mod tests {
 
         let mut buf = [0u8; 64];
         let bytes = packet.serialize(&mut buf).unwrap();
-        assert_eq!(bytes.len(), 45);
+        assert_eq!(bytes.len(), 47);
         assert_eq!(&bytes[0..4], b"RTMP");
 
         let decoded = RtmpStreamTelemetryPacket::decode(bytes).unwrap();
@@ -745,6 +840,15 @@ mod tests {
         assert_eq!(decoded.ingress_bitrate_kbps, 4500);
         assert_eq!(decoded.viewer_count, 1240);
         assert!(decoded.is_live);
+
+        // Verification of CRC16 corruption rejection
+        let mut corrupted = [0u8; 47];
+        corrupted.copy_from_slice(bytes);
+        corrupted[15] ^= 0xAA;
+        assert_eq!(
+            RtmpStreamTelemetryPacket::decode(&corrupted),
+            Err(EdgeCmsError::ChecksumMismatch)
+        );
     }
 
     #[test]
@@ -752,7 +856,9 @@ mod tests {
         let mut channel_id = heapless::String::new();
         channel_id.push_str("ch_action_movies").unwrap();
         let mut program_title = heapless::String::new();
-        program_title.push_str("Die Hard 2 - Midnight Feature").unwrap();
+        program_title
+            .push_str("Die Hard 2 - Midnight Feature")
+            .unwrap();
 
         let packet = FastChannelStatusPacket {
             channel_id,
@@ -764,15 +870,27 @@ mod tests {
 
         let mut buf = [0u8; 128];
         let bytes = packet.serialize(&mut buf).unwrap();
-        assert_eq!(bytes.len(), 93);
+        assert_eq!(bytes.len(), 95);
         assert_eq!(&bytes[0..4], b"FAST");
 
         let decoded = FastChannelStatusPacket::decode(bytes).unwrap();
         assert_eq!(decoded.channel_id.as_str(), "ch_action_movies");
-        assert_eq!(decoded.program_title.as_str(), "Die Hard 2 - Midnight Feature");
+        assert_eq!(
+            decoded.program_title.as_str(),
+            "Die Hard 2 - Midnight Feature"
+        );
         assert_eq!(decoded.remaining_sec, 1845);
         assert_eq!(decoded.viewer_count, 5210);
         assert!(!decoded.is_ad_break);
+
+        // Verification of CRC16 corruption rejection
+        let mut corrupted = [0u8; 95];
+        corrupted.copy_from_slice(bytes);
+        corrupted[20] ^= 0x55;
+        assert_eq!(
+            FastChannelStatusPacket::decode(&corrupted),
+            Err(EdgeCmsError::ChecksumMismatch)
+        );
     }
 
     #[test]
@@ -828,4 +946,3 @@ mod tests {
         assert!(f_out.contains("Classic Cartoons"));
     }
 }
-

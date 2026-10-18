@@ -96,7 +96,10 @@ impl ResumableChunkEngine {
         total_bytes: u64,
         metadata: HashMap<String, String>,
     ) -> Result<(), TranscodeError> {
-        let mut lock = self.sessions.write().map_err(|_| TranscodeError::LockError)?;
+        let mut lock = self
+            .sessions
+            .write()
+            .map_err(|_| TranscodeError::LockError)?;
         let id = upload_id.into();
         lock.insert(
             id.clone(),
@@ -165,7 +168,10 @@ impl ResumableChunkEngine {
         offset: u64,
         data: Vec<u8>,
     ) -> Result<bool, TranscodeError> {
-        let mut lock = self.sessions.write().map_err(|_| TranscodeError::LockError)?;
+        let mut lock = self
+            .sessions
+            .write()
+            .map_err(|_| TranscodeError::LockError)?;
         let session = lock
             .get_mut(upload_id)
             .ok_or_else(|| TranscodeError::UploadNotFound(upload_id.to_string()))?;
@@ -197,7 +203,10 @@ impl ResumableChunkEngine {
 
     /// Returns the current upload progress (received_bytes, total_bytes).
     pub fn get_progress(&self, upload_id: &str) -> Result<(u64, u64), TranscodeError> {
-        let lock = self.sessions.read().map_err(|_| TranscodeError::LockError)?;
+        let lock = self
+            .sessions
+            .read()
+            .map_err(|_| TranscodeError::LockError)?;
         let session = lock
             .get(upload_id)
             .ok_or_else(|| TranscodeError::UploadNotFound(upload_id.to_string()))?;
@@ -205,11 +214,11 @@ impl ResumableChunkEngine {
     }
 
     /// Reassembles the uploaded chunks into a single byte payload with SHA-256 hash.
-    pub fn assemble_payload(
-        &self,
-        upload_id: &str,
-    ) -> Result<(Vec<u8>, String), TranscodeError> {
-        let lock = self.sessions.read().map_err(|_| TranscodeError::LockError)?;
+    pub fn assemble_payload(&self, upload_id: &str) -> Result<(Vec<u8>, String), TranscodeError> {
+        let lock = self
+            .sessions
+            .read()
+            .map_err(|_| TranscodeError::LockError)?;
         let session = lock
             .get(upload_id)
             .ok_or_else(|| TranscodeError::UploadNotFound(upload_id.to_string()))?;
@@ -336,8 +345,17 @@ impl StoryboardTile {
 
             out.push_str(&format!(
                 "{:02}:{:02}:{:06.3} --> {:02}:{:02}:{:06.3}\n{}#xywh={},{},{},{}\n\n",
-                start_h, start_m, start_s, end_h, end_m, end_s,
-                tile.sprite_uri, tile.x, tile.y, tile.width, tile.height
+                start_h,
+                start_m,
+                start_s,
+                end_h,
+                end_m,
+                end_s,
+                tile.sprite_uri,
+                tile.x,
+                tile.y,
+                tile.width,
+                tile.height
             ));
         }
         out
@@ -530,8 +548,14 @@ mod tests {
         // "filename dmlkZW8ubXA0,filetype dmlkZW8vbXA0" -> "video.mp4", "video/mp4"
         let header = "filename dmlkZW8ubXA0,filetype dmlkZW8vbXA0";
         let parsed = ResumableChunkEngine::parse_tus_metadata(header);
-        assert_eq!(parsed.get("filename").map(|s| s.as_str()), Some("video.mp4"));
-        assert_eq!(parsed.get("filetype").map(|s| s.as_str()), Some("video/mp4"));
+        assert_eq!(
+            parsed.get("filename").map(|s| s.as_str()),
+            Some("video.mp4")
+        );
+        assert_eq!(
+            parsed.get("filetype").map(|s| s.as_str()),
+            Some("video/mp4")
+        );
     }
 
     #[test]
@@ -615,7 +639,10 @@ mod tests {
 
         queue.enqueue_job(job).unwrap();
         assert_eq!(queue.len(), 1);
-        assert_eq!(queue.poll_job("tx-404").unwrap(), TranscodeJobStatus::Queued);
+        assert_eq!(
+            queue.poll_job("tx-404").unwrap(),
+            TranscodeJobStatus::Queued
+        );
 
         // Update progress
         queue.update_progress("tx-404", 45.0, 1).unwrap();
@@ -648,7 +675,10 @@ mod tests {
                 assert_eq!(duration_sec, 124.5);
                 assert_eq!(output_master_playlist, "/hls/movie-1/master.m3u8");
                 assert_eq!(thumbnail_path, "/hls/movie-1/thumb.jpg");
-                assert_eq!(storyboard_vtt.as_deref(), Some("/hls/movie-1/storyboard.vtt"));
+                assert_eq!(
+                    storyboard_vtt.as_deref(),
+                    Some("/hls/movie-1/storyboard.vtt")
+                );
             }
             other => panic!("Unexpected status: {:?}", other),
         }

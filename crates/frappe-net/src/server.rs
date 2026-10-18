@@ -46,18 +46,25 @@ use crate::v2_routes::{
     portal_supplier_dashboard_handler, print_document_handler, quic_status_handler,
     render_invoice_handler, render_receipt_handler, report_pivot_table_handler,
     selling_delivery_note_handler, selling_sales_invoice_handler, setup_wizard_handler,
-    trade_add_wishlist_item_handler, trade_apply_coupon_handler, trade_calculate_shipping_handler,
-    trade_create_coupon_handler, trade_get_wishlist_handler, trade_list_coupons_handler,
-    trade_list_reviews_handler, trade_list_shipping_zones_handler, trade_moderate_review_handler,
-    trade_order_transition_handler, trade_remove_wishlist_item_handler, trade_rma_submit_handler,
+    streaming_cache_configure_handler, streaming_cache_prefetch_handler,
+    streaming_cache_stats_handler, streaming_fast_epg_handler,
+    streaming_fast_live_manifest_handler, streaming_fast_status_handler,
+    streaming_h3_segment_handler, streaming_master_playlist_handler,
+    streaming_playback_progress_handler, streaming_resilient_master_playlist_handler,
+    streaming_rtmp_auth_handler, streaming_rtmp_done_handler, streaming_segment_handler,
+    streaming_upload_chunk_handler, streaming_variant_playlist_handler,
+    streaming_video_xray_handler, streaming_video_xray_vtt_handler, stremio_catalog_handler,
+    stremio_manifest_handler, stremio_meta_handler, stremio_stream_handler,
+    stremio_subtitles_handler, trade_add_wishlist_item_handler, trade_apply_coupon_handler,
+    trade_calculate_shipping_handler, trade_create_coupon_handler, trade_get_wishlist_handler,
+    trade_list_coupons_handler, trade_list_reviews_handler, trade_list_shipping_zones_handler,
+    trade_moderate_review_handler, trade_order_transition_handler,
+    trade_remove_wishlist_item_handler, trade_rma_get_handler, trade_rma_submit_handler,
     trade_submit_review_handler, upload_file_handler, v2_amend_document, v2_cancel_document,
     v2_create_document, v2_delete_document, v2_get_document, v2_get_meta_handler, v2_list_document,
     v2_list_meta_handler, v2_print_document, v2_submit_document, v2_update_document,
     webhooks_dispatch_test_handler, workflow_evaluate_handler, workflow_version_history_handler,
-    workflow_version_rollback_handler, streaming_master_playlist_handler,
-    streaming_playback_progress_handler, streaming_rtmp_auth_handler, streaming_rtmp_done_handler,
-    streaming_segment_handler, streaming_upload_chunk_handler, streaming_variant_playlist_handler,
-    streaming_video_xray_handler, streaming_video_xray_vtt_handler,
+    workflow_version_rollback_handler,
 };
 use actix_web::{
     App, HttpMessage, HttpRequest, HttpResponse, HttpServer, Responder, middleware::Compress,
@@ -2182,15 +2189,16 @@ async fn template_detail_handler(
     }
 }
 
-pub async fn sitemap_xml_handler(
-    state: Option<web::Data<DynamicRbacState>>,
-) -> impl Responder {
+pub async fn sitemap_xml_handler(state: Option<web::Data<DynamicRbacState>>) -> impl Responder {
     TOTAL_REQUESTS.fetch_add(1, Ordering::Relaxed);
     let mut entries = Vec::new();
     if let Some(st) = state {
         if let Ok(docs) = st.emdash_documents.read() {
             for (id, doc) in docs.iter() {
-                if matches!(doc.workflow_state, erp_cms::EditorialWorkflowState::Published { .. }) {
+                if matches!(
+                    doc.workflow_state,
+                    erp_cms::EditorialWorkflowState::Published { .. }
+                ) {
                     let loc = if !doc.slug.is_empty() {
                         format!("https://rustnext.enterprise.io/site/{}", doc.slug)
                     } else {
@@ -2222,24 +2230,29 @@ pub async fn sitemap_xml_handler(
 }
 
 #[allow(clippy::collapsible_if)]
-pub async fn rss_feed_handler(
-    state: Option<web::Data<DynamicRbacState>>,
-) -> impl Responder {
+pub async fn rss_feed_handler(state: Option<web::Data<DynamicRbacState>>) -> impl Responder {
     TOTAL_REQUESTS.fetch_add(1, Ordering::Relaxed);
     let mut items = Vec::new();
     if let Some(st) = state {
         if let Ok(docs) = st.emdash_documents.read() {
             for (id, doc) in docs.iter() {
-                if matches!(doc.workflow_state, erp_cms::EditorialWorkflowState::Published { .. }) {
+                if matches!(
+                    doc.workflow_state,
+                    erp_cms::EditorialWorkflowState::Published { .. }
+                ) {
                     let link = if !doc.slug.is_empty() {
                         format!("https://rustnext.enterprise.io/site/{}", doc.slug)
                     } else {
                         format!("https://rustnext.enterprise.io/site/{}", id)
                     };
-                    let summary = doc.blocks.iter().find_map(|b| match b {
-                        erp_cms::EmdashBlock::Paragraph { text } => Some(text.to_string()),
-                        _ => None,
-                    }).unwrap_or_else(|| "Planetary ERP Editorial Publication".to_string());
+                    let summary = doc
+                        .blocks
+                        .iter()
+                        .find_map(|b| match b {
+                            erp_cms::EmdashBlock::Paragraph { text } => Some(text.to_string()),
+                            _ => None,
+                        })
+                        .unwrap_or_else(|| "Planetary ERP Editorial Publication".to_string());
 
                     items.push(erp_cms::RssFeedItem {
                         title: doc.title.to_string(),
@@ -2267,8 +2280,12 @@ pub async fn rss_feed_handler(
 pub async fn streaming_player_studio_handler(
     query: web::Query<std::collections::HashMap<String, String>>,
 ) -> impl Responder {
-    let video_id = query.get("v").cloned().unwrap_or_else(|| "vid_demo_master".into());
-    let html = format!(r#"<!DOCTYPE html>
+    let video_id = query
+        .get("v")
+        .cloned()
+        .unwrap_or_else(|| "vid_demo_master".into());
+    let html = format!(
+        r#"<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -2446,7 +2463,9 @@ pub async fn streaming_player_studio_handler(
         }});
     </script>
 </body>
-</html>"#, video_id = video_id);
+</html>"#,
+        video_id = video_id
+    );
 
     HttpResponse::Ok()
         .content_type("text/html; charset=utf-8")
@@ -3011,6 +3030,10 @@ pub fn configure_app(
             "/api/v2/trade/rma",
             web::post().to(trade_rma_submit_handler),
         )
+        .route(
+            "/api/v2/trade/rma/{rma_id}",
+            web::get().to(trade_rma_get_handler),
+        )
         // V2 CMS Taxonomy, Media & SEO Endpoints
         .route(
             "/api/v2/cms/taxonomy",
@@ -3111,6 +3134,60 @@ pub fn configure_app(
         .route(
             "/api/v2/streaming/videos/{id}/xray.vtt",
             web::get().to(streaming_video_xray_vtt_handler),
+        )
+        .route(
+            "/api/v2/streaming/fast/{channel_id}/live.m3u8",
+            web::get().to(streaming_fast_live_manifest_handler),
+        )
+        .route(
+            "/api/v2/streaming/fast/{channel_id}/status",
+            web::get().to(streaming_fast_status_handler),
+        )
+        .route(
+            "/api/v2/streaming/fast/{channel_id}/epg.json",
+            web::get().to(streaming_fast_epg_handler),
+        )
+        // QUIC Resilient Streaming & User Cache Endpoints
+        .route(
+            "/api/v2/streaming/videos/{id}/resilient.m3u8",
+            web::get().to(streaming_resilient_master_playlist_handler),
+        )
+        .route(
+            "/api/v2/streaming/cache/configure",
+            web::post().to(streaming_cache_configure_handler),
+        )
+        .route(
+            "/api/v2/streaming/cache/stats",
+            web::get().to(streaming_cache_stats_handler),
+        )
+        .route(
+            "/api/v2/streaming/cache/prefetch",
+            web::post().to(streaming_cache_prefetch_handler),
+        )
+        .route(
+            "/api/v2/streaming/h3/segment/{id}/{variant}/{segment}",
+            web::get().to(streaming_h3_segment_handler),
+        )
+        // Stremio Addon Protocol v3 Endpoints (Phase 10)
+        .route(
+            "/api/v2/streaming/addon/manifest.json",
+            web::get().to(stremio_manifest_handler),
+        )
+        .route(
+            "/api/v2/streaming/addon/catalog/{type}/{id}.json",
+            web::get().to(stremio_catalog_handler),
+        )
+        .route(
+            "/api/v2/streaming/addon/meta/{type}/{id}.json",
+            web::get().to(stremio_meta_handler),
+        )
+        .route(
+            "/api/v2/streaming/addon/stream/{type}/{id}.json",
+            web::get().to(stremio_stream_handler),
+        )
+        .route(
+            "/api/v2/streaming/addon/subtitles/{type}/{id}.json",
+            web::get().to(stremio_subtitles_handler),
         )
         .route(
             "/studio/player",

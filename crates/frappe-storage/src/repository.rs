@@ -17,6 +17,16 @@ pub enum RepositoryError {
     Serialization(#[from] serde_json::Error),
     #[error("Entity not found: {0}")]
     NotFound(String),
+    #[error("Invalid SQL identifier: {0}")]
+    InvalidIdentifier(String),
+}
+
+/// Validates that table names and entity IDs contain only safe alphanumeric and underscore characters.
+pub fn validate_identifier(ident: &str) -> Result<(), RepositoryError> {
+    if ident.is_empty() || !ident.chars().all(|c| c.is_ascii_alphanumeric() || c == '_') {
+        return Err(RepositoryError::InvalidIdentifier(ident.to_string()));
+    }
+    Ok(())
 }
 
 /// Universal entity repository wrapping a SurrealDB client connection.
@@ -45,8 +55,11 @@ impl<C: Connection> SurrealRepository<C> {
         id: &str,
         data: &T,
     ) -> Result<(), RepositoryError> {
-        let val = serde_json::to_value(data)?;
+        validate_identifier(table)?;
         let clean_id = id.replace([':', ' ', '-'], "_");
+        validate_identifier(&clean_id)?;
+
+        let val = serde_json::to_value(data)?;
         let sql = format!("UPSERT {table}:{clean_id} MERGE $payload;");
         self.db.query(sql).bind(("payload", val)).await?.check()?;
         Ok(())
@@ -58,7 +71,10 @@ impl<C: Connection> SurrealRepository<C> {
         table: &str,
         id: &str,
     ) -> Result<Option<T>, RepositoryError> {
+        validate_identifier(table)?;
         let clean_id = id.replace([':', ' ', '-'], "_");
+        validate_identifier(&clean_id)?;
+
         let sql = format!("SELECT * FROM {table}:{clean_id};");
         let mut response = self.db.query(sql).await?.check()?;
         let records: Vec<serde_json::Value> = response.take(0)?;
@@ -75,6 +91,7 @@ impl<C: Connection> SurrealRepository<C> {
         &self,
         table: &str,
     ) -> Result<Vec<T>, RepositoryError> {
+        validate_identifier(table)?;
         let sql = format!("SELECT * FROM {table};");
         let mut response = self.db.query(sql).await?.check()?;
         let records: Vec<serde_json::Value> = response.take(0)?;
@@ -93,6 +110,13 @@ impl<C: Connection> SurrealRepository<C> {
         table: &str,
         where_clause: &str,
     ) -> Result<Vec<T>, RepositoryError> {
+        validate_identifier(table)?;
+        if where_clause.contains(';') {
+            return Err(RepositoryError::InvalidIdentifier(
+                "Semicolon prohibited in WHERE clause".into(),
+            ));
+        }
+
         let sql = format!("SELECT * FROM {table} WHERE {where_clause};");
         let mut response = self.db.query(sql).await?.check()?;
         let records: Vec<serde_json::Value> = response.take(0)?;
@@ -105,9 +129,42 @@ impl<C: Connection> SurrealRepository<C> {
         Ok(result)
     }
 
+    /// Fetches records matching a parameterized WHERE clause with typed bindings.
+    pub async fn query_where_bound<T: DeserializeOwned + Send + Sync>(
+        &self,
+        table: &str,
+        where_clause: &str,
+        bindings: &[(&str, serde_json::Value)],
+    ) -> Result<Vec<T>, RepositoryError> {
+        validate_identifier(table)?;
+        if where_clause.contains(';') {
+            return Err(RepositoryError::InvalidIdentifier(
+                "Semicolon prohibited in WHERE clause".into(),
+            ));
+        }
+
+        let sql = format!("SELECT * FROM {table} WHERE {where_clause};");
+        let mut query = self.db.query(sql);
+        for (k, v) in bindings {
+            query = query.bind((*k, v.clone()));
+        }
+        let mut response = query.await?.check()?;
+        let records: Vec<serde_json::Value> = response.take(0)?;
+        let mut result = Vec::with_capacity(records.len());
+        for val in records {
+            if let Ok(entity) = serde_json::from_value(val) {
+                result.push(entity);
+            }
+        }
+        Ok(result)
+    }
+
     /// Deletes a single record at `table:id`.
     pub async fn delete(&self, table: &str, id: &str) -> Result<(), RepositoryError> {
+        validate_identifier(table)?;
         let clean_id = id.replace([':', ' ', '-'], "_");
+        validate_identifier(&clean_id)?;
+
         let sql = format!("DELETE {table}:{clean_id};");
         self.db.query(sql).await?.check()?;
         Ok(())
@@ -115,6 +172,7 @@ impl<C: Connection> SurrealRepository<C> {
 
     /// Counts records in a given table.
     pub async fn count(&self, table: &str) -> Result<u64, RepositoryError> {
+        validate_identifier(table)?;
         let sql = format!("SELECT count() FROM {table} GROUP ALL;");
         let mut response = self.db.query(sql).await?.check()?;
         let res: Option<serde_json::Value> = response.take(0)?;
@@ -188,5 +246,46 @@ mod tests {
             .await
             .expect("Select after delete");
         assert_eq!(after_delete, None);
+    }
+
+    #[tokio::test]
+    async fn test_surreal_repository_injection_defense() {
+        let db = Surreal::new::<Mem>(()).await.unwrap();
+        db.use_ns("sec_ns").use_db("sec_db").await.unwrap();
+        let repo = SurrealRepository::new(db);
+
+        // 1. Malicious table identifier with spaces or special characters
+        let res = repo.count("customers; DROP TABLE user").await;
+        assert!(matches!(res, Err(RepositoryError::InvalidIdentifier(_))));
+
+        // 2. Semicolon query chaining in WHERE clause rejected
+        let res2: Result<Vec<MockCustomer>, RepositoryError> = repo
+            .query_where("customers", "1 = 1; DELETE customers")
+            .await;
+        assert!(matches!(res2, Err(RepositoryError::InvalidIdentifier(_))));
+
+        // 3. Bound query with parameter binding works securely
+        let customer = MockCustomer {
+            id: "cust_200".to_string(),
+            name: "Alice Security".to_string(),
+            email: "alice@defense.rs".to_string(),
+        };
+        repo.upsert("customers", &customer.id, &customer)
+            .await
+            .unwrap();
+
+        let bound: Vec<MockCustomer> = repo
+            .query_where_bound(
+                "customers",
+                "email = $email",
+                &[(
+                    "email",
+                    serde_json::Value::String("alice@defense.rs".into()),
+                )],
+            )
+            .await
+            .unwrap();
+        assert_eq!(bound.len(), 1);
+        assert_eq!(bound[0].name, "Alice Security");
     }
 }

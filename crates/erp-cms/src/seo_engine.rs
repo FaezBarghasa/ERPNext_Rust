@@ -536,10 +536,19 @@ pub fn generate_rss_2_xml(
     let mut items_xml = String::new();
     for item in items {
         items_xml.push_str("    <item>\n");
-        items_xml.push_str(&format!("      <title><![CDATA[{}]]></title>\n", item.title));
+        items_xml.push_str(&format!(
+            "      <title><![CDATA[{}]]></title>\n",
+            item.title
+        ));
         items_xml.push_str(&format!("      <link>{}</link>\n", item.link));
-        items_xml.push_str(&format!("      <guid isPermaLink=\"false\">{}</guid>\n", item.guid));
-        items_xml.push_str(&format!("      <description><![CDATA[{}]]></description>\n", item.description));
+        items_xml.push_str(&format!(
+            "      <guid isPermaLink=\"false\">{}</guid>\n",
+            item.guid
+        ));
+        items_xml.push_str(&format!(
+            "      <description><![CDATA[{}]]></description>\n",
+            item.description
+        ));
         items_xml.push_str(&format!("      <pubDate>{}</pubDate>\n", item.pub_date));
         if let Some(ref author) = item.author {
             items_xml.push_str(&format!("      <author>{}</author>\n", author));

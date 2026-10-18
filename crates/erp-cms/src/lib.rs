@@ -2,17 +2,20 @@ pub mod analytics;
 pub mod block_canvas;
 pub mod builder_core;
 pub mod emdash_studio;
+pub mod fast_channels;
 pub mod hls_engine;
 pub mod luxury_storefront;
 pub mod media_library;
 pub mod print;
+pub mod resilient_streaming;
 pub mod rtmp_ingest;
 pub mod security;
 pub mod seo_engine;
+pub mod ssai_engine;
 pub mod storefront;
+pub mod stremio_addon;
 pub mod taxonomy;
 pub mod template_catalog;
-pub mod ssai_engine;
 pub mod theme_engine;
 pub mod transcode_pipeline;
 pub mod video_streaming;
@@ -34,18 +37,45 @@ pub use emdash_studio::{
     EmdashDocument, WebPVariantMetadata, calculate_focal_crop, generate_editorial_xml_sitemap,
     generate_responsive_webp_variants,
 };
+pub use erp_cms_core as core;
+pub use fast_channels::{
+    ActiveProgramContext, EpgChannelGuide, EpgScheduleEntry, FastChannelError, FastChannelRegistry,
+    FastChannelSchedule, LinearManifestEngine, LinearProgram,
+};
+pub use hls_engine::{
+    HlsAudioRendition, HlsMasterPlaylist, HlsMediaPlaylist, HlsMediaSegment, HlsSegmentCache,
+    HlsSubtitleRendition, HlsVariant,
+};
 pub use luxury_storefront::{
     LUXURY_STOREFRONT_CSS, LUXURY_STOREFRONT_HTML, LUXURY_STOREFRONT_JS, LuxuryProduct,
     get_luxury_catalog, render_luxury_storefront_html,
 };
 pub use print::render_invoice_html;
+pub use resilient_streaming::{
+    NetworkCondition, QuicStreamOptimizer, ResilientPlaylistEngine, UserCacheConfig,
+    UserCacheRegistry, UserCacheStats, UserCacheTier,
+};
+pub use rtmp_ingest::{
+    NginxRtmpPublishPayload, NginxRtmpRecordPayload, NginxRtmpUpdatePayload, RtmpError,
+    RtmpIngestManager, RtmpStreamSession, RtmpStreamStatus,
+};
 pub use security::{HmacStreamingSigner, StreamingError, SvodPlaybackManager, parse_byte_range};
 pub use seo_engine::{
     RssFeedItem, SeoMetadata, SitemapEntry, generate_dynamic_sitemap_xml, generate_robots_txt,
     generate_rss_2_xml, generate_sitemap_xml,
 };
+pub use ssai_engine::{
+    AdCreative, AdPod, AdTrackingBeacons, HlsDateRange, Scte35CommandType, Scte35Cue,
+    Scte35SpliceInsert, SsaiError, SsaiManifestStitcher, SsaiStitchResult, mpeg_crc32,
+};
 pub use storefront::{
     AtomicCheckoutEngine, CheckoutError, CheckoutItem, CheckoutResult, CustomerCheckoutRequest,
+};
+pub use stremio_addon::{
+    StremioAddonEngine, StremioCatalogDefinition, StremioCatalogItem, StremioCatalogResponse,
+    StremioExtraProp, StremioManifest, StremioMetaDetail, StremioMetaResponse, StremioStream,
+    StremioStreamBehaviorHints, StremioStreamsResponse, StremioSubtitle, StremioSubtitlesResponse,
+    StremioVideo,
 };
 pub use template_catalog::{
     TemplateSuite, get_template_suite, list_template_suites, render_template_html,
@@ -54,18 +84,6 @@ pub use template_catalog::{
 pub use theme_engine::{
     CompiledTheme, DesignTokens, RenderEngineKind, SlotDefinition, ThemeManifest, ThemeRegistry,
     ThemeVariant, WorkTypeClassification,
-};
-pub use hls_engine::{
-    HlsAudioRendition, HlsMasterPlaylist, HlsMediaPlaylist, HlsMediaSegment, HlsSegmentCache,
-    HlsSubtitleRendition, HlsVariant,
-};
-pub use rtmp_ingest::{
-    NginxRtmpPublishPayload, NginxRtmpRecordPayload, NginxRtmpUpdatePayload, RtmpError,
-    RtmpIngestManager, RtmpStreamSession, RtmpStreamStatus,
-};
-pub use ssai_engine::{
-    AdCreative, AdPod, AdTrackingBeacons, HlsDateRange, Scte35CommandType, Scte35Cue,
-    Scte35SpliceInsert, SsaiError, SsaiManifestStitcher, SsaiStitchResult, mpeg_crc32,
 };
 pub use transcode_pipeline::{
     HardwareAccelType, ResumableChunkEngine, ResumableUploadSession, StoryboardTile,
@@ -80,7 +98,6 @@ pub use xray_metadata::{
     ActorCredit, MusicTrackInfo, ProductCommerceTag, SceneTrivia, SceneTriviaCategory,
     VideoXRayCatalog, XRayRegistry, XRaySnapshot, XRayTimeRange,
 };
-pub use erp_cms_core as core;
 
 #[cfg(test)]
 mod tests {
@@ -88,10 +105,16 @@ mod tests {
 
     #[test]
     fn test_canvas_to_edge_core_bridge() {
-        let mut edge_layout: erp_cms_core::EdgeCanvasLayout<16> = erp_cms_core::EdgeCanvasLayout::new("Warehouse Display");
+        let mut edge_layout: erp_cms_core::EdgeCanvasLayout<16> =
+            erp_cms_core::EdgeCanvasLayout::new("Warehouse Display");
         let mut text = erp_cms_core::heapless::String::new();
         text.push_str("SKU-9923 Item Verified").unwrap();
-        edge_layout.add_block(erp_cms_core::EdgeBlockNode::new("b1", erp_cms_core::EdgeBlockType::Text { content: text })).unwrap();
+        edge_layout
+            .add_block(erp_cms_core::EdgeBlockNode::new(
+                "b1",
+                erp_cms_core::EdgeBlockType::Text { content: text },
+            ))
+            .unwrap();
         assert_eq!(edge_layout.blocks.len(), 1);
     }
 
@@ -189,8 +212,9 @@ mod tests {
         ad_pod.add_creative(AdCreative::preset_15s("ad-audi", "Audi"));
 
         let cue = Scte35Cue::new_splice_insert_cue_out(99, Scte35Cue::seconds_to_pts(18.0), 15.0);
-        let (stitched, result) = SsaiManifestStitcher::stitch_midroll(&playlist, 18.0, &ad_pod, Some(&cue))
-            .expect("stitch midroll failed");
+        let (stitched, result) =
+            SsaiManifestStitcher::stitch_midroll(&playlist, 18.0, &ad_pod, Some(&cue))
+                .expect("stitch midroll failed");
 
         assert_eq!(result.inserted_ad_segments_count, 3);
         assert_eq!(result.discontinuities_injected, 2);

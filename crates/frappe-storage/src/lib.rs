@@ -48,7 +48,9 @@ impl TenantContext {
     /// Generates SurrealQL USE statement.
     #[must_use]
     pub fn surreal_use(&self) -> String {
-        format!("USE NS {} DB {};", self.tenant_id, self.site_name)
+        let clean_ns = self.tenant_id.replace([';', ' ', '\'', '"', '`'], "_");
+        let clean_db = self.site_name.replace([';', ' ', '\'', '"', '`'], "_");
+        format!("USE NS {clean_ns} DB {clean_db};")
     }
 
     /// Resolves tenant context from HTTP headers.

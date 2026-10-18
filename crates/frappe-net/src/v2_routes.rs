@@ -15,7 +15,7 @@ use crate::middleware::ip_filter::{IpFilterRule, IpRuleRegistry};
 use crate::rate_limit::LoginGuard;
 use crate::tenant::{ConnectionPoolManager, TenantId};
 use actix_web::{HttpMessage, HttpRequest, HttpResponse, Responder, web};
-use chrono::{NaiveDate, Utc};
+use chrono::{Datelike, NaiveDate, Utc};
 use erp_accounting::{
     GlEntry, JournalEntry, JournalEntryLine, MockPaymentGateway, PaymentGatewayProcessor,
     PaymentIntent, PaymentMethod, PaymentReconciliationEngine, PaymentStatus, PrintableInvoice,
@@ -473,8 +473,95 @@ pub async fn v2_create_document(
         _ => return HttpResponse::BadRequest().body("Payload must be a JSON object"),
     };
 
-    let name = if let Some(serde_json::Value::String(n)) = doc_map.get("name") {
-        n.clone()
+    // 1. Schema lookup & validation
+    let schema_opt = frappe_meta::registry::lookup_schema(&doctype);
+    if let Some(ref schema) = schema_opt {
+        // Enforce required fields if strict validation requested or default missing fields
+        let is_strict_validation = req.headers().contains_key("x-validate-schema")
+            || req.headers().contains_key("x-strict-schema");
+        for field in &schema.fields {
+            if !field.fieldtype.is_layout_field() && !doc_map.contains_key(&field.fieldname) {
+                if let Some(def) = &field.default_value {
+                    doc_map.insert(field.fieldname.clone(), def.clone());
+                } else if field.reqd && is_strict_validation {
+                    return HttpResponse::BadRequest().json(serde_json::json!({
+                        "error": format!("Mandatory field '{}' is required for DocType '{}'", field.fieldname, doctype)
+                    }));
+                }
+            }
+        }
+    }
+
+    static GLOBAL_SERIES_STORE: std::sync::LazyLock<frappe_framework::naming::NamingSeriesStore> =
+        std::sync::LazyLock::new(frappe_framework::naming::NamingSeriesStore::new);
+
+    let name = if let Some(serde_json::Value::String(n)) = doc_map.get("name")
+        && !n.trim().is_empty()
+    {
+        n.trim().to_string()
+    } else if let Some(ref schema) = schema_opt {
+        let now = Utc::now();
+        let year = now.year();
+        let month = now.month();
+        let day = now.day();
+
+        match schema.naming_rule.as_deref() {
+            Some(rule) if rule.starts_with("field:") => {
+                let field_name = rule.trim_start_matches("field:").trim();
+                if let Some(val) = doc_map.get(field_name).and_then(|v| v.as_str()) {
+                    val.trim().to_string()
+                } else {
+                    let fallback_template = format!(
+                        "{}-.YYYY.-.#####",
+                        schema.name.to_uppercase().replace(' ', "-")
+                    );
+                    frappe_framework::naming::NamingEngine::parse_series_template(
+                        &fallback_template,
+                        year,
+                        month,
+                        day,
+                        &GLOBAL_SERIES_STORE,
+                    )
+                }
+            }
+            Some(rule) if rule.contains(".#") => {
+                frappe_framework::naming::NamingEngine::parse_series_template(
+                    rule,
+                    year,
+                    month,
+                    day,
+                    &GLOBAL_SERIES_STORE,
+                )
+            }
+            _ => {
+                if let Some(s) = doc_map.get("naming_series").and_then(|v| v.as_str()) {
+                    let tmpl = if s.contains(".#") {
+                        s.to_string()
+                    } else {
+                        format!("{s}.#####")
+                    };
+                    frappe_framework::naming::NamingEngine::parse_series_template(
+                        &tmpl,
+                        year,
+                        month,
+                        day,
+                        &GLOBAL_SERIES_STORE,
+                    )
+                } else {
+                    let fallback_template = format!(
+                        "{}-.YYYY.-.#####",
+                        schema.name.to_uppercase().replace(' ', "-")
+                    );
+                    frappe_framework::naming::NamingEngine::parse_series_template(
+                        &fallback_template,
+                        year,
+                        month,
+                        day,
+                        &GLOBAL_SERIES_STORE,
+                    )
+                }
+            }
+        }
     } else {
         format!("{}-{}", table, Utc::now().timestamp_millis())
     };
@@ -1687,7 +1774,10 @@ pub async fn download_image_handler(
 
     // 1. Fetch file bytes from DB if pool is available, else fallback to memory cache/synthetic bytes
     let raw_bytes: Option<Vec<u8>> = if let Some(mgr) = pool_mgr {
-        if let Ok(client) = mgr.get_or_initialize_client(&TenantId("default".into())).await {
+        if let Ok(client) = mgr
+            .get_or_initialize_client(&TenantId("default".into()))
+            .await
+        {
             let sql = "SELECT * FROM drive_file WHERE content_hash = $content_hash;";
             if let Ok(mut res) = client.query(sql).bind(("content_hash", hash.clone())).await {
                 let records: Vec<serde_json::Value> = res.take(0).unwrap_or_default();
@@ -1713,22 +1803,25 @@ pub async fn download_image_handler(
     // 2. Focal Crop calculation
     let mut crop_header: Option<String> = None;
     if let (Some(target_w), Some(target_h)) = (q.w, q.h) {
-        let focal = q.crop.as_deref().and_then(|c| {
-            let mut parts = c.split(',');
-            let x = parts.next()?.trim().parse::<f32>().ok()?;
-            let y = parts.next()?.trim().parse::<f32>().ok()?;
-            Some((x, y))
-        }).unwrap_or((0.5, 0.5));
+        let focal = q
+            .crop
+            .as_deref()
+            .and_then(|c| {
+                let mut parts = c.split(',');
+                let x = parts.next()?.trim().parse::<f32>().ok()?;
+                let y = parts.next()?.trim().parse::<f32>().ok()?;
+                Some((x, y))
+            })
+            .unwrap_or((0.5, 0.5));
 
         // Use reference raster size 1920x1080 if not embedded in payload
-        if let Ok(crop_box) = erp_cms::emdash_studio::calculate_focal_crop(
-            1920,
-            1080,
-            target_w,
-            target_h,
-            focal,
-        ) {
-            crop_header = Some(format!("x={},y={},w={},h={}", crop_box.x, crop_box.y, crop_box.width, crop_box.height));
+        if let Ok(crop_box) =
+            erp_cms::emdash_studio::calculate_focal_crop(1920, 1080, target_w, target_h, focal)
+        {
+            crop_header = Some(format!(
+                "x={},y={},w={},h={}",
+                crop_box.x, crop_box.y, crop_box.width, crop_box.height
+            ));
         }
     }
 
@@ -2370,6 +2463,9 @@ pub struct DynamicRbacState {
     pub svod_manager: Arc<erp_cms::security::SvodPlaybackManager>,
     pub streaming_signer: Arc<erp_cms::security::HmacStreamingSigner>,
     pub xray_registry: Arc<erp_cms::xray_metadata::XRayRegistry>,
+    pub fast_registry: Arc<erp_cms::fast_channels::FastChannelRegistry>,
+    pub stremio_addon: Arc<erp_cms::stremio_addon::StremioAddonEngine>,
+    pub user_cache_registry: Arc<erp_cms::resilient_streaming::UserCacheRegistry>,
 }
 
 impl Default for DynamicRbacState {
@@ -2523,6 +2619,13 @@ impl Default for DynamicRbacState {
                 b"erpnext_ott_master_secret_key_321",
             )),
             xray_registry: Arc::new(erp_cms::xray_metadata::XRayRegistry::with_demo_catalogs()),
+            fast_registry: Arc::new(
+                erp_cms::fast_channels::FastChannelRegistry::with_demo_channels(),
+            ),
+            stremio_addon: Arc::new(
+                erp_cms::stremio_addon::StremioAddonEngine::with_demo_catalogs(),
+            ),
+            user_cache_registry: Arc::new(erp_cms::resilient_streaming::UserCacheRegistry::new()),
         }
     }
 }
@@ -3990,21 +4093,91 @@ pub struct SubmitRmaPayload {
 
 /// Handler: Submit RMA: `POST /api/v2/trade/rma`
 pub async fn trade_rma_submit_handler(
+    req: HttpRequest,
     state: web::Data<DynamicRbacState>,
     payload: web::Json<SubmitRmaPayload>,
+    pool_mgr: Option<web::Data<ConnectionPoolManager>>,
 ) -> impl Responder {
     let p = payload.into_inner();
     let rma_id = format!("rma_{}_{}", p.order_id, Utc::now().timestamp_millis());
-    let req = RmaRecord::new(rma_id, p.order_id, p.customer_id, p.items, p.reason);
+    let req_record = RmaRecord::new(rma_id, p.order_id, p.customer_id, p.items, p.reason);
 
     if let Ok(mut lock) = state.rma_records.write() {
-        lock.insert(req.rma_id.clone(), req.clone());
+        lock.insert(req_record.rma_id.clone(), req_record.clone());
+    }
+
+    if let Some(mgr) = &pool_mgr {
+        let tenant_id = req
+            .extensions()
+            .get::<TenantId>()
+            .cloned()
+            .unwrap_or_else(|| TenantId("default".into()));
+        if let Ok(client) = mgr.get_or_initialize_client(&tenant_id).await {
+            let _ = client
+                .query("UPSERT rma_records CONTENT $rma;")
+                .bind(("rma", serde_json::to_value(&req_record).unwrap_or_default()))
+                .await;
+        }
     }
 
     HttpResponse::Created().json(serde_json::json!({
         "status": "CREATED",
-        "rma": req,
+        "rma": req_record,
     }))
+}
+
+/// Handler: Get RMA by ID: `GET /api/v2/trade/rma/{rma_id}`
+pub async fn trade_rma_get_handler(
+    req: HttpRequest,
+    state: web::Data<DynamicRbacState>,
+    path: web::Path<String>,
+    pool_mgr: Option<web::Data<ConnectionPoolManager>>,
+) -> impl Responder {
+    let rma_id = path.into_inner();
+    let mut found_rma = {
+        let lock = match state.rma_records.read() {
+            Ok(l) => l,
+            Err(_) => return HttpResponse::InternalServerError().body("Lock error"),
+        };
+        lock.get(&rma_id).cloned()
+    };
+
+    if found_rma.is_none()
+        && let Some(mgr) = &pool_mgr
+    {
+        let tenant_id = req
+            .extensions()
+            .get::<TenantId>()
+            .cloned()
+            .unwrap_or_else(|| TenantId("default".into()));
+        if let Ok(client) = mgr.get_or_initialize_client(&tenant_id).await
+            && let Ok(mut res) = client
+                .query("SELECT * FROM rma_records WHERE rma_id = $id;")
+                .bind(("id", rma_id.clone()))
+                .await
+        {
+            let rows: Vec<serde_json::Value> = res.take(0).unwrap_or_default();
+            if let Some(row) = rows.into_iter().next()
+                && let Ok(record) = serde_json::from_value::<RmaRecord>(row)
+            {
+                if let Ok(mut lock) = state.rma_records.write() {
+                    lock.insert(record.rma_id.clone(), record.clone());
+                }
+                found_rma = Some(record);
+            }
+        }
+    }
+
+    match found_rma {
+        Some(rma) => HttpResponse::Ok().json(serde_json::json!({
+            "status": "OK",
+            "rma": rma,
+        })),
+        None => HttpResponse::NotFound().json(serde_json::json!({
+            "status": "NOT_FOUND",
+            "message": format!("RMA '{}' not found", rma_id),
+        })),
+    }
 }
 
 // =========================================================================
@@ -4266,7 +4439,10 @@ pub async fn builder_get_page_handler(
             if let Ok(mut res) = client.query(&sql).await {
                 if let Ok(Some(row)) = res.take::<Option<serde_json::Value>>(0) {
                     if let Some(tree_val) = row.get("tree") {
-                        if let Ok(tree) = serde_json::from_value::<erp_cms::builder_core::CanvasBlockTree>(tree_val.clone()) {
+                        if let Ok(tree) = serde_json::from_value::<
+                            erp_cms::builder_core::CanvasBlockTree,
+                        >(tree_val.clone())
+                        {
                             if let Ok(mut lock) = state.builder_pages.write() {
                                 lock.insert(id.clone(), tree.clone());
                             }
@@ -4419,19 +4595,24 @@ pub async fn builder_ai_prompt_handler(
                     data_binding: None,
                 },
                 erp_cms::builder_core::CanvasBlock::TextBlock {
-                    content: "Instant deployment, zero vendor lock-in, and sub-millisecond execution.".into(),
+                    content:
+                        "Instant deployment, zero vendor lock-in, and sub-millisecond execution."
+                            .into(),
                     data_binding: None,
                 },
                 erp_cms::builder_core::CanvasBlock::Container {
                     children: vec![
                         erp_cms::builder_core::CanvasBlock::CardBlock {
                             title: "Developer Edition".into(),
-                            body: "Free for local & single-node clusters. Full SurrealDB integration.".into(),
+                            body:
+                                "Free for local & single-node clusters. Full SurrealDB integration."
+                                    .into(),
                             image_url: None,
                         },
                         erp_cms::builder_core::CanvasBlock::CardBlock {
                             title: "Enterprise Grid".into(),
-                            body: "High-availability multi-tenant deployment with zero GC pauses.".into(),
+                            body: "High-availability multi-tenant deployment with zero GC pauses."
+                                .into(),
                             image_url: None,
                         },
                     ],
@@ -4440,7 +4621,10 @@ pub async fn builder_ai_prompt_handler(
             ],
             css_classes: "pricing-tier-grid py-12 px-6 text-center".into(),
         }
-    } else if prompt_lower.contains("card") || prompt_lower.contains("product") || prompt_lower.contains("catalog") {
+    } else if prompt_lower.contains("card")
+        || prompt_lower.contains("product")
+        || prompt_lower.contains("catalog")
+    {
         erp_cms::builder_core::CanvasBlock::Section {
             id: "product_showcase_section".into(),
             children: vec![
@@ -4473,7 +4657,8 @@ pub async fn builder_ai_prompt_handler(
         }
     } else if prompt_lower.contains("footer") {
         erp_cms::builder_core::CanvasBlock::Footer {
-            copyright_text: "© 2026 RustNext Enterprise ERP. Powered by Pure-Rust & SurrealDB.".into(),
+            copyright_text: "© 2026 RustNext Enterprise ERP. Powered by Pure-Rust & SurrealDB."
+                .into(),
         }
     } else {
         erp_cms::builder_core::CanvasBlock::Section {
@@ -4581,15 +4766,35 @@ pub async fn emdash_get_document_handler(
             let sql = format!("SELECT * FROM emdash_article:{clean_id};");
             if let Ok(mut res) = client.query(&sql).await {
                 if let Ok(Some(row)) = res.take::<Option<serde_json::Value>>(0) {
-                    let title = row.get("title").and_then(|v| v.as_str()).unwrap_or("Untitled").to_string();
-                    let slug = row.get("slug").and_then(|v| v.as_str()).unwrap_or(&clean_id).to_string();
-                    let author = row.get("author").and_then(|v| v.as_str()).unwrap_or("Editor").to_string();
-                    let mut doc = erp_cms::emdash_studio::EmdashDocument::new(id.clone(), title, slug, author);
+                    let title = row
+                        .get("title")
+                        .and_then(|v| v.as_str())
+                        .unwrap_or("Untitled")
+                        .to_string();
+                    let slug = row
+                        .get("slug")
+                        .and_then(|v| v.as_str())
+                        .unwrap_or(&clean_id)
+                        .to_string();
+                    let author = row
+                        .get("author")
+                        .and_then(|v| v.as_str())
+                        .unwrap_or("Editor")
+                        .to_string();
+                    let mut doc = erp_cms::emdash_studio::EmdashDocument::new(
+                        id.clone(),
+                        title,
+                        slug,
+                        author,
+                    );
                     if let Some(ver) = row.get("version").and_then(|v| v.as_u64()) {
                         doc.version = ver;
                     }
                     if let Some(blocks_val) = row.get("blocks") {
-                        if let Ok(blocks) = serde_json::from_value::<Vec<erp_cms::emdash_studio::EmdashBlock>>(blocks_val.clone()) {
+                        if let Ok(blocks) = serde_json::from_value::<
+                            Vec<erp_cms::emdash_studio::EmdashBlock>,
+                        >(blocks_val.clone())
+                        {
                             for b in blocks {
                                 doc.add_block(b);
                             }
@@ -4848,6 +5053,10 @@ pub async fn streaming_master_playlist_handler(video_id: web::Path<String>) -> i
     HttpResponse::Ok()
         .content_type("application/vnd.apple.mpegurl")
         .insert_header(("Cache-Control", "no-cache"))
+        .insert_header((
+            "Alt-Svc",
+            crate::quic_h3_stream::QuicH3StreamingEngine::generate_alt_svc_header(4433, 86400),
+        ))
         .body(playlist_str)
 }
 
@@ -4872,14 +5081,19 @@ pub async fn streaming_variant_playlist_handler(
     HttpResponse::Ok()
         .content_type("application/vnd.apple.mpegurl")
         .insert_header(("Cache-Control", "public, max-age=4"))
+        .insert_header((
+            "Alt-Svc",
+            crate::quic_h3_stream::QuicH3StreamingEngine::generate_alt_svc_header(4433, 86400),
+        ))
         .body(playlist_str)
 }
 
-/// Query parameters for token verification.
+/// Query parameters for token verification and client cache coordination.
 #[derive(Debug, Deserialize)]
 pub struct SegmentTokenQuery {
     pub token: Option<String>,
     pub exp: Option<u64>,
+    pub client_id: Option<String>,
 }
 
 /// Handler: Deliver HLS Transport Stream Segment: `GET /api/v2/streaming/videos/{id}/{variant}/{segment}`
@@ -4932,6 +5146,23 @@ pub async fn streaming_segment_handler(
         }
     };
 
+    let client_id = query.client_id.as_deref().unwrap_or("default_client");
+    let user_cfg = state.user_cache_registry.get_or_default(client_id);
+    let prefetches =
+        state
+            .user_cache_registry
+            .calculate_prefetch_segments(seq, seq + 40, &user_cfg);
+    let prefetch_header_val =
+        erp_cms::resilient_streaming::QuicStreamOptimizer::format_prefetch_header(&prefetches);
+    let priority_val = erp_cms::resilient_streaming::QuicStreamOptimizer::priority_header_value(
+        false,
+        user_cfg.burst_prefetch_enabled,
+    );
+
+    state
+        .user_cache_registry
+        .record_cache_hit(segment_bytes.len() as u64);
+
     let mime = if segment.ends_with(".m4s") || segment.ends_with(".mp4") {
         "video/iso.segment"
     } else {
@@ -4941,6 +5172,14 @@ pub async fn streaming_segment_handler(
     HttpResponse::Ok()
         .content_type(mime)
         .insert_header(("Cache-Control", "public, max-age=31536000, immutable"))
+        .insert_header((
+            "Alt-Svc",
+            crate::quic_h3_stream::QuicH3StreamingEngine::generate_alt_svc_header(4433, 86400),
+        ))
+        .insert_header(("Priority", priority_val))
+        .insert_header(("X-Prefetch-Segments", prefetch_header_val))
+        .insert_header(("X-User-Cache-Tier", format!("{:?}", user_cfg.tier)))
+        .insert_header(("X-User-Cache-MaxMB", user_cfg.max_cache_mb.to_string()))
         .body(segment_bytes)
 }
 
@@ -4955,20 +5194,18 @@ pub async fn streaming_rtmp_auth_handler(
             "channel_id": session.channel_id,
             "session": session,
         })),
-        Err(erp_cms::rtmp_ingest::RtmpError::UnauthorizedStreamKey(k)) => {
-            HttpResponse::Forbidden().json(serde_json::json!({
+        Err(erp_cms::rtmp_ingest::RtmpError::UnauthorizedStreamKey(k)) => HttpResponse::Forbidden()
+            .json(serde_json::json!({
                 "status": "error",
                 "error": "unauthorized_stream_key",
                 "key": k,
-            }))
-        }
-        Err(erp_cms::rtmp_ingest::RtmpError::ChannelAlreadyActive(c)) => {
-            HttpResponse::Conflict().json(serde_json::json!({
+            })),
+        Err(erp_cms::rtmp_ingest::RtmpError::ChannelAlreadyActive(c)) => HttpResponse::Conflict()
+            .json(serde_json::json!({
                 "status": "error",
                 "error": "channel_already_broadcasting",
                 "channel_id": c,
-            }))
-        }
+            })),
         Err(e) => HttpResponse::InternalServerError().json(serde_json::json!({
             "status": "error",
             "message": e.to_string(),
@@ -5026,7 +5263,10 @@ pub async fn streaming_upload_chunk_handler(
         Err(_) => p.chunk_base64.into_bytes(),
     };
 
-    match state.chunk_engine.append_chunk(&p.upload_id, p.offset, raw_data) {
+    match state
+        .chunk_engine
+        .append_chunk(&p.upload_id, p.offset, raw_data)
+    {
         Ok(is_complete) => {
             let (received, total) = state
                 .chunk_engine
@@ -5115,7 +5355,10 @@ pub async fn streaming_playback_progress_handler(
     };
 
     let mut wire_buf = [0u8; 128];
-    let wire_bytes_len = packet.serialize(&mut wire_buf).map(|b| b.len()).unwrap_or(0);
+    let wire_bytes_len = packet
+        .serialize(&mut wire_buf)
+        .map(|b| b.len())
+        .unwrap_or(0);
 
     HttpResponse::Ok().json(serde_json::json!({
         "status": "recorded",
@@ -5181,6 +5424,392 @@ pub async fn streaming_video_xray_vtt_handler(
             "message": format!("No X-Ray metadata track available for media '{id}'"),
         })),
     }
+}
+
+/// Query parameters for FAST linear manifest generation.
+#[derive(Debug, Deserialize)]
+pub struct FastLiveManifestQuery {
+    pub variant: Option<String>,
+}
+
+/// Handler: Deliver 24/7 FAST Linear Live HLS Manifest: `GET /api/v2/streaming/fast/{channel_id}/live.m3u8`
+pub async fn streaming_fast_live_manifest_handler(
+    channel_id: web::Path<String>,
+    query: web::Query<FastLiveManifestQuery>,
+    state: web::Data<DynamicRbacState>,
+) -> impl Responder {
+    let ch = channel_id.into_inner();
+    let variant = query.variant.as_deref().unwrap_or("720p");
+    let now_epoch = Utc::now().timestamp() as u64;
+
+    match state
+        .fast_registry
+        .get_live_manifest(&ch, now_epoch, variant)
+    {
+        Ok(manifest) => HttpResponse::Ok()
+            .content_type("application/vnd.apple.mpegurl")
+            .insert_header(("Cache-Control", "no-cache, no-store, must-revalidate"))
+            .body(manifest),
+        Err(e) => HttpResponse::NotFound().json(serde_json::json!({
+            "status": "error",
+            "message": e.to_string(),
+        })),
+    }
+}
+
+/// Handler: Real-time FAST Linear Playout & Edge Telemetry Status: `GET /api/v2/streaming/fast/{channel_id}/status`
+pub async fn streaming_fast_status_handler(
+    channel_id: web::Path<String>,
+    state: web::Data<DynamicRbacState>,
+) -> impl Responder {
+    let ch = channel_id.into_inner();
+    let now_epoch = Utc::now().timestamp() as u64;
+
+    match state.fast_registry.get_status_packet(&ch, now_epoch) {
+        Ok(packet) => {
+            let mut wire_buf = [0u8; 128];
+            let wire_len = packet
+                .serialize(&mut wire_buf)
+                .map(|b| b.len())
+                .unwrap_or(0);
+
+            HttpResponse::Ok().json(serde_json::json!({
+                "status": "success",
+                "channel_id": packet.channel_id.as_str(),
+                "program_title": packet.program_title.as_str(),
+                "remaining_sec": packet.remaining_sec,
+                "viewer_count": packet.viewer_count,
+                "is_ad_break": packet.is_ad_break,
+                "wire_bytes": wire_len,
+            }))
+        }
+        Err(e) => HttpResponse::NotFound().json(serde_json::json!({
+            "status": "error",
+            "message": e.to_string(),
+        })),
+    }
+}
+
+/// Handler: Electronic Program Guide (EPG) Schedule: `GET /api/v2/streaming/fast/{channel_id}/epg.json`
+pub async fn streaming_fast_epg_handler(
+    channel_id: web::Path<String>,
+    state: web::Data<DynamicRbacState>,
+) -> impl Responder {
+    let ch = channel_id.into_inner();
+    let now_epoch = Utc::now().timestamp() as u64;
+
+    match state.fast_registry.get_epg(&ch, now_epoch) {
+        Ok(epg) => HttpResponse::Ok().json(serde_json::json!({
+            "status": "success",
+            "epg": epg,
+        })),
+        Err(e) => HttpResponse::NotFound().json(serde_json::json!({
+            "status": "error",
+            "message": e.to_string(),
+        })),
+    }
+}
+
+// =========================================================================
+// QUIC Resilient Streaming & User Cache Endpoints
+// =========================================================================
+
+/// Query parameters for network-adaptive resilient playlist request.
+#[derive(Debug, Deserialize)]
+pub struct ResilientPlaylistQuery {
+    pub profile: Option<String>,
+    pub downlink_mbps: Option<f32>,
+    pub rtt_ms: Option<u32>,
+    pub packet_loss_pct: Option<f32>,
+    pub client_id: Option<String>,
+}
+
+/// Handler: Deliver network-adaptive resilient HLS Master Playlist: `GET /api/v2/streaming/videos/{id}/resilient.m3u8`
+pub async fn streaming_resilient_master_playlist_handler(
+    video_id: web::Path<String>,
+    query: web::Query<ResilientPlaylistQuery>,
+    state: web::Data<DynamicRbacState>,
+) -> impl Responder {
+    let id = video_id.into_inner();
+    let condition = erp_cms::resilient_streaming::NetworkCondition::from_hints(
+        query.profile.as_deref(),
+        query.downlink_mbps,
+        query.rtt_ms,
+        query.packet_loss_pct,
+    );
+
+    let client_id = query.client_id.as_deref().unwrap_or("default_client");
+    let user_cfg = state.user_cache_registry.get_or_default(client_id);
+
+    let manifest =
+        erp_cms::resilient_streaming::ResilientPlaylistEngine::compile_resilient_master_playlist(
+            &id, &condition,
+        );
+
+    HttpResponse::Ok()
+        .content_type("application/vnd.apple.mpegurl")
+        .insert_header(("Cache-Control", "no-cache"))
+        .insert_header((
+            "Alt-Svc",
+            crate::quic_h3_stream::QuicH3StreamingEngine::generate_alt_svc_header(4433, 86400),
+        ))
+        .insert_header(("X-Network-Profile", format!("{:?}", condition)))
+        .insert_header(("X-User-Cache-Tier", format!("{:?}", user_cfg.tier)))
+        .body(manifest)
+}
+
+/// DTO for configuring user cache tier.
+#[derive(Debug, Deserialize)]
+pub struct ConfigureUserCachePayload {
+    pub client_id: String,
+    pub tier: String,
+    pub max_cache_mb: Option<u32>,
+    pub prefetch_depth: Option<usize>,
+}
+
+/// Handler: Configure client/user caching tier: `POST /api/v2/streaming/cache/configure`
+pub async fn streaming_cache_configure_handler(
+    payload: web::Json<ConfigureUserCachePayload>,
+    state: web::Data<DynamicRbacState>,
+) -> impl Responder {
+    let p = payload.into_inner();
+    let tier = match p.tier.to_ascii_lowercase().as_str() {
+        "increased" | "high" => erp_cms::resilient_streaming::UserCacheTier::Increased,
+        "lossy_resilient" | "lossy" => erp_cms::resilient_streaming::UserCacheTier::LossyResilient,
+        "offline_burst" | "burst" | "offline" => {
+            erp_cms::resilient_streaming::UserCacheTier::OfflineBurst
+        }
+        _ => erp_cms::resilient_streaming::UserCacheTier::Standard,
+    };
+
+    let cfg = state.user_cache_registry.configure_user(
+        &p.client_id,
+        tier,
+        p.max_cache_mb,
+        p.prefetch_depth,
+    );
+
+    HttpResponse::Ok().json(serde_json::json!({
+        "status": "success",
+        "client_id": cfg.client_id.as_str(),
+        "tier": format!("{:?}", cfg.tier),
+        "max_cache_mb": cfg.max_cache_mb,
+        "prefetch_depth": cfg.prefetch_depth,
+        "buffer_protection_seconds": cfg.tier.buffer_protection_seconds(),
+        "burst_prefetch_enabled": cfg.burst_prefetch_enabled,
+        "quic_priority_enabled": cfg.quic_priority_enabled,
+    }))
+}
+
+/// Handler: Global & User Cache Telemetry: `GET /api/v2/streaming/cache/stats`
+pub async fn streaming_cache_stats_handler(state: web::Data<DynamicRbacState>) -> impl Responder {
+    let stats = state.user_cache_registry.get_stats();
+    HttpResponse::Ok().json(serde_json::json!({
+        "status": "success",
+        "total_configured_users": stats.total_configured_users,
+        "total_prefetch_batches": stats.total_prefetch_batches,
+        "total_segments_prefetched": stats.total_segments_prefetched,
+        "cache_hits": stats.cache_hits,
+        "bytes_saved_mb": stats.bytes_saved_mb,
+        "estimated_stalls_mitigated": stats.estimated_stalls_mitigated,
+        "quic_transport": "RFC 9000 / RFC 9114 Active",
+    }))
+}
+
+/// DTO for segment prefetch list request.
+#[derive(Debug, Deserialize)]
+pub struct CachePrefetchQueryPayload {
+    pub client_id: String,
+    pub video_id: String,
+    pub variant: String,
+    pub current_sequence: u64,
+    pub max_sequence: Option<u64>,
+}
+
+/// Handler: Calculate forward segment prefetch list: `POST /api/v2/streaming/cache/prefetch`
+pub async fn streaming_cache_prefetch_handler(
+    payload: web::Json<CachePrefetchQueryPayload>,
+    state: web::Data<DynamicRbacState>,
+) -> impl Responder {
+    let p = payload.into_inner();
+    let user_cfg = state.user_cache_registry.get_or_default(&p.client_id);
+    let max_seq = p.max_sequence.unwrap_or(p.current_sequence + 50);
+
+    let segments = state.user_cache_registry.calculate_prefetch_segments(
+        p.current_sequence,
+        max_seq,
+        &user_cfg,
+    );
+
+    let segment_urls: Vec<String> = segments
+        .iter()
+        .map(|s| {
+            format!(
+                "/api/v2/streaming/videos/{}/{}/{}",
+                p.video_id, p.variant, s
+            )
+        })
+        .collect();
+
+    HttpResponse::Ok().json(serde_json::json!({
+        "status": "success",
+        "client_id": p.client_id,
+        "tier": format!("{:?}", user_cfg.tier),
+        "prefetch_depth": segments.len(),
+        "segments": segments,
+        "segment_urls": segment_urls,
+        "quic_stream_priority": "u=4, i",
+        "estimated_buffer_gain_seconds": (segments.len() as f32) * 4.0,
+    }))
+}
+
+/// Handler: Zero-HoL HTTP/3 Framed Video Segment Streaming: `GET /api/v2/streaming/h3/segment/{id}/{variant}/{segment}`
+pub async fn streaming_h3_segment_handler(
+    path: web::Path<(String, String, String)>,
+    state: web::Data<DynamicRbacState>,
+) -> impl Responder {
+    let (id, variant, segment) = path.into_inner();
+    let seq = segment
+        .trim_start_matches("seg_")
+        .trim_end_matches(".ts")
+        .trim_end_matches(".m4s")
+        .parse::<u64>()
+        .unwrap_or(0);
+
+    let segment_bytes = match state.segment_cache.get_segment(&id, &variant, seq) {
+        Some(bytes) => bytes,
+        None => {
+            let mut synth = vec![0x47, 0x40, 0x00, 0x10];
+            synth.resize(188 * 10, 0xAA);
+            state
+                .segment_cache
+                .insert_segment(&id, &variant, seq, synth.clone());
+            synth
+        }
+    };
+
+    let peer_addr = std::net::SocketAddr::from(([127, 0, 0, 1], 4433));
+    let mut engine = crate::quic_h3_stream::QuicH3StreamingEngine::new(peer_addr);
+    let stream_id = engine.create_bidirectional_stream();
+
+    let frames =
+        match engine.stream_video_segment_h3(stream_id, &segment_bytes, "u=1, i", 32 * 1024) {
+            Ok(f) => f,
+            Err(e) => return HttpResponse::InternalServerError().body(e.to_string()),
+        };
+
+    let mut stream_bytes = Vec::new();
+    for f in frames {
+        stream_bytes.extend_from_slice(&f);
+    }
+
+    state
+        .user_cache_registry
+        .record_cache_hit(segment_bytes.len() as u64);
+
+    HttpResponse::Ok()
+        .content_type("application/octet-stream")
+        .insert_header(("X-QUIC-Stream-ID", stream_id.to_string()))
+        .insert_header(("Priority", "u=1, i"))
+        .insert_header((
+            "Alt-Svc",
+            crate::quic_h3_stream::QuicH3StreamingEngine::generate_alt_svc_header(4433, 86400),
+        ))
+        .body(stream_bytes)
+}
+
+// =========================================================================
+// Stremio Addon Protocol v3 Endpoints (Phase 10)
+// =========================================================================
+
+/// Handler: Stremio Addon Manifest: `GET /api/v2/streaming/addon/manifest.json`
+pub async fn stremio_manifest_handler(state: web::Data<DynamicRbacState>) -> impl Responder {
+    HttpResponse::Ok()
+        .content_type("application/json")
+        .insert_header(("Access-Control-Allow-Origin", "*"))
+        .json(state.stremio_addon.manifest())
+}
+
+/// Query parameters for Stremio catalog listings.
+#[derive(Debug, Deserialize)]
+pub struct StremioCatalogQuery {
+    pub search: Option<String>,
+    pub genre: Option<String>,
+}
+
+/// Handler: Stremio Catalog Resolution: `GET /api/v2/streaming/addon/catalog/{type}/{id}.json`
+pub async fn stremio_catalog_handler(
+    path: web::Path<(String, String)>,
+    query: web::Query<StremioCatalogQuery>,
+    state: web::Data<DynamicRbacState>,
+) -> impl Responder {
+    let (type_name, catalog_id) = path.into_inner();
+    let res = state.stremio_addon.catalog(
+        &type_name,
+        &catalog_id,
+        query.search.as_deref(),
+        query.genre.as_deref(),
+    );
+    HttpResponse::Ok()
+        .content_type("application/json")
+        .insert_header(("Access-Control-Allow-Origin", "*"))
+        .json(res)
+}
+
+/// Handler: Stremio Deep Metadata Resolution: `GET /api/v2/streaming/addon/meta/{type}/{id}.json`
+pub async fn stremio_meta_handler(
+    path: web::Path<(String, String)>,
+    state: web::Data<DynamicRbacState>,
+) -> impl Responder {
+    let (type_name, item_id) = path.into_inner();
+    match state.stremio_addon.meta(&type_name, &item_id) {
+        Some(res) => HttpResponse::Ok()
+            .content_type("application/json")
+            .insert_header(("Access-Control-Allow-Origin", "*"))
+            .json(res),
+        None => HttpResponse::NotFound()
+            .content_type("application/json")
+            .insert_header(("Access-Control-Allow-Origin", "*"))
+            .json(serde_json::json!({
+                "error": format!("Item '{item_id}' of type '{type_name}' not found"),
+            })),
+    }
+}
+
+/// Handler: Stremio Stream Source Resolution: `GET /api/v2/streaming/addon/stream/{type}/{id}.json`
+pub async fn stremio_stream_handler(
+    path: web::Path<(String, String)>,
+    state: web::Data<DynamicRbacState>,
+    req: HttpRequest,
+) -> impl Responder {
+    let (type_name, item_id) = path.into_inner();
+    let conn_info = req.connection_info();
+    let base_url = format!("{}://{}", conn_info.scheme(), conn_info.host());
+
+    let res = state.stremio_addon.streams(&type_name, &item_id, &base_url);
+    HttpResponse::Ok()
+        .content_type("application/json")
+        .insert_header(("Access-Control-Allow-Origin", "*"))
+        .json(res)
+}
+
+/// Handler: Stremio Subtitles Resolution: `GET /api/v2/streaming/addon/subtitles/{type}/{id}.json`
+pub async fn stremio_subtitles_handler(
+    path: web::Path<(String, String)>,
+    state: web::Data<DynamicRbacState>,
+    req: HttpRequest,
+) -> impl Responder {
+    let (type_name, item_id) = path.into_inner();
+    let conn_info = req.connection_info();
+    let base_url = format!("{}://{}", conn_info.scheme(), conn_info.host());
+
+    let res = state
+        .stremio_addon
+        .subtitles(&type_name, &item_id, &base_url);
+    HttpResponse::Ok()
+        .content_type("application/json")
+        .insert_header(("Access-Control-Allow-Origin", "*"))
+        .json(res)
 }
 
 // =========================================================================
@@ -8188,7 +8817,10 @@ mod tests {
         )
         .await
         .respond_to(&actix_web::test::TestRequest::default().to_http_request());
-        assert_eq!(conflict_resp.status(), actix_web::http::StatusCode::CONFLICT);
+        assert_eq!(
+            conflict_resp.status(),
+            actix_web::http::StatusCode::CONFLICT
+        );
 
         // 1d. Builder optimistic concurrency conflict via HTTP If-Match header
         let stale_if_match_req = actix_web::test::TestRequest::default()
@@ -8209,15 +8841,16 @@ mod tests {
         )
         .await
         .respond_to(&actix_web::test::TestRequest::default().to_http_request());
-        assert_eq!(if_match_conflict.status(), actix_web::http::StatusCode::CONFLICT);
+        assert_eq!(
+            if_match_conflict.status(),
+            actix_web::http::StatusCode::CONFLICT
+        );
 
         // 1e. Builder history endpoint
-        let hist_resp = builder_history_list_handler(
-            web::Path::from("landing_v1".to_string()),
-            None,
-        )
-        .await
-        .respond_to(&actix_web::test::TestRequest::default().to_http_request());
+        let hist_resp =
+            builder_history_list_handler(web::Path::from("landing_v1".to_string()), None)
+                .await
+                .respond_to(&actix_web::test::TestRequest::default().to_http_request());
         assert_eq!(hist_resp.status(), actix_web::http::StatusCode::OK);
 
         // 2. Builder list pages
@@ -8291,7 +8924,10 @@ mod tests {
         )
         .await
         .respond_to(&actix_web::test::TestRequest::default().to_http_request());
-        assert_eq!(doc_conflict_resp.status(), actix_web::http::StatusCode::CONFLICT);
+        assert_eq!(
+            doc_conflict_resp.status(),
+            actix_web::http::StatusCode::CONFLICT
+        );
 
         // 4d. Emdash optimistic concurrency conflict via HTTP If-Match header
         let stale_doc_header_req = actix_web::test::TestRequest::default()
@@ -8314,15 +8950,15 @@ mod tests {
         )
         .await
         .respond_to(&actix_web::test::TestRequest::default().to_http_request());
-        assert_eq!(doc_header_conflict.status(), actix_web::http::StatusCode::CONFLICT);
+        assert_eq!(
+            doc_header_conflict.status(),
+            actix_web::http::StatusCode::CONFLICT
+        );
 
         // 4e. Emdash revisions endpoint
-        let rev_resp = emdash_revisions_list_handler(
-            web::Path::from("art_001".to_string()),
-            None,
-        )
-        .await
-        .respond_to(&actix_web::test::TestRequest::default().to_http_request());
+        let rev_resp = emdash_revisions_list_handler(web::Path::from("art_001".to_string()), None)
+            .await
+            .respond_to(&actix_web::test::TestRequest::default().to_http_request());
         assert_eq!(rev_resp.status(), actix_web::http::StatusCode::OK);
 
         // 5. Emdash transition document to InReview then Published
@@ -8384,13 +9020,10 @@ mod tests {
             crop: Some("0.5,0.5".into()),
             fmt: Some("webp".into()),
         });
-        let img_resp = download_image_handler(
-            web::Path::from("sample_hash".to_string()),
-            img_query,
-            None,
-        )
-        .await
-        .respond_to(&actix_web::test::TestRequest::default().to_http_request());
+        let img_resp =
+            download_image_handler(web::Path::from("sample_hash".to_string()), img_query, None)
+                .await
+                .respond_to(&actix_web::test::TestRequest::default().to_http_request());
         assert_eq!(img_resp.status(), actix_web::http::StatusCode::OK);
         assert_eq!(
             img_resp.headers().get("Content-Type").unwrap(),

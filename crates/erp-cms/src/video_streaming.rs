@@ -457,7 +457,9 @@ mod tests {
 
         let decision = PlaybackDecisionEngine::evaluate_playback(&profile, &media);
         assert_eq!(decision, PlayMethod::DirectPlay);
-        assert!(PlaybackDecisionEngine::build_ffmpeg_command("in.mp4", "out.mp4", &decision).is_none());
+        assert!(
+            PlaybackDecisionEngine::build_ffmpeg_command("in.mp4", "out.mp4", &decision).is_none()
+        );
     }
 
     #[test]
@@ -485,7 +487,8 @@ mod tests {
             }
         );
 
-        let cmd = PlaybackDecisionEngine::build_ffmpeg_command("in.mkv", "out.mp4", &decision).unwrap();
+        let cmd =
+            PlaybackDecisionEngine::build_ffmpeg_command("in.mkv", "out.mp4", &decision).unwrap();
         assert!(cmd.contains("-c copy"));
         assert!(cmd.contains("-movflags +faststart"));
     }
@@ -522,7 +525,8 @@ mod tests {
             other => panic!("Expected Transcode, got {:?}", other),
         }
 
-        let cmd = PlaybackDecisionEngine::build_ffmpeg_command("in.mp4", "out.mp4", &decision).unwrap();
+        let cmd =
+            PlaybackDecisionEngine::build_ffmpeg_command("in.mp4", "out.mp4", &decision).unwrap();
         assert!(cmd.contains("-ac 2"));
         assert!(cmd.contains("tonemap=mobius"));
     }
@@ -560,7 +564,8 @@ mod tests {
             other => panic!("Expected Transcode, got {:?}", other),
         }
 
-        let cmd = PlaybackDecisionEngine::build_ffmpeg_command("in.mp4", "out.mp4", &decision).unwrap();
+        let cmd =
+            PlaybackDecisionEngine::build_ffmpeg_command("in.mp4", "out.mp4", &decision).unwrap();
         assert!(cmd.contains("subtitles=\"in.mp4\""));
     }
 }

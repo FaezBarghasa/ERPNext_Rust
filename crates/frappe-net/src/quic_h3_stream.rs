@@ -523,6 +523,7 @@ pub struct QuicH3StreamingEngine {
     pub max_connection_data: u64,
     pub total_bytes_sent: u64,
     pub active_streams: HashMap<u64, QuicStream>,
+    pub max_active_streams: usize,
     pub settings: H3Settings,
     pub last_activity: Instant,
     pub total_frames_sent: AtomicU64,
@@ -539,14 +540,31 @@ impl QuicH3StreamingEngine {
             max_connection_data: 64 * 1024 * 1024, // 64 MB connection window
             total_bytes_sent: 0,
             active_streams: HashMap::new(),
+            max_active_streams: 512,
             settings: H3Settings::default(),
             last_activity: Instant::now(),
             total_frames_sent: AtomicU64::new(0),
         }
     }
 
+    /// Prunes finished streams to prevent monotonic memory leakage over long-running sessions.
+    pub fn prune_finished_streams(&mut self) -> usize {
+        let before = self.active_streams.len();
+        self.active_streams.retain(|_, s| !s.is_finished);
+        before.saturating_sub(self.active_streams.len())
+    }
+
+    /// Explicitly closes and removes a stream.
+    pub fn close_stream(&mut self, stream_id: u64) {
+        self.active_streams.remove(&stream_id);
+    }
+
     /// Allocates a new HTTP/3 server bidirectional stream ID (0x01, 0x05, 0x09...).
     pub fn create_bidirectional_stream(&mut self) -> u64 {
+        if self.active_streams.len() >= self.max_active_streams {
+            self.prune_finished_streams();
+        }
+
         let sid = (self.next_stream_id * 4) | 0x01;
         self.next_stream_id += 1;
         self.active_streams.insert(
@@ -564,6 +582,10 @@ impl QuicH3StreamingEngine {
 
     /// Allocates a server-initiated unidirectional stream for Live Event Push / Telemetry (0x03, 0x07...).
     pub fn create_unidirectional_push_stream(&mut self) -> u64 {
+        if self.active_streams.len() >= self.max_active_streams {
+            self.prune_finished_streams();
+        }
+
         let sid = (self.next_stream_id * 4) | 0x03;
         self.next_stream_id += 1;
         self.active_streams.insert(
@@ -636,6 +658,30 @@ impl QuicH3StreamingEngine {
         stream.is_finished = true;
         self.last_activity = Instant::now();
         Ok(frames)
+    }
+
+    /// Streams an HLS video segment over HTTP/3 with RFC 9218 stream priority and chunked DATA frames.
+    pub fn stream_video_segment_h3(
+        &mut self,
+        stream_id: u64,
+        segment_bytes: &[u8],
+        priority: &str,
+        chunk_size: usize,
+    ) -> Result<Vec<Vec<u8>>, QuicH3Error> {
+        let header_frame = self.send_h3_headers(
+            stream_id,
+            200,
+            &[
+                ("content-type", "video/mp2t"),
+                ("priority", priority),
+                ("cache-control", "public, max-age=31536000, immutable"),
+            ],
+        )?;
+
+        let mut all_frames = vec![header_frame];
+        let data_frames = self.stream_file_asset_h3(stream_id, segment_bytes, chunk_size)?;
+        all_frames.extend(data_frames);
+        Ok(all_frames)
     }
 
     /// Emits a live real-time mutation or telemetry push event over HTTP/3 Server Push.

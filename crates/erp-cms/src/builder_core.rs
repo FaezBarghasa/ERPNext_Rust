@@ -490,35 +490,85 @@ impl BlockCssInspector {
 
     /// Merges overrides from another inspector if the corresponding field is `Some`.
     pub fn merge_override(&mut self, other: &Self) {
-        if other.font_family.is_some() { self.font_family = other.font_family.clone(); }
-        if other.font_size_px.is_some() { self.font_size_px = other.font_size_px; }
-        if other.font_weight.is_some() { self.font_weight = other.font_weight; }
-        if other.line_height.is_some() { self.line_height = other.line_height; }
-        if other.text_align.is_some() { self.text_align = other.text_align.clone(); }
-        if other.color.is_some() { self.color = other.color.clone(); }
+        if other.font_family.is_some() {
+            self.font_family = other.font_family.clone();
+        }
+        if other.font_size_px.is_some() {
+            self.font_size_px = other.font_size_px;
+        }
+        if other.font_weight.is_some() {
+            self.font_weight = other.font_weight;
+        }
+        if other.line_height.is_some() {
+            self.line_height = other.line_height;
+        }
+        if other.text_align.is_some() {
+            self.text_align = other.text_align.clone();
+        }
+        if other.color.is_some() {
+            self.color = other.color.clone();
+        }
 
-        if other.margin_top_px.is_some() { self.margin_top_px = other.margin_top_px; }
-        if other.margin_right_px.is_some() { self.margin_right_px = other.margin_right_px; }
-        if other.margin_bottom_px.is_some() { self.margin_bottom_px = other.margin_bottom_px; }
-        if other.margin_left_px.is_some() { self.margin_left_px = other.margin_left_px; }
+        if other.margin_top_px.is_some() {
+            self.margin_top_px = other.margin_top_px;
+        }
+        if other.margin_right_px.is_some() {
+            self.margin_right_px = other.margin_right_px;
+        }
+        if other.margin_bottom_px.is_some() {
+            self.margin_bottom_px = other.margin_bottom_px;
+        }
+        if other.margin_left_px.is_some() {
+            self.margin_left_px = other.margin_left_px;
+        }
 
-        if other.padding_top_px.is_some() { self.padding_top_px = other.padding_top_px; }
-        if other.padding_right_px.is_some() { self.padding_right_px = other.padding_right_px; }
-        if other.padding_bottom_px.is_some() { self.padding_bottom_px = other.padding_bottom_px; }
-        if other.padding_left_px.is_some() { self.padding_left_px = other.padding_left_px; }
+        if other.padding_top_px.is_some() {
+            self.padding_top_px = other.padding_top_px;
+        }
+        if other.padding_right_px.is_some() {
+            self.padding_right_px = other.padding_right_px;
+        }
+        if other.padding_bottom_px.is_some() {
+            self.padding_bottom_px = other.padding_bottom_px;
+        }
+        if other.padding_left_px.is_some() {
+            self.padding_left_px = other.padding_left_px;
+        }
 
-        if other.display.is_some() { self.display = other.display.clone(); }
-        if other.flex_direction.is_some() { self.flex_direction = other.flex_direction.clone(); }
-        if other.justify_content.is_some() { self.justify_content = other.justify_content.clone(); }
-        if other.align_items.is_some() { self.align_items = other.align_items.clone(); }
-        if other.gap_px.is_some() { self.gap_px = other.gap_px; }
-        if other.grid_columns.is_some() { self.grid_columns = other.grid_columns.clone(); }
+        if other.display.is_some() {
+            self.display = other.display.clone();
+        }
+        if other.flex_direction.is_some() {
+            self.flex_direction = other.flex_direction.clone();
+        }
+        if other.justify_content.is_some() {
+            self.justify_content = other.justify_content.clone();
+        }
+        if other.align_items.is_some() {
+            self.align_items = other.align_items.clone();
+        }
+        if other.gap_px.is_some() {
+            self.gap_px = other.gap_px;
+        }
+        if other.grid_columns.is_some() {
+            self.grid_columns = other.grid_columns.clone();
+        }
 
-        if other.background_color.is_some() { self.background_color = other.background_color.clone(); }
-        if other.border_width_px.is_some() { self.border_width_px = other.border_width_px; }
-        if other.border_color.is_some() { self.border_color = other.border_color.clone(); }
-        if other.border_radius_px.is_some() { self.border_radius_px = other.border_radius_px; }
-        if other.box_shadow.is_some() { self.box_shadow = other.box_shadow.clone(); }
+        if other.background_color.is_some() {
+            self.background_color = other.background_color.clone();
+        }
+        if other.border_width_px.is_some() {
+            self.border_width_px = other.border_width_px;
+        }
+        if other.border_color.is_some() {
+            self.border_color = other.border_color.clone();
+        }
+        if other.border_radius_px.is_some() {
+            self.border_radius_px = other.border_radius_px;
+        }
+        if other.box_shadow.is_some() {
+            self.box_shadow = other.box_shadow.clone();
+        }
     }
 }
 
@@ -912,7 +962,9 @@ impl CanvasBlockTree {
                     .as_deref()
                     .and_then(|p| resolver.resolve_path(p))
                     .unwrap_or_else(|| resolver.interpolate_string(content.as_str()));
-                out.push_str(&format!("<p id=\"{id}\"{slot_attr}{style_attr}>{resolved}</p>\n"));
+                out.push_str(&format!(
+                    "<p id=\"{id}\"{slot_attr}{style_attr}>{resolved}</p>\n"
+                ));
             }
             CanvasBlock::BlockQuote { quote, author } => {
                 let q_res = resolver.interpolate_string(quote.as_str());
@@ -996,7 +1048,9 @@ impl CanvasBlockTree {
             } => {
                 let title_res = resolver.interpolate_string(title.as_str());
                 let body_res = resolver.interpolate_string(body.as_str());
-                let img_res = image_url.as_ref().map(|img| resolver.interpolate_string(img.as_str()));
+                let img_res = image_url
+                    .as_ref()
+                    .map(|img| resolver.interpolate_string(img.as_str()));
 
                 out.push_str(&format!(
                     "<div id=\"{id}\" class=\"card-block\"{slot_attr}{style_attr}>"
@@ -1053,13 +1107,23 @@ impl CanvasBlockTree {
                 out.push_str(&format!(
                     "<div id=\"{id}\" class=\"repeater\" data-source=\"{data_source_path}\"{slot_attr}{style_attr}>\n"
                 ));
-                let clean_path = data_source_path.trim().trim_start_matches("{{").trim_end_matches("}}").trim();
+                let clean_path = data_source_path
+                    .trim()
+                    .trim_start_matches("{{")
+                    .trim_end_matches("}}")
+                    .trim();
                 let parts: Vec<&str> = clean_path.split('.').collect();
-                let key = if parts.len() > 1 && parts[0] == "pageData" { parts[1] } else { parts[0] };
+                let key = if parts.len() > 1 && parts[0] == "pageData" {
+                    parts[1]
+                } else {
+                    parts[0]
+                };
                 if let Some(serde_json::Value::Array(items)) = resolver.page_data.get(key) {
                     for (idx, item) in items.iter().enumerate() {
                         let mut item_resolver = resolver.clone();
-                        item_resolver.component_data.insert(item_alias.clone(), item.clone());
+                        item_resolver
+                            .component_data
+                            .insert(item_alias.clone(), item.clone());
                         let temp_id = format!("{id}_item_{idx}");
                         let temp_node = CanvasBlockNode {
                             id: temp_id.into(),
@@ -1072,7 +1136,9 @@ impl CanvasBlockTree {
                             slot_definitions: Vec::new(),
                         };
                         let mut temp_tree = CanvasBlockTree::default();
-                        temp_tree.nodes.insert(temp_node.id.clone(), temp_node.clone());
+                        temp_tree
+                            .nodes
+                            .insert(temp_node.id.clone(), temp_node.clone());
                         temp_tree.root_ids.push(temp_node.id.clone());
                         out.push_str(&temp_tree.render_html(&item_resolver));
                     }
@@ -1459,7 +1525,16 @@ mod tests {
         assert!(html.contains("Rendered within slot container."));
         assert!(html.contains("@media (max-width: 480px)"));
         assert!(html.contains("#blk_1 { background-color: #000000; }"));
-        assert_eq!(tree.get_node(slot_container_id.as_str()).unwrap().slot_definitions.len(), 1);
-        assert_eq!(tree.get_node(p_id.as_str()).unwrap().parent_id.as_deref(), Some(slot_container_id.as_str()));
+        assert_eq!(
+            tree.get_node(slot_container_id.as_str())
+                .unwrap()
+                .slot_definitions
+                .len(),
+            1
+        );
+        assert_eq!(
+            tree.get_node(p_id.as_str()).unwrap().parent_id.as_deref(),
+            Some(slot_container_id.as_str())
+        );
     }
 }
