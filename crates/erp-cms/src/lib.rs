@@ -12,9 +12,11 @@ pub mod seo_engine;
 pub mod storefront;
 pub mod taxonomy;
 pub mod template_catalog;
+pub mod ssai_engine;
 pub mod theme_engine;
 pub mod transcode_pipeline;
 pub mod video_streaming;
+pub mod xray_metadata;
 
 pub use media_library::{MediaAsset, MediaError, MediaLibraryRegistry};
 pub use taxonomy::{TaxonomyError, TaxonomyRegistry, TaxonomyTerm, TaxonomyType};
@@ -60,6 +62,10 @@ pub use hls_engine::{
 pub use rtmp_ingest::{
     NginxRtmpPublishPayload, NginxRtmpRecordPayload, NginxRtmpUpdatePayload, RtmpError,
     RtmpIngestManager, RtmpStreamSession, RtmpStreamStatus,
+};
+pub use ssai_engine::{
+    AdCreative, AdPod, AdTrackingBeacons, HlsDateRange, Scte35CommandType, Scte35Cue,
+    Scte35SpliceInsert, SsaiError, SsaiManifestStitcher, SsaiStitchResult, mpeg_crc32,
 };
 pub use transcode_pipeline::{
     HardwareAccelType, ResumableChunkEngine, ResumableUploadSession, StoryboardTile,
@@ -161,5 +167,33 @@ mod tests {
                 .start_playback("user_1", "session_2".into(), true, 1)
                 .is_ok()
         );
+    }
+
+    #[test]
+    fn test_ssai_manifest_stitching_end_to_end() {
+        let mut playlist = hls_engine::HlsMediaPlaylist::new(6, false);
+        for i in 0..6 {
+            playlist.add_segment(hls_engine::HlsMediaSegment {
+                sequence_number: i,
+                duration_seconds: 6.0,
+                uri: format!("vod/seg_{i}.ts"),
+                has_discontinuity: false,
+            });
+        }
+
+        let mut ad_pod = AdPod::new("pod-mid-99", 15.0);
+        ad_pod.add_creative(AdCreative::preset_15s("ad-audi", "Audi"));
+
+        let cue = Scte35Cue::new_splice_insert_cue_out(99, Scte35Cue::seconds_to_pts(18.0), 15.0);
+        let (stitched, result) = SsaiManifestStitcher::stitch_midroll(&playlist, 18.0, &ad_pod, Some(&cue))
+            .expect("stitch midroll failed");
+
+        assert_eq!(result.inserted_ad_segments_count, 3);
+        assert_eq!(result.discontinuities_injected, 2);
+
+        let manifest = SsaiManifestStitcher::compile_manifest(&stitched, &result.daterange_tags);
+        assert!(manifest.contains("#EXT-X-DATERANGE:ID=\"ad-pod-midroll-pod-mid-99\""));
+        assert!(manifest.contains("ads/ad-audi/seg_0.ts"));
+        assert!(manifest.contains("#EXT-X-DISCONTINUITY"));
     }
 }

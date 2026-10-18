@@ -5013,10 +5013,10 @@ pub async fn streaming_upload_chunk_handler(
     state: web::Data<DynamicRbacState>,
 ) -> impl Responder {
     let p = payload.into_inner();
-    if p.offset == 0 {
-        if let Some(total) = p.total_bytes {
-            let _ = state.chunk_engine.initiate_upload(&p.upload_id, total);
-        }
+    if p.offset == 0
+        && let Some(total) = p.total_bytes
+    {
+        let _ = state.chunk_engine.initiate_upload(&p.upload_id, total);
     }
 
     let raw_data = match hex::decode(&p.chunk_base64) {
@@ -5031,24 +5031,24 @@ pub async fn streaming_upload_chunk_handler(
                 .get_progress(&p.upload_id)
                 .unwrap_or((0, 0));
 
-            if is_complete {
-                if let Ok((_bytes, hash)) = state.chunk_engine.assemble_payload(&p.upload_id) {
-                    let job = erp_cms::transcode_pipeline::TranscodeJob {
-                        job_id: format!("tx_{}", p.upload_id),
-                        media_id: p.upload_id.clone(),
-                        input_path: format!("/spool/{}.mp4", p.upload_id),
-                        output_dir: format!("/hls/{}", p.upload_id),
-                        hardware_accel: erp_cms::transcode_pipeline::HardwareAccelType::Cpu,
-                        enable_storyboard: true,
-                    };
-                    let _ = state.transcode_queue.enqueue_job(job);
-                    return HttpResponse::Ok().json(serde_json::json!({
-                        "status": "complete",
-                        "upload_id": p.upload_id,
-                        "sha256": hash,
-                        "transcode_job_id": format!("tx_{}", p.upload_id),
-                    }));
-                }
+            if is_complete
+                && let Ok((_bytes, hash)) = state.chunk_engine.assemble_payload(&p.upload_id)
+            {
+                let job = erp_cms::transcode_pipeline::TranscodeJob {
+                    job_id: format!("tx_{}", p.upload_id),
+                    media_id: p.upload_id.clone(),
+                    input_path: format!("/spool/{}.mp4", p.upload_id),
+                    output_dir: format!("/hls/{}", p.upload_id),
+                    hardware_accel: erp_cms::transcode_pipeline::HardwareAccelType::Cpu,
+                    enable_storyboard: true,
+                };
+                let _ = state.transcode_queue.enqueue_job(job);
+                return HttpResponse::Ok().json(serde_json::json!({
+                    "status": "complete",
+                    "upload_id": p.upload_id,
+                    "sha256": hash,
+                    "transcode_job_id": format!("tx_{}", p.upload_id),
+                }));
             }
 
             HttpResponse::Ok().json(serde_json::json!({
