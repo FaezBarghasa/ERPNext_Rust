@@ -77,12 +77,18 @@ graph TD
 - **Automated Double-Entry Invoice Settlement Reconciliation**: Payment entries and gateway payment charges (`/api/v2/payments/charge`, `/api/v2/method/accounting/payment-entry`) automatically query and reconcile the target `Sales Invoice` or `Purchase Invoice` in SurrealDB, decrementing `outstanding_amount` and transitioning document status from `Unpaid` to `Paid` or `Partly Paid`.
 - **In-Process Automated ACME Gateway (`AcmeGateway`)**: Manages Let's Encrypt automated certificate negotiation, caching, and host-to-tenant SNI routing.
 - **Tenant Context Scoping (`TenantContext`, `resolve_scoped_session`)**: Strictly isolates tenant database handles extracted from headers (`X-Tenant-Id`) or subdomain routing.
+- **Dynamic RBAC & Security Gateway**: Role permission registry with permlevels (0..9), MFA TOTP verification, LoginGuard brute-force protection, CIDR IP filtering, and bitemporal audit trail ledger.
+- **High-Performance Video & Audio Streaming APIs**: Actix-Web endpoints serving HLS v6 video manifests, SSAI stitched segments, FAST channel EPGs, Stremio addon protocol, Subsonic / OpenSubsonic v1.16+ views (`/rest/*.view`), Owncast-style live radio LL-HLS audio and chat, and Audioserve-grade chapters and LWW cross-device bookmarks.
 
-### 3.5 `rbench`
+### 3.5 `erp-cms-core`
+- **Zero-Allocation `#![no_std]` Edge Telemetry**: Bounded wire structs (`AudioPlaybackPacket`) reporting mode, track ID, position, volume, and EQ preset in 63 bytes with CRC16-CCITT checksum for ARM Cortex-M and RISC-V targets.
+- **Static Edge Canvas Layout (`EdgeCanvasLayout<CAP>`)**: Zero-heap layout structure using `heapless` collections for e-ink warehouse shelf tags, kiosks, and embedded displays.
+
+### 3.6 `rbench`
 - **Site Orchestration CLI**: Automates tenant namespace provisioning (`new-site`), fast template deployment (`site deploy`), schema migration (`migrate`), and app archive verification (`install-app`).
 - **Synthetic Load Generator (`benchmark`)**: Multi-threaded async benchmark engine tracking latency percentiles (p50, p90, p95, p99) and QPS throughput across in-memory and cluster deployments.
 
-### 3.6 `desk-app` & `desk-components`
+### 3.7 `desk-app` & `desk-components`
 - **Universal Hardware Abstraction Layer (`MobileHardwareAbstractionLayer`)**: Async Rust 2024 trait routing biometric verification, barcode scanning, thermal ESC/POS printing, and geolocation between Android JNI (`AndroidJniHalAdapter`) and W3C Web APIs (`WebApisHalAdapter`).
 - **Role-Adaptive Multi-Persona Shell (`PersonaShellConfig`, `render_desk_shell_html`)**: Projects 5 specialized interfaces (`ClientCustomer`, `WarehouseWorker`, `ShopfloorMes`, `ManagerApprover`, `SystemAdmin`) and unified enterprise desktop from a single binary.
 - **Schema-Driven Dynamic Form & List View Engines (`render_list_view_html`, `render_form_view_html`)**: Dynamically queries `/api/v2/meta/{doctype}` and generates typed form inputs (`Currency`, `Float`, `Int`, `Date`, `Datetime`, `Check`, `Select`, `Textarea`), required field indicators, raw JSON developer inspector toggle, SurrealDB persistence, and document lifecycle controls (`Draft` $\to$ `Submitted` $\to$ `Cancelled`).
@@ -104,7 +110,8 @@ graph TD
 | **`erp-asset`** | Asset Life Cycle & Operational Safety | Linear Referencing Systems (LRS), Weibull $(\beta, \eta)$ Remaining Useful Life (RUL) predictive degradation, and tamper-evident Permit-to-Work (PTW) / Lockout-Tagout (LOTO) interlocks. |
 | **`erp-software`** | Subscription Billing & Revenue Recognition | ASC 606 5-step standalone selling price (SSP) allocation, graduated SaaS subscription tiers, and SLA penalty credit ledgers. |
 | **`erp-trade`** | Commercial Operations & Logistics | Cascading pricing rules, metered billing models, landed cost allocation, automated 3-way invoice matching (`InvoiceMatchingEngine`), and streaming WooCommerce migration (`WooMigrationEngine`). |
-| **`erp-cms`** | Digital Commerce & Content Delivery | Declarative `PageBlock` canvas AST, pre-allocated Server-Side HTML Rendering (`SsrEngine` with $<10\text{ms}$ TTFB), atomic e-commerce checkout transactions (`AtomicCheckoutEngine`), LuxeGen 3D WebGL procedural configurator (Three.js PBR + GSAP ScrollTrigger kinetics), 6 prebuilt enterprise template suites (`template_catalog.rs`), and dynamic multi-tenant theme compiler (`theme_engine.rs`). |
+| **`erp-cms-core`** | `#![no_std]` Edge CMS & Wire Telemetry | 63-byte binary wire telemetry packet (`AudioPlaybackPacket`) with CRC16-CCITT checksum for Cortex-M bare-metal microcontrollers, and bounded static canvas layouts (`EdgeCanvasLayout`). |
+| **`erp-cms`** | Block Canvas, Video OTT & Audio Streaming CMS | Declarative `PageBlock` canvas AST, pre-allocated Server-Side HTML Rendering (`SsrEngine` with $<10\text{ms}$ TTFB), atomic e-commerce checkout (`AtomicCheckoutEngine`), 10 prebuilt enterprise template suites with 10 aesthetic themes (100 permutations total), full OTT video streaming (HLS v6, SCTE-35 SSAI, FAST linear EPG channels, Stremio v1, Video X-Ray), and Master Audio Streaming CMS (lossless FLAC compression, 10-band ISO EQ, karaoke LRC, Camelot harmonic & transcript TF-IDF recommendation engine, EBU R128 normalizer, SoundCloud waveforms, procedural sleep soundscapes, Owncast live radio, Audioserve chapters/bookmarks, and Subsonic API v1.16+). |
 | **`erp-hr`** | Human Resources & Workforce Management | Departmental structures, biometric attendance logging, flexible salary rule matrix, and automated payroll slip generation. |
 | **`erp-crm`** | Sales Pipeline & Customer Engagement | Multi-stage lead acquisition funnels, deal conversion state machines, and weighted opportunity scoring algorithms. |
 | **`erp-support`** | Service Desk & Customer Support | Ticket lifecycle management, multi-tier SLA response/resolution countdown timers, and automated priority escalation matrices. |

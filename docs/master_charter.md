@@ -631,6 +631,55 @@ Permissions & Assertions     - CompactString Keys
   \text{Sustained Mobile Frame Rate} \ge 60\,\text{FPS}, \quad \text{3D Scene Memory Overhead} \le 18\,\text{MB}
   $$
 
+### Milestone 5.6: Production OTT Video Delivery Network, SCTE-35 SSAI & FAST Channels
+
+* **Objective:** Deliver enterprise OTT video streaming directly from the Rust binary, supporting multi-bitrate HLS v6 / CMAF playlists, programmatic Server-Side Ad Insertion (SSAI), 24/7 linear FAST channels, Stremio v1 addon interoperability, and real-time playhead Video X-Ray metadata.
+* **Implementation Mechanics:**
+  1. **HLS v6 & CMAF Engine (`hls_engine.rs`)**:
+     - Compiles RFC 8216 multi-variant master playlists with distinct video renditions, multilingual audio tracks, and WebVTT subtitles.
+     - Supports byte-range segment slicing for tokenized SVOD delivery and low-latency chunk streaming.
+  2. **Server-Side Ad Insertion (`ssai_engine.rs`)**:
+     - Parses SCTE-35 Cue-In / Cue-Out messages and injects ad pods directly into HLS manifests with `#EXT-X-DATERANGE` tags and `#EXT-X-DISCONTINUITY` boundaries.
+     - Emits standard client tracking beacons (`start`, `firstQuartile`, `midpoint`, `thirdQuartile`, `complete`).
+  3. **FAST Linear Channels (`fast_channels.rs`)**:
+     - Programmatic 24/7 linear streaming channels with dynamic EPG guides and epoch-calculated sliding-window manifests.
+  4. **Stremio Addon Protocol (`stremio_addon.rs`)**:
+     - Full Stremio v1 specification compliance delivering `manifest.json`, catalog filtering, metadata resolution, and streaming sources.
+  5. **Video X-Ray Metadata (`xray_metadata.rs`)**:
+     - Contextual metadata engine reporting active cast members, scene trivia, music tracks, and commerce tags synchronized with current playhead timestamps.
+
+### Milestone 5.7: High-Performance Master Audio Streaming CMS & Subsonic Ecosystem
+
+* **Objective:** Implement a unified audio content management system synthesizing the best architectural paradigms of Spotify (normalization, gapless crossfade, synced lyrics), SoundCloud (waveforms, timed comments), Audioserve (speech transcoding, chapters, LWW bookmarks), Owncast (LL-HLS live radio, chat, presence), Navidrome (Subsonic v1.16+ API), and procedural sleep soundscapes.
+* **Implementation Mechanics:**
+  1. **Lossless FLAC Transcoding Pipeline (`audio_flac_pipeline.rs`)**:
+     - Automatic FLAC compression (levels 0..8) with 4-tier audiophile quality grading and VorbisComment metadata preservation.
+  2. **Custom 10-Band ISO Equalizer (`audio_dsp_eq.rs`)**:
+     - Biquad IIR filter generation across 10 standard ISO frequencies with automatic preamp attenuation headroom and 10 presets.
+  3. **Line-Synchronized & Syllable/Karaoke Lyrics (`audio_lyrics.rs`)**:
+     - Dual-parser for line-level and syllable/word-level karaoke LRC files with millisecond active playhead query.
+  4. **Music Intelligence & Transcription Semantic Recommendations (`audio_intelligence.rs`)**:
+     - Technical liner notes (ISRC, BPM, Camelot wheel, contributors), Camelot harmonic key distance scoring, and transcript TF-IDF semantic recommendation engine.
+  5. **EBU R128 Loudness & Gapless Crossfade (`audio_streaming.rs`)**:
+     - Integrated -14 LUFS normalizer with -1 dBFS true-peak limiter clamp, and crossfade transition curves (`EqualPower`, `Linear`, `Logarithmic`).
+  6. **Waveforms & Timed Comments (`audio_waveform.rs`)**:
+     - 100-point thumbnail & 1800-point scrub bar peak downsampling, mirror SVG vector rendering, and temporal comment clustering histogram.
+  7. **Procedural Sleep Soundscapes (`audio_sleep_noise.rs`)**:
+     - Algorithmic white, pink ($1/f$), and brown ($1/f^2$) noise generators, binaural beats synthesizer, multi-stem soundboard mixer, and exponential volume decay timer.
+  8. **Live Radio & Listener Presence (`audio_live_radio.rs`)**:
+     - Low-latency HLS audio streaming (`#EXT-X-TARGETDURATION:2`), real-time listener heartbeats, and live listener chat room.
+  9. **Audiobook Chapters & Bookmark Sync (`audio_book_sync.rs`)**:
+     - Chapter markers (M4B, ID3v2 CHAP) and Last-Write-Wins (LWW) cross-device playback position synchronization.
+  10. **Subsonic / OpenSubsonic API v1.16+ Protocol (`audio_subsonic.rs`)**:
+      - Full Subsonic compatibility (`ping.view`, `getSong.view`, `stream.view`, `getMusicFolders.view`, `scrobble.view`, `getNowPlaying.view`, `search3.view`).
+  11. **Bare-Metal `#![no_std]` Wire Telemetry Core (`erp-cms-core`)**:
+      - 63-byte binary wire telemetry packet (`AudioPlaybackPacket`) with CRC16-CCITT checksum for Cortex-M bare-metal microcontrollers.
+
+* **Verification Invariant:**
+  $$
+  \text{Audio Packet Serialization Overhead} \equiv 0\,\text{allocations}, \quad \text{Loudness Compliance} = -14.0 \pm 0.1\,\text{LUFS}
+  $$
+
 ---
 
 ## Epoch VI: Fault-Isolated WASI 0.2 Sandbox & Component Marketplace

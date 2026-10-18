@@ -10,37 +10,47 @@ Every template is compiled directly into the pure-Rust binary with sub-10ms Serv
 
 ```
 +─────────────────────────────────────────────────────────────────────────────────────────────────────────────+
-|                         THE 6 UNIVERSAL PREBUILT ENTERPRISE TEMPLATE SUITES                                 |
+|                         THE 10 UNIVERSAL PREBUILT ENTERPRISE TEMPLATE SUITES                                |
 |                                                                                                             |
 |  1. SVoD Streaming & Entertainment Platform (`svod-streaming`)                                              |
 |     ├── Benchmarks: Netflix (Billboard player, ABR HLS, scrub) & Crunchyroll (simulcast, anime subs)        |
-|     ├── Modules: `erp-cms`, `erp-software`, `erp-accounting`, `erp-support`, `frappe-storage`               |
-|     └── Stack: HLS/DASH Transcoder, 1536-dim Subtitle Vector Search, Watch Party WebSockets, DRM HMAC       |
+|     └── Stack: HLS/CMAF Transcoder, SSAI SCTE-35 Ad Pods, Watch Party WebSockets, DRM HMAC, Stremio v1     |
 |                                                                                                             |
 |  2. Digital Learning & LMS Academy (`lms-academy`)                                                          |
 |     ├── Benchmarks: Coursera (Degree paths, verifiable certs) & Udemy (Instructor splits, Q&A checkpoints)  |
-|     ├── Modules: `erp-learning`, `erp-software`, `erp-accounting`, `erp-trade`, `erp-cms`                  |
 |     └── Stack: Dynamic Syllabus Trees, ASC 606 Progress Recognition, Merkle Typst PDF/A Verifiable Diplomas |
 |                                                                                                             |
 |  3. Digital Products, Games & Creator Hub (`digital-goods`)                                                 |
 |     ├── Benchmarks: Steam (Trailers, specs, bundle pricing) & Creative Market (Live font/3D test)           |
-|     ├── Modules: `erp-trade`, `erp-software`, `erp-accounting`, `frappe-storage`, `erp-crm`                 |
 |     └── Stack: AES-256-GCM Signed Download URLs, Hardware UUID License Locks, 85/15 Instant Creator Payouts |
 |                                                                                                             |
 |  4. Industrial B2B E-Commerce & Parametric CAD Matrix (`b2b-industrial`)                                    |
 |     ├── Benchmarks: Frost CNC (3D tool customizer), Rowa/Starmatik (Heavy automation), Mind Robotics        |
-|     ├── Modules: `erp-manufacturing`, `erp-trade`, `erp-inventory`, `erp-wms`, `erp-accounting`            |
 |     └── Stack: Three.js Parametric 3D Tooling Customizer, STEP/IGES DFM Mesh Ingest, ZUGFeRD 2.2 E-Invoicing |
 |                                                                                                             |
 |  5. High-Velocity Luxury & Spatial Consumer B2C Flagship (`b2c-retail`)                                     |
 |     ├── Benchmarks: Cartier (Haute Horlogerie 3D exploded view), Industry West (AR swatches), Oryzo/Hubtown|
-|     ├── Modules: `erp-cms`, `erp-inventory`, `erp-trade`, `erp-wms`, `erp-accounting`                       |
 |     └── Stack: 60 FPS Viewport Grid, PBR Metallurgy Shaders, Real-Time Flash Stock Feed, Slide-Over Bag     |
 |                                                                                                             |
 |  6. Financial Trading, Brokerage & Prediction Hub (`trading-exchange`)                                      |
 |     ├── Benchmarks: Binance (L2 order book, depth chart), Robinhood (Scrub charts), Polymarket (Binary odds)|
-|     ├── Modules: `erp-trade`, `erp-accounting`, `erp-crm`, `frappe-net`, `frappe-storage`                  |
 |     └── Stack: WebGL Canvas Candlesticks, Microsecond Tick Streams, CPMM Probability AMM, Bi-Temporal Merkle|
+|                                                                                                             |
+|  7. Ultra-Luxury Architectural Real Estate (`real-estate-luxury`)                                           |
+|     ├── Benchmarks: Sotheby's International Realty, Architectural Digest, Christie's Real Estate            |
+|     └── Stack: Virtual Tour Viewports, Cadastral Maps, Interactive Mortgage Amortization & Private Inquiries|
+|                                                                                                             |
+|  8. Healthcare, Clinical Services & Telehealth (`healthcare-clinic`)                                        |
+|     ├── Benchmarks: Mayo Clinic, One Medical, Cleveland Clinic Patient Portal                              |
+|     └── Stack: Doctor Scheduling Engine, Triage Categorization, Encrypted Patient Records, Specialty Matrix |
+|                                                                                                             |
+|  9. Fine Dining, Culinary Bistro & Wine Cellar (`restaurant-culinary`)                                      |
+|     ├── Benchmarks: Eleven Madison Park, Noma, Michelin Guide Reservoirs                                   |
+|     └── Stack: Dynamic Degustation Menus, Real-Time Table Reservation Grid, Sommelier Pairings & Cellar List|
+|                                                                                                             |
+| 10. High-Density Modern Newsroom & Magazine (`news-editorial`)                                              |
+|     ├── Benchmarks: Bloomberg Terminal News, The New York Times, Financial Times, Reuters Wire             |
+|     └── Stack: Real-Time Breaking Tickers, Multi-Edition Lead Grids, Curated Columns & RSS 2.0 Feeds         |
 +─────────────────────────────────────────────────────────────────────────────────────────────────────────────+
 ```
 
