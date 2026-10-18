@@ -150,8 +150,8 @@ impl BinauralBeatGenerator {
         let right = self.phase_right.sin();
 
         let step_left = (2.0 * std::f32::consts::PI * self.carrier_hz) / (self.sample_rate as f32);
-        let step_right =
-            (2.0 * std::f32::consts::PI * (self.carrier_hz + self.beat_hz)) / (self.sample_rate as f32);
+        let step_right = (2.0 * std::f32::consts::PI * (self.carrier_hz + self.beat_hz))
+            / (self.sample_rate as f32);
 
         self.phase_left = (self.phase_left + step_left) % (2.0 * std::f32::consts::PI);
         self.phase_right = (self.phase_right + step_right) % (2.0 * std::f32::consts::PI);
@@ -335,7 +335,7 @@ impl SleepTimerController {
 
         AudioPlaybackPacket {
             track_id: track_str,
-            position_ms: (self.elapsed_seconds as u32) * 1000,
+            position_ms: self.elapsed_seconds * 1000,
             duration_ms: self.total_seconds * 1000,
             volume_permille: cur_vol_permille,
             mode: AudioPlaybackMode::SleepNoise,

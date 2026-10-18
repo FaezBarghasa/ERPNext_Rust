@@ -27,18 +27,21 @@ use crate::v2_routes::{
     admin_list_ip_rules_handler, admin_list_lockouts_handler, admin_list_roles_handler,
     admin_list_users_handler, admin_query_handler, admin_status_handler,
     admin_unlock_target_handler, admin_update_permission_handler, admin_update_user_roles_handler,
-    auth_forgot_password_handler, auth_mfa_activate_handler, auth_mfa_disable_handler,
-    auth_mfa_enroll_handler, auth_refresh_token_handler, auth_reset_password_handler,
-    builder_ai_prompt_handler, builder_get_page_handler, builder_history_list_handler,
-    builder_list_pages_handler, builder_save_page_handler, buying_purchase_invoice_handler,
-    buying_purchase_order_handler, buying_purchase_receipt_handler, cms_create_taxonomy_handler,
-    cms_generate_seo_handler, cms_list_media_handler, cms_list_taxonomies_handler,
-    cms_upload_media_handler, crm_convert_quotation_handler, download_file_handler,
-    download_image_handler, email_list_queue_handler, email_send_handler,
-    emdash_get_document_handler, emdash_list_documents_handler, emdash_media_crop_handler,
-    emdash_revisions_list_handler, emdash_save_document_handler, emdash_transition_handler,
-    export_dataset_handler, h3_stream_file_handler, h3_stream_telemetry_handler,
-    hr_process_payroll_handler, inventory_stock_balance_handler, inventory_stock_entry_handler,
+    audio_add_comment_handler, audio_crossfade_handler, audio_get_comments_handler,
+    audio_normalize_handler, audio_sleep_soundboard_handler, audio_sleep_timer_handler,
+    audio_waveform_handler, auth_forgot_password_handler, auth_mfa_activate_handler,
+    auth_mfa_disable_handler, auth_mfa_enroll_handler, auth_refresh_token_handler,
+    auth_reset_password_handler, builder_ai_prompt_handler, builder_get_page_handler,
+    builder_history_list_handler, builder_list_pages_handler, builder_save_page_handler,
+    buying_purchase_invoice_handler, buying_purchase_order_handler,
+    buying_purchase_receipt_handler, cms_create_taxonomy_handler, cms_generate_seo_handler,
+    cms_list_media_handler, cms_list_taxonomies_handler, cms_upload_media_handler,
+    crm_convert_quotation_handler, download_file_handler, download_image_handler,
+    email_list_queue_handler, email_send_handler, emdash_get_document_handler,
+    emdash_list_documents_handler, emdash_media_crop_handler, emdash_revisions_list_handler,
+    emdash_save_document_handler, emdash_transition_handler, export_dataset_handler,
+    h3_stream_file_handler, h3_stream_telemetry_handler, hr_process_payroll_handler,
+    inventory_stock_balance_handler, inventory_stock_entry_handler,
     inventory_variant_matrix_handler, login_handler, logout_handler,
     manufacturing_complete_work_order_handler, manufacturing_work_order_handler,
     notifications_dispatch_handler, notifications_get_inbox_handler, payment_charge_handler,
@@ -55,16 +58,17 @@ use crate::v2_routes::{
     streaming_upload_chunk_handler, streaming_variant_playlist_handler,
     streaming_video_xray_handler, streaming_video_xray_vtt_handler, stremio_catalog_handler,
     stremio_manifest_handler, stremio_meta_handler, stremio_stream_handler,
-    stremio_subtitles_handler, trade_add_wishlist_item_handler, trade_apply_coupon_handler,
-    trade_calculate_shipping_handler, trade_create_coupon_handler, trade_get_wishlist_handler,
-    trade_list_coupons_handler, trade_list_reviews_handler, trade_list_shipping_zones_handler,
-    trade_moderate_review_handler, trade_order_transition_handler,
-    trade_remove_wishlist_item_handler, trade_rma_get_handler, trade_rma_submit_handler,
-    trade_submit_review_handler, upload_file_handler, v2_amend_document, v2_cancel_document,
-    v2_create_document, v2_delete_document, v2_get_document, v2_get_meta_handler, v2_list_document,
-    v2_list_meta_handler, v2_print_document, v2_submit_document, v2_update_document,
-    webhooks_dispatch_test_handler, workflow_evaluate_handler, workflow_version_history_handler,
-    workflow_version_rollback_handler,
+    stremio_subtitles_handler, subsonic_get_license_handler, subsonic_get_song_handler,
+    subsonic_ping_handler, subsonic_stream_handler, trade_add_wishlist_item_handler,
+    trade_apply_coupon_handler, trade_calculate_shipping_handler, trade_create_coupon_handler,
+    trade_get_wishlist_handler, trade_list_coupons_handler, trade_list_reviews_handler,
+    trade_list_shipping_zones_handler, trade_moderate_review_handler,
+    trade_order_transition_handler, trade_remove_wishlist_item_handler, trade_rma_get_handler,
+    trade_rma_submit_handler, trade_submit_review_handler, upload_file_handler, v2_amend_document,
+    v2_cancel_document, v2_create_document, v2_delete_document, v2_get_document,
+    v2_get_meta_handler, v2_list_document, v2_list_meta_handler, v2_print_document,
+    v2_submit_document, v2_update_document, webhooks_dispatch_test_handler,
+    workflow_evaluate_handler, workflow_version_history_handler, workflow_version_rollback_handler,
 };
 use actix_web::{
     App, HttpMessage, HttpRequest, HttpResponse, HttpServer, Responder, middleware::Compress,
@@ -3193,6 +3197,45 @@ pub fn configure_app(
             "/studio/player",
             web::get().to(streaming_player_studio_handler),
         )
+        // High-Level Audio Streaming & Subsonic Protocol v1.16 Endpoints
+        .route(
+            "/api/v2/audio/normalize",
+            web::post().to(audio_normalize_handler),
+        )
+        .route(
+            "/api/v2/audio/crossfade",
+            web::post().to(audio_crossfade_handler),
+        )
+        .route(
+            "/api/v2/audio/waveform",
+            web::post().to(audio_waveform_handler),
+        )
+        .route(
+            "/api/v2/audio/comments",
+            web::post().to(audio_add_comment_handler),
+        )
+        .route(
+            "/api/v2/audio/comments/{track_id}",
+            web::get().to(audio_get_comments_handler),
+        )
+        .route(
+            "/api/v2/audio/sleep/soundboard",
+            web::post().to(audio_sleep_soundboard_handler),
+        )
+        .route(
+            "/api/v2/audio/sleep/timer",
+            web::post().to(audio_sleep_timer_handler),
+        )
+        .route("/rest/ping.view", web::get().to(subsonic_ping_handler))
+        .route(
+            "/rest/getLicense.view",
+            web::get().to(subsonic_get_license_handler),
+        )
+        .route(
+            "/rest/getSong.view",
+            web::get().to(subsonic_get_song_handler),
+        )
+        .route("/rest/stream.view", web::get().to(subsonic_stream_handler))
         // V2 Approval Workflow & Versioning Endpoints
         .route(
             "/api/v2/workflow/evaluate",

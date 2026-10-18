@@ -61,8 +61,15 @@ pub struct SubsonicRequestParams {
 
 impl SubsonicRequestParams {
     /// Validates authentication against known password using salt or plaintext.
-    pub fn authenticate(&self, expected_user: &str, expected_pass: &str) -> Result<(), SubsonicError> {
-        let user = self.u.as_deref().ok_or(SubsonicError::MissingParameter("u"))?;
+    pub fn authenticate(
+        &self,
+        expected_user: &str,
+        expected_pass: &str,
+    ) -> Result<(), SubsonicError> {
+        let user = self
+            .u
+            .as_deref()
+            .ok_or(SubsonicError::MissingParameter("u"))?;
         if user != expected_user {
             return Err(SubsonicError::AuthFailed);
         }
@@ -246,7 +253,10 @@ impl SubsonicController {
     }
 
     /// Handles `getSong.view`.
-    pub fn get_song(&self, song_id: &str) -> Result<SubsonicResponseEnvelope<GetSongResponse>, SubsonicError> {
+    pub fn get_song(
+        &self,
+        song_id: &str,
+    ) -> Result<SubsonicResponseEnvelope<GetSongResponse>, SubsonicError> {
         if song_id.is_empty() {
             return Err(SubsonicError::MissingParameter("id"));
         }
@@ -350,7 +360,9 @@ mod tests {
         assert_eq!(song.id, "audio_101");
         assert_eq!(song.content_type, "audio/opus");
 
-        let stream_info = ctrl.resolve_stream("audio_101", Some(96), Some("aac")).unwrap();
+        let stream_info = ctrl
+            .resolve_stream("audio_101", Some(96), Some("aac"))
+            .unwrap();
         assert_eq!(stream_info, "stream:audio_101:fmt=aac:kbps=96");
     }
 

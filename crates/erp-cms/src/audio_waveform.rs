@@ -48,16 +48,20 @@ impl WaveformGenerator {
         // Find absolute peak for dynamic normalization
         let max_abs = pcm_samples
             .iter()
-            .map(|&s| if s == i16::MIN { i16::MAX as u32 } else { s.unsigned_abs() as u32 })
+            .map(|&s| {
+                if s == i16::MIN {
+                    i16::MAX as u32
+                } else {
+                    s.unsigned_abs() as u32
+                }
+            })
             .max()
             .unwrap_or(0);
 
         let normalize = |val: u32| -> u8 {
-            if max_abs == 0 {
-                0
-            } else {
-                ((val * 255) / max_abs).min(255) as u8
-            }
+            (val * 255)
+                .checked_div(max_abs)
+                .map_or(0, |res| res.min(255) as u8)
         };
 
         let thumbnail_peaks = Self::extract_buckets(pcm_samples, THUMBNAIL_PEAK_COUNT, normalize);
@@ -86,7 +90,9 @@ impl WaveformGenerator {
 
         for i in 0..target_count {
             let start = (i * sample_len) / target_count;
-            let end = (((i + 1) * sample_len) / target_count).max(start + 1).min(sample_len);
+            let end = (((i + 1) * sample_len) / target_count)
+                .max(start + 1)
+                .min(sample_len);
 
             let mut peak = 0u32;
             for &sample in &pcm[start..end] {

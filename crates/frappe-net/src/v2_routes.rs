@@ -2466,6 +2466,9 @@ pub struct DynamicRbacState {
     pub fast_registry: Arc<erp_cms::fast_channels::FastChannelRegistry>,
     pub stremio_addon: Arc<erp_cms::stremio_addon::StremioAddonEngine>,
     pub user_cache_registry: Arc<erp_cms::resilient_streaming::UserCacheRegistry>,
+    pub subsonic_controller: Arc<erp_cms::audio_subsonic::SubsonicController>,
+    pub audio_timelines:
+        Arc<RwLock<HashMap<String, erp_cms::audio_waveform::TimedCommentTimeline>>>,
 }
 
 impl Default for DynamicRbacState {
@@ -2626,6 +2629,8 @@ impl Default for DynamicRbacState {
                 erp_cms::stremio_addon::StremioAddonEngine::with_demo_catalogs(),
             ),
             user_cache_registry: Arc::new(erp_cms::resilient_streaming::UserCacheRegistry::new()),
+            subsonic_controller: Arc::new(erp_cms::audio_subsonic::SubsonicController::new()),
+            audio_timelines: Arc::new(RwLock::new(HashMap::new())),
         }
     }
 }
@@ -5810,6 +5815,345 @@ pub async fn stremio_subtitles_handler(
         .content_type("application/json")
         .insert_header(("Access-Control-Allow-Origin", "*"))
         .json(res)
+}
+
+// =========================================================================
+// High-Level Audio Streaming CMS & Subsonic Protocol Endpoints
+// =========================================================================
+
+/// DTO for loudness normalization request
+#[derive(Debug, Deserialize)]
+pub struct AudioNormalizePayload {
+    pub integrated_lufs: f32,
+    pub true_peak_dbfs: f32,
+    pub loudness_range_lu: Option<f32>,
+}
+
+/// Handler: Calculate EBU R128 loudness gain: `POST /api/v2/audio/normalize`
+pub async fn audio_normalize_handler(payload: web::Json<AudioNormalizePayload>) -> impl Responder {
+    let p = payload.into_inner();
+    let profile = erp_cms::audio_streaming::LoudnessProfile {
+        integrated_lufs: p.integrated_lufs,
+        true_peak_dbfs: p.true_peak_dbfs,
+        loudness_range_lu: p.loudness_range_lu.unwrap_or(7.0),
+    };
+
+    match erp_cms::audio_streaming::EbuR128Normalizer::calculate_gain(&profile) {
+        Ok((gain_db, multiplier)) => {
+            let filter = erp_cms::audio_streaming::EbuR128Normalizer::ffmpeg_loudnorm_filter();
+            HttpResponse::Ok().json(serde_json::json!({
+                "status": "success",
+                "target_lufs": erp_cms::audio_streaming::EbuR128Normalizer::TARGET_LUFS,
+                "true_peak_ceiling_dbfs": erp_cms::audio_streaming::EbuR128Normalizer::TRUE_PEAK_CEILING_DBFS,
+                "gain_adjustment_db": gain_db,
+                "linear_multiplier": multiplier,
+                "ffmpeg_filter": filter,
+            }))
+        }
+        Err(err) => HttpResponse::BadRequest().json(serde_json::json!({
+            "status": "error",
+            "message": err.to_string(),
+        })),
+    }
+}
+
+/// DTO for crossfade curve calculation
+#[derive(Debug, Deserialize)]
+pub struct AudioCrossfadePayload {
+    pub curve: String,
+    pub from_track: String,
+    pub to_track: String,
+    pub duration_sec: f32,
+}
+
+/// Handler: Evaluate crossfade curve transition: `POST /api/v2/audio/crossfade`
+pub async fn audio_crossfade_handler(payload: web::Json<AudioCrossfadePayload>) -> impl Responder {
+    let p = payload.into_inner();
+    let curve = match p.curve.to_lowercase().as_str() {
+        "linear" => erp_cms::audio_streaming::CrossfadeCurve::Linear,
+        "logarithmic" | "log" => erp_cms::audio_streaming::CrossfadeCurve::Logarithmic,
+        _ => erp_cms::audio_streaming::CrossfadeCurve::EqualPower,
+    };
+
+    let steps = [0.0f32, 0.25, 0.5, 0.75, 1.0];
+    let gains: Vec<_> = steps
+        .iter()
+        .map(|&t| {
+            let (out_g, in_g) = curve.compute_gains(t);
+            serde_json::json!({
+                "progress": t,
+                "fade_out_gain": out_g,
+                "fade_in_gain": in_g,
+                "sum_of_squares": (out_g * out_g) + (in_g * in_g),
+            })
+        })
+        .collect();
+
+    HttpResponse::Ok().json(serde_json::json!({
+        "status": "success",
+        "curve": format!("{:?}", curve),
+        "from_track": p.from_track,
+        "to_track": p.to_track,
+        "duration_sec": p.duration_sec,
+        "transition_steps": gains,
+    }))
+}
+
+/// DTO for waveform generation request
+#[derive(Debug, Deserialize)]
+pub struct AudioWaveformPayload {
+    pub samples: Vec<i16>,
+    pub duration_ms: u64,
+}
+
+/// Handler: Extract normalized waveform peaks and vector SVG: `POST /api/v2/audio/waveform`
+pub async fn audio_waveform_handler(payload: web::Json<AudioWaveformPayload>) -> impl Responder {
+    let p = payload.into_inner();
+    let waveform =
+        erp_cms::audio_waveform::WaveformGenerator::from_pcm16_mono(&p.samples, p.duration_ms);
+    let svg_preview = erp_cms::audio_waveform::WaveformGenerator::render_svg_waveform(
+        &waveform.thumbnail_peaks,
+        600.0,
+        100.0,
+        35.0,
+    );
+
+    HttpResponse::Ok().json(serde_json::json!({
+        "status": "success",
+        "thumbnail_peaks": waveform.thumbnail_peaks,
+        "scrub_peaks_count": waveform.scrub_peaks.len(),
+        "max_peak": waveform.max_peak,
+        "duration_ms": waveform.duration_ms,
+        "svg_preview": svg_preview,
+    }))
+}
+
+/// DTO for adding a SoundCloud-style timed comment
+#[derive(Debug, Deserialize)]
+pub struct AddTimedCommentPayload {
+    pub track_id: String,
+    pub user: String,
+    pub avatar_url: Option<String>,
+    pub timestamp_ms: u32,
+    pub text: String,
+}
+
+/// Handler: Add timed comment: `POST /api/v2/audio/comments`
+pub async fn audio_add_comment_handler(
+    state: web::Data<DynamicRbacState>,
+    payload: web::Json<AddTimedCommentPayload>,
+) -> impl Responder {
+    let p = payload.into_inner();
+    let comment_id = format!("cm_{}_{}", p.timestamp_ms, Utc::now().timestamp_millis());
+    let comment = erp_cms::audio_waveform::TimedComment {
+        id: comment_id.clone(),
+        user: p.user,
+        avatar_url: p.avatar_url,
+        timestamp_ms: p.timestamp_ms,
+        text: p.text,
+        upvotes: 0,
+        created_at: Utc::now().timestamp(),
+    };
+
+    let mut timelines = state.audio_timelines.write().unwrap();
+    let timeline = timelines.entry(p.track_id).or_default();
+    timeline.add_comment(comment.clone());
+
+    HttpResponse::Ok().json(serde_json::json!({
+        "status": "success",
+        "comment": comment,
+    }))
+}
+
+/// Query parameters for comments and timeline clusters
+#[derive(Debug, Deserialize)]
+pub struct AudioCommentsQuery {
+    pub duration_ms: Option<u64>,
+    pub buckets: Option<usize>,
+}
+
+/// Handler: Get comments and cluster density: `GET /api/v2/audio/comments/{track_id}`
+pub async fn audio_get_comments_handler(
+    state: web::Data<DynamicRbacState>,
+    path: web::Path<String>,
+    query: web::Query<AudioCommentsQuery>,
+) -> impl Responder {
+    let track_id = path.into_inner();
+    let timelines = state.audio_timelines.read().unwrap();
+    let empty_timeline = erp_cms::audio_waveform::TimedCommentTimeline::new();
+    let timeline = timelines.get(&track_id).unwrap_or(&empty_timeline);
+
+    let duration_ms = query.duration_ms.unwrap_or(180_000);
+    let buckets = query.buckets.unwrap_or(20);
+    let clusters = timeline.cluster_density(duration_ms, buckets);
+
+    HttpResponse::Ok().json(serde_json::json!({
+        "status": "success",
+        "track_id": track_id,
+        "comments": timeline.comments,
+        "clusters": clusters,
+    }))
+}
+
+/// DTO for ambient soundboard mixer configuration
+#[derive(Debug, Deserialize)]
+pub struct SoundboardPayload {
+    pub stems: Vec<erp_cms::audio_sleep_noise::AmbientStem>,
+    pub master_volume: f32,
+}
+
+/// Handler: Compute multi-stem ambient soundboard gains: `POST /api/v2/audio/sleep/soundboard`
+pub async fn audio_sleep_soundboard_handler(
+    payload: web::Json<SoundboardPayload>,
+) -> impl Responder {
+    let p = payload.into_inner();
+    let mut mixer = erp_cms::audio_sleep_noise::SoundboardMixer::new();
+    mixer.master_volume = p.master_volume;
+    for s in p.stems {
+        mixer.set_stem(s);
+    }
+
+    let stem_gains: Vec<_> = mixer
+        .stems
+        .iter()
+        .map(|s| {
+            let (gl, gr) = mixer.compute_stem_gains(s);
+            serde_json::json!({
+                "stem_id": s.id,
+                "name": s.name,
+                "gain_left": gl,
+                "gain_right": gr,
+                "muted": s.muted,
+            })
+        })
+        .collect();
+
+    HttpResponse::Ok().json(serde_json::json!({
+        "status": "success",
+        "master_volume": mixer.master_volume,
+        "stems": stem_gains,
+    }))
+}
+
+/// DTO for exponential sleep timer calculation
+#[derive(Debug, Deserialize)]
+pub struct SleepTimerPayload {
+    pub initial_volume: f32,
+    pub total_seconds: u32,
+    pub elapsed_seconds: u32,
+    pub noise_color: Option<String>,
+    pub track_id: Option<u64>,
+}
+
+/// Handler: Evaluate exponential sleep timer and wire telemetry: `POST /api/v2/audio/sleep/timer`
+pub async fn audio_sleep_timer_handler(payload: web::Json<SleepTimerPayload>) -> impl Responder {
+    let p = payload.into_inner();
+    let mut timer =
+        erp_cms::audio_sleep_noise::SleepTimerController::new(p.initial_volume, p.total_seconds);
+    timer.tick(p.elapsed_seconds);
+
+    let color = match p
+        .noise_color
+        .as_deref()
+        .unwrap_or("brown")
+        .to_lowercase()
+        .as_str()
+    {
+        "white" => erp_cms::core::NoiseColor::White,
+        "pink" => erp_cms::core::NoiseColor::Pink,
+        "binaural" => erp_cms::core::NoiseColor::Binaural,
+        _ => erp_cms::core::NoiseColor::Brown,
+    };
+
+    let track_id = p.track_id.unwrap_or(101);
+    let packet = timer.to_telemetry_packet(color, track_id);
+
+    let mut wire_buf = [0u8; 128];
+    let wire_bytes = packet.serialize(&mut wire_buf).unwrap_or(&[]);
+    let wire_hex = hex::encode(wire_bytes);
+
+    HttpResponse::Ok().json(serde_json::json!({
+        "status": "success",
+        "current_volume": timer.current_volume(),
+        "remaining_seconds": timer.remaining_seconds(),
+        "volume_permille": packet.volume_permille,
+        "noise_color": format!("{:?}", color),
+        "wire_packet_len": wire_bytes.len(),
+        "wire_packet_hex": wire_hex,
+    }))
+}
+
+/// Query parameters for Subsonic requests
+#[derive(Debug, Deserialize)]
+pub struct SubsonicViewQuery {
+    pub u: Option<String>,
+    pub p: Option<String>,
+    pub t: Option<String>,
+    pub s: Option<String>,
+    pub v: Option<String>,
+    pub c: Option<String>,
+    pub f: Option<String>,
+    pub id: Option<String>,
+    pub format: Option<String>,
+    #[serde(rename = "maxBitRate")]
+    pub max_bit_rate: Option<u32>,
+}
+
+/// Handler: Subsonic ping.view: `GET /rest/ping.view`
+pub async fn subsonic_ping_handler(
+    state: web::Data<DynamicRbacState>,
+    query: web::Query<SubsonicViewQuery>,
+) -> impl Responder {
+    let _ = query;
+    let resp = state.subsonic_controller.ping();
+    HttpResponse::Ok().json(resp)
+}
+
+/// Handler: Subsonic getLicense.view: `GET /rest/getLicense.view`
+pub async fn subsonic_get_license_handler(
+    state: web::Data<DynamicRbacState>,
+    query: web::Query<SubsonicViewQuery>,
+) -> impl Responder {
+    let _ = query;
+    let resp = state.subsonic_controller.get_license();
+    HttpResponse::Ok().json(resp)
+}
+
+/// Handler: Subsonic getSong.view: `GET /rest/getSong.view`
+pub async fn subsonic_get_song_handler(
+    state: web::Data<DynamicRbacState>,
+    query: web::Query<SubsonicViewQuery>,
+) -> impl Responder {
+    let song_id = query.id.as_deref().unwrap_or("");
+    match state.subsonic_controller.get_song(song_id) {
+        Ok(resp) => HttpResponse::Ok().json(resp),
+        Err(err) => {
+            let env = erp_cms::audio_subsonic::SubsonicResponseEnvelope::<()>::error(&err);
+            HttpResponse::Ok().json(env)
+        }
+    }
+}
+
+/// Handler: Subsonic stream.view: `GET /rest/stream.view`
+pub async fn subsonic_stream_handler(
+    state: web::Data<DynamicRbacState>,
+    query: web::Query<SubsonicViewQuery>,
+) -> impl Responder {
+    let song_id = query.id.as_deref().unwrap_or("");
+    match state.subsonic_controller.resolve_stream(
+        song_id,
+        query.max_bit_rate,
+        query.format.as_deref(),
+    ) {
+        Ok(stream_action) => HttpResponse::Ok().json(serde_json::json!({
+            "status": "ok",
+            "stream_action": stream_action,
+        })),
+        Err(err) => {
+            let env = erp_cms::audio_subsonic::SubsonicResponseEnvelope::<()>::error(&err);
+            HttpResponse::Ok().json(env)
+        }
+    }
 }
 
 // =========================================================================

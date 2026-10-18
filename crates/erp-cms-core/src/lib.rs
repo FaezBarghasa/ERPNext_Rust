@@ -803,7 +803,8 @@ impl AudioPlaybackPacket {
 
         let t_slice = &buf[4..36];
         let t_end = t_slice.iter().position(|&b| b == 0).unwrap_or(32);
-        let t_str = core::str::from_utf8(&t_slice[..t_end]).map_err(|_| EdgeCmsError::InvalidUtf8)?;
+        let t_str =
+            core::str::from_utf8(&t_slice[..t_end]).map_err(|_| EdgeCmsError::InvalidUtf8)?;
         let mut track_id = heapless::String::new();
         let _ = track_id.push_str(t_str);
 
@@ -850,7 +851,12 @@ impl AudioPlaybackPacket {
         write!(
             w,
             "{mode_tag} \x1b[1;36m[{status_icon} {:02}:{:02} / {:02}:{:02}]\x1b[0m \x1b[33m[Vol: {}%]\x1b[0m (ID: {})",
-            p_m, p_s, d_m, d_s, vol_pct, self.track_id.as_str()
+            p_m,
+            p_s,
+            d_m,
+            d_s,
+            vol_pct,
+            self.track_id.as_str()
         )?;
 
         if self.sleep_timer_rem_min > 0 {
@@ -1188,6 +1194,9 @@ mod tests {
         let mut corrupted = [0u8; 63];
         corrupted.copy_from_slice(bytes);
         corrupted[10] ^= 0xEE;
-        assert_eq!(AudioPlaybackPacket::decode(&corrupted), Err(EdgeCmsError::ChecksumMismatch));
+        assert_eq!(
+            AudioPlaybackPacket::decode(&corrupted),
+            Err(EdgeCmsError::ChecksumMismatch)
+        );
     }
 }

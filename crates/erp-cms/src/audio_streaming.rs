@@ -180,8 +180,16 @@ impl CrossfadeCurve {
                 (angle.cos(), angle.sin())
             }
             Self::Logarithmic => {
-                let out = if t >= 1.0 { 0.0 } else { 1.0 - (1.0 + 9.0 * t).log10() };
-                let in_gain = if t <= 0.0 { 0.0 } else { (1.0 + 9.0 * t).log10() };
+                let out = if t >= 1.0 {
+                    0.0
+                } else {
+                    1.0 - (1.0 + 9.0 * t).log10()
+                };
+                let in_gain = if t <= 0.0 {
+                    0.0
+                } else {
+                    (1.0 + 9.0 * t).log10()
+                };
                 (out.clamp(0.0, 1.0), in_gain.clamp(0.0, 1.0))
             }
         }
@@ -221,9 +229,7 @@ impl GaplessTransitionDescriptor {
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub enum AudioDeliveryAction {
     /// Direct stream asset with byte ranges (zero CPU transcoding).
-    DirectPlay {
-        content_type: &'static str,
-    },
+    DirectPlay { content_type: &'static str },
     /// Transcode on the fly via FFmpeg.
     Transcode {
         target_codec: AudioCodec,
@@ -345,7 +351,10 @@ mod tests {
             let t = step as f32 / 10.0;
             let (o, i) = curve.compute_gains(t);
             let power = o * o + i * i;
-            assert!((power - 1.0).abs() < 0.001, "Power mismatch at t={t}: {power}");
+            assert!(
+                (power - 1.0).abs() < 0.001,
+                "Power mismatch at t={t}: {power}"
+            );
         }
     }
 

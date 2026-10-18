@@ -964,3 +964,195 @@ async fn test_v2_autonaming_and_rma_persistence() {
         Some("ORD-99120")
     );
 }
+
+#[actix_web::test]
+async fn test_audio_streaming_cms_and_subsonic_end_to_end() {
+    let pool_mgr = ConnectionPoolManager::in_memory(Duration::from_secs(300));
+    let topology = MicroTopologyConfig::default();
+
+    let app = test::init_service(
+        App::new().configure(|cfg| configure_app(cfg, pool_mgr.clone(), topology.clone(), None)),
+    )
+    .await;
+
+    // 1. EBU R128 Loudness Normalization
+    let norm_payload = json!({
+        "integrated_lufs": -12.0,
+        "true_peak_dbfs": -0.5,
+        "loudness_range_lu": 8.0
+    });
+    let req = test::TestRequest::post()
+        .uri("/api/v2/audio/normalize")
+        .set_json(&norm_payload)
+        .to_request();
+    let resp = test::call_service(&app, req).await;
+    assert_eq!(resp.status(), 200);
+    let norm_res: serde_json::Value = test::read_body_json(resp).await;
+    assert_eq!(norm_res["status"], "success");
+    assert_eq!(norm_res["target_lufs"], -14.0);
+    assert!(norm_res["gain_adjustment_db"].as_f64().unwrap() < 0.0);
+    assert!(
+        norm_res["ffmpeg_filter"]
+            .as_str()
+            .unwrap()
+            .contains("loudnorm")
+    );
+
+    // 2. Crossfade Curve Transition
+    let xfade_payload = json!({
+        "curve": "equal_power",
+        "from_track": "ambient_01",
+        "to_track": "ambient_02",
+        "duration_sec": 6.0
+    });
+    let req = test::TestRequest::post()
+        .uri("/api/v2/audio/crossfade")
+        .set_json(&xfade_payload)
+        .to_request();
+    let resp = test::call_service(&app, req).await;
+    assert_eq!(resp.status(), 200);
+    let xfade_res: serde_json::Value = test::read_body_json(resp).await;
+    assert_eq!(xfade_res["status"], "success");
+    let steps = xfade_res["transition_steps"].as_array().unwrap();
+    assert_eq!(steps.len(), 5);
+    for step in steps {
+        let sum_sq = step["sum_of_squares"].as_f64().unwrap();
+        assert!((sum_sq - 1.0).abs() < 0.01);
+    }
+
+    // 3. Audio Waveform & Vector SVG
+    let samples: Vec<i16> = (0..1000).map(|i| ((i % 100) * 300) as i16).collect();
+    let wave_payload = json!({
+        "samples": samples,
+        "duration_ms": 120_000
+    });
+    let req = test::TestRequest::post()
+        .uri("/api/v2/audio/waveform")
+        .set_json(&wave_payload)
+        .to_request();
+    let resp = test::call_service(&app, req).await;
+    assert_eq!(resp.status(), 200);
+    let wave_res: serde_json::Value = test::read_body_json(resp).await;
+    assert_eq!(wave_res["status"], "success");
+    assert_eq!(wave_res["thumbnail_peaks"].as_array().unwrap().len(), 100);
+    assert_eq!(wave_res["scrub_peaks_count"], 1800);
+    assert!(wave_res["svg_preview"].as_str().unwrap().contains("<svg"));
+
+    // 4. SoundCloud-Style Timed Comments
+    let comment_payload = json!({
+        "track_id": "track_ambient_77",
+        "user": "audiophile_1",
+        "avatar_url": "https://erpnext.rs/avatars/user1.png",
+        "timestamp_ms": 15_400,
+        "text": "Incredible soundstage!"
+    });
+    let req = test::TestRequest::post()
+        .uri("/api/v2/audio/comments")
+        .set_json(&comment_payload)
+        .to_request();
+    let resp = test::call_service(&app, req).await;
+    assert_eq!(resp.status(), 200);
+
+    let req = test::TestRequest::get()
+        .uri("/api/v2/audio/comments/track_ambient_77?duration_ms=180000&buckets=10")
+        .to_request();
+    let resp = test::call_service(&app, req).await;
+    assert_eq!(resp.status(), 200);
+    let comments_res: serde_json::Value = test::read_body_json(resp).await;
+    assert_eq!(comments_res["status"], "success");
+    assert_eq!(comments_res["comments"].as_array().unwrap().len(), 1);
+    assert_eq!(comments_res["clusters"].as_array().unwrap().len(), 10);
+
+    // 5. Procedural Sleep Soundboard Mixer
+    let soundboard_payload = json!({
+        "stems": [
+            {
+                "id": "heavy_rain",
+                "name": "Heavy Rain",
+                "volume": 0.8,
+                "pan": -0.5,
+                "muted": false
+            },
+            {
+                "id": "campfire",
+                "name": "Cozy Campfire",
+                "volume": 0.6,
+                "pan": 0.5,
+                "muted": false
+            }
+        ],
+        "master_volume": 0.9
+    });
+    let req = test::TestRequest::post()
+        .uri("/api/v2/audio/sleep/soundboard")
+        .set_json(&soundboard_payload)
+        .to_request();
+    let resp = test::call_service(&app, req).await;
+    assert_eq!(resp.status(), 200);
+    let soundboard_res: serde_json::Value = test::read_body_json(resp).await;
+    assert_eq!(soundboard_res["status"], "success");
+    assert_eq!(soundboard_res["stems"].as_array().unwrap().len(), 2);
+
+    // 6. Exponential Sleep Timer & Hardware Packet
+    let timer_payload = json!({
+        "initial_volume": 1.0,
+        "total_seconds": 100,
+        "elapsed_seconds": 50,
+        "noise_color": "pink",
+        "track_id": 909
+    });
+    let req = test::TestRequest::post()
+        .uri("/api/v2/audio/sleep/timer")
+        .set_json(&timer_payload)
+        .to_request();
+    let resp = test::call_service(&app, req).await;
+    assert_eq!(resp.status(), 200);
+    let timer_res: serde_json::Value = test::read_body_json(resp).await;
+    assert_eq!(timer_res["status"], "success");
+    assert!((timer_res["current_volume"].as_f64().unwrap() - 0.25).abs() < 0.01);
+    assert_eq!(timer_res["remaining_seconds"], 50);
+    assert_eq!(timer_res["wire_packet_len"], 63);
+
+    // 7. Subsonic / OpenSubsonic API v1.16 Endpoints
+    // ping.view
+    let req = test::TestRequest::get()
+        .uri("/rest/ping.view?u=admin&p=admin&v=1.16.1&c=Symfonium&f=json")
+        .to_request();
+    let resp = test::call_service(&app, req).await;
+    assert_eq!(resp.status(), 200);
+    let ping_res: serde_json::Value = test::read_body_json(resp).await;
+    assert_eq!(ping_res["subsonic-response"]["status"], "ok");
+
+    // getLicense.view
+    let req = test::TestRequest::get()
+        .uri("/rest/getLicense.view?u=admin&p=admin&v=1.16.1&c=DSub&f=json")
+        .to_request();
+    let resp = test::call_service(&app, req).await;
+    assert_eq!(resp.status(), 200);
+    let lic_res: serde_json::Value = test::read_body_json(resp).await;
+    assert_eq!(lic_res["subsonic-response"]["license"]["valid"], true);
+
+    // getSong.view
+    let req = test::TestRequest::get()
+        .uri("/rest/getSong.view?u=admin&p=admin&id=song_777&v=1.16.1&f=json")
+        .to_request();
+    let resp = test::call_service(&app, req).await;
+    assert_eq!(resp.status(), 200);
+    let song_res: serde_json::Value = test::read_body_json(resp).await;
+    assert_eq!(song_res["subsonic-response"]["song"]["id"], "song_777");
+
+    // stream.view
+    let req = test::TestRequest::get()
+        .uri("/rest/stream.view?u=admin&p=admin&id=song_777&maxBitRate=96&format=opus&v=1.16.1&f=json")
+        .to_request();
+    let resp = test::call_service(&app, req).await;
+    assert_eq!(resp.status(), 200);
+    let stream_res: serde_json::Value = test::read_body_json(resp).await;
+    assert_eq!(stream_res["status"], "ok");
+    assert!(
+        stream_res["stream_action"]
+            .as_str()
+            .unwrap()
+            .contains("stream:song_777")
+    );
+}
