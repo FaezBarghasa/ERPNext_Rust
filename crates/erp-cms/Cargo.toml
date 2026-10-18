@@ -9,6 +9,7 @@ license.workspace = true
 frappe-meta = { workspace = true }
 frappe-framework = { workspace = true }
 frappe-storage = { workspace = true }
+erp-cms-core = { workspace = true }
 erp-accounting = { workspace = true }
 erp-trade = { workspace = true }
 rust_decimal = { workspace = true }

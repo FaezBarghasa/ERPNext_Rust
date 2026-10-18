@@ -129,8 +129,9 @@ impl EmdashBlock {
                     .as_ref()
                     .map(|c| format!("<figcaption>{c}</figcaption>"))
                     .unwrap_or_default();
+                let base_url = url.split('?').next().unwrap_or(url.as_str());
                 format!(
-                    "<figure><img src=\"{url}\" alt=\"{alt}\" loading=\"lazy\" />{cap}</figure>\n"
+                    "<figure>\n  <picture>\n    <source type=\"image/avif\" srcset=\"{base_url}?w=1200&amp;fmt=avif 1200w, {base_url}?w=800&amp;fmt=avif 800w, {base_url}?w=400&amp;fmt=avif 400w\" sizes=\"(max-width: 768px) 100vw, 800px\" />\n    <source type=\"image/webp\" srcset=\"{base_url}?w=1200&amp;fmt=webp 1200w, {base_url}?w=800&amp;fmt=webp 800w, {base_url}?w=400&amp;fmt=webp 400w\" sizes=\"(max-width: 768px) 100vw, 800px\" />\n    <img src=\"{url}\" alt=\"{alt}\" loading=\"lazy\" width=\"800\" height=\"450\" />\n  </picture>\n  {cap}\n</figure>\n"
                 )
             }
         }
@@ -261,6 +262,8 @@ pub struct EmdashDocument {
     pub seo: SeoMetadata,
     #[serde(default)]
     pub version: u64,
+    #[serde(default)]
+    pub updated_by: Option<CompactString>,
     pub created_at: u64,
     pub updated_at: u64,
 }
@@ -288,6 +291,7 @@ impl EmdashDocument {
             tags: Vec::new(),
             seo,
             version: 1,
+            updated_by: None,
             created_at: 0,
             updated_at: 0,
         }
@@ -487,14 +491,24 @@ mod tests {
             title: Some("Notice".into()),
             text: "Zero JavaScript runtime required for standard blog readers.".into(),
         };
+        let media = EmdashBlock::Media {
+            asset_id: "ast_img1".into(),
+            url: "/files/image/ast_img1".into(),
+            caption: Some("Serverless pure-Rust microservice architecture".into()),
+            alt: "System Architecture".into(),
+        };
 
         assert!(heading.render_html().contains("<h1>"));
         assert!(para.render_html().contains("<p>"));
         assert!(callout.render_html().contains("callout-success"));
+        assert!(media.render_html().contains("<picture>"));
+        assert!(media.render_html().contains("image/avif"));
+        assert!(media.render_html().contains("image/webp"));
 
         assert_eq!(heading.word_count(), 4);
         assert_eq!(para.word_count(), 9);
         assert_eq!(callout.word_count(), 8);
+        assert_eq!(media.word_count(), 6);
     }
 
     #[test]

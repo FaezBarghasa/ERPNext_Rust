@@ -16,6 +16,7 @@ members = [
     "crates/erp-crm",
     "crates/erp-hr",
     "crates/erp-cms",
+    "crates/erp-cms-core",
     "crates/frappe-storage",
     "crates/desk-app",
     "crates/desk-components",
@@ -46,6 +47,7 @@ desk-components = { path = "crates/desk-components" }
 erp-accounting = { path = "crates/erp-accounting" }
 erp-asset = { path = "crates/erp-asset" }
 erp-cms = { path = "crates/erp-cms" }
+erp-cms-core = { path = "crates/erp-cms-core" }
 erp-crm = { path = "crates/erp-crm" }
 erp-hr = { path = "crates/erp-hr" }
 erp-importer = { path = "crates/erp-importer" }

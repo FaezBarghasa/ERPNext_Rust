@@ -29,13 +29,14 @@ use crate::v2_routes::{
     admin_unlock_target_handler, admin_update_permission_handler, admin_update_user_roles_handler,
     auth_forgot_password_handler, auth_mfa_activate_handler, auth_mfa_disable_handler,
     auth_mfa_enroll_handler, auth_refresh_token_handler, auth_reset_password_handler,
-    builder_ai_prompt_handler, builder_get_page_handler, builder_list_pages_handler,
-    builder_save_page_handler, buying_purchase_invoice_handler, buying_purchase_order_handler,
-    buying_purchase_receipt_handler, cms_create_taxonomy_handler, cms_generate_seo_handler,
-    cms_list_media_handler, cms_list_taxonomies_handler, cms_upload_media_handler,
-    crm_convert_quotation_handler, download_file_handler, download_image_handler, email_list_queue_handler,
-    email_send_handler, emdash_get_document_handler, emdash_list_documents_handler,
-    emdash_media_crop_handler, emdash_save_document_handler, emdash_transition_handler,
+    builder_ai_prompt_handler, builder_get_page_handler, builder_history_list_handler,
+    builder_list_pages_handler, builder_save_page_handler, buying_purchase_invoice_handler,
+    buying_purchase_order_handler, buying_purchase_receipt_handler, cms_create_taxonomy_handler,
+    cms_generate_seo_handler, cms_list_media_handler, cms_list_taxonomies_handler,
+    cms_upload_media_handler, crm_convert_quotation_handler, download_file_handler,
+    download_image_handler, email_list_queue_handler, email_send_handler,
+    emdash_get_document_handler, emdash_list_documents_handler, emdash_media_crop_handler,
+    emdash_revisions_list_handler, emdash_save_document_handler, emdash_transition_handler,
     export_dataset_handler, h3_stream_file_handler, h3_stream_telemetry_handler,
     hr_process_payroll_handler, inventory_stock_balance_handler, inventory_stock_entry_handler,
     inventory_variant_matrix_handler, login_handler, logout_handler,
@@ -569,10 +570,13 @@ async fn builder_studio_handler(page_id: Option<web::Path<String>>) -> impl Resp
 
     <main class="builder-workspace">
         <header class="builder-toolbar">
-            <div style="display: flex; gap: 0.5rem;">
+            <div style="display: flex; gap: 0.5rem; align-items: center;">
                 <button class="btn btn-outline" id="btn-device-desktop" onclick="setDevice('desktop')">🖥️ Desktop</button>
                 <button class="btn btn-outline" id="btn-device-tablet" onclick="setDevice('tablet')">📱 Tablet</button>
                 <button class="btn btn-outline" id="btn-device-mobile" onclick="setDevice('mobile')">📲 Mobile</button>
+                <div style="width: 1px; height: 20px; background: var(--border); margin: 0 4px;"></div>
+                <button class="btn btn-outline" onclick="undo()" title="Undo (Ctrl+Z)">↶ Undo</button>
+                <button class="btn btn-outline" onclick="redo()" title="Redo (Ctrl+Y)">↷ Redo</button>
             </div>
             <div style="display: flex; align-items: center; gap: 0.75rem;">
                 <span id="ast-counter" style="font-size: 0.8rem; color: var(--text-muted);">0 blocks</span>
@@ -623,6 +627,63 @@ async fn builder_studio_handler(page_id: Option<web::Path<String>>) -> impl Resp
         window.selectedNodeId = null;
         window.activeBreakpoint = 'Desktop';
         let draggedNodeId = null;
+        window.historyStack = [];
+        window.redoStack = [];
+
+        function pushHistory() {{
+            try {{
+                window.historyStack.push(JSON.stringify(window.activeTree));
+                if (window.historyStack.length > 50) window.historyStack.shift();
+                window.redoStack = [];
+            }} catch (_) {{}}
+        }}
+
+        function undo() {{
+            if (!window.historyStack || window.historyStack.length === 0) {{
+                showToast('Nothing to undo');
+                return;
+            }}
+            window.redoStack.push(JSON.stringify(window.activeTree));
+            const prev = window.historyStack.pop();
+            window.activeTree = JSON.parse(prev);
+            renderCanvas();
+            showToast('↶ Undo');
+        }}
+
+        function redo() {{
+            if (!window.redoStack || window.redoStack.length === 0) {{
+                showToast('Nothing to redo');
+                return;
+            }}
+            window.historyStack.push(JSON.stringify(window.activeTree));
+            const next = window.redoStack.pop();
+            window.activeTree = JSON.parse(next);
+            renderCanvas();
+            showToast('↷ Redo');
+        }}
+
+        document.addEventListener('keydown', (e) => {{
+            if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || e.target.isContentEditable) {{
+                return;
+            }}
+            if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'z') {{
+                e.preventDefault();
+                if (e.shiftKey) {{
+                    redo();
+                }} else {{
+                    undo();
+                }}
+            }} else if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'y') {{
+                e.preventDefault();
+                redo();
+            }} else if (e.key === 'Delete' || e.key === 'Backspace') {{
+                if (window.selectedNodeId) {{
+                    e.preventDefault();
+                    pushHistory();
+                    removeNode(window.selectedNodeId);
+                }}
+            }}
+        }});
 
         function showToast(msg, isSuccess = true) {{
             const t = document.getElementById('toast');
@@ -757,6 +818,7 @@ async fn builder_studio_handler(page_id: Option<web::Path<String>>) -> impl Resp
 
         function updateNodeSlot(slotVal) {{
             if (!window.selectedNodeId) return;
+            pushHistory();
             window.activeTree.nodes[window.selectedNodeId].slot = slotVal || null;
             renderCanvas();
         }}
@@ -776,6 +838,7 @@ async fn builder_studio_handler(page_id: Option<web::Path<String>>) -> impl Resp
 
         function updateStyle(prop, val) {{
             if (!window.selectedNodeId) return;
+            pushHistory();
             const node = window.activeTree.nodes[window.selectedNodeId];
             if (!node.responsive_styles) {{
                 node.responsive_styles = {{ desktop: {{}}, tablet: null, mobile: null }};
@@ -822,6 +885,7 @@ async fn builder_studio_handler(page_id: Option<web::Path<String>>) -> impl Resp
             const dstIdx = rootIds.indexOf(targetNodeId);
 
             if (srcIdx !== -1 && dstIdx !== -1) {{
+                pushHistory();
                 rootIds.splice(srcIdx, 1);
                 rootIds.splice(dstIdx, 0, draggedNodeId);
                 renderCanvas();
@@ -981,6 +1045,7 @@ async fn builder_studio_handler(page_id: Option<web::Path<String>>) -> impl Resp
             }}
 
             if (block) {{
+                pushHistory();
                 window.activeTree.nodes[id] = {{
                     id: id,
                     block: block,
@@ -998,6 +1063,7 @@ async fn builder_studio_handler(page_id: Option<web::Path<String>>) -> impl Resp
         }}
 
         function removeNode(nodeId) {{
+            pushHistory();
             delete window.activeTree.nodes[nodeId];
             window.activeTree.root_ids = window.activeTree.root_ids.filter(i => i !== nodeId);
             if (window.selectedNodeId === nodeId) window.selectedNodeId = null;
@@ -1103,7 +1169,7 @@ async fn builder_studio_handler(page_id: Option<web::Path<String>>) -> impl Resp
         document.addEventListener('DOMContentLoaded', initBuilder);
     </script>
 </body>
-</html>"#,
+</html>"###,
         target_page = target_page,
         frame_style = frame_style
     );
@@ -1121,7 +1187,7 @@ async fn emdash_studio_handler(doc_id: Option<web::Path<String>>) -> impl Respon
         .unwrap_or_else(|| "new-post".into());
 
     let html = format!(
-        r#"<!DOCTYPE html>
+        r###"<!DOCTYPE html>
 <html lang="en" data-theme="dark">
 <head>
     <meta charset="UTF-8">
@@ -1382,6 +1448,7 @@ async fn emdash_studio_handler(doc_id: Option<web::Path<String>>) -> impl Respon
             <button class="tool-btn" onclick="insertBlock('Quote')">+ Quote</button>
             <button class="tool-btn" onclick="insertBlock('Callout')">+ Callout</button>
             <button class="tool-btn" onclick="insertBlock('Code')">+ Code</button>
+            <button class="tool-btn" onclick="insertBlock('Table')">+ Table</button>
             <button class="tool-btn" onclick="insertBlock('Image')">+ Image</button>
         </div>
 
@@ -1398,6 +1465,7 @@ async fn emdash_studio_handler(doc_id: Option<web::Path<String>>) -> impl Respon
             <div class="slash-item" onclick="applySlash('Quote')"><span>💬</span> Blockquote (/quote)</div>
             <div class="slash-item" onclick="applySlash('Callout')"><span>💡</span> Callout Box (/callout)</div>
             <div class="slash-item" onclick="applySlash('Code')"><span>💻</span> Code Snippet (/code)</div>
+            <div class="slash-item" onclick="applySlash('Table')"><span>📊</span> Data Table (/table)</div>
             <div class="slash-item" onclick="applySlash('Image')"><span>🖼️</span> Responsive Image (/image)</div>
         </div>
 
@@ -1493,6 +1561,42 @@ async fn emdash_studio_handler(doc_id: Option<web::Path<String>>) -> impl Respon
                     pre.textContent = b.code;
                     attachInputListeners(pre, idx, (val) => {{ b.code = val; }});
                     row.appendChild(pre);
+                }} else if (b.block_type === 'Table') {{
+                    const tbl = document.createElement('table');
+                    tbl.style.width = '100%';
+                    tbl.style.borderCollapse = 'collapse';
+                    tbl.style.margin = '1rem 0';
+                    const thead = document.createElement('thead');
+                    const hr = document.createElement('tr');
+                    (b.headers || ['Column 1', 'Column 2']).forEach((h, hidx) => {{
+                        const th = document.createElement('th');
+                        th.style.border = '1px solid var(--border)';
+                        th.style.padding = '0.5rem 0.75rem';
+                        th.style.textAlign = 'left';
+                        th.style.background = 'rgba(255,255,255,0.05)';
+                        th.contentEditable = 'true';
+                        th.textContent = h;
+                        th.onblur = () => {{ b.headers[hidx] = th.textContent; updateStats(); }};
+                        hr.appendChild(th);
+                    }});
+                    thead.appendChild(hr);
+                    tbl.appendChild(thead);
+                    const tbody = document.createElement('tbody');
+                    (b.rows || [['Value 1', 'Value 2']]).forEach((rowVals, ridx) => {{
+                        const tr = document.createElement('tr');
+                        rowVals.forEach((cval, cidx) => {{
+                            const td = document.createElement('td');
+                            td.style.border = '1px solid var(--border)';
+                            td.style.padding = '0.5rem 0.75rem';
+                            td.contentEditable = 'true';
+                            td.textContent = cval;
+                            td.onblur = () => {{ b.rows[ridx][cidx] = td.textContent; updateStats(); }};
+                            tr.appendChild(td);
+                        }});
+                        tbody.appendChild(tr);
+                    }});
+                    tbl.appendChild(tbody);
+                    row.appendChild(tbl);
                 }} else if (b.block_type === 'Image') {{
                     const imgBox = document.createElement('div');
                     imgBox.className = 'media-box';
@@ -1560,6 +1664,8 @@ async fn emdash_studio_handler(doc_id: Option<web::Path<String>>) -> impl Respon
                 window.emdashBlocks[idx] = {{ block_type: 'Callout', style: 'Info', title: 'Note', text: 'Key takeaway message here.' }};
             }} else if (kind === 'Code') {{
                 window.emdashBlocks[idx] = {{ block_type: 'Code', language: 'rust', code: '// Rust snippet\\nfn main() {{}}' }};
+            }} else if (kind === 'Table') {{
+                window.emdashBlocks[idx] = {{ block_type: 'Table', headers: ['Metric', 'Benchmark'], rows: [['Latency', '< 1ms'], ['Throughput', '25,000 req/s']] }};
             }} else if (kind === 'Image') {{
                 window.emdashBlocks[idx] = {{ block_type: 'Image', url: '/files/image/sample?w=800&h=450&fmt=webp', caption: 'High-resolution diagram' }};
             }}
@@ -1609,6 +1715,8 @@ async fn emdash_studio_handler(doc_id: Option<web::Path<String>>) -> impl Respon
                 window.emdashBlocks.push({{ block_type: 'Callout', style: 'Info', title: 'Note', text: 'Ensure SurrealDB schema migrations have concluded.' }});
             }} else if (kind === 'Code') {{
                 window.emdashBlocks.push({{ block_type: 'Code', language: 'rust', code: '// Pure-Rust concurrent actor\\npub async fn run() {{ ... }}' }});
+            }} else if (kind === 'Table') {{
+                window.emdashBlocks.push({{ block_type: 'Table', headers: ['Metric', 'Benchmark'], rows: [['Latency', '< 1ms'], ['Throughput', '25,000 req/s']] }});
             }} else if (kind === 'Image') {{
                 window.emdashBlocks.push({{ block_type: 'Image', url: '/files/image/sample?w=800&h=450&fmt=webp', caption: 'Dynamic responsive media' }});
             }}
@@ -1709,7 +1817,7 @@ async fn emdash_studio_handler(doc_id: Option<web::Path<String>>) -> impl Respon
         document.addEventListener('DOMContentLoaded', initEmdash);
     </script>
 </body>
-</html>"#,
+</html>"###,
         target_doc = target_doc
     );
 
@@ -1752,6 +1860,7 @@ async fn builder_preview_handler(
 }
 
 /// Fallback Dynamic Route Dispatcher for published Builder pages and Emdash articles: `GET /site/{slug}`
+#[allow(clippy::collapsible_if)]
 async fn dynamic_site_page_handler(
     slug: web::Path<String>,
     state: web::Data<DynamicRbacState>,
@@ -2094,7 +2203,7 @@ pub async fn sitemap_xml_handler(
             }
         }
         if let Ok(pages) = st.builder_pages.read() {
-            for (id, _tree) in pages.iter() {
+            for id in pages.keys() {
                 entries.push(erp_cms::SitemapEntry {
                     loc: format!("https://rustnext.enterprise.io/site/{}", id),
                     lastmod: Some("2026-10-17".into()),
@@ -2109,6 +2218,7 @@ pub async fn sitemap_xml_handler(
         .body(erp_cms::generate_dynamic_sitemap_xml(&entries))
 }
 
+#[allow(clippy::collapsible_if)]
 pub async fn rss_feed_handler(
     state: Option<web::Data<DynamicRbacState>>,
 ) -> impl Responder {
@@ -2740,6 +2850,10 @@ pub fn configure_app(
             web::post().to(builder_save_page_handler),
         )
         .route(
+            "/api/v2/builder/pages/{id}/history",
+            web::get().to(builder_history_list_handler),
+        )
+        .route(
             "/api/v2/builder/ai/prompt",
             web::post().to(builder_ai_prompt_handler),
         )
@@ -2755,6 +2869,10 @@ pub fn configure_app(
         .route(
             "/api/v2/emdash/documents/{id}",
             web::post().to(emdash_save_document_handler),
+        )
+        .route(
+            "/api/v2/emdash/documents/{id}/revisions",
+            web::get().to(emdash_revisions_list_handler),
         )
         .route(
             "/api/v2/emdash/documents/{id}/transition",

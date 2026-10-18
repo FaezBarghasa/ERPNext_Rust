@@ -1,0 +1,15 @@
+[package]
+name = "erp-cms-core"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+license.workspace = true
+description = "Zero-allocation #![no_std] CMS and Visual Builder core AST for edge kiosks, warehouse terminals, and serial signage displays"
+
+[dependencies]
+heapless = { workspace = true }
+serde = { workspace = true, optional = true }
+
+[features]
+default = []
+serde = ["dep:serde", "heapless/serde"]

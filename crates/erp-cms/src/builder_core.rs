@@ -13,6 +13,30 @@ use compact_str::CompactString;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 
+/// Definition of a named component slot for template composition.
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+pub struct SlotDefinition {
+    pub name: CompactString,
+    pub description: CompactString,
+    pub allowed_components: Vec<CompactString>,
+    pub required: bool,
+}
+
+impl SlotDefinition {
+    #[must_use]
+    pub fn new(name: impl Into<CompactString>, description: impl Into<CompactString>) -> Self {
+        Self {
+            name: name.into(),
+            description: description.into(),
+            allowed_components: Vec::new(),
+            required: false,
+        }
+    }
+}
+
+/// Breakpoint-indexed sparse CSS properties with desktop-first inheritance rules.
+pub type ResponsiveStyleMap = ResponsiveStyleCascade;
+
 /// Interaction modes in the visual canvas.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 pub enum CanvasInteractionMode {
@@ -83,6 +107,11 @@ pub enum CanvasBlock {
     },
     Footer {
         copyright_text: CompactString,
+    },
+    SlotContainer {
+        name: CompactString,
+        allowed_types: Vec<CompactString>,
+        children: Vec<CanvasBlock>,
     },
 
     // Dynamic Repeaters & Data Blocks
@@ -653,6 +682,8 @@ pub struct CanvasBlockNode {
     pub responsive_styles: Option<ResponsiveStyleCascade>,
     #[serde(default)]
     pub slot: Option<CompactString>,
+    #[serde(default)]
+    pub slot_definitions: Vec<SlotDefinition>,
 }
 
 /// Hierarchical Block Canvas Tree supporting drag-and-drop insertion, removal, and reordering.
@@ -706,6 +737,7 @@ impl CanvasBlockTree {
             css_styles: None,
             responsive_styles: None,
             slot: None,
+            slot_definitions: Vec::new(),
         };
 
         self.nodes.insert(id.clone(), node);
@@ -948,6 +980,15 @@ impl CanvasBlockTree {
                     "<footer id=\"{id}\" class=\"builder-footer\"{slot_attr}{style_attr}><p>{copy}</p></footer>\n"
                 ));
             }
+            CanvasBlock::SlotContainer { name, .. } => {
+                out.push_str(&format!(
+                    "<div id=\"{id}\" class=\"builder-slot-container\" data-slot=\"{name}\"{slot_attr}{style_attr}>\n"
+                ));
+                for cid in &node.child_ids {
+                    self.render_node(cid.as_str(), resolver, out);
+                }
+                out.push_str("</div>\n");
+            }
             CanvasBlock::CardBlock {
                 title,
                 body,
@@ -960,12 +1001,10 @@ impl CanvasBlockTree {
                 out.push_str(&format!(
                     "<div id=\"{id}\" class=\"card-block\"{slot_attr}{style_attr}>"
                 ));
-                if let Some(img) = img_res {
-                    if !img.is_empty() {
-                        out.push_str(&format!(
-                            "<img src=\"{img}\" alt=\"{title_res}\" class=\"card-img\" />"
-                        ));
-                    }
+                if let Some(img) = img_res.filter(|img| !img.is_empty()) {
+                    out.push_str(&format!(
+                        "<img src=\"{img}\" alt=\"{title_res}\" class=\"card-img\" />"
+                    ));
                 }
                 out.push_str(&format!("<h3>{title_res}</h3><p>{body_res}</p></div>\n"));
             }
@@ -1030,6 +1069,7 @@ impl CanvasBlockTree {
                             css_styles: None,
                             responsive_styles: None,
                             slot: None,
+                            slot_definitions: Vec::new(),
                         };
                         let mut temp_tree = CanvasBlockTree::default();
                         temp_tree.nodes.insert(temp_node.id.clone(), temp_node.clone());
@@ -1370,5 +1410,56 @@ mod tests {
         assert!(html.contains("#blk_2 { color: #00ffcc; }"));
         assert!(html.contains("data-slot=\"header\""));
         assert!(html.contains("Header Content"));
+    }
+
+    #[test]
+    fn test_slot_definition_and_slot_container_rendering() {
+        let slot_def = SlotDefinition {
+            name: "main_content".into(),
+            description: "Main article container".into(),
+            allowed_components: vec!["Heading".into(), "TextBlock".into()],
+            required: true,
+        };
+
+        let mut tree = CanvasBlockTree::new();
+        let slot_container_id = tree.insert_block(
+            None,
+            CanvasBlock::SlotContainer {
+                name: "main_content".into(),
+                allowed_types: vec!["Heading".into(), "TextBlock".into()],
+                children: Vec::new(),
+            },
+            0,
+        );
+
+        let p_id = tree.insert_block(
+            Some(slot_container_id.as_str()),
+            CanvasBlock::TextBlock {
+                content: "Rendered within slot container.".into(),
+                data_binding: None,
+            },
+            0,
+        );
+
+        if let Some(node) = tree.get_node_mut(slot_container_id.as_str()) {
+            node.slot_definitions = vec![slot_def];
+            let mut style_map = ResponsiveStyleMap::default();
+            style_map.desktop.background_color = Some("#1a1a2e".into());
+            style_map.mobile = Some(BlockCssInspector {
+                background_color: Some("#000000".into()),
+                ..Default::default()
+            });
+            node.responsive_styles = Some(style_map);
+        }
+
+        let resolver = BlockValueResolver::new();
+        let html = tree.render_html(&resolver);
+        assert!(html.contains("class=\"builder-slot-container\""));
+        assert!(html.contains("data-slot=\"main_content\""));
+        assert!(html.contains("Rendered within slot container."));
+        assert!(html.contains("@media (max-width: 480px)"));
+        assert!(html.contains("#blk_1 { background-color: #000000; }"));
+        assert_eq!(tree.get_node(slot_container_id.as_str()).unwrap().slot_definitions.len(), 1);
+        assert_eq!(tree.get_node(p_id.as_str()).unwrap().parent_id.as_deref(), Some(slot_container_id.as_str()));
     }
 }

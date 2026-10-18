@@ -21,6 +21,7 @@ pub use builder_core::{
     BlockCssInspector, BlockValueResolver, BobAgentPromptRequest, CanvasBlock, CanvasBlockNode,
     CanvasBlockTree, CanvasBreakpoint, CanvasInteractionMode, CanvasReversionLedger,
     DeviceFrameSwitcher, DocTypeBindingFilter, DocTypeDataBinding, ResponsiveStyleCascade,
+    ResponsiveStyleMap,
 };
 pub use emdash_studio::{
     CalloutStyle, CropBox, EditorialWorkflowError, EditorialWorkflowState, EmdashBlock,
@@ -48,10 +49,20 @@ pub use theme_engine::{
     CompiledTheme, DesignTokens, RenderEngineKind, SlotDefinition, ThemeManifest, ThemeRegistry,
     ThemeVariant, WorkTypeClassification,
 };
+pub use erp_cms_core as core;
 
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn test_canvas_to_edge_core_bridge() {
+        let mut edge_layout: erp_cms_core::EdgeCanvasLayout<16> = erp_cms_core::EdgeCanvasLayout::new("Warehouse Display");
+        let mut text = erp_cms_core::heapless::String::new();
+        text.push_str("SKU-9923 Item Verified").unwrap();
+        edge_layout.add_block(erp_cms_core::EdgeBlockNode::new("b1", erp_cms_core::EdgeBlockType::Text { content: text })).unwrap();
+        assert_eq!(edge_layout.blocks.len(), 1);
+    }
 
     #[test]
     fn test_byte_range_parser() {

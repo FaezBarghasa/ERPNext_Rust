@@ -1691,9 +1691,9 @@ pub async fn download_image_handler(
             let sql = "SELECT * FROM drive_file WHERE content_hash = $content_hash;";
             if let Ok(mut res) = client.query(sql).bind(("content_hash", hash.clone())).await {
                 let records: Vec<serde_json::Value> = res.take(0).unwrap_or_default();
-                records.into_iter().next().and_then(|r| {
+                records.into_iter().next().map(|r| {
                     let raw_data = r.get("data").and_then(|d| d.as_str()).unwrap_or_default();
-                    Some(hex::decode(raw_data).unwrap_or_else(|_| raw_data.as_bytes().to_vec()))
+                    hex::decode(raw_data).unwrap_or_else(|_| raw_data.as_bytes().to_vec())
                 })
             } else {
                 None
@@ -4215,6 +4215,7 @@ pub async fn builder_list_pages_handler(state: web::Data<DynamicRbacState>) -> i
 }
 
 /// Handler: Get single Builder page AST: `GET /api/v2/builder/pages/{id}`
+#[allow(clippy::collapsible_if)]
 pub async fn builder_get_page_handler(
     page_id: web::Path<String>,
     state: web::Data<DynamicRbacState>,
@@ -4270,7 +4271,9 @@ pub async fn builder_get_page_handler(
 }
 
 /// Handler: Save or create Builder page AST: `POST /api/v2/builder/pages/{id}`
+#[allow(clippy::collapsible_if)]
 pub async fn builder_save_page_handler(
+    req: actix_web::HttpRequest,
     page_id: web::Path<String>,
     payload: web::Json<SaveBuilderPagePayload>,
     state: web::Data<DynamicRbacState>,
@@ -4279,8 +4282,15 @@ pub async fn builder_save_page_handler(
     let id = page_id.into_inner();
     let mut p = payload.into_inner();
 
-    // Optimistic Concurrency Control
-    if let Some(expected_ver) = p.expected_version {
+    // Optimistic Concurrency Control (via JSON payload expected_version or HTTP If-Match header)
+    let if_match_version = req
+        .headers()
+        .get("if-match")
+        .and_then(|h| h.to_str().ok())
+        .and_then(|s| s.trim().trim_matches('"').parse::<u64>().ok());
+    let expected_ver = p.expected_version.or(if_match_version);
+
+    if let Some(expected_ver) = expected_ver {
         if let Ok(lock) = state.builder_pages.read() {
             if let Some(current) = lock.get(&id) {
                 if current.version > 0 && current.version != expected_ver {
@@ -4313,10 +4323,22 @@ pub async fn builder_save_page_handler(
                 "route_path": p.route_path,
                 "tree": p.tree,
                 "version": saved_version,
+                "updated_by": p.tree.updated_by.clone().unwrap_or_else(|| "editor".into()),
                 "updated_at": Utc::now().to_rfc3339(),
             });
             let sql = format!("UPSERT builder_page:{clean_id} CONTENT $data;");
             let _ = client.query(&sql).bind(("data", doc_json)).await;
+
+            // Persist durable mutation snapshot to builder_history table
+            let hist_json = serde_json::json!({
+                "page_id": id,
+                "version": saved_version,
+                "tree": p.tree,
+                "updated_by": p.tree.updated_by.clone().unwrap_or_else(|| "editor".into()),
+                "created_at": Utc::now().to_rfc3339(),
+            });
+            let hist_sql = "CREATE builder_history CONTENT $hist;";
+            let _ = client.query(hist_sql).bind(("hist", hist_json)).await;
         }
     }
 
@@ -4330,6 +4352,33 @@ pub async fn builder_save_page_handler(
             "version": saved_version,
             "node_count": p.tree.nodes.len()
         }))
+}
+
+/// Handler: Retrieve mutation history for a Builder page: `GET /api/v2/builder/pages/{id}/history`
+pub async fn builder_history_list_handler(
+    page_id: web::Path<String>,
+    pool_mgr: Option<web::Data<ConnectionPoolManager>>,
+) -> impl Responder {
+    let id = page_id.into_inner();
+    if let Some(mgr) = pool_mgr {
+        let tenant_id = TenantId("default".into());
+        if let Ok(client) = mgr.get_or_initialize_client(&tenant_id).await {
+            let sql = "SELECT * FROM builder_history WHERE page_id = $page_id ORDER BY version DESC LIMIT 50;";
+            if let Ok(mut res) = client.query(sql).bind(("page_id", id.clone())).await {
+                let records: Vec<serde_json::Value> = res.take(0).unwrap_or_default();
+                return HttpResponse::Ok().json(serde_json::json!({
+                    "status": "OK",
+                    "page_id": id,
+                    "history": records
+                }));
+            }
+        }
+    }
+    HttpResponse::Ok().json(serde_json::json!({
+        "status": "OK",
+        "page_id": id,
+        "history": []
+    }))
 }
 
 /// Handler: Autonomous Site Agent ("Bob") AI Prompt: `POST /api/v2/builder/ai/prompt`
@@ -4482,6 +4531,7 @@ pub async fn emdash_list_documents_handler(state: web::Data<DynamicRbacState>) -
 }
 
 /// Handler: Get single Emdash document: `GET /api/v2/emdash/documents/{id}`
+#[allow(clippy::collapsible_if)]
 pub async fn emdash_get_document_handler(
     doc_id: web::Path<String>,
     state: web::Data<DynamicRbacState>,
@@ -4547,7 +4597,9 @@ pub async fn emdash_get_document_handler(
 }
 
 /// Handler: Create or save Emdash editorial document: `POST /api/v2/emdash/documents/{id}`
+#[allow(clippy::collapsible_if)]
 pub async fn emdash_save_document_handler(
+    req: actix_web::HttpRequest,
     doc_id: web::Path<String>,
     payload: web::Json<SaveEmdashDocumentPayload>,
     state: web::Data<DynamicRbacState>,
@@ -4556,8 +4608,15 @@ pub async fn emdash_save_document_handler(
     let id = doc_id.into_inner();
     let p = payload.into_inner();
 
-    // Optimistic Concurrency Control
-    let next_version = if let Some(expected_ver) = p.expected_version {
+    // Optimistic Concurrency Control (via JSON payload expected_version or HTTP If-Match header)
+    let if_match_version = req
+        .headers()
+        .get("if-match")
+        .and_then(|h| h.to_str().ok())
+        .and_then(|s| s.trim().trim_matches('"').parse::<u64>().ok());
+    let expected_ver = p.expected_version.or(if_match_version);
+
+    let next_version = if let Some(expected_ver) = expected_ver {
         if let Ok(lock) = state.emdash_documents.read() {
             if let Some(current) = lock.get(&id) {
                 if current.version > 0 && current.version != expected_ver {
@@ -4583,6 +4642,7 @@ pub async fn emdash_save_document_handler(
     let mut doc =
         erp_cms::emdash_studio::EmdashDocument::new(id.clone(), p.title, p.slug, p.author);
     doc.version = next_version;
+    doc.updated_by = Some(doc.author.clone());
     for b in p.blocks {
         doc.add_block(b);
     }
@@ -4610,12 +4670,26 @@ pub async fn emdash_save_document_handler(
                 "tags": doc.tags,
                 "workflow_state": doc.workflow_state,
                 "version": doc.version,
+                "updated_by": doc.updated_by,
                 "word_count": doc.word_count(),
                 "reading_time_mins": doc.reading_time_minutes(),
                 "updated_at": Utc::now().to_rfc3339(),
             });
             let sql = format!("UPSERT emdash_article:{clean_id} CONTENT $data;");
             let _ = client.query(&sql).bind(("data", doc_json)).await;
+
+            // Persist durable revision snapshot to emdash_revision table
+            let rev_json = serde_json::json!({
+                "article_id": id,
+                "version": next_version,
+                "title": doc.title,
+                "blocks": doc.blocks,
+                "workflow_state": doc.workflow_state,
+                "updated_by": doc.updated_by.clone().unwrap_or_else(|| doc.author.clone()),
+                "created_at": Utc::now().to_rfc3339(),
+            });
+            let rev_sql = "CREATE emdash_revision CONTENT $rev;";
+            let _ = client.query(rev_sql).bind(("rev", rev_json)).await;
         }
     }
 
@@ -4628,6 +4702,33 @@ pub async fn emdash_save_document_handler(
             "word_count": doc.word_count(),
             "reading_time_mins": doc.reading_time_minutes(),
         }))
+}
+
+/// Handler: Retrieve revision history for an Emdash document: `GET /api/v2/emdash/documents/{id}/revisions`
+pub async fn emdash_revisions_list_handler(
+    doc_id: web::Path<String>,
+    pool_mgr: Option<web::Data<ConnectionPoolManager>>,
+) -> impl Responder {
+    let id = doc_id.into_inner();
+    if let Some(mgr) = pool_mgr {
+        let tenant_id = TenantId("default".into());
+        if let Ok(client) = mgr.get_or_initialize_client(&tenant_id).await {
+            let sql = "SELECT * FROM emdash_revision WHERE article_id = $article_id ORDER BY version DESC LIMIT 50;";
+            if let Ok(mut res) = client.query(sql).bind(("article_id", id.clone())).await {
+                let records: Vec<serde_json::Value> = res.take(0).unwrap_or_default();
+                return HttpResponse::Ok().json(serde_json::json!({
+                    "status": "OK",
+                    "article_id": id,
+                    "revisions": records
+                }));
+            }
+        }
+    }
+    HttpResponse::Ok().json(serde_json::json!({
+        "status": "OK",
+        "article_id": id,
+        "revisions": []
+    }))
 }
 
 /// Handler: Transition Emdash editorial document lifecycle: `POST /api/v2/emdash/documents/{id}/transition`
@@ -7682,6 +7783,7 @@ mod tests {
             expected_version: None,
         });
         let save_resp = builder_save_page_handler(
+            actix_web::test::TestRequest::default().to_http_request(),
             web::Path::from("landing_v1".to_string()),
             save_builder,
             state.clone(),
@@ -7702,7 +7804,7 @@ mod tests {
         assert_eq!(get_page_resp.status(), actix_web::http::StatusCode::OK);
         assert!(get_page_resp.headers().contains_key("ETag"));
 
-        // 1c. Builder optimistic concurrency conflict
+        // 1c. Builder optimistic concurrency conflict via expected_version
         let stale_save = web::Json(SaveBuilderPagePayload {
             title: "Stale update".into(),
             route_path: "/landing".into(),
@@ -7710,6 +7812,7 @@ mod tests {
             expected_version: Some(999),
         });
         let conflict_resp = builder_save_page_handler(
+            actix_web::test::TestRequest::default().to_http_request(),
             web::Path::from("landing_v1".to_string()),
             stale_save,
             state.clone(),
@@ -7718,6 +7821,36 @@ mod tests {
         .await
         .respond_to(&actix_web::test::TestRequest::default().to_http_request());
         assert_eq!(conflict_resp.status(), actix_web::http::StatusCode::CONFLICT);
+
+        // 1d. Builder optimistic concurrency conflict via HTTP If-Match header
+        let stale_if_match_req = actix_web::test::TestRequest::default()
+            .insert_header(("If-Match", "\"888\""))
+            .to_http_request();
+        let stale_save_header = web::Json(SaveBuilderPagePayload {
+            title: "Header conflict".into(),
+            route_path: "/landing".into(),
+            tree: erp_cms::builder_core::CanvasBlockTree::default(),
+            expected_version: None,
+        });
+        let if_match_conflict = builder_save_page_handler(
+            stale_if_match_req,
+            web::Path::from("landing_v1".to_string()),
+            stale_save_header,
+            state.clone(),
+            None,
+        )
+        .await
+        .respond_to(&actix_web::test::TestRequest::default().to_http_request());
+        assert_eq!(if_match_conflict.status(), actix_web::http::StatusCode::CONFLICT);
+
+        // 1e. Builder history endpoint
+        let hist_resp = builder_history_list_handler(
+            web::Path::from("landing_v1".to_string()),
+            None,
+        )
+        .await
+        .respond_to(&actix_web::test::TestRequest::default().to_http_request());
+        assert_eq!(hist_resp.status(), actix_web::http::StatusCode::OK);
 
         // 2. Builder list pages
         let list_resp = builder_list_pages_handler(state.clone())
@@ -7751,6 +7884,7 @@ mod tests {
             expected_version: None,
         });
         let doc_resp = emdash_save_document_handler(
+            actix_web::test::TestRequest::default().to_http_request(),
             web::Path::from("art_001".to_string()),
             save_doc,
             state.clone(),
@@ -7771,7 +7905,7 @@ mod tests {
         assert_eq!(get_doc_resp.status(), actix_web::http::StatusCode::OK);
         assert!(get_doc_resp.headers().contains_key("ETag"));
 
-        // 4c. Emdash optimistic concurrency conflict
+        // 4c. Emdash optimistic concurrency conflict via expected_version
         let stale_doc = web::Json(SaveEmdashDocumentPayload {
             title: "Stale Doc".into(),
             slug: "rustnext-release".into(),
@@ -7781,6 +7915,7 @@ mod tests {
             expected_version: Some(999),
         });
         let doc_conflict_resp = emdash_save_document_handler(
+            actix_web::test::TestRequest::default().to_http_request(),
             web::Path::from("art_001".to_string()),
             stale_doc,
             state.clone(),
@@ -7789,6 +7924,38 @@ mod tests {
         .await
         .respond_to(&actix_web::test::TestRequest::default().to_http_request());
         assert_eq!(doc_conflict_resp.status(), actix_web::http::StatusCode::CONFLICT);
+
+        // 4d. Emdash optimistic concurrency conflict via HTTP If-Match header
+        let stale_doc_header_req = actix_web::test::TestRequest::default()
+            .insert_header(("If-Match", "\"777\""))
+            .to_http_request();
+        let stale_doc_header = web::Json(SaveEmdashDocumentPayload {
+            title: "Stale Header Doc".into(),
+            slug: "rustnext-release".into(),
+            author: "Administrator".into(),
+            blocks: vec![],
+            tags: vec![],
+            expected_version: None,
+        });
+        let doc_header_conflict = emdash_save_document_handler(
+            stale_doc_header_req,
+            web::Path::from("art_001".to_string()),
+            stale_doc_header,
+            state.clone(),
+            None,
+        )
+        .await
+        .respond_to(&actix_web::test::TestRequest::default().to_http_request());
+        assert_eq!(doc_header_conflict.status(), actix_web::http::StatusCode::CONFLICT);
+
+        // 4e. Emdash revisions endpoint
+        let rev_resp = emdash_revisions_list_handler(
+            web::Path::from("art_001".to_string()),
+            None,
+        )
+        .await
+        .respond_to(&actix_web::test::TestRequest::default().to_http_request());
+        assert_eq!(rev_resp.status(), actix_web::http::StatusCode::OK);
 
         // 5. Emdash transition document to InReview then Published
         let trans1 = web::Json(EmdashTransitionPayload {
@@ -7841,5 +8008,31 @@ mod tests {
             .await
             .respond_to(&actix_web::test::TestRequest::default().to_http_request());
         assert_eq!(rss_resp.status(), actix_web::http::StatusCode::OK);
+
+        // 8. Dynamic Image Delivery with on-the-fly thumbnail/crop calculation
+        let img_query = web::Query(ImageTransformQuery {
+            w: Some(800),
+            h: Some(600),
+            crop: Some("0.5,0.5".into()),
+            fmt: Some("webp".into()),
+        });
+        let img_resp = download_image_handler(
+            web::Path::from("sample_hash".to_string()),
+            img_query,
+            None,
+        )
+        .await
+        .respond_to(&actix_web::test::TestRequest::default().to_http_request());
+        assert_eq!(img_resp.status(), actix_web::http::StatusCode::OK);
+        assert_eq!(
+            img_resp.headers().get("Content-Type").unwrap(),
+            "image/webp"
+        );
+        assert!(img_resp.headers().contains_key("ETag"));
+        assert!(img_resp.headers().contains_key("X-Crop-Box"));
+        assert_eq!(
+            img_resp.headers().get("Cache-Control").unwrap(),
+            "public, max-age=31536000, immutable"
+        );
     }
 }
