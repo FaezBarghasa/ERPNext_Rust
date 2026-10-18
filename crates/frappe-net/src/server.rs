@@ -57,6 +57,7 @@ use crate::v2_routes::{
     workflow_version_rollback_handler, streaming_master_playlist_handler,
     streaming_playback_progress_handler, streaming_rtmp_auth_handler, streaming_rtmp_done_handler,
     streaming_segment_handler, streaming_upload_chunk_handler, streaming_variant_playlist_handler,
+    streaming_video_xray_handler, streaming_video_xray_vtt_handler,
 };
 use actix_web::{
     App, HttpMessage, HttpRequest, HttpResponse, HttpServer, Responder, middleware::Compress,
@@ -3102,6 +3103,14 @@ pub fn configure_app(
         .route(
             "/api/v2/streaming/playback/progress",
             web::post().to(streaming_playback_progress_handler),
+        )
+        .route(
+            "/api/v2/streaming/videos/{id}/xray",
+            web::get().to(streaming_video_xray_handler),
+        )
+        .route(
+            "/api/v2/streaming/videos/{id}/xray.vtt",
+            web::get().to(streaming_video_xray_vtt_handler),
         )
         .route(
             "/studio/player",

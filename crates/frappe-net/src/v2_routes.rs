@@ -2369,6 +2369,7 @@ pub struct DynamicRbacState {
     pub segment_cache: Arc<erp_cms::hls_engine::HlsSegmentCache>,
     pub svod_manager: Arc<erp_cms::security::SvodPlaybackManager>,
     pub streaming_signer: Arc<erp_cms::security::HmacStreamingSigner>,
+    pub xray_registry: Arc<erp_cms::xray_metadata::XRayRegistry>,
 }
 
 impl Default for DynamicRbacState {
@@ -2521,6 +2522,7 @@ impl Default for DynamicRbacState {
             streaming_signer: Arc::new(erp_cms::security::HmacStreamingSigner::new(
                 b"erpnext_ott_master_secret_key_321",
             )),
+            xray_registry: Arc::new(erp_cms::xray_metadata::XRayRegistry::with_demo_catalogs()),
         }
     }
 }
@@ -5121,6 +5123,64 @@ pub async fn streaming_playback_progress_handler(
         "duration_sec": p.duration_sec,
         "wire_bytes": wire_bytes_len,
     }))
+}
+
+/// Query parameters for X-Ray timeline queries.
+#[derive(Debug, Deserialize)]
+pub struct XRayTimelineQuery {
+    pub time: Option<f64>,
+}
+
+/// Handler: Query X-Ray Interactive Metadata: `GET /api/v2/streaming/videos/{id}/xray`
+pub async fn streaming_video_xray_handler(
+    video_id: web::Path<String>,
+    query: web::Query<XRayTimelineQuery>,
+    state: web::Data<DynamicRbacState>,
+) -> impl Responder {
+    let id = video_id.into_inner();
+
+    if let Some(t) = query.time {
+        match state.xray_registry.get_snapshot(&id, t) {
+            Some(snapshot) => HttpResponse::Ok().json(serde_json::json!({
+                "status": "success",
+                "media_id": id,
+                "snapshot": snapshot,
+            })),
+            None => HttpResponse::NotFound().json(serde_json::json!({
+                "status": "error",
+                "message": format!("No X-Ray metadata catalog registered for media '{id}'"),
+            })),
+        }
+    } else {
+        match state.xray_registry.get_catalog(&id) {
+            Some(catalog) => HttpResponse::Ok().json(serde_json::json!({
+                "status": "success",
+                "catalog": catalog,
+            })),
+            None => HttpResponse::NotFound().json(serde_json::json!({
+                "status": "error",
+                "message": format!("No X-Ray metadata catalog registered for media '{id}'"),
+            })),
+        }
+    }
+}
+
+/// Handler: Deliver RFC 8216 WebVTT Timed Metadata Track: `GET /api/v2/streaming/videos/{id}/xray.vtt`
+pub async fn streaming_video_xray_vtt_handler(
+    video_id: web::Path<String>,
+    state: web::Data<DynamicRbacState>,
+) -> impl Responder {
+    let id = video_id.into_inner();
+    match state.xray_registry.get_webvtt_track(&id) {
+        Some(vtt_track) => HttpResponse::Ok()
+            .content_type("text/vtt")
+            .insert_header(("Cache-Control", "public, max-age=3600"))
+            .body(vtt_track),
+        None => HttpResponse::NotFound().json(serde_json::json!({
+            "status": "error",
+            "message": format!("No X-Ray metadata track available for media '{id}'"),
+        })),
+    }
 }
 
 // =========================================================================
