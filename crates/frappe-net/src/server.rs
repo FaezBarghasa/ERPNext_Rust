@@ -27,23 +27,25 @@ use crate::v2_routes::{
     admin_list_ip_rules_handler, admin_list_lockouts_handler, admin_list_roles_handler,
     admin_list_users_handler, admin_query_handler, admin_status_handler,
     admin_unlock_target_handler, admin_update_permission_handler, admin_update_user_roles_handler,
-    audio_add_comment_handler, audio_crossfade_handler, audio_eq_filter_handler,
-    audio_flac_compress_handler, audio_get_comments_handler, audio_lyrics_current_handler,
-    audio_lyrics_parse_handler, audio_music_info_handler, audio_normalize_handler,
-    audio_recommend_handler, audio_sleep_soundboard_handler, audio_sleep_timer_handler,
-    audio_waveform_handler, auth_forgot_password_handler, auth_mfa_activate_handler,
-    auth_mfa_disable_handler, auth_mfa_enroll_handler, auth_refresh_token_handler,
-    auth_reset_password_handler, builder_ai_prompt_handler, builder_get_page_handler,
-    builder_history_list_handler, builder_list_pages_handler, builder_save_page_handler,
-    buying_purchase_invoice_handler, buying_purchase_order_handler,
-    buying_purchase_receipt_handler, cms_create_taxonomy_handler, cms_generate_seo_handler,
-    cms_list_media_handler, cms_list_taxonomies_handler, cms_upload_media_handler,
-    crm_convert_quotation_handler, download_file_handler, download_image_handler,
-    email_list_queue_handler, email_send_handler, emdash_get_document_handler,
-    emdash_list_documents_handler, emdash_media_crop_handler, emdash_revisions_list_handler,
-    emdash_save_document_handler, emdash_transition_handler, export_dataset_handler,
-    h3_stream_file_handler, h3_stream_telemetry_handler, hr_process_payroll_handler,
-    inventory_stock_balance_handler, inventory_stock_entry_handler,
+    audio_add_comment_handler, audio_chapters_handler, audio_crossfade_handler,
+    audio_eq_filter_handler, audio_flac_compress_handler, audio_get_bookmark_handler,
+    audio_get_comments_handler, audio_lyrics_current_handler, audio_lyrics_parse_handler,
+    audio_music_info_handler, audio_normalize_handler, audio_radio_get_chat_handler,
+    audio_radio_heartbeat_handler, audio_radio_hls_handler, audio_radio_listeners_handler,
+    audio_radio_send_chat_handler, audio_recommend_handler, audio_save_bookmark_handler,
+    audio_sleep_soundboard_handler, audio_sleep_timer_handler, audio_waveform_handler,
+    auth_forgot_password_handler, auth_mfa_activate_handler, auth_mfa_disable_handler,
+    auth_mfa_enroll_handler, auth_refresh_token_handler, auth_reset_password_handler,
+    builder_ai_prompt_handler, builder_get_page_handler, builder_history_list_handler,
+    builder_list_pages_handler, builder_save_page_handler, buying_purchase_invoice_handler,
+    buying_purchase_order_handler, buying_purchase_receipt_handler, cms_create_taxonomy_handler,
+    cms_generate_seo_handler, cms_list_media_handler, cms_list_taxonomies_handler,
+    cms_upload_media_handler, crm_convert_quotation_handler, download_file_handler,
+    download_image_handler, email_list_queue_handler, email_send_handler,
+    emdash_get_document_handler, emdash_list_documents_handler, emdash_media_crop_handler,
+    emdash_revisions_list_handler, emdash_save_document_handler, emdash_transition_handler,
+    export_dataset_handler, h3_stream_file_handler, h3_stream_telemetry_handler,
+    hr_process_payroll_handler, inventory_stock_balance_handler, inventory_stock_entry_handler,
     inventory_variant_matrix_handler, login_handler, logout_handler,
     manufacturing_complete_work_order_handler, manufacturing_work_order_handler,
     notifications_dispatch_handler, notifications_get_inbox_handler, payment_charge_handler,
@@ -60,11 +62,12 @@ use crate::v2_routes::{
     streaming_upload_chunk_handler, streaming_variant_playlist_handler,
     streaming_video_xray_handler, streaming_video_xray_vtt_handler, stremio_catalog_handler,
     stremio_manifest_handler, stremio_meta_handler, stremio_stream_handler,
-    stremio_subtitles_handler, subsonic_get_license_handler, subsonic_get_song_handler,
-    subsonic_ping_handler, subsonic_stream_handler, trade_add_wishlist_item_handler,
-    trade_apply_coupon_handler, trade_calculate_shipping_handler, trade_create_coupon_handler,
-    trade_get_wishlist_handler, trade_list_coupons_handler, trade_list_reviews_handler,
-    trade_list_shipping_zones_handler, trade_moderate_review_handler,
+    stremio_subtitles_handler, subsonic_get_license_handler, subsonic_get_music_folders_handler,
+    subsonic_get_now_playing_handler, subsonic_get_song_handler, subsonic_ping_handler,
+    subsonic_scrobble_handler, subsonic_search3_handler, subsonic_stream_handler,
+    trade_add_wishlist_item_handler, trade_apply_coupon_handler, trade_calculate_shipping_handler,
+    trade_create_coupon_handler, trade_get_wishlist_handler, trade_list_coupons_handler,
+    trade_list_reviews_handler, trade_list_shipping_zones_handler, trade_moderate_review_handler,
     trade_order_transition_handler, trade_remove_wishlist_item_handler, trade_rma_get_handler,
     trade_rma_submit_handler, trade_submit_review_handler, upload_file_handler, v2_amend_document,
     v2_cancel_document, v2_create_document, v2_delete_document, v2_get_document,
@@ -3239,6 +3242,22 @@ pub fn configure_app(
         )
         .route("/rest/stream.view", web::get().to(subsonic_stream_handler))
         .route(
+            "/rest/getMusicFolders.view",
+            web::get().to(subsonic_get_music_folders_handler),
+        )
+        .route(
+            "/rest/scrobble.view",
+            web::get().to(subsonic_scrobble_handler),
+        )
+        .route(
+            "/rest/getNowPlaying.view",
+            web::get().to(subsonic_get_now_playing_handler),
+        )
+        .route(
+            "/rest/search3.view",
+            web::get().to(subsonic_search3_handler),
+        )
+        .route(
             "/api/v2/audio/flac/compress",
             web::post().to(audio_flac_compress_handler),
         )
@@ -3261,6 +3280,38 @@ pub fn configure_app(
         .route(
             "/api/v2/audio/recommend",
             web::post().to(audio_recommend_handler),
+        )
+        .route(
+            "/api/v2/audio/radio/{station_id}/live.m3u8",
+            web::get().to(audio_radio_hls_handler),
+        )
+        .route(
+            "/api/v2/audio/radio/{station_id}/heartbeat",
+            web::post().to(audio_radio_heartbeat_handler),
+        )
+        .route(
+            "/api/v2/audio/radio/{station_id}/listeners",
+            web::get().to(audio_radio_listeners_handler),
+        )
+        .route(
+            "/api/v2/audio/radio/{station_id}/chat",
+            web::post().to(audio_radio_send_chat_handler),
+        )
+        .route(
+            "/api/v2/audio/radio/{station_id}/chat",
+            web::get().to(audio_radio_get_chat_handler),
+        )
+        .route(
+            "/api/v2/audio/podcasts/{media_id}/chapters",
+            web::get().to(audio_chapters_handler),
+        )
+        .route(
+            "/api/v2/audio/playback/bookmark",
+            web::post().to(audio_save_bookmark_handler),
+        )
+        .route(
+            "/api/v2/audio/playback/bookmark/{user_id}/{media_id}",
+            web::get().to(audio_get_bookmark_handler),
         )
         // V2 Approval Workflow & Versioning Endpoints
         .route(

@@ -1,7 +1,9 @@
 pub mod analytics;
+pub mod audio_book_sync;
 pub mod audio_dsp_eq;
 pub mod audio_flac_pipeline;
 pub mod audio_intelligence;
+pub mod audio_live_radio;
 pub mod audio_lyrics;
 pub mod audio_sleep_noise;
 pub mod audio_streaming;
@@ -29,6 +31,7 @@ pub mod transcode_pipeline;
 pub mod video_streaming;
 pub mod xray_metadata;
 
+pub use audio_book_sync::{AudioBookmarkRegistry, AudioChapter, AudioPlaybackBookmark};
 pub use audio_dsp_eq::{AudioEqualizer, EQ_FREQUENCIES_HZ, EqBand, EqPreset};
 pub use audio_flac_pipeline::{
     FlacCompressionConfig, FlacMetadataTags, FlacPipelineEngine, FlacQualityTier,
@@ -37,6 +40,7 @@ pub use audio_flac_pipeline::{
 pub use audio_intelligence::{
     CamelotKey, MusicContributor, MusicIntelligenceEngine, TrackLinerNotes, TrackRecommendation,
 };
+pub use audio_live_radio::{ListenerPresence, LiveRadioRegistry, RadioChatMessage, RadioStation};
 pub use audio_lyrics::{ActiveLyricSnapshot, LyricLine, LyricsDocument, SyllableTiming};
 pub use audio_sleep_noise::{
     AmbientStem, BinauralBeatGenerator, BrownNoiseGenerator, FastRng, ProceduralNoiseEngine,
@@ -47,9 +51,12 @@ pub use audio_streaming::{
     EbuR128Normalizer, LoudnessProfile,
 };
 pub use audio_subsonic::{
-    GetLicenseResponse, GetSongResponse, PingResponse, SUBSONIC_API_VERSION, SUBSONIC_SERVER_NAME,
-    ScrobbleRequest, SubsonicController, SubsonicError, SubsonicErrorPayload, SubsonicLicense,
-    SubsonicRequestParams, SubsonicResponseEnvelope, SubsonicResponsePayload, SubsonicSong,
+    GetLicenseResponse, GetMusicFoldersResponse, GetNowPlayingResponse, GetSongResponse,
+    MusicFoldersContainer, NowPlayingContainer, NowPlayingEntry, PingResponse,
+    SUBSONIC_API_VERSION, SUBSONIC_SERVER_NAME, ScrobbleRequest, ScrobbleResponse, Search3Response,
+    SearchResult3Container, SubsonicController, SubsonicError, SubsonicErrorPayload,
+    SubsonicLicense, SubsonicMusicFolder, SubsonicRequestParams, SubsonicResponseEnvelope,
+    SubsonicResponsePayload, SubsonicSong,
 };
 pub use audio_waveform::{
     AudioWaveformData, CommentCluster, SCRUB_PEAK_COUNT, THUMBNAIL_PEAK_COUNT, TimedComment,

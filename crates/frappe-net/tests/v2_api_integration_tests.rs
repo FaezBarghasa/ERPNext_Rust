@@ -1397,3 +1397,206 @@ async fn test_audio_flac_eq_lyrics_and_transcription_recommendations() {
             .contains("Tempo match")
     );
 }
+
+#[actix_web::test]
+async fn test_audio_live_radio_chapters_bookmarks_and_subsonic_extensions() {
+    let pool_mgr = ConnectionPoolManager::in_memory(Duration::from_secs(300));
+    let topology = MicroTopologyConfig::default();
+
+    let app = test::init_service(
+        App::new().configure(|cfg| configure_app(cfg, pool_mgr.clone(), topology.clone(), None)),
+    )
+    .await;
+
+    // 1. Subsonic Protocol Extensions (getMusicFolders, scrobble, getNowPlaying, search3)
+    let req = test::TestRequest::get()
+        .uri("/rest/getMusicFolders.view")
+        .to_request();
+    let resp = test::call_service(&app, req).await;
+    assert_eq!(resp.status(), 200);
+    let folders: serde_json::Value = test::read_body_json(resp).await;
+    assert_eq!(folders["subsonic-response"]["status"], "ok");
+    let folder_list = folders["subsonic-response"]["musicFolders"]["musicFolder"]
+        .as_array()
+        .unwrap();
+    assert!(folder_list.iter().any(|f| f["name"] == "Audiobooks"));
+
+    let req = test::TestRequest::get()
+        .uri("/rest/scrobble.view?id=song_rust_01&submission=true")
+        .to_request();
+    let resp = test::call_service(&app, req).await;
+    assert_eq!(resp.status(), 200);
+    let scrobble: serde_json::Value = test::read_body_json(resp).await;
+    assert_eq!(scrobble["subsonic-response"]["status"], "ok");
+
+    let req = test::TestRequest::get()
+        .uri("/rest/getNowPlaying.view")
+        .to_request();
+    let resp = test::call_service(&app, req).await;
+    assert_eq!(resp.status(), 200);
+    let now_playing: serde_json::Value = test::read_body_json(resp).await;
+    assert_eq!(now_playing["subsonic-response"]["status"], "ok");
+    let np_entries = now_playing["subsonic-response"]["nowPlaying"]["entry"]
+        .as_array()
+        .unwrap();
+    assert!(!np_entries.is_empty());
+
+    let req = test::TestRequest::get()
+        .uri("/rest/search3.view?query=Synthwave")
+        .to_request();
+    let resp = test::call_service(&app, req).await;
+    assert_eq!(resp.status(), 200);
+    let search_res: serde_json::Value = test::read_body_json(resp).await;
+    assert_eq!(search_res["subsonic-response"]["status"], "ok");
+    let results = search_res["subsonic-response"]["searchResult3"]["song"]
+        .as_array()
+        .unwrap();
+    assert_eq!(results[0]["id"], "search_Synthwave");
+
+    // 2. Owncast-Grade Live Radio & Listener Presence
+    let req = test::TestRequest::get()
+        .uri("/api/v2/audio/radio/synthwave_fm/live.m3u8")
+        .to_request();
+    let resp = test::call_service(&app, req).await;
+    assert_eq!(resp.status(), 200);
+    assert_eq!(
+        resp.headers()
+            .get("content-type")
+            .unwrap()
+            .to_str()
+            .unwrap(),
+        "application/vnd.apple.mpegurl"
+    );
+    let body_bytes = test::read_body(resp).await;
+    let playlist_str = String::from_utf8(body_bytes.to_vec()).unwrap();
+    assert!(playlist_str.contains("#EXT-X-TARGETDURATION:2"));
+    assert!(playlist_str.contains("chunks/synthwave_fm_seg_3.aac"));
+
+    // Heartbeat from listener 1
+    let heartbeat_payload = json!({
+        "listener_id": "lis_faez_01",
+        "user_agent": "Mozilla/5.0 AudioPlayer"
+    });
+    let req = test::TestRequest::post()
+        .uri("/api/v2/audio/radio/synthwave_fm/heartbeat")
+        .set_json(&heartbeat_payload)
+        .to_request();
+    let resp = test::call_service(&app, req).await;
+    assert_eq!(resp.status(), 200);
+    let hb_res: serde_json::Value = test::read_body_json(resp).await;
+    assert_eq!(hb_res["active_listeners"], 1);
+
+    // Get active listeners
+    let req = test::TestRequest::get()
+        .uri("/api/v2/audio/radio/synthwave_fm/listeners")
+        .to_request();
+    let resp = test::call_service(&app, req).await;
+    assert_eq!(resp.status(), 200);
+    let lis_res: serde_json::Value = test::read_body_json(resp).await;
+    assert_eq!(lis_res["active_listeners"], 1);
+    assert_eq!(lis_res["listeners"][0]["listener_id"], "lis_faez_01");
+
+    // Live Radio Chat
+    let chat_payload = json!({
+        "user_id": "usr_99",
+        "username": "CyberKnight",
+        "message": "Incredible soundscape on Synthwave FM!"
+    });
+    let req = test::TestRequest::post()
+        .uri("/api/v2/audio/radio/synthwave_fm/chat")
+        .set_json(&chat_payload)
+        .to_request();
+    let resp = test::call_service(&app, req).await;
+    assert_eq!(resp.status(), 200);
+
+    let req = test::TestRequest::get()
+        .uri("/api/v2/audio/radio/synthwave_fm/chat?limit=10")
+        .to_request();
+    let resp = test::call_service(&app, req).await;
+    assert_eq!(resp.status(), 200);
+    let chat_res: serde_json::Value = test::read_body_json(resp).await;
+    assert_eq!(chat_res["count"], 1);
+    assert_eq!(chat_res["messages"][0]["username"], "CyberKnight");
+
+    // 3. Audioserve-Grade Audiobook Chapters & Cross-Device Bookmark Sync
+    let req = test::TestRequest::get()
+        .uri("/api/v2/audio/podcasts/book_rust_concurrency/chapters")
+        .to_request();
+    let resp = test::call_service(&app, req).await;
+    assert_eq!(resp.status(), 200);
+    let ch_res: serde_json::Value = test::read_body_json(resp).await;
+    let chapters = ch_res["chapters"].as_array().unwrap();
+    assert_eq!(chapters.len(), 3);
+    assert_eq!(chapters[0]["title"], "Chapter 1: The Rust Revolution");
+
+    // Save initial bookmark
+    let bookmark_v1 = json!({
+        "media_id": "book_rust_concurrency",
+        "user_id": "usr_faez",
+        "device_id": "mobile_phone",
+        "position_ms": 120000,
+        "duration_ms": 1800000,
+        "playback_rate": 1.25,
+        "updated_at": 1700000100i64
+    });
+    let req = test::TestRequest::post()
+        .uri("/api/v2/audio/playback/bookmark")
+        .set_json(&bookmark_v1)
+        .to_request();
+    let resp = test::call_service(&app, req).await;
+    assert_eq!(resp.status(), 200);
+
+    // Retrieve bookmark
+    let req = test::TestRequest::get()
+        .uri("/api/v2/audio/playback/bookmark/usr_faez/book_rust_concurrency")
+        .to_request();
+    let resp = test::call_service(&app, req).await;
+    assert_eq!(resp.status(), 200);
+    let bm_res: serde_json::Value = test::read_body_json(resp).await;
+    assert_eq!(bm_res["bookmark"]["position_ms"], 120000);
+    assert_eq!(bm_res["bookmark"]["device_id"], "mobile_phone");
+
+    // Update with newer timestamp (LWW wins)
+    let bookmark_v2 = json!({
+        "media_id": "book_rust_concurrency",
+        "user_id": "usr_faez",
+        "device_id": "desktop_workstation",
+        "position_ms": 250000,
+        "duration_ms": 1800000,
+        "playback_rate": 1.0,
+        "updated_at": 1700000200i64
+    });
+    let req = test::TestRequest::post()
+        .uri("/api/v2/audio/playback/bookmark")
+        .set_json(&bookmark_v2)
+        .to_request();
+    let resp = test::call_service(&app, req).await;
+    assert_eq!(resp.status(), 200);
+
+    // Stale older update attempt (LWW rejects older timestamp)
+    let bookmark_stale = json!({
+        "media_id": "book_rust_concurrency",
+        "user_id": "usr_faez",
+        "device_id": "tablet",
+        "position_ms": 80000,
+        "duration_ms": 1800000,
+        "playback_rate": 1.0,
+        "updated_at": 1700000050i64
+    });
+    let req = test::TestRequest::post()
+        .uri("/api/v2/audio/playback/bookmark")
+        .set_json(&bookmark_stale)
+        .to_request();
+    let resp = test::call_service(&app, req).await;
+    assert_eq!(resp.status(), 200);
+
+    // Verify current bookmark remains at 250000 from desktop_workstation
+    let req = test::TestRequest::get()
+        .uri("/api/v2/audio/playback/bookmark/usr_faez/book_rust_concurrency")
+        .to_request();
+    let resp = test::call_service(&app, req).await;
+    assert_eq!(resp.status(), 200);
+    let final_bm: serde_json::Value = test::read_body_json(resp).await;
+    assert_eq!(final_bm["bookmark"]["position_ms"], 250000);
+    assert_eq!(final_bm["bookmark"]["device_id"], "desktop_workstation");
+}

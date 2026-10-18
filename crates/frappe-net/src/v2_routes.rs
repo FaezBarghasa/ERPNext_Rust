@@ -2470,6 +2470,8 @@ pub struct DynamicRbacState {
     pub audio_timelines:
         Arc<RwLock<HashMap<String, erp_cms::audio_waveform::TimedCommentTimeline>>>,
     pub music_catalog: Arc<RwLock<HashMap<String, erp_cms::audio_intelligence::TrackLinerNotes>>>,
+    pub radio_registry: Arc<erp_cms::audio_live_radio::LiveRadioRegistry>,
+    pub bookmark_registry: Arc<erp_cms::audio_book_sync::AudioBookmarkRegistry>,
 }
 
 impl Default for DynamicRbacState {
@@ -2633,6 +2635,12 @@ impl Default for DynamicRbacState {
             subsonic_controller: Arc::new(erp_cms::audio_subsonic::SubsonicController::new()),
             audio_timelines: Arc::new(RwLock::new(HashMap::new())),
             music_catalog: Arc::new(RwLock::new(HashMap::new())),
+            radio_registry: Arc::new(
+                erp_cms::audio_live_radio::LiveRadioRegistry::with_demo_stations(),
+            ),
+            bookmark_registry: Arc::new(
+                erp_cms::audio_book_sync::AudioBookmarkRegistry::with_demo_chapters(),
+            ),
         }
     }
 }
@@ -6099,6 +6107,9 @@ pub struct SubsonicViewQuery {
     pub format: Option<String>,
     #[serde(rename = "maxBitRate")]
     pub max_bit_rate: Option<u32>,
+    pub query: Option<String>,
+    pub time: Option<i64>,
+    pub submission: Option<bool>,
 }
 
 /// Handler: Subsonic ping.view: `GET /rest/ping.view`
@@ -6151,6 +6162,57 @@ pub async fn subsonic_stream_handler(
             "status": "ok",
             "stream_action": stream_action,
         })),
+        Err(err) => {
+            let env = erp_cms::audio_subsonic::SubsonicResponseEnvelope::<()>::error(&err);
+            HttpResponse::Ok().json(env)
+        }
+    }
+}
+
+/// Handler: Subsonic getMusicFolders.view: `GET /rest/getMusicFolders.view`
+pub async fn subsonic_get_music_folders_handler(
+    state: web::Data<DynamicRbacState>,
+    query: web::Query<SubsonicViewQuery>,
+) -> impl Responder {
+    let _ = query;
+    let resp = state.subsonic_controller.get_music_folders();
+    HttpResponse::Ok().json(resp)
+}
+
+/// Handler: Subsonic scrobble.view: `GET /rest/scrobble.view`
+pub async fn subsonic_scrobble_handler(
+    state: web::Data<DynamicRbacState>,
+    query: web::Query<SubsonicViewQuery>,
+) -> impl Responder {
+    let song_id = query.id.as_deref().unwrap_or("");
+    let submission = query.submission.unwrap_or(true);
+    match state.subsonic_controller.scrobble(song_id, submission) {
+        Ok(resp) => HttpResponse::Ok().json(resp),
+        Err(err) => {
+            let env = erp_cms::audio_subsonic::SubsonicResponseEnvelope::<()>::error(&err);
+            HttpResponse::Ok().json(env)
+        }
+    }
+}
+
+/// Handler: Subsonic getNowPlaying.view: `GET /rest/getNowPlaying.view`
+pub async fn subsonic_get_now_playing_handler(
+    state: web::Data<DynamicRbacState>,
+    query: web::Query<SubsonicViewQuery>,
+) -> impl Responder {
+    let _ = query;
+    let resp = state.subsonic_controller.get_now_playing();
+    HttpResponse::Ok().json(resp)
+}
+
+/// Handler: Subsonic search3.view: `GET /rest/search3.view`
+pub async fn subsonic_search3_handler(
+    state: web::Data<DynamicRbacState>,
+    query: web::Query<SubsonicViewQuery>,
+) -> impl Responder {
+    let q = query.query.as_deref().unwrap_or("");
+    match state.subsonic_controller.search3(q) {
+        Ok(resp) => HttpResponse::Ok().json(resp),
         Err(err) => {
             let env = erp_cms::audio_subsonic::SubsonicResponseEnvelope::<()>::error(&err);
             HttpResponse::Ok().json(env)
@@ -6351,6 +6413,166 @@ pub async fn audio_recommend_handler(
         "current_track_id": p.current_track.track_id,
         "recommendations": recommendations,
     }))
+}
+
+/// DTO for radio listener heartbeat
+#[derive(Debug, Deserialize)]
+pub struct RadioHeartbeatPayload {
+    pub listener_id: String,
+    pub user_agent: Option<String>,
+}
+
+/// DTO for live radio chat messages
+#[derive(Debug, Deserialize)]
+pub struct RadioChatPayload {
+    pub user_id: String,
+    pub username: String,
+    pub message: String,
+}
+
+/// Query parameters for live radio chat history
+#[derive(Debug, Deserialize)]
+pub struct RadioChatQuery {
+    pub limit: Option<usize>,
+}
+
+/// Handler: Live LL-HLS audio playlist for radio station: `GET /api/v2/audio/radio/{station_id}/live.m3u8`
+pub async fn audio_radio_hls_handler(
+    state: web::Data<DynamicRbacState>,
+    path: web::Path<String>,
+) -> impl Responder {
+    let station_id = path.into_inner();
+    let stations = state.radio_registry.stations.read().unwrap();
+    if !stations.contains_key(&station_id) {
+        return HttpResponse::NotFound().json(serde_json::json!({
+            "status": "error",
+            "message": format!("Station '{station_id}' not found")
+        }));
+    }
+    drop(stations);
+
+    let playlist =
+        erp_cms::audio_live_radio::LiveRadioRegistry::generate_live_hls_playlist(&station_id, 3);
+    HttpResponse::Ok()
+        .content_type("application/vnd.apple.mpegurl")
+        .body(playlist)
+}
+
+/// Handler: Record radio listener heartbeat: `POST /api/v2/audio/radio/{station_id}/heartbeat`
+pub async fn audio_radio_heartbeat_handler(
+    state: web::Data<DynamicRbacState>,
+    path: web::Path<String>,
+    payload: web::Json<RadioHeartbeatPayload>,
+) -> impl Responder {
+    let station_id = path.into_inner();
+    let p = payload.into_inner();
+    state
+        .radio_registry
+        .record_heartbeat(&station_id, &p.listener_id, p.user_agent);
+    state.radio_registry.purge_stale_listeners(&station_id, 30);
+    let active_count = state.radio_registry.get_listener_count(&station_id);
+    HttpResponse::Ok().json(serde_json::json!({
+        "status": "success",
+        "station_id": station_id,
+        "active_listeners": active_count,
+    }))
+}
+
+/// Handler: Get active listeners for radio station: `GET /api/v2/audio/radio/{station_id}/listeners`
+pub async fn audio_radio_listeners_handler(
+    state: web::Data<DynamicRbacState>,
+    path: web::Path<String>,
+) -> impl Responder {
+    let station_id = path.into_inner();
+    state.radio_registry.purge_stale_listeners(&station_id, 30);
+    let listeners = state.radio_registry.get_listeners(&station_id);
+    HttpResponse::Ok().json(serde_json::json!({
+        "status": "success",
+        "station_id": station_id,
+        "active_listeners": listeners.len(),
+        "listeners": listeners,
+    }))
+}
+
+/// Handler: Send message in live radio chat: `POST /api/v2/audio/radio/{station_id}/chat`
+pub async fn audio_radio_send_chat_handler(
+    state: web::Data<DynamicRbacState>,
+    path: web::Path<String>,
+    payload: web::Json<RadioChatPayload>,
+) -> impl Responder {
+    let station_id = path.into_inner();
+    let p = payload.into_inner();
+    let chat_msg =
+        state
+            .radio_registry
+            .post_chat_message(&station_id, &p.user_id, &p.username, &p.message);
+    HttpResponse::Ok().json(serde_json::json!({
+        "status": "success",
+        "station_id": station_id,
+        "message": chat_msg,
+    }))
+}
+
+/// Handler: Retrieve chat history for radio station: `GET /api/v2/audio/radio/{station_id}/chat`
+pub async fn audio_radio_get_chat_handler(
+    state: web::Data<DynamicRbacState>,
+    path: web::Path<String>,
+    query: web::Query<RadioChatQuery>,
+) -> impl Responder {
+    let station_id = path.into_inner();
+    let limit = query.limit.unwrap_or(50);
+    let messages = state.radio_registry.get_recent_chat(&station_id, limit);
+    HttpResponse::Ok().json(serde_json::json!({
+        "status": "success",
+        "station_id": station_id,
+        "count": messages.len(),
+        "messages": messages,
+    }))
+}
+
+/// Handler: Fetch audiobook/podcast chapter markers: `GET /api/v2/audio/podcasts/{media_id}/chapters`
+pub async fn audio_chapters_handler(
+    state: web::Data<DynamicRbacState>,
+    path: web::Path<String>,
+) -> impl Responder {
+    let media_id = path.into_inner();
+    let chapters = state.bookmark_registry.get_chapters(&media_id);
+    HttpResponse::Ok().json(serde_json::json!({
+        "status": "success",
+        "media_id": media_id,
+        "chapters": chapters,
+    }))
+}
+
+/// Handler: Upsert playback bookmark with Last-Write-Wins (LWW) resolution: `POST /api/v2/audio/playback/bookmark`
+pub async fn audio_save_bookmark_handler(
+    state: web::Data<DynamicRbacState>,
+    payload: web::Json<erp_cms::audio_book_sync::AudioPlaybackBookmark>,
+) -> impl Responder {
+    let bookmark = payload.into_inner();
+    let resolved = state.bookmark_registry.save_bookmark(bookmark);
+    HttpResponse::Ok().json(serde_json::json!({
+        "status": "success",
+        "bookmark": resolved,
+    }))
+}
+
+/// Handler: Get cross-device playback bookmark: `GET /api/v2/audio/playback/bookmark/{user_id}/{media_id}`
+pub async fn audio_get_bookmark_handler(
+    state: web::Data<DynamicRbacState>,
+    path: web::Path<(String, String)>,
+) -> impl Responder {
+    let (user_id, media_id) = path.into_inner();
+    match state.bookmark_registry.get_bookmark(&user_id, &media_id) {
+        Some(bookmark) => HttpResponse::Ok().json(serde_json::json!({
+            "status": "success",
+            "bookmark": bookmark,
+        })),
+        None => HttpResponse::NotFound().json(serde_json::json!({
+            "status": "not_found",
+            "message": format!("No bookmark found for user {user_id} and media {media_id}"),
+        })),
+    }
 }
 
 // =========================================================================

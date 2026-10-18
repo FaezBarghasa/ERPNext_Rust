@@ -223,6 +223,66 @@ pub struct ScrobbleRequest {
     pub submission: bool,
 }
 
+/// Subsonic Music Folder representation.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub struct SubsonicMusicFolder {
+    pub id: u32,
+    pub name: String,
+}
+
+/// Response payload for `getMusicFolders.view`.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub struct GetMusicFoldersResponse {
+    #[serde(rename = "musicFolders")]
+    pub music_folders: MusicFoldersContainer,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub struct MusicFoldersContainer {
+    #[serde(rename = "musicFolder")]
+    pub music_folder: Vec<SubsonicMusicFolder>,
+}
+
+/// Scrobble response payload.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub struct ScrobbleResponse {}
+
+/// Active now-playing entry.
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct NowPlayingEntry {
+    #[serde(flatten)]
+    pub song: SubsonicSong,
+    pub username: String,
+    #[serde(rename = "minutesAgo")]
+    pub minutes_ago: u32,
+    #[serde(rename = "playerId")]
+    pub player_id: Option<u32>,
+}
+
+/// Response payload for `getNowPlaying.view`.
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct GetNowPlayingResponse {
+    #[serde(rename = "nowPlaying")]
+    pub now_playing: NowPlayingContainer,
+}
+
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct NowPlayingContainer {
+    pub entry: Vec<NowPlayingEntry>,
+}
+
+/// Response payload for `search3.view`.
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct Search3Response {
+    #[serde(rename = "searchResult3")]
+    pub search_result3: SearchResult3Container,
+}
+
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct SearchResult3Container {
+    pub song: Vec<SubsonicSong>,
+}
+
 /// Subsonic Controller servicing standard Subsonic endpoints.
 #[derive(Debug, Default, Clone)]
 pub struct SubsonicController;
@@ -299,6 +359,113 @@ impl SubsonicController {
         let br = max_bit_rate.unwrap_or(128);
 
         Ok(format!("stream:{song_id}:fmt={target_fmt}:kbps={br}"))
+    }
+
+    /// Handles `getMusicFolders.view`.
+    #[must_use]
+    pub fn get_music_folders(&self) -> SubsonicResponseEnvelope<GetMusicFoldersResponse> {
+        SubsonicResponseEnvelope::ok(GetMusicFoldersResponse {
+            music_folders: MusicFoldersContainer {
+                music_folder: vec![
+                    SubsonicMusicFolder {
+                        id: 1,
+                        name: "Music Library".into(),
+                    },
+                    SubsonicMusicFolder {
+                        id: 2,
+                        name: "Podcasts & Spoken".into(),
+                    },
+                    SubsonicMusicFolder {
+                        id: 3,
+                        name: "Sleep & Ambient".into(),
+                    },
+                    SubsonicMusicFolder {
+                        id: 4,
+                        name: "Audiobooks".into(),
+                    },
+                ],
+            },
+        })
+    }
+
+    /// Handles `scrobble.view`.
+    pub fn scrobble(
+        &self,
+        song_id: &str,
+        submission: bool,
+    ) -> Result<SubsonicResponseEnvelope<ScrobbleResponse>, SubsonicError> {
+        if song_id.is_empty() {
+            return Err(SubsonicError::MissingParameter("id"));
+        }
+        let _ = submission;
+        Ok(SubsonicResponseEnvelope::ok(ScrobbleResponse {}))
+    }
+
+    /// Handles `getNowPlaying.view`.
+    #[must_use]
+    pub fn get_now_playing(&self) -> SubsonicResponseEnvelope<GetNowPlayingResponse> {
+        let sample_song = SubsonicSong {
+            id: "now_playing_01".into(),
+            parent: "album_live".into(),
+            is_dir: false,
+            title: "Live Ambient Radio".into(),
+            album: "Sanctuary".into(),
+            artist: "ERPNext Stream".into(),
+            track: 1,
+            year: 2026,
+            genre: "Ambient".into(),
+            cover_art: "art_live".into(),
+            size: 16_000_000,
+            content_type: "audio/opus".into(),
+            suffix: "opus".into(),
+            duration: 3600,
+            bit_rate: 160,
+            path: "/live/sanctuary.opus".into(),
+        };
+
+        SubsonicResponseEnvelope::ok(GetNowPlayingResponse {
+            now_playing: NowPlayingContainer {
+                entry: vec![NowPlayingEntry {
+                    song: sample_song,
+                    username: "audiophile_1".into(),
+                    minutes_ago: 1,
+                    player_id: Some(1),
+                }],
+            },
+        })
+    }
+
+    /// Handles `search3.view`.
+    pub fn search3(
+        &self,
+        query: &str,
+    ) -> Result<SubsonicResponseEnvelope<Search3Response>, SubsonicError> {
+        if query.is_empty() {
+            return Err(SubsonicError::MissingParameter("query"));
+        }
+
+        let song = SubsonicSong {
+            id: format!("search_{query}"),
+            parent: "album_search".into(),
+            is_dir: false,
+            title: format!("Match for {query}"),
+            album: "Search Results".into(),
+            artist: "ERPNext Music".into(),
+            track: 1,
+            year: 2026,
+            genre: "Electronic".into(),
+            cover_art: "art_search".into(),
+            size: 7_000_000,
+            content_type: "audio/flac".into(),
+            suffix: "flac".into(),
+            duration: 210,
+            bit_rate: 900,
+            path: format!("/music/{query}.flac"),
+        };
+
+        Ok(SubsonicResponseEnvelope::ok(Search3Response {
+            search_result3: SearchResult3Container { song: vec![song] },
+        }))
     }
 }
 
