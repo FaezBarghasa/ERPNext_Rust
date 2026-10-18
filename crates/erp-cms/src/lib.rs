@@ -57,7 +57,10 @@ pub use hls_engine::{
     HlsAudioRendition, HlsMasterPlaylist, HlsMediaPlaylist, HlsMediaSegment, HlsSegmentCache,
     HlsSubtitleRendition, HlsVariant,
 };
-pub use rtmp_ingest::{RtmpError, RtmpIngestManager, RtmpStreamSession, RtmpStreamStatus};
+pub use rtmp_ingest::{
+    NginxRtmpPublishPayload, NginxRtmpRecordPayload, NginxRtmpUpdatePayload, RtmpError,
+    RtmpIngestManager, RtmpStreamSession, RtmpStreamStatus,
+};
 pub use transcode_pipeline::{
     HardwareAccelType, ResumableChunkEngine, ResumableUploadSession, TranscodeError, TranscodeJob,
 };
