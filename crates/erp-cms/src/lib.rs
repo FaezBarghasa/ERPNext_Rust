@@ -1,4 +1,8 @@
 pub mod analytics;
+pub mod audio_sleep_noise;
+pub mod audio_streaming;
+pub mod audio_subsonic;
+pub mod audio_waveform;
 pub mod block_canvas;
 pub mod builder_core;
 pub mod emdash_studio;
@@ -20,6 +24,25 @@ pub mod theme_engine;
 pub mod transcode_pipeline;
 pub mod video_streaming;
 pub mod xray_metadata;
+
+pub use audio_sleep_noise::{
+    AmbientStem, BinauralBeatGenerator, BrownNoiseGenerator, FastRng, ProceduralNoiseEngine,
+    SleepTimerController, SoundboardMixer, VossMcCartneyPinkNoise,
+};
+pub use audio_streaming::{
+    AudioCodec as MusicCodec, AudioDeliveryAction, AudioDeliveryOptimizer, CrossfadeCurve,
+    EbuR128Normalizer, LoudnessProfile,
+};
+pub use audio_subsonic::{
+    GetLicenseResponse, GetSongResponse, PingResponse, ScrobbleRequest, SubsonicController,
+    SubsonicError, SubsonicErrorPayload, SubsonicLicense, SubsonicRequestParams,
+    SubsonicResponseEnvelope, SubsonicResponsePayload, SubsonicSong, SUBSONIC_API_VERSION,
+    SUBSONIC_SERVER_NAME,
+};
+pub use audio_waveform::{
+    AudioWaveformData, CommentCluster, TimedComment, TimedCommentTimeline, WaveformGenerator,
+    SCRUB_PEAK_COUNT, THUMBNAIL_PEAK_COUNT,
+};
 
 pub use media_library::{MediaAsset, MediaError, MediaLibraryRegistry};
 pub use taxonomy::{TaxonomyError, TaxonomyRegistry, TaxonomyTerm, TaxonomyType};

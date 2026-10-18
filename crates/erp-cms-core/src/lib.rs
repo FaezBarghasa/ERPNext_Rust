@@ -665,6 +665,201 @@ impl FastChannelStatusPacket {
     }
 }
 
+/// Playback mode for zero-allocation edge audio devices.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+#[repr(u8)]
+pub enum AudioPlaybackMode {
+    #[default]
+    Music = 0,
+    Podcast = 1,
+    SleepNoise = 2,
+    LiveRadio = 3,
+}
+
+impl AudioPlaybackMode {
+    #[must_use]
+    pub const fn from_u8(val: u8) -> Self {
+        match val {
+            1 => Self::Podcast,
+            2 => Self::SleepNoise,
+            3 => Self::LiveRadio,
+            _ => Self::Music,
+        }
+    }
+}
+
+/// Noise soundscape color for procedural sleep generation.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+#[repr(u8)]
+pub enum NoiseColor {
+    #[default]
+    None = 0,
+    White = 1,
+    Pink = 2,
+    Brown = 3,
+    Binaural = 4,
+}
+
+impl NoiseColor {
+    #[must_use]
+    pub const fn from_u8(val: u8) -> Self {
+        match val {
+            1 => Self::White,
+            2 => Self::Pink,
+            3 => Self::Brown,
+            4 => Self::Binaural,
+            _ => Self::None,
+        }
+    }
+}
+
+/// Zero-allocation audio telemetry packet for smart speakers, sleep devices, and edge displays.
+///
+/// Wire format (63 bytes with CRC16-CCITT):
+/// `[0..4]`   Magic: `b"AUDP"`
+/// `[4..36]`  Track / Sound ID (32 bytes UTF-8 null-padded)
+/// `[36..40]` Position (u32 LE ms)
+/// `[40..44]` Duration (u32 LE ms)
+/// `[44..46]` Master Volume (u16 LE, 0..1000 = 0.0%..100.0%)
+/// `[46]`     Playback Mode: 0=Music, 1=Podcast, 2=SleepNoise, 3=LiveRadio
+/// `[47]`     Noise Type: 0=None, 1=White, 2=Pink, 3=Brown, 4=Binaural
+/// `[48]`     Sleep timer remaining minutes (u8)
+/// `[49]`     Playback flags: bit 0 = paused, bit 1 = gapless, bit 2 = normalizing
+/// `[50..61]` Reserved (11 bytes)
+/// `[61..63]` CRC16-CCITT checksum (u16 LE)
+#[derive(Debug, Clone, PartialEq, Eq)]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+pub struct AudioPlaybackPacket {
+    pub track_id: heapless::String<32>,
+    pub position_ms: u32,
+    pub duration_ms: u32,
+    pub volume_permille: u16,
+    pub mode: AudioPlaybackMode,
+    pub noise_color: NoiseColor,
+    pub sleep_timer_rem_min: u8,
+    pub is_paused: bool,
+    pub is_gapless: bool,
+    pub is_normalizing: bool,
+}
+
+impl AudioPlaybackPacket {
+    /// Serializes audio telemetry into a fixed 63-byte slice (including 2-byte CRC16-CCITT).
+    pub fn serialize<'a>(&self, buf: &'a mut [u8]) -> Result<&'a [u8], EdgeCmsError> {
+        if buf.len() < 63 {
+            return Err(EdgeCmsError::BufferTooSmall);
+        }
+        buf[0..4].copy_from_slice(b"AUDP");
+
+        // Pad Track ID to 32 bytes
+        buf[4..36].fill(0);
+        let t_bytes = self.track_id.as_bytes();
+        let t_len = t_bytes.len().min(32);
+        buf[4..4 + t_len].copy_from_slice(&t_bytes[..t_len]);
+
+        buf[36..40].copy_from_slice(&self.position_ms.to_le_bytes());
+        buf[40..44].copy_from_slice(&self.duration_ms.to_le_bytes());
+        buf[44..46].copy_from_slice(&self.volume_permille.to_le_bytes());
+        buf[46] = self.mode as u8;
+        buf[47] = self.noise_color as u8;
+        buf[48] = self.sleep_timer_rem_min;
+
+        let mut flags = 0u8;
+        if self.is_paused {
+            flags |= 0b0000_0001;
+        }
+        if self.is_gapless {
+            flags |= 0b0000_0010;
+        }
+        if self.is_normalizing {
+            flags |= 0b0000_0100;
+        }
+        buf[49] = flags;
+
+        // Reserved 11 bytes
+        buf[50..61].fill(0);
+
+        let crc = crc16_ccitt(&buf[0..61]);
+        buf[61..63].copy_from_slice(&crc.to_le_bytes());
+
+        Ok(&buf[..63])
+    }
+
+    /// Decodes a 63-byte buffer into an `AudioPlaybackPacket` after validating CRC16-CCITT.
+    pub fn decode(buf: &[u8]) -> Result<Self, EdgeCmsError> {
+        if buf.len() < 63 {
+            return Err(EdgeCmsError::PayloadTruncated);
+        }
+        if &buf[0..4] != b"AUDP" {
+            return Err(EdgeCmsError::InvalidMagic);
+        }
+
+        let computed_crc = crc16_ccitt(&buf[0..61]);
+        let expected_crc = u16::from_le_bytes([buf[61], buf[62]]);
+        if computed_crc != expected_crc {
+            return Err(EdgeCmsError::ChecksumMismatch);
+        }
+
+        let t_slice = &buf[4..36];
+        let t_end = t_slice.iter().position(|&b| b == 0).unwrap_or(32);
+        let t_str = core::str::from_utf8(&t_slice[..t_end]).map_err(|_| EdgeCmsError::InvalidUtf8)?;
+        let mut track_id = heapless::String::new();
+        let _ = track_id.push_str(t_str);
+
+        let position_ms = u32::from_le_bytes([buf[36], buf[37], buf[38], buf[39]]);
+        let duration_ms = u32::from_le_bytes([buf[40], buf[41], buf[42], buf[43]]);
+        let volume_permille = u16::from_le_bytes([buf[44], buf[45]]);
+        let mode = AudioPlaybackMode::from_u8(buf[46]);
+        let noise_color = NoiseColor::from_u8(buf[47]);
+        let sleep_timer_rem_min = buf[48];
+        let flags = buf[49];
+        let is_paused = (flags & 0b0000_0001) != 0;
+        let is_gapless = (flags & 0b0000_0010) != 0;
+        let is_normalizing = (flags & 0b0000_0100) != 0;
+
+        Ok(Self {
+            track_id,
+            position_ms,
+            duration_ms,
+            volume_permille,
+            mode,
+            noise_color,
+            sleep_timer_rem_min,
+            is_paused,
+            is_gapless,
+            is_normalizing,
+        })
+    }
+
+    /// Renders zero-allocation ANSI playback badge for serial consoles, character LCDs, and smart speaker HUDs.
+    pub fn render_ansi(&self, w: &mut impl core::fmt::Write) -> core::fmt::Result {
+        let status_icon = if self.is_paused { "||" } else { ">" };
+        let mode_tag = match self.mode {
+            AudioPlaybackMode::Music => "\x1b[1;32m[MUSIC]\x1b[0m",
+            AudioPlaybackMode::Podcast => "\x1b[1;34m[PODCAST]\x1b[0m",
+            AudioPlaybackMode::SleepNoise => "\x1b[1;35m[SLEEP NOISE]\x1b[0m",
+            AudioPlaybackMode::LiveRadio => "\x1b[1;31m[LIVE RADIO]\x1b[0m",
+        };
+        let p_m = (self.position_ms / 1000) / 60;
+        let p_s = (self.position_ms / 1000) % 60;
+        let d_m = (self.duration_ms / 1000) / 60;
+        let d_s = (self.duration_ms / 1000) % 60;
+        let vol_pct = self.volume_permille / 10;
+
+        write!(
+            w,
+            "{mode_tag} \x1b[1;36m[{status_icon} {:02}:{:02} / {:02}:{:02}]\x1b[0m \x1b[33m[Vol: {}%]\x1b[0m (ID: {})",
+            p_m, p_s, d_m, d_s, vol_pct, self.track_id.as_str()
+        )?;
+
+        if self.sleep_timer_rem_min > 0 {
+            write!(w, " \x1b[95m[Zzz: {}m]\x1b[0m", self.sleep_timer_rem_min)?;
+        }
+        Ok(())
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -944,5 +1139,55 @@ mod tests {
         assert!(f_out.contains("FAST: retro"));
         assert!(f_out.contains("AD BREAK"));
         assert!(f_out.contains("Classic Cartoons"));
+    }
+
+    #[test]
+    fn test_audio_playback_packet_roundtrip() {
+        let mut track_id = heapless::String::new();
+        track_id.push_str("trk_neon_dreams_99").unwrap();
+
+        let packet = AudioPlaybackPacket {
+            track_id,
+            position_ms: 125000,
+            duration_ms: 240000,
+            volume_permille: 850,
+            mode: AudioPlaybackMode::Music,
+            noise_color: NoiseColor::None,
+            sleep_timer_rem_min: 30,
+            is_paused: false,
+            is_gapless: true,
+            is_normalizing: true,
+        };
+
+        let mut buf = [0u8; 128];
+        let bytes = packet.serialize(&mut buf).unwrap();
+        assert_eq!(bytes.len(), 63);
+        assert_eq!(&bytes[0..4], b"AUDP");
+
+        let decoded = AudioPlaybackPacket::decode(bytes).unwrap();
+        assert_eq!(decoded.track_id.as_str(), "trk_neon_dreams_99");
+        assert_eq!(decoded.position_ms, 125000);
+        assert_eq!(decoded.duration_ms, 240000);
+        assert_eq!(decoded.volume_permille, 850);
+        assert_eq!(decoded.mode, AudioPlaybackMode::Music);
+        assert_eq!(decoded.noise_color, NoiseColor::None);
+        assert_eq!(decoded.sleep_timer_rem_min, 30);
+        assert!(!decoded.is_paused);
+        assert!(decoded.is_gapless);
+        assert!(decoded.is_normalizing);
+
+        // Verify ANSI rendering
+        let mut ansi_out = heapless::String::<128>::new();
+        decoded.render_ansi(&mut ansi_out).unwrap();
+        assert!(ansi_out.contains("MUSIC"));
+        assert!(ansi_out.contains("02:05 / 04:00"));
+        assert!(ansi_out.contains("Vol: 85%"));
+        assert!(ansi_out.contains("Zzz: 30m"));
+
+        // Verify CRC16 corruption rejection
+        let mut corrupted = [0u8; 63];
+        corrupted.copy_from_slice(bytes);
+        corrupted[10] ^= 0xEE;
+        assert_eq!(AudioPlaybackPacket::decode(&corrupted), Err(EdgeCmsError::ChecksumMismatch));
     }
 }
