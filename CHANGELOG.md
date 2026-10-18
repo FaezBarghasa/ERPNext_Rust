@@ -7,6 +7,39 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [0.4.0] - 2026-10-18
+
+### Added
+- **Production OTT Video Streaming Subsystem (`erp-cms`)**:
+  - HLS v6 / CMAF engine with multi-variant video ladders, multi-channel audio tracks, and WebVTT subtitles.
+  - Server-Side Ad Insertion (SSAI) with SCTE-35 Cue-In / Cue-Out manifest stitching and RFC-compliant tracking beacons.
+  - FAST linear channel engine with 24/7 EPG scheduling and live sliding-window playlists.
+  - Stremio Addon Protocol v1 (`manifest.json`, catalog queries, meta detail, video streams, subtitle tracks).
+  - Video X-Ray metadata system tracking actors, scene trivia, music tracks, and WebVTT metadata tracks at current playhead.
+  - Resilient low-bandwidth streaming with QUIC / HTTP/3 optimization headers and user prefetch cache registry.
+- **Visual Block Canvas AST & Emdash Editorial Studio (`erp-cms`)**:
+  - Declarative reversible Block Canvas AST with slot containers, responsive breakpoint cascade, and SurrealQL two-way DocType binding.
+  - High-performance compiled SSR engine rendering pre-allocated HTML in $<10\text{ms}$ TTFB.
+  - Emdash editorial studio: multi-channel editorial workflows, revision diffing, focal-point cropping, and responsive WebP variant generation.
+- **10 Enterprise Template Suites & 10 Aesthetic Archetypes (100 Permutations)**:
+  - 10 full vertical template suites: `svod-streaming`, `lms-academy`, `digital-goods`, `b2b-industrial`, `b2c-retail`, `trading-exchange`, `real-estate-luxury`, `healthcare-clinic`, `restaurant-culinary`, `news-editorial`.
+  - 10 design archetypes: `awwwards`, `cyberpunk`, `vaporwave`, `retrowave`, `neonwave`, `tasteful`, `brutalist`, `editorial`, `luxury`, `monochrome`.
+  - Live preview switcher dock and runtime `<1ms` variant re-rendering via `?variant={name}`.
+- **Master Audio Streaming CMS (Spotify, SoundCloud, Audioserve, Owncast & Navidrome)**:
+  - Lossless audio ingestion and FLAC compression pipeline (levels 0..8) with 4 audiophile quality tiers and VorbisComment preservation.
+  - Custom 10-band ISO equalizer with biquad IIR filter generation, automatic headroom preamp attenuation, and 10 presets.
+  - Line-level and syllable/word karaoke LRC parser with active playhead resolution.
+  - Music Intelligence Engine: technical liner notes (ISRC, BPM, Camelot wheel, contributors), Camelot harmonic key distance scoring, and transcript TF-IDF semantic recommendation engine.
+  - EBU R128 loudness normalization (-14 LUFS, -1 dBFS true-peak limiter clamp) and gapless crossfading (`EqualPower`, `Linear`, `Logarithmic`).
+  - SoundCloud-grade 100-point & 1800-point scrub bar waveform generators, mirror SVG vector rendering, and temporal comment clustering histogram.
+  - Procedural sleep soundscapes (white, pink $1/f$, brown $1/f^2$), binaural beats synthesizer, multi-stem soundboard mixer, and exponential volume decay timer.
+  - Owncast-grade live radio broadcasting with LL-HLS audio (`#EXT-X-TARGETDURATION:2`), real-time listener heartbeats, and live chat rooms.
+  - Audioserve-grade audiobook chapter markers (M4B, ID3v2 CHAP) and Last-Write-Wins (LWW) cross-device playback position synchronization.
+  - Subsonic / OpenSubsonic API v1.16+ protocol controller (`ping.view`, `getLicense.view`, `getSong.view`, `stream.view`, `getMusicFolders.view`, `scrobble.view`, `getNowPlaying.view`, `search3.view`).
+  - Bare-metal `#![no_std]` wire playback telemetry packet (`AudioPlaybackPacket`) with CRC16-CCITT checksum for Cortex-M microcontrollers.
+
+---
+
 ## [0.3.0] - 2026-10-12
 
 ### Added
