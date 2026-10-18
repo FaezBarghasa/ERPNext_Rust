@@ -183,3 +183,96 @@ Process card charges and handle provider webhooks with automated double-entry GL
   }
   ```
 - On successful payment capture, the `PaymentReconciliationEngine` automatically generates a balanced Journal Entry clearing Accounts Receivable and posting to the designated Bank/Clearing Ledger.
+
+---
+
+## 6. OTT Video Streaming, SSAI & FAST Linear Channels
+
+`rustnext` provides a media delivery experience with broadcast-grade features:
+
+### 6.1 Multi-Bitrate HLS v6 Streaming
+- **Master Manifest**: Access adaptive bitrate video streams via RFC 8216 master playlist:
+  ```http
+  GET /api/v2/stream/hls/master.m3u8?content_id={id}
+  ```
+- **Automatic Resolution Switching**: Players seamlessly switch between 1080p, 720p, and 480p streams based on available network bandwidth.
+
+### 6.2 Server-Side Ad Insertion (SSAI) with SCTE-35
+- Requesting sub-stream playlists with `cue_scte35=true` enables frame-accurate `#EXT-X-DATERANGE` markers:
+  ```http
+  GET /api/v2/stream/hls/1080p.m3u8?content_id={id}&cue_scte35=true
+  ```
+- Ad splices occur on exact keyframe boundaries without client player rebuffering.
+
+### 6.3 24/7 Linear FAST Channels & XMLTV EPG
+- **Linear Stream Playhead**: Continuous virtual broadcast channel simulating linear cable/satellite television.
+- **XMLTV EPG Syndication**: Electronic Program Guide accessible by standard IPTV and media center applications:
+  ```http
+  GET /api/v2/stream/fast/epg.xml
+  ```
+
+### 6.4 Stremio v1 Addon Discovery
+- Install into any Stremio player via the community addon URL:
+  ```http
+  GET /stremio/v1/manifest.json
+  ```
+- Enables catalog browsing, stream playback, and metadata discovery directly inside the Stremio ecosystem.
+
+---
+
+## 7. Master Audio Streaming CMS & Subsonic Ecosystem
+
+Experience studio-grade audio delivery, acoustic transcription suggestions, and full Subsonic client interoperability:
+
+### 7.1 Lossless Audio Streaming & FLAC Compression
+- Stream bit-perfect FLAC audio or compressed streams on demand:
+  ```http
+  GET /api/v2/audio/stream?track_id={id}&format=flac
+  ```
+- Ingested audio uploads are automatically analyzed and compressed to FLAC with $\ge 40\%$ lossless bandwidth reduction.
+
+### 7.2 10-Band Graphic Studio Equalizer
+- Apply studio EQ presets or custom band gains directly to the DSP pipeline:
+  ```http
+  POST /api/v2/audio/eq
+  Content-Type: application/json
+
+  {
+    "preset": "AcousticWarmth",
+    "gains_db": [2.0, 1.5, 0.5, 0.0, 0.0, 0.5, 1.0, 1.5, 2.0, 1.0]
+  }
+  ```
+- **Built-in Presets:** `Flat`, `BassBoost`, `VocalAir`, `ClubDance`, `ClassicalHall`, `AcousticWarmth`.
+
+### 7.3 Synchronized Karaoke LRC Lyrics
+- Millisecond-accurate word/line timing for real-time karaoke display:
+  ```http
+  GET /api/v2/audio/lyrics?track_id={id}
+  ```
+- Supports byte-offset tracking, time synchronization (`[mm:ss.xx]`), and dual-language translation tags.
+
+### 7.4 Acoustic Transcription Music Recommendations
+- Suggests new tracks by analyzing real acoustic transcription features (spectral centroid, cadence, tempo, key harmonic changes), avoiding the echo-chamber pitfalls of simple text metadata tags:
+  ```http
+  GET /api/v2/audio/suggest?track_id={id}&limit=10
+  ```
+
+### 7.5 Procedural Sleep Sounds & Binaural Beats
+- Synthesize uninterrupted sleep noise directly on the edge:
+  ```http
+  GET /api/v2/audio/sleep-noise?color=pink&duration_secs=3600&binaural_hz=4.0
+  ```
+- **Noise Profiles:** `White`, `Pink` ($1/f$ pink noise for sleep), `Brown` ($1/f^2$ brown noise for deep relaxation).
+- **Binaural Wave Entrainment:** Delta ($0.5-4\,\text{Hz}$), Theta ($4-8\,\text{Hz}$), Alpha ($8-12\,\text{Hz}$).
+
+### 7.6 Live Radio Directory & Multi-Client Audiobook Sync
+- **SHOUTcast/Icecast Streaming:** Browse curated live global radio stations with real-time stream metadata extraction.
+- **Audiobook Bookmarks:** Sync playback position down to the second across multiple devices with configurable sleep timers and automatic rewind on resumption.
+
+### 7.7 Native Subsonic Client Interoperability
+Connect any certified Subsonic client (Symfonium, DSub, Ultrasonic, Tempo, Jamstash) to your `rustnext` instance:
+1. Open client account settings and choose **Subsonic** protocol.
+2. Enter server URL: `https://your-domain.com`.
+3. Provide your `rustnext` user credentials.
+4. Enjoy instant streaming, offline sync, and playlist management across mobile and desktop.
+
