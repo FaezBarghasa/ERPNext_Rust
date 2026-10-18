@@ -74,7 +74,7 @@ impl XRayTimeRange {
 }
 
 /// Actor and character attribution for active on-screen talent.
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct ActorCredit {
     pub actor_id: String,
     pub name: String,
@@ -86,7 +86,7 @@ pub struct ActorCredit {
 }
 
 /// Synchronized soundtrack and music recognition entry.
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct MusicTrackInfo {
     pub track_id: String,
     pub title: String,
@@ -108,7 +108,7 @@ pub enum SceneTriviaCategory {
 }
 
 /// Curated trivia, production notes, or location insight.
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct SceneTrivia {
     pub trivia_id: String,
     pub category: SceneTriviaCategory,
@@ -118,7 +118,7 @@ pub struct SceneTrivia {
 }
 
 /// Interactive contextual commerce tag linking on-screen items to store inventory.
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct ProductCommerceTag {
     pub product_id: String,
     pub title: String,

@@ -76,6 +76,10 @@ pub use video_streaming::{
     PlayMethod, PlaybackDecisionEngine, SubtitleDelivery, SubtitleFormat, SubtitleTrackInfo,
     VideoCodec,
 };
+pub use xray_metadata::{
+    ActorCredit, MusicTrackInfo, ProductCommerceTag, SceneTrivia, SceneTriviaCategory,
+    VideoXRayCatalog, XRayRegistry, XRaySnapshot, XRayTimeRange,
+};
 pub use erp_cms_core as core;
 
 #[cfg(test)]
