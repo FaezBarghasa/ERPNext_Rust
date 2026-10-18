@@ -545,3 +545,141 @@ async fn test_v2_invoice_settlement_reconciliation() {
         .unwrap_or(-1.0);
     assert_eq!(out_amt, 0.0);
 }
+
+#[actix_web::test]
+async fn test_v2_streaming_ott_endpoints_lifecycle() {
+    let pool_mgr = ConnectionPoolManager::in_memory(Duration::from_secs(300));
+    let topology = MicroTopologyConfig::default();
+
+    let app = test::init_service(
+        App::new().configure(|cfg| configure_app(cfg, pool_mgr.clone(), topology.clone(), None)),
+    )
+    .await;
+
+    // 1. Deliver HLS Master Playlist
+    let req = test::TestRequest::get()
+        .uri("/api/v2/streaming/videos/vid-demo-99/master.m3u8")
+        .to_request();
+    let resp = test::call_service(&app, req).await;
+    assert!(resp.status().is_success());
+    assert_eq!(
+        resp.headers().get("Content-Type").unwrap(),
+        "application/vnd.apple.mpegurl"
+    );
+    let master_body = test::read_body(resp).await;
+    let master_str = String::from_utf8(master_body.to_vec()).unwrap();
+    assert!(master_str.contains("#EXTM3U"));
+    assert!(master_str.contains("#EXT-X-STREAM-INF:BANDWIDTH=4500000"));
+    assert!(master_str.contains("vid-demo-99/1080p/index.m3u8"));
+
+    // 2. Deliver HLS Media Playlist for 1080p variant
+    let req = test::TestRequest::get()
+        .uri("/api/v2/streaming/videos/vid-demo-99/1080p/index.m3u8")
+        .to_request();
+    let resp = test::call_service(&app, req).await;
+    assert!(resp.status().is_success());
+    let media_body = test::read_body(resp).await;
+    let media_str = String::from_utf8(media_body.to_vec()).unwrap();
+    assert!(media_str.contains("#EXT-X-TARGETDURATION:4"));
+    assert!(media_str.contains("1080p/seg_0.ts?token="));
+
+    // 3. Deliver Segment (MPEG-TS binary)
+    let req = test::TestRequest::get()
+        .uri("/api/v2/streaming/videos/vid-demo-99/1080p/seg_0.ts")
+        .to_request();
+    let resp = test::call_service(&app, req).await;
+    assert!(resp.status().is_success());
+    assert_eq!(resp.headers().get("Content-Type").unwrap(), "video/MP2T");
+    let seg_body = test::read_body(resp).await;
+    assert_eq!(seg_body[0], 0x47); // MPEG-TS Sync Byte
+
+    // 4. RTMP Publish Webhook Auth (Unauthorized rejection)
+    let bad_auth_payload = serde_json::json!({
+        "app": "live",
+        "name": "unauthorized_stream_key_999",
+        "addr": "192.168.1.100"
+    });
+    let req = test::TestRequest::post()
+        .uri("/api/v2/streaming/rtmp/auth")
+        .set_json(&bad_auth_payload)
+        .to_request();
+    let resp = test::call_service(&app, req).await;
+    assert_eq!(resp.status(), actix_web::http::StatusCode::FORBIDDEN);
+
+    // 5. RTMP Publish Webhook Auth (Authorized)
+    let good_auth_payload = serde_json::json!({
+        "app": "live",
+        "name": "live_stream_key_123",
+        "addr": "192.168.1.100",
+        "clientid": "conn_obs_1"
+    });
+    let req = test::TestRequest::post()
+        .uri("/api/v2/streaming/rtmp/auth")
+        .set_json(&good_auth_payload)
+        .to_request();
+    let resp = test::call_service(&app, req).await;
+    assert!(resp.status().is_success());
+    let auth_res: serde_json::Value = test::read_body_json(resp).await;
+    assert_eq!(auth_res.get("status").and_then(|v| v.as_str()), Some("authorized"));
+    assert_eq!(auth_res.get("channel_id").and_then(|v| v.as_str()), Some("live_main"));
+
+    // 6. RTMP Done Webhook (Teardown)
+    let done_payload = serde_json::json!({
+        "name": "live_stream_key_123"
+    });
+    let req = test::TestRequest::post()
+        .uri("/api/v2/streaming/rtmp/done")
+        .set_json(&done_payload)
+        .to_request();
+    let resp = test::call_service(&app, req).await;
+    assert!(resp.status().is_success());
+
+    // 7. Resumable Chunk Upload
+    let chunk_payload = serde_json::json!({
+        "upload_id": "up_sample_video",
+        "offset": 0,
+        "total_bytes": 10,
+        "chunk_base64": "48656c6c6f576f726c64" // "HelloWorld" in hex
+    });
+    let req = test::TestRequest::post()
+        .uri("/api/v2/streaming/upload/chunk")
+        .set_json(&chunk_payload)
+        .to_request();
+    let resp = test::call_service(&app, req).await;
+    assert!(resp.status().is_success());
+    let chunk_res: serde_json::Value = test::read_body_json(resp).await;
+    assert_eq!(chunk_res.get("status").and_then(|v| v.as_str()), Some("complete"));
+    assert!(chunk_res.get("sha256").is_some());
+
+    // 8. Playback Progress Telemetry & Concurrency Heartbeat
+    let progress_payload = serde_json::json!({
+        "user_id": "usr_viewer_ott",
+        "media_id": "vid-demo-99",
+        "session_id": "sess_stream_101",
+        "playhead_sec": 120,
+        "duration_sec": 7200,
+        "buffered_sec": 30,
+        "is_paused": false
+    });
+    let req = test::TestRequest::post()
+        .uri("/api/v2/streaming/playback/progress")
+        .set_json(&progress_payload)
+        .to_request();
+    let resp = test::call_service(&app, req).await;
+    assert!(resp.status().is_success());
+    let prog_res: serde_json::Value = test::read_body_json(resp).await;
+    assert_eq!(prog_res.get("status").and_then(|v| v.as_str()), Some("recorded"));
+    assert_eq!(prog_res.get("playhead_sec").and_then(|v| v.as_u64()), Some(120));
+
+    // 9. HTML5 Player Studio Page
+    let req = test::TestRequest::get()
+        .uri("/studio/player?v=vid-demo-99")
+        .to_request();
+    let resp = test::call_service(&app, req).await;
+    assert!(resp.status().is_success());
+    assert_eq!(resp.headers().get("Content-Type").unwrap(), "text/html; charset=utf-8");
+    let html_body = test::read_body(resp).await;
+    let html_str = String::from_utf8(html_body.to_vec()).unwrap();
+    assert!(html_str.contains("RustNext OTT Video Player Studio"));
+    assert!(html_str.contains("/api/v2/streaming/videos/vid-demo-99/master.m3u8"));
+}

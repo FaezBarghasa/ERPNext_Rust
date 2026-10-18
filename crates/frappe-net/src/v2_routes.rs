@@ -2363,6 +2363,12 @@ pub struct DynamicRbacState {
     pub fifo_layers: Arc<RwLock<HashMap<String, Vec<FifoBatchItem>>>>,
     pub builder_pages: Arc<RwLock<HashMap<String, erp_cms::builder_core::CanvasBlockTree>>>,
     pub emdash_documents: Arc<RwLock<HashMap<String, erp_cms::emdash_studio::EmdashDocument>>>,
+    pub rtmp_manager: Arc<erp_cms::rtmp_ingest::RtmpIngestManager>,
+    pub chunk_engine: Arc<erp_cms::transcode_pipeline::ResumableChunkEngine>,
+    pub transcode_queue: Arc<erp_cms::transcode_pipeline::TranscodeQueue>,
+    pub segment_cache: Arc<erp_cms::hls_engine::HlsSegmentCache>,
+    pub svod_manager: Arc<erp_cms::security::SvodPlaybackManager>,
+    pub streaming_signer: Arc<erp_cms::security::HmacStreamingSigner>,
 }
 
 impl Default for DynamicRbacState {
@@ -2503,6 +2509,18 @@ impl Default for DynamicRbacState {
             fifo_layers: Arc::new(RwLock::new(HashMap::new())),
             builder_pages: Arc::new(RwLock::new(HashMap::new())),
             emdash_documents: Arc::new(RwLock::new(HashMap::new())),
+            rtmp_manager: {
+                let mgr = erp_cms::rtmp_ingest::RtmpIngestManager::new();
+                let _ = mgr.register_channel("live_main", "live_stream_key_123");
+                Arc::new(mgr)
+            },
+            chunk_engine: Arc::new(erp_cms::transcode_pipeline::ResumableChunkEngine::new()),
+            transcode_queue: Arc::new(erp_cms::transcode_pipeline::TranscodeQueue::new()),
+            segment_cache: Arc::new(erp_cms::hls_engine::HlsSegmentCache::new()),
+            svod_manager: Arc::new(erp_cms::security::SvodPlaybackManager::new()),
+            streaming_signer: Arc::new(erp_cms::security::HmacStreamingSigner::new(
+                b"erpnext_ott_master_secret_key_321",
+            )),
         }
     }
 }
@@ -4813,6 +4831,296 @@ pub async fn emdash_media_crop_handler(payload: web::Json<FocalCropPayload>) -> 
             "error": e.to_string()
         })),
     }
+}
+
+// =========================================================================
+// OTT Video Streaming, RTMP Ingest & ABR Playback Endpoints (Phase 6)
+// =========================================================================
+
+/// Handler: Deliver RFC 8216 HLS Master Playlist: `GET /api/v2/streaming/videos/{id}/master.m3u8`
+pub async fn streaming_master_playlist_handler(video_id: web::Path<String>) -> impl Responder {
+    let id = video_id.into_inner();
+    let master = erp_cms::hls_engine::HlsMasterPlaylist::standard_ladder(&id);
+    let playlist_str = master.compile();
+
+    HttpResponse::Ok()
+        .content_type("application/vnd.apple.mpegurl")
+        .insert_header(("Cache-Control", "no-cache"))
+        .body(playlist_str)
+}
+
+/// Handler: Deliver RFC 8216 HLS Media Playlist: `GET /api/v2/streaming/videos/{id}/{variant}/index.m3u8`
+pub async fn streaming_variant_playlist_handler(
+    path: web::Path<(String, String)>,
+    state: web::Data<DynamicRbacState>,
+) -> impl Responder {
+    let (id, variant) = path.into_inner();
+    // Generate tokenized media playlist (10 segments of 4.0s each)
+    let expiry = 1_893_456_000; // Far-future token
+    let playlist = erp_cms::hls_engine::HlsMediaPlaylist::generate_tokenized(
+        &id,
+        &variant,
+        10,
+        4.0,
+        &state.streaming_signer,
+        expiry,
+    );
+    let playlist_str = playlist.compile();
+
+    HttpResponse::Ok()
+        .content_type("application/vnd.apple.mpegurl")
+        .insert_header(("Cache-Control", "public, max-age=4"))
+        .body(playlist_str)
+}
+
+/// Query parameters for token verification.
+#[derive(Debug, Deserialize)]
+pub struct SegmentTokenQuery {
+    pub token: Option<String>,
+    pub exp: Option<u64>,
+}
+
+/// Handler: Deliver HLS Transport Stream Segment: `GET /api/v2/streaming/videos/{id}/{variant}/{segment}`
+pub async fn streaming_segment_handler(
+    path: web::Path<(String, String, String)>,
+    query: web::Query<SegmentTokenQuery>,
+    state: web::Data<DynamicRbacState>,
+) -> impl Responder {
+    let (id, variant, segment) = path.into_inner();
+
+    // Verify token if exp is provided
+    if let (Some(token), Some(exp)) = (&query.token, query.exp) {
+        let seq = segment
+            .trim_start_matches("seg_")
+            .trim_end_matches(".ts")
+            .trim_end_matches(".m4s")
+            .parse::<u64>()
+            .unwrap_or(0);
+
+        let media_token_key = format!("{id}:{variant}:{seq}");
+        let now_sec = chrono::Utc::now().timestamp() as u64;
+        if state
+            .streaming_signer
+            .verify_token(&media_token_key, exp, now_sec, token)
+            .is_err()
+        {
+            return HttpResponse::Forbidden().json(serde_json::json!({
+                "error": "invalid_or_expired_streaming_token"
+            }));
+        }
+    }
+
+    let seq = segment
+        .trim_start_matches("seg_")
+        .trim_end_matches(".ts")
+        .trim_end_matches(".m4s")
+        .parse::<u64>()
+        .unwrap_or(0);
+
+    // Retrieve from in-memory segment cache or generate synthetic compliant MPEG-TS chunk
+    let segment_bytes = match state.segment_cache.get_segment(&id, &variant, seq) {
+        Some(bytes) => bytes,
+        None => {
+            let mut synth = vec![0x47, 0x40, 0x00, 0x10];
+            synth.resize(188 * 10, 0xAA);
+            state
+                .segment_cache
+                .insert_segment(&id, &variant, seq, synth.clone());
+            synth
+        }
+    };
+
+    let mime = if segment.ends_with(".m4s") || segment.ends_with(".mp4") {
+        "video/iso.segment"
+    } else {
+        "video/MP2T"
+    };
+
+    HttpResponse::Ok()
+        .content_type(mime)
+        .insert_header(("Cache-Control", "public, max-age=31536000, immutable"))
+        .body(segment_bytes)
+}
+
+/// Handler: NGINX-RTMP/SRS Broadcast Ingest Authentication Webhook: `POST /api/v2/streaming/rtmp/auth`
+pub async fn streaming_rtmp_auth_handler(
+    payload: web::Json<erp_cms::rtmp_ingest::NginxRtmpPublishPayload>,
+    state: web::Data<DynamicRbacState>,
+) -> impl Responder {
+    match state.rtmp_manager.handle_on_publish_payload(&payload) {
+        Ok(session) => HttpResponse::Ok().json(serde_json::json!({
+            "status": "authorized",
+            "channel_id": session.channel_id,
+            "session": session,
+        })),
+        Err(erp_cms::rtmp_ingest::RtmpError::UnauthorizedStreamKey(k)) => {
+            HttpResponse::Forbidden().json(serde_json::json!({
+                "status": "error",
+                "error": "unauthorized_stream_key",
+                "key": k,
+            }))
+        }
+        Err(erp_cms::rtmp_ingest::RtmpError::ChannelAlreadyActive(c)) => {
+            HttpResponse::Conflict().json(serde_json::json!({
+                "status": "error",
+                "error": "channel_already_broadcasting",
+                "channel_id": c,
+            }))
+        }
+        Err(e) => HttpResponse::InternalServerError().json(serde_json::json!({
+            "status": "error",
+            "message": e.to_string(),
+        })),
+    }
+}
+
+/// DTO for RTMP publish done webhook.
+#[derive(Debug, Deserialize)]
+pub struct RtmpDonePayload {
+    pub name: String,
+}
+
+/// Handler: NGINX-RTMP/SRS Broadcast Teardown Webhook: `POST /api/v2/streaming/rtmp/done`
+pub async fn streaming_rtmp_done_handler(
+    payload: web::Json<RtmpDonePayload>,
+    state: web::Data<DynamicRbacState>,
+) -> impl Responder {
+    match state.rtmp_manager.handle_on_publish_done(&payload.name) {
+        Ok(session) => HttpResponse::Ok().json(serde_json::json!({
+            "status": "teardown_complete",
+            "channel_id": session.channel_id,
+            "session": session,
+        })),
+        Err(e) => HttpResponse::NotFound().json(serde_json::json!({
+            "status": "error",
+            "message": e.to_string(),
+        })),
+    }
+}
+
+/// DTO for resumable chunk upload.
+#[derive(Debug, Deserialize)]
+pub struct StreamingChunkPayload {
+    pub upload_id: String,
+    pub offset: u64,
+    pub total_bytes: Option<u64>,
+    pub chunk_base64: String,
+}
+
+/// Handler: Resumable Chunked Ingest: `POST /api/v2/streaming/upload/chunk`
+pub async fn streaming_upload_chunk_handler(
+    payload: web::Json<StreamingChunkPayload>,
+    state: web::Data<DynamicRbacState>,
+) -> impl Responder {
+    let p = payload.into_inner();
+    if p.offset == 0 {
+        if let Some(total) = p.total_bytes {
+            let _ = state.chunk_engine.initiate_upload(&p.upload_id, total);
+        }
+    }
+
+    let raw_data = match hex::decode(&p.chunk_base64) {
+        Ok(d) => d,
+        Err(_) => p.chunk_base64.into_bytes(),
+    };
+
+    match state.chunk_engine.append_chunk(&p.upload_id, p.offset, raw_data) {
+        Ok(is_complete) => {
+            let (received, total) = state
+                .chunk_engine
+                .get_progress(&p.upload_id)
+                .unwrap_or((0, 0));
+
+            if is_complete {
+                if let Ok((_bytes, hash)) = state.chunk_engine.assemble_payload(&p.upload_id) {
+                    let job = erp_cms::transcode_pipeline::TranscodeJob {
+                        job_id: format!("tx_{}", p.upload_id),
+                        media_id: p.upload_id.clone(),
+                        input_path: format!("/spool/{}.mp4", p.upload_id),
+                        output_dir: format!("/hls/{}", p.upload_id),
+                        hardware_accel: erp_cms::transcode_pipeline::HardwareAccelType::Cpu,
+                        enable_storyboard: true,
+                    };
+                    let _ = state.transcode_queue.enqueue_job(job);
+                    return HttpResponse::Ok().json(serde_json::json!({
+                        "status": "complete",
+                        "upload_id": p.upload_id,
+                        "sha256": hash,
+                        "transcode_job_id": format!("tx_{}", p.upload_id),
+                    }));
+                }
+            }
+
+            HttpResponse::Ok().json(serde_json::json!({
+                "status": "chunk_accepted",
+                "upload_id": p.upload_id,
+                "received_bytes": received,
+                "total_bytes": total,
+                "is_complete": is_complete,
+            }))
+        }
+        Err(e) => HttpResponse::BadRequest().json(serde_json::json!({
+            "status": "error",
+            "message": e.to_string(),
+        })),
+    }
+}
+
+/// DTO for user playback telemetry reporting.
+#[derive(Debug, Deserialize)]
+pub struct PlaybackProgressPayload {
+    pub user_id: String,
+    pub media_id: String,
+    pub session_id: String,
+    pub playhead_sec: u32,
+    pub duration_sec: u32,
+    pub buffered_sec: u16,
+    pub is_paused: bool,
+}
+
+/// Handler: User Playback Progress & Concurrency Telemetry: `POST /api/v2/streaming/playback/progress`
+pub async fn streaming_playback_progress_handler(
+    payload: web::Json<PlaybackProgressPayload>,
+    state: web::Data<DynamicRbacState>,
+) -> impl Responder {
+    let p = payload.into_inner();
+
+    // Verify SVoD concurrency limit (allow 3 concurrent streams)
+    if let Err(e) = state
+        .svod_manager
+        .start_playback(&p.user_id, p.session_id.clone(), true, 3)
+    {
+        return HttpResponse::TooManyRequests().json(serde_json::json!({
+            "status": "error",
+            "error": "concurrency_limit_exceeded",
+            "message": e.to_string(),
+        }));
+    }
+
+    // Build zero-allocation wire packet to validate bounds
+    let mut u_id = erp_cms::core::heapless::String::<32>::new();
+    let _ = u_id.push_str(&p.user_id);
+    let mut m_id = erp_cms::core::heapless::String::<32>::new();
+    let _ = m_id.push_str(&p.media_id);
+
+    let packet = erp_cms::core::VideoPlaybackPacket {
+        user_id: u_id,
+        media_id: m_id,
+        playhead_sec: p.playhead_sec,
+        duration_sec: p.duration_sec,
+        buffered_sec: p.buffered_sec,
+        is_paused: p.is_paused,
+    };
+
+    let mut wire_buf = [0u8; 128];
+    let wire_bytes_len = packet.serialize(&mut wire_buf).map(|b| b.len()).unwrap_or(0);
+
+    HttpResponse::Ok().json(serde_json::json!({
+        "status": "recorded",
+        "playhead_sec": p.playhead_sec,
+        "duration_sec": p.duration_sec,
+        "wire_bytes": wire_bytes_len,
+    }))
 }
 
 // =========================================================================

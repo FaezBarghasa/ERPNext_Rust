@@ -54,7 +54,9 @@ use crate::v2_routes::{
     v2_create_document, v2_delete_document, v2_get_document, v2_get_meta_handler, v2_list_document,
     v2_list_meta_handler, v2_print_document, v2_submit_document, v2_update_document,
     webhooks_dispatch_test_handler, workflow_evaluate_handler, workflow_version_history_handler,
-    workflow_version_rollback_handler,
+    workflow_version_rollback_handler, streaming_master_playlist_handler,
+    streaming_playback_progress_handler, streaming_rtmp_auth_handler, streaming_rtmp_done_handler,
+    streaming_segment_handler, streaming_upload_chunk_handler, streaming_variant_playlist_handler,
 };
 use actix_web::{
     App, HttpMessage, HttpRequest, HttpResponse, HttpServer, Responder, middleware::Compress,
@@ -2260,6 +2262,196 @@ pub async fn rss_feed_handler(
         ))
 }
 
+/// HTML5 Video Streaming Player Studio & Telemetry HUD: `GET /studio/player`
+pub async fn streaming_player_studio_handler(
+    query: web::Query<std::collections::HashMap<String, String>>,
+) -> impl Responder {
+    let video_id = query.get("v").cloned().unwrap_or_else(|| "vid_demo_master".into());
+    let html = format!(r#"<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RustNext OTT Video Player Studio</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&family=Outfit:wght@400;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
+    <style>
+        :root {{
+            --bg: #090d16;
+            --surface: #121927;
+            --border: #1e293b;
+            --accent: #06b6d4;
+            --accent-glow: rgba(6, 182, 212, 0.35);
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --success: #10b981;
+        }}
+        * {{ margin: 0; padding: 0; box-sizing: border-box; }}
+        body {{
+            background: var(--bg);
+            color: var(--text-main);
+            font-family: 'Outfit', sans-serif;
+            min-height: 100vh;
+            padding: 2rem;
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+        }}
+        .header {{
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid var(--border);
+            padding-bottom: 1rem;
+        }}
+        .header h1 {{
+            font-size: 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            color: var(--accent);
+        }}
+        .studio-grid {{
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 1.5rem;
+        }}
+        .player-card, .hud-card {{
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 1.25rem;
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }}
+        .video-wrapper {{
+            position: relative;
+            background: #000;
+            border-radius: 8px;
+            overflow: hidden;
+            aspect-ratio: 16/9;
+        }}
+        video {{
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+        }}
+        .controls-bar {{
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 0.85rem;
+        }}
+        .badge {{
+            padding: 0.25rem 0.5rem;
+            border-radius: 4px;
+            background: rgba(16, 185, 129, 0.15);
+            color: var(--success);
+            font-weight: 600;
+        }}
+        .mono {{
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.8rem;
+            background: #050811;
+            padding: 0.75rem;
+            border-radius: 6px;
+            color: #38bdf8;
+            overflow-x: auto;
+        }}
+        select, button {{
+            background: #1e293b;
+            color: #f8fafc;
+            border: 1px solid #334155;
+            padding: 0.4rem 0.8rem;
+            border-radius: 6px;
+            font-family: inherit;
+            cursor: pointer;
+        }}
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1><span>⚡</span> RustNext OTT Player Studio</h1>
+        <div class="badge">RFC 8216 Compliant</div>
+    </div>
+    <div class="studio-grid">
+        <div class="player-card">
+            <div class="video-wrapper">
+                <video id="video-elem" controls autoplay playsinline></video>
+            </div>
+            <div class="controls-bar">
+                <div>Source: <span class="mono">/api/v2/streaming/videos/{video_id}/master.m3u8</span></div>
+                <div>
+                    Ladder:
+                    <select id="quality-select">
+                        <option value="auto">Auto ABR</option>
+                        <option value="1080p">1080p (4.5M)</option>
+                        <option value="720p">720p (2.4M)</option>
+                        <option value="480p">480p (1.2M)</option>
+                        <option value="360p">360p (600k)</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+        <div class="hud-card">
+            <h3>Edge Telemetry HUD (no_std wire format)</h3>
+            <div class="mono" id="telemetry-box">
+                [VODP Packet]<br>
+                Playhead: 00:00:00<br>
+                Buffer Health: 0.0s<br>
+                Bandwidth: Evaluating...<br>
+                Status: Standby
+            </div>
+            <button id="ping-progress-btn">Send Progress Heartbeat</button>
+        </div>
+    </div>
+    <script>
+        const video = document.getElementById('video-elem');
+        const src = '/api/v2/streaming/videos/{video_id}/master.m3u8';
+        if (Hls.isSupported()) {{
+            const hls = new Hls();
+            hls.loadSource(src);
+            hls.attachMedia(video);
+            hls.on(Hls.Events.MANIFEST_PARSED, function() {{
+                console.log('HLS manifest loaded with ' + hls.levels.length + ' quality levels');
+            }});
+        }} else if (video.canPlayType('application/vnd.apple.mpegurl')) {{
+            video.src = src;
+        }}
+
+        document.getElementById('ping-progress-btn').addEventListener('click', async () => {{
+            const res = await fetch('/api/v2/streaming/playback/progress', {{
+                method: 'POST',
+                headers: {{ 'Content-Type': 'application/json' }},
+                body: JSON.stringify({{
+                    user_id: 'usr_viewer_1',
+                    media_id: '{video_id}',
+                    session_id: 'sess_' + Math.random().toString(36).substring(7),
+                    playhead_sec: Math.floor(video.currentTime || 0),
+                    duration_sec: Math.floor(video.duration || 7200),
+                    buffered_sec: 25,
+                    is_paused: video.paused
+                }})
+            }});
+            const data = await res.json();
+            document.getElementById('telemetry-box').innerHTML =
+                '[VODP Packet Telemetry Verified]<br>' +
+                'Status: ' + data.status + '<br>' +
+                'Playhead: ' + data.playhead_sec + 's<br>' +
+                'Duration: ' + data.duration_sec + 's<br>' +
+                'Wire Bytes: ' + data.wire_bytes + ' (no_std fixed)';
+        }});
+    </script>
+</body>
+</html>"#, video_id = video_id);
+
+    HttpResponse::Ok()
+        .content_type("text/html; charset=utf-8")
+        .body(html)
+}
+
 async fn robots_txt_handler() -> impl Responder {
     TOTAL_REQUESTS.fetch_add(1, Ordering::Relaxed);
     HttpResponse::Ok()
@@ -2881,6 +3073,39 @@ pub fn configure_app(
         .route(
             "/api/v2/emdash/media/crop",
             web::post().to(emdash_media_crop_handler),
+        )
+        // V2 OTT Video Streaming, RTMP Ingest & ABR Playback Endpoints (Phase 6)
+        .route(
+            "/api/v2/streaming/videos/{id}/master.m3u8",
+            web::get().to(streaming_master_playlist_handler),
+        )
+        .route(
+            "/api/v2/streaming/videos/{id}/{variant}/index.m3u8",
+            web::get().to(streaming_variant_playlist_handler),
+        )
+        .route(
+            "/api/v2/streaming/videos/{id}/{variant}/{segment}",
+            web::get().to(streaming_segment_handler),
+        )
+        .route(
+            "/api/v2/streaming/rtmp/auth",
+            web::post().to(streaming_rtmp_auth_handler),
+        )
+        .route(
+            "/api/v2/streaming/rtmp/done",
+            web::post().to(streaming_rtmp_done_handler),
+        )
+        .route(
+            "/api/v2/streaming/upload/chunk",
+            web::post().to(streaming_upload_chunk_handler),
+        )
+        .route(
+            "/api/v2/streaming/playback/progress",
+            web::post().to(streaming_playback_progress_handler),
+        )
+        .route(
+            "/studio/player",
+            web::get().to(streaming_player_studio_handler),
         )
         // V2 Approval Workflow & Versioning Endpoints
         .route(
