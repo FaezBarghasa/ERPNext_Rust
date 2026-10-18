@@ -62,7 +62,8 @@ pub use rtmp_ingest::{
     RtmpIngestManager, RtmpStreamSession, RtmpStreamStatus,
 };
 pub use transcode_pipeline::{
-    HardwareAccelType, ResumableChunkEngine, ResumableUploadSession, TranscodeError, TranscodeJob,
+    HardwareAccelType, ResumableChunkEngine, ResumableUploadSession, StoryboardTile,
+    TranscodeError, TranscodeJob, TranscodeJobStatus, TranscodeQueue,
 };
 pub use video_streaming::{
     AudioChannels, AudioCodec, ClientDeviceProfile, ColorRange, MediaContainer, MediaStreamInfo,
