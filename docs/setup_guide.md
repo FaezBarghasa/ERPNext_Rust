@@ -25,12 +25,15 @@ This document provides step-by-step instructions to install, build, configure, p
 git clone https://github.com/FaezBarghasa/ERPNext_Rust.git
 cd ERPNext_Rust
 
-# Verify compilation across all 28 crates
+# Verify compilation across all workspace crates and tools
 cargo check --workspace
+
+# Verify bare-metal #![no_std] edge wire core for Cortex-M
+cargo check -p erp-cms-core --target thumbv7em-none-eabihf --no-default-features
 ```
 
 ### Step 2: Provision a Tenant Site via `rbench`
-Deploy any of the prebuilt enterprise template suites in under 2 seconds:
+Deploy any of the 10 prebuilt enterprise template suites (`svod-streaming`, `lms-academy`, `digital-goods`, `b2b-industrial`, `b2c-retail`, `trading-exchange`, `real-estate-luxury`, `healthcare-clinic`, `restaurant-culinary`, `news-editorial`) in under 2 seconds:
 ```bash
 # Provision the SVoD Video Streaming Platform for demo.rustnext.org
 cargo run -p rbench -- site deploy \
@@ -39,7 +42,7 @@ cargo run -p rbench -- site deploy \
   --admin-email admin@enterprise.local
 ```
 
-### Step 3: Launch the Production Web Server & Enterprise Desk
+### Step 3: Launch the Production Web Server & Streaming Media Gateway
 ```bash
 # Launch frappe-net HTTP/1.1, HTTP/2, HTTP/3, and WebSocket server with Enterprise Desk
 cargo run -p frappe-net -- start --bind 127.0.0.1:8000 --micro
@@ -50,6 +53,15 @@ cargo run -p frappe-net -- start --bind 127.0.0.1:8000 --micro
 * **Printable Invoice Engine:** `http://127.0.0.1:8000/api/v2/document/sales_invoice/{name}/print`
 * **Payment API Endpoint:** `http://127.0.0.1:8000/api/v2/payments/charge`
 * **Universal Template Portal:** `http://127.0.0.1:8000/templates`
+* **OTT Video HLS Master:** `http://127.0.0.1:8000/api/v2/stream/hls/master.m3u8`
+* **FAST Channel XMLTV EPG:** `http://127.0.0.1:8000/api/v2/stream/fast/epg.xml`
+* **Stremio v1 Addon Manifest:** `http://127.0.0.1:8000/stremio/v1/manifest.json`
+* **Audio Lossless FLAC Stream:** `http://127.0.0.1:8000/api/v2/audio/stream`
+* **Audio 10-Band EQ DSP:** `http://127.0.0.1:8000/api/v2/audio/eq`
+* **Synchronized LRC Lyrics:** `http://127.0.0.1:8000/api/v2/audio/lyrics`
+* **Acoustic Music Recommender:** `http://127.0.0.1:8000/api/v2/audio/suggest`
+* **Procedural Sleep Sounds:** `http://127.0.0.1:8000/api/v2/audio/sleep-noise`
+* **Subsonic REST v1.16+ API:** `http://127.0.0.1:8000/rest/ping`
 * **Health Check:** `http://127.0.0.1:8000/health`
 
 ---

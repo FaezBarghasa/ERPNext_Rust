@@ -47,6 +47,8 @@
 - **FR-NET-02**: Must provide an in-process automated ACME gateway negotiating and caching Let's Encrypt TLS certificates.
 - **FR-NET-03**: Must support `--micro` runtime flags bounding memory caches and background worker queues.
 - **FR-NET-04**: Must stream real-time document mutation events over WebSocket connections.
+- **FR-NET-05**: Must deliver native HTTP/3 (QUIC via Quinn and H3) alongside HTTP/1.1 and HTTP/2 with zero-downtime ALPN negotiation.
+- **FR-NET-06**: Must enforce Dynamic RBAC with permission bitmasks (`RoleBitmask`) and `LoginGuard` brute-force rate-limiting.
 
 ### 3.5 Financial & Accounting Systems (`erp-accounting`)
 - **FR-ACC-01**: Must enforce balanced multi-currency double-entry journal postings with zero floating-point drift.
@@ -63,15 +65,19 @@
 - **`erp-ppm`**: Dual-engine CPM/CCPM project scheduling, ANSI/EIA-748 EVMS metrics (CPI, SPI, EAC, TCPI), and 100k-run Monte Carlo risk simulator.
 - **`erp-asset`**: Linear Referencing Systems (LRS), Weibull $(\beta, \eta)$ Remaining Useful Life (RUL) predictive degradation, and tamper-evident PTW / LOTO safety interlocks.
 - **`erp-software`**: ASC 606 5-step revenue recognition, graduated SaaS subscription tiers, and SLA penalty credit ledgers.
-- **`erp-cms`**: Declarative `PageBlock` AST, pre-allocated SSR HTML renderer ($<10\,\text{ms}$ TTFB), atomic e-commerce checkout, LuxeGen 3D WebGL configurator (Three.js PBR + GSAP kinetic typography), and 12 universal work-type templates.
+- **`erp-cms` & `erp-cms-core`**: Emdash visual canvas block editor (`PageBlock` AST), pre-allocated SSR HTML renderer ($<10\,\text{ms}$ TTFB), 10 enterprise vertical suites with 10 themes (100 permutations), OTT Video Delivery (HLS v6, SCTE-35 SSAI, FAST, Stremio v1, X-Ray), Master Audio Streaming CMS (lossless FLAC, 10-band EQ, lyrics, transcription suggestions, procedural sleep noise, live radio, audiobook bookmarks, Subsonic v1.16+), and `no_std` wire packet framing.
 - **`erp-hr`**: Attendance logs, biometric tracking, multi-component salary structures, and automated payroll batches.
 - **`erp-crm`**: Multi-stage lead acquisition funnels, deal conversion pipelines, and weighted opportunity scoring.
 - **`erp-support`**: Ticket SLA countdown timers and priority escalation matrices.
 - **`erp-lending`**: Reducing-balance and compound interest accrual with exact-decimal amortization schedules.
-### 3.8 Universal Work-Type Templates & Theme Engine (`erp-cms` & `frappe-meta`)
-- **FR-CMS-01**: Must embed 6 prebuilt enterprise template suites (`svod-streaming`, `lms-academy`, `digital-goods`, `b2b-industrial`, `b2c-retail`, `trading-exchange`) with sub-10ms SSR rendering and specialized interactive widgets.
+
+### 3.8 Universal Work-Type Templates, Streaming & Edge CMS (`erp-cms`, `erp-cms-core`, `frappe-net`)
+- **FR-CMS-01**: Must embed 10 prebuilt enterprise template suites (`svod-streaming`, `lms-academy`, `digital-goods`, `b2b-industrial`, `b2c-retail`, `trading-exchange`, `real-estate-luxury`, `healthcare-clinic`, `restaurant-culinary`, `news-editorial`) and 10 dynamic aesthetic themes providing 100 runtime permutations with sub-10ms SSR rendering and specialized interactive widgets.
 - **FR-CMS-02**: Must provide a dynamic multi-tenant `ThemeRegistry` compiling JSON `DesignTokens` into CSS custom properties (`:root { ... }`) with $<50\,\mu\text{s}$ cache invalidation.
 - **FR-CMS-03**: Must support one-command fast deployment via `rbench site deploy` in $\le 2000\,\text{ms}$.
+- **FR-CMS-04 (OTT Video Delivery)**: Must generate standards-compliant RFC 8216 Apple HLS v6 multi-bitrate master manifests, frame-accurate SCTE-35 cue injection for Server-Side Ad Insertion (SSAI), linear FAST 24/7 channel schedules with XMLTV EPG syndication, Stremio v1 addon manifests, and scene-level X-Ray metadata.
+- **FR-CMS-05 (Master Audio Streaming CMS)**: Must support lossless FLAC compression and streaming, 10-band IIR graphic equalizers with studio presets, synchronized LRC karaoke lyrics parser with byte-offset scrolling, real acoustic transcription NLP music suggestion engine, procedural sleep sound synthesis (white, pink, brown, binaural beats), live radio stream directory (SHOUTcast/Icecast), multi-client audiobook sync with sleep timers, and complete Subsonic API v1.16+ compatibility (`/rest/ping`, `/rest/getMusicFolders`, `/rest/stream`).
+- **FR-CMS-06 (`#![no_std]` Wire Telemetry Core)**: Must provide bare-metal `#![no_std]` binary framing (`AudioPlaybackPacket`) fitting inside 63-byte MTU envelopes with CRC16-CCITT integrity verification and static `EdgeCanvasLayout<CAP>` for microcontrollers.
 
 ### 3.9 Universal Mobile, HAL & Role-Adaptive Multi-Persona Shell (`desk-app`)
 - **FR-DESK-01**: Must provide a polymorphic `MobileHardwareAbstractionLayer` routing biometrics, barcode scanning, thermal printing, and GPS across Android JNI and W3C Web APIs.

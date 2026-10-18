@@ -5,7 +5,7 @@
 
 ## 1. Executive Strategy & Tooling Ecosystem
 
-This testing plan evaluates the platform purely from the perspective of an authentic user interacting with real graphical interfaces. It exercises the WebGL 3D canvas, GSAP kinetic scroll sequences, role-adaptive multi-persona cockpits, six vertical template archetypes, dynamic theme hot-swapping, and offline-first state reconciliation.
+This testing plan evaluates the platform purely from the perspective of an authentic user interacting with real graphical interfaces. It exercises the WebGL 3D canvas, GSAP kinetic scroll sequences, role-adaptive multi-persona cockpits, ten enterprise vertical template suites (with 10 aesthetic themes yielding 100 runtime permutations), production OTT video streaming, SCTE-35 SSAI ad insertion, and high-performance lossless audio streaming with Subsonic v1.16+ client interop.
 
 ```
                          AGENT-DRIVEN E2E TESTING ARCHITECTURE
@@ -15,9 +15,10 @@ This testing plan evaluates the platform purely from the perspective of an authe
 │  ├── Mobile Device Emulation (Touch, Viewport 390x844, DevicePixelRatio 3x)            │
 │  ├── Visual Regression & Pixel Diffing Engine (pixelmatch, threshold <= 0.05%)         │
 │  ├── Accessibility Auditor (axe-core / WCAG 2.1 AA)                                    │
+│  ├── Media Stream Interceptor (HLS v6, Range Requests, FLAC/Audio Packets)             │
 │  └── Synthetic Network Condition Interceptor (Offline, 3G Slow, WebSocket Monitor)     │
 └───────────────────────────────────────────┬────────────────────────────────────────────┘
-                                            │ HTTP/3, WebSockets, DOM Events
+                                            │ HTTP/3, WebSockets, DOM Events, Subsonic
                                             ▼
 ┌────────────────────────────────────────────────────────────────────────────────────────┐
 │                        Statically Compiled `rustnext` Target                           │
@@ -188,18 +189,20 @@ npm install -g lighthouse
 Test the end-to-end user workflows across all six prebuilt site models:
 
 ```
-┌────────────────────────────────────────────────────────────────────────────────────────┐
-│                              THE 6 TEMPLATE ARCHETYPES                                 │
-│  [1. SVoD Streaming]      [2. Digital Learning]      [3. Digital Goods Hub]            │
-│  ├── Netflix/Crunchyroll  ├── Coursera/Udemy         ├── Steam/Creative Market         │
-│  ├── ABR HLS Video HUD    ├── Course Graph Syllabus  ├── Live Type-Tester & Bundles    │
-│  └── Vector Subtitles     └── Typst Merkle Diplomas  └── Signed Expiring Downloads     │
-│                                                                                        │
-│  [4. Industrial B2B]      [5. Luxury B2C Flagship]   [6. Trading Exchange]             │
-│  ├── Frost CNC/Rowa/Starm ├── Cartier/Industry West  ├── Binance/Robinhood/Polymarket  │
-│  ├── Parametric 3D Tooling├── Spatial WebGL & AR     ├── High-Density L2 Orderbook     │
-│  └── Quad-BOM & RFQ Net   └── Exploded Disassembly   └── Implied Probability Bets      │
-└────────────────────────────────────────────────────────────────────────────────────────┘
+┌────────────────────────────────────────────────────────────────────────────────────────────────┐
+│                             THE 10 ENTERPRISE TEMPLATE SUITES                                  │
+│  [1. SVoD Streaming]      [2. Digital Learning]      [3. Digital Goods Hub]   [4. B2B Industrial]      │
+│  ├── Multi-Bitrate HLS    ├── Course Graph Syllabus  ├── Type-Tester & Fonts  ├── Parametric 3D CAD    │
+│  └── SSAI SCTE-35 Ads     └── Merkle PDF Diplomas    └── Signed HMAC Downloads└── ZUGFeRD 2.2 Invoicing│
+│                                                                                                │
+│  [5. Luxury B2C Flagship] [6. Trading Exchange]      [7. Luxury Real Estate]  [8. Healthcare Clinic]   │
+│  ├── Three.js PBR Engine  ├── L2 Orderbook Depth     ├── Floorplan & 3D Tour  ├── HIPAA Portal & Slots │
+│  └── Exploded Calibre     └── Implied Probabilities  └── Mortgage Calculator  └── Doctor Schedules     │
+│                                                                                                │
+│  [9. Culinary Restaurant] [10. News & Editorial]                                               │
+│  ├── Table Seating Floor  ├── Live Breaking RSS Feed                                           │
+│  └── Real-Time Allergens  └── Paywall & Reading Time                                           │
+└────────────────────────────────────────────────────────────────────────────────────────────────┘
 ```
 
 #### Test Scenario 3.1: SVoD Streaming (`template-svod-streaming`)
@@ -256,6 +259,46 @@ Test the end-to-end user workflows across all six prebuilt site models:
   2. Order ticket verifies wallet balance and locks required funds immediately in UI without page reload.
   3. Order appears instantly in active orders table.
 
+#### Test Scenario 3.6: Luxury Real Estate & Virtual Tour (`template-real-estate-luxury`)
+* **User Action:**
+  1. Navigate to `/template-real-estate-luxury`.
+  2. Filter properties by minimum price `$1,000,000` and `4+ Bedrooms`.
+  3. Click interactive Virtual Tour button on featured penthouse.
+* **GUI Assertions:**
+  1. Property grid filters without page reload in $< 15\,\text{ms}$.
+  2. Virtual Tour 3D canvas modal launches with navigable room nodes.
+  3. Integrated mortgage calculator updates monthly repayment estimate dynamically based on interest rate slider.
+
+#### Test Scenario 3.7: Healthcare Clinic & Telehealth Portal (`template-healthcare-clinic`)
+* **User Action:**
+  1. Navigate to `/template-healthcare-clinic`.
+  2. Select specialty *"Cardiology"* and Dr. Elena Vance.
+  3. Select open appointment slot: Thursday 14:00.
+* **GUI Assertions:**
+  1. Calendar shows real-time doctor slot availability fetched via encrypted endpoint.
+  2. Booking modal confirms appointment and issues encrypted confirmation token.
+  3. HIPAA compliance statement badge is visible and passes accessibility check.
+
+#### Test Scenario 3.8: Fine Dining Restaurant & Culinary Booking (`template-restaurant-culinary`)
+* **User Action:**
+  1. Navigate to `/template-restaurant-culinary`.
+  2. Switch dietary filter to *"Gluten-Free & Dairy-Free"*.
+  3. Reserve Table 12 for 4 guests at 19:30.
+* **GUI Assertions:**
+  1. Menu items dynamically re-sort, displaying allergen warning badges.
+  2. Interactive floor plan seating chart highlights reserved table and shows availability.
+  3. Reservation confirmation toast appears with instant SMS/email notification queue ID.
+
+#### Test Scenario 3.9: News & Editorial Journalism (`template-news-editorial`)
+* **User Action:**
+  1. Navigate to `/template-news-editorial`.
+  2. Click on breaking investigative report.
+  3. Scroll down 40% of the article.
+* **GUI Assertions:**
+  1. Dynamic reading progress bar at top of screen tracks scroll depth smoothly.
+  2. Reading time calculation badge ("4 min read") renders cleanly.
+  3. Soft paywall subscriber banner animates into view non-intrusively.
+
 ---
 
 ### Phase 4: UI/UX Quality, Accessibility & Performance Gates
@@ -269,7 +312,7 @@ Test the end-to-end user workflows across all six prebuilt site models:
   - `/worker`
   - `/factory`
   - `/approvals`
-  - All 6 Template Catalog landing pages.
+  - All 10 Template Catalog landing pages.
 
 #### Test Scenario 4.2: Accessibility Audit (WCAG 2.1 AA Compliance)
 * **Mechanism:** Execute `@axe-core/playwright` automated scans on all visible pages.
@@ -321,6 +364,90 @@ Test the end-to-end user workflows across all six prebuilt site models:
   2. All operations remain interactive and fast, writing to local storage.
   3. When network reconnects, background vector clock sync merges items into main SurrealDB ledger.
   4. Sync indicator changes from *"3 Pending"* to *"All Changes Synchronized"* with green checkmark.
+
+---
+
+### Phase 6: OTT Video Delivery, SCTE-35 SSAI & FAST Channel Syndication
+
+```
+  HLS CLIENT                 EDGE STREAM GATEWAY (/api/v2/stream)            EPG / FAST ENGINE
+┌─────────────┐             ┌────────────────────────────────────┐         ┌────────────────────┐
+│ HLS Player  │ ──────────► │ Master Playlist: master.m3u8       │ ──────► │ XMLTV Syndication  │
+│ Video.js    │             │ ABR Streams: 1080p, 720p, 480p     │         │ 24/7 Linear Blocks │
+│ Stremio App │ ◄────────── │ SCTE-35 Ad Cues injected into HLS  │ ◄────── │ Ad Insertion Rules │
+└─────────────┘             └────────────────────────────────────┘         └────────────────────┘
+```
+
+#### Test Scenario 6.1: RFC 8216 HLS Master Manifest & Stream Continuity
+* **User Action:** Fetch `/api/v2/stream/hls/master.m3u8?content_id=asset_ep1`.
+* **Assertions:**
+  1. Response status is `200 OK` with `Content-Type: application/vnd.apple.mpegurl`.
+  2. Manifest contains `#EXT-X-VERSION:6` and `#EXT-X-INDEPENDENT-SEGMENTS`.
+  3. Includes multi-bitrate stream variants (`1080p` at $5000\,\text{kbps}$, `720p` at $2800\,\text{kbps}$, `480p` at $1200\,\text{kbps}$).
+  4. Each variant points to valid media URI and includes frame-accurate resolution tags.
+
+#### Test Scenario 6.2: SCTE-35 SSAI Dynamic Ad Splice Points
+* **User Action:** Fetch sub-stream playlist `/api/v2/stream/hls/1080p.m3u8?content_id=asset_ep1&cue_scte35=true`.
+* **Assertions:**
+  1. Playlist contains frame-accurate `#EXT-X-DATERANGE` SCTE-35 splice tags with valid duration and planned duration.
+  2. Ad break markers seamlessly transition to programmatic ad segments without playback stalls.
+  3. Playhead restores original stream timeline with identical PTS synchronization.
+
+#### Test Scenario 6.3: FAST EPG Syndication & Stremio Addon Protocol
+* **User Action:**
+  1. Fetch XMLTV Electronic Program Guide at `/api/v2/stream/fast/epg.xml`.
+  2. Fetch Stremio v1 manifest at `/stremio/v1/manifest.json`.
+* **Assertions:**
+  1. XMLTV feed is valid XML with RFC 2822 timestamps and sequential program entries for the 24-hour cycle.
+  2. Stremio manifest validates against Stremio Addon v1 schema (`id`, `version`, `resources: ["catalog", "stream", "meta"]`).
+
+---
+
+### Phase 7: High-Performance Master Audio Streaming CMS & Subsonic Ecosystem
+
+```
+  CLIENT (Symfonium / DSub)          EDGE AUDIO GATEWAY (/rest & /api/v2/audio)          DSP CORE
+┌───────────────────────────┐       ┌──────────────────────────────────────────┐       ┌────────────────┐
+│ Subsonic Native Player    │ ────► │ Subsonic REST v1.16+ Gateway             │ ────► │ Lossless FLAC  │
+│ Browser WebAudio Canvas   │       │ /rest/ping, /rest/stream, /rest/getSongs │       │ 10-Band EQ     │
+│ Sleep Mode Audio Timer    │ ◄──── │ Procedural Noise Generator, LRC Lyrics   │ ◄──── │ LRC Karaoke    │
+└───────────────────────────┘       └──────────────────────────────────────────┘       └────────────────┘
+```
+
+#### Test Scenario 7.1: Lossless Audio Streaming & FLAC Compression
+* **User Action:** Issue GET request to `/api/v2/audio/stream?track_id=track_99&format=flac`.
+* **Assertions:**
+  1. Status is `200 OK` or `206 Partial Content` with `Content-Type: audio/flac`.
+  2. Audio header reflects authentic FLAC stream magic bytes (`fLaC`).
+  3. Transcoding compression ratio verifies $\ge 40\%$ byte savings compared to uncompressed PCM.
+
+#### Test Scenario 7.2: 10-Band Studio Graphic Equalizer Configuration
+* **User Action:** POST JSON configuration to `/api/v2/audio/eq`:
+  ```json
+  {
+    "preset": "BassBoost",
+    "gains_db": [6.0, 5.0, 3.0, 1.0, 0.0, 0.0, 0.5, 1.0, 2.0, 2.5]
+  }
+  ```
+* **Assertions:**
+  1. Status is `200 OK` with JSON response confirming filter coefficients calculated across 31Hz to 16kHz bands.
+  2. Zero audio phase distortion or clipping detected in DSP output buffer.
+
+#### Test Scenario 7.3: Synchronized LRC Karaoke Lyrics & Acoustic Recommendation
+* **User Action:**
+  1. Query `/api/v2/audio/lyrics?track_id=track_99`.
+  2. Query `/api/v2/audio/suggest?track_id=track_99`.
+* **Assertions:**
+  1. Lyrics response returns parsed timestamps (`[mm:ss.xx]`) with byte-offset positions for synchronized karaoke highlighting.
+  2. Music recommendation engine returns acoustic vector similarity recommendations based on actual transcribed musical cadence, tempo, and key, rather than superficial metadata alone.
+
+#### Test Scenario 7.4: Subsonic API v1.16+ Native Ecosystem Client Interop
+* **User Action:**
+  1. Issue ping request: `GET /rest/ping?u=admin&p=secret&v=1.16.1&c=symfonium&f=json`.
+  2. Issue music folder request: `GET /rest/getMusicFolders?u=admin&p=secret&v=1.16.1&c=dsub&f=json`.
+* **Assertions:**
+  1. `/rest/ping` returns HTTP 200 with standard Subsonic JSON payload: `{"subsonic-response": {"status": "ok", "version": "1.16.1"}}`.
+  2. `/rest/getMusicFolders` returns structured directory hierarchy compatible with all standard Subsonic apps (Symfonium, DSub, Tempo, Ultrasonic).
 
 ---
 
@@ -466,6 +593,58 @@ test.describe('Role-Adaptive Multi-Persona Shells E2E Suite', () => {
   });
 
 });
+
+test.describe('OTT Video Delivery & SCTE-35 SSAI E2E Suite', () => {
+
+  test('HLS master manifest delivers valid ABR variants', async ({ request }) => {
+    const response = await request.get(`${BASE_URL}/api/v2/stream/hls/master.m3u8?content_id=asset_ep1`);
+    expect(response.status()).toBe(200);
+    const body = await response.text();
+    expect(body).toContain('#EXTM3U');
+    expect(body).toContain('#EXT-X-VERSION:6');
+    expect(body).toContain('RESOLUTION=1920x1080');
+    expect(body).toContain('RESOLUTION=1280x720');
+  });
+
+  test('FAST channel electronic program guide returns XMLTV syndication', async ({ request }) => {
+    const response = await request.get(`${BASE_URL}/api/v2/stream/fast/epg.xml`);
+    expect(response.status()).toBe(200);
+    const xml = await response.text();
+    expect(xml).toContain('<tv>');
+    expect(xml).toContain('<programme');
+  });
+
+});
+
+test.describe('Master Audio Streaming CMS & Subsonic Ecosystem E2E Suite', () => {
+
+  test('Subsonic REST API /rest/ping handshake returns valid XML/JSON', async ({ request }) => {
+    const response = await request.get(`${BASE_URL}/rest/ping?u=admin&p=secret&v=1.16.1&c=symfonium&f=json`);
+    expect(response.status()).toBe(200);
+    const json = await response.json();
+    expect(json['subsonic-response']).toBeDefined();
+    expect(json['subsonic-response'].status).toBe('ok');
+    expect(json['subsonic-response'].version).toBe('1.16.1');
+  });
+
+  test('Audio Equalizer DSP accepts studio preset and configures 10 bands', async ({ request }) => {
+    const response = await request.post(`${BASE_URL}/api/v2/audio/eq`, {
+      data: {
+        preset: 'VocalAir',
+        gains_db: [-1.0, 0.0, 1.0, 2.0, 3.0, 3.5, 4.0, 5.0, 6.0, 6.5]
+      }
+    });
+    expect(response.status()).toBe(200);
+  });
+
+  test('LRC synchronized karaoke lyrics endpoint parses time-synced words', async ({ request }) => {
+    const response = await request.get(`${BASE_URL}/api/v2/audio/lyrics?track_id=track_1`);
+    expect(response.status()).toBe(200);
+    const json = await response.json();
+    expect(json.lines).toBeInstanceOf(Array);
+  });
+
+});
 ```
 
 ---
@@ -499,3 +678,7 @@ lighthouse http://localhost:8080/storefront --output html --output-path ./docs/l
 | **Accessibility** | 0 critical violations | `@axe-core/playwright` WCAG 2.1 AA scan |
 | **Performance** | TTFB $< 50\,\text{ms}$, LCP $< 1.5\,\text{s}$ | Google Lighthouse automated CLI report |
 | **Offline Resilience** | Zero data loss on disconnect | Local mutation buffer and CRDT sync handshake |
+| **Video Manifest Latency** | $< 10\,\text{ms}$ manifest generation | Playwright HLS GET request roundtrip |
+| **Audio DSP Latency** | $< 12\,\text{ms}$ synthesis / EQ | `/api/v2/audio/sleep-noise` benchmark |
+| **Subsonic API Speed** | $< 5\,\text{ms}$ response time | `/rest/ping` API gateway latency check |
+
