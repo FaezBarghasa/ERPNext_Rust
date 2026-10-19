@@ -97,9 +97,8 @@ impl<C: Connection> SurrealRepository<C> {
         let records: Vec<serde_json::Value> = response.take(0)?;
         let mut result = Vec::with_capacity(records.len());
         for val in records {
-            if let Ok(entity) = serde_json::from_value(val) {
-                result.push(entity);
-            }
+            let entity = serde_json::from_value(val).map_err(RepositoryError::Serialization)?;
+            result.push(entity);
         }
         Ok(result)
     }
@@ -111,9 +110,13 @@ impl<C: Connection> SurrealRepository<C> {
         where_clause: &str,
     ) -> Result<Vec<T>, RepositoryError> {
         validate_identifier(table)?;
-        if where_clause.contains(';') {
+        if where_clause.contains(';')
+            || where_clause.contains('\0')
+            || where_clause.contains("--")
+            || where_clause.contains("/*")
+        {
             return Err(RepositoryError::InvalidIdentifier(
-                "Semicolon prohibited in WHERE clause".into(),
+                "Unsafe characters or SQL comments prohibited in WHERE clause".into(),
             ));
         }
 
@@ -122,9 +125,8 @@ impl<C: Connection> SurrealRepository<C> {
         let records: Vec<serde_json::Value> = response.take(0)?;
         let mut result = Vec::with_capacity(records.len());
         for val in records {
-            if let Ok(entity) = serde_json::from_value(val) {
-                result.push(entity);
-            }
+            let entity = serde_json::from_value(val).map_err(RepositoryError::Serialization)?;
+            result.push(entity);
         }
         Ok(result)
     }
@@ -137,9 +139,13 @@ impl<C: Connection> SurrealRepository<C> {
         bindings: &[(&str, serde_json::Value)],
     ) -> Result<Vec<T>, RepositoryError> {
         validate_identifier(table)?;
-        if where_clause.contains(';') {
+        if where_clause.contains(';')
+            || where_clause.contains('\0')
+            || where_clause.contains("--")
+            || where_clause.contains("/*")
+        {
             return Err(RepositoryError::InvalidIdentifier(
-                "Semicolon prohibited in WHERE clause".into(),
+                "Unsafe characters or SQL comments prohibited in WHERE clause".into(),
             ));
         }
 
@@ -152,9 +158,8 @@ impl<C: Connection> SurrealRepository<C> {
         let records: Vec<serde_json::Value> = response.take(0)?;
         let mut result = Vec::with_capacity(records.len());
         for val in records {
-            if let Ok(entity) = serde_json::from_value(val) {
-                result.push(entity);
-            }
+            let entity = serde_json::from_value(val).map_err(RepositoryError::Serialization)?;
+            result.push(entity);
         }
         Ok(result)
     }

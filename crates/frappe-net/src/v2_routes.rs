@@ -9952,4 +9952,91 @@ mod tests {
             "public, max-age=31536000, immutable"
         );
     }
+
+    #[test]
+    fn test_evaluate_route_permission_and_rls() {
+        use frappe_meta::rbac::HasPermissionEdge;
+
+        let state = web::Data::new(DynamicRbacState::default());
+        {
+            let mut reg = state.registry.write().unwrap();
+            reg.permission_edges.push(HasPermissionEdge {
+                role: "Sales User".into(),
+                doctype: "Sales Order".into(),
+                permlevel: 0,
+                p_read: true,
+                p_write: true,
+                p_create: true,
+                p_delete: false,
+                p_submit: false,
+                p_cancel: false,
+                p_amend: false,
+            });
+        }
+
+        // 1. Admin context bypasses edge requirement
+        let admin_ctx = SecurityContext {
+            claims: SessionClaims::new("admin", "alpha-shop", vec![ROLE_ADMINISTRATOR.into()]),
+        };
+        assert!(evaluate_route_permission(
+            Some(&admin_ctx),
+            Some(&state),
+            "Secret DocType",
+            Permission::Delete,
+            0,
+        ));
+
+        // 2. Sales User with matching doctype and allowed action
+        let sales_ctx = SecurityContext {
+            claims: SessionClaims::new("alice", "alpha-shop", vec!["Sales User".into()]),
+        };
+        assert!(evaluate_route_permission(
+            Some(&sales_ctx),
+            Some(&state),
+            "Sales Order",
+            Permission::Read,
+            0,
+        ));
+        assert!(evaluate_route_permission(
+            Some(&sales_ctx),
+            Some(&state),
+            "sales order", // Case-insensitive match
+            Permission::Create,
+            0,
+        ));
+
+        // 3. Sales User rejected for disallowed actions on Sales Order
+        assert!(!evaluate_route_permission(
+            Some(&sales_ctx),
+            Some(&state),
+            "Sales Order",
+            Permission::Delete,
+            0,
+        ));
+        assert!(!evaluate_route_permission(
+            Some(&sales_ctx),
+            Some(&state),
+            "Sales Order",
+            Permission::Submit,
+            0,
+        ));
+
+        // 4. Sales User rejected on other DocTypes (prevent cross-doctype privilege leakage)
+        assert!(!evaluate_route_permission(
+            Some(&sales_ctx),
+            Some(&state),
+            "Purchase Order",
+            Permission::Read,
+            0,
+        ));
+
+        // 5. Unauthenticated context rejected
+        assert!(!evaluate_route_permission(
+            None,
+            Some(&state),
+            "Sales Order",
+            Permission::Read,
+            0,
+        ));
+    }
 }

@@ -35,9 +35,9 @@ impl VectorClock {
         }
     }
 
-    /// Returns true if this clock is causally ahead of or concurrent with other.
+    /// Returns true if this clock dominates or equals other ($V_1 \ge V_2$).
     #[must_use]
-    pub fn is_concurrent_or_ahead(&self, other: &VectorClock) -> bool {
+    pub fn dominates_or_equals(&self, other: &VectorClock) -> bool {
         for (node, other_counter) in &other.clocks {
             if let Some(self_counter) = self.clocks.get(node) {
                 if self_counter < other_counter {
@@ -47,7 +47,38 @@ impl VectorClock {
                 return false;
             }
         }
+
         true
+    }
+
+    /// Returns true if this clock is causally ahead of or equal to other.
+    #[must_use]
+    pub fn is_concurrent_or_ahead(&self, other: &VectorClock) -> bool {
+        self.dominates_or_equals(other)
+    }
+
+    /// Returns true if this clock and other are mathematically concurrent
+    /// ($V_1 \parallel V_2$, neither dominates the other).
+    #[must_use]
+    pub fn is_concurrent(&self, other: &VectorClock) -> bool {
+        let mut has_greater = false;
+        let mut has_lesser = false;
+        let all_keys: std::collections::BTreeSet<_> =
+            self.clocks.keys().chain(other.clocks.keys()).collect();
+        for k in all_keys {
+            let v1 = self.clocks.get(k).copied().unwrap_or(0);
+            let v2 = other.clocks.get(k).copied().unwrap_or(0);
+            if v1 > v2 {
+                has_greater = true;
+            }
+            if v1 < v2 {
+                has_lesser = true;
+            }
+            if has_greater && has_lesser {
+                return true;
+            }
+        }
+        false
     }
 }
 
@@ -261,6 +292,34 @@ mod tests {
         v1.merge(&v2);
         assert_eq!(*v1.clocks.get("pos_node_1").unwrap(), 2);
         assert_eq!(*v1.clocks.get("pos_node_2").unwrap(), 1);
+    }
+
+    #[test]
+    fn test_vector_clock_concurrency_and_domination() {
+        let mut a = VectorClock::new();
+        a.increment("node1"); // a: {node1: 1}
+
+        let mut b = VectorClock::new();
+        b.increment("node2"); // b: {node2: 1}
+
+        // Neither dominates the other -> concurrent
+        assert!(!a.dominates_or_equals(&b));
+        assert!(!b.dominates_or_equals(&a));
+        assert!(a.is_concurrent(&b));
+        assert!(b.is_concurrent(&a));
+
+        // Let c extend a
+        let mut c = a.clone();
+        c.increment("node1"); // c: {node1: 2}
+        assert!(c.dominates_or_equals(&a));
+        assert!(!a.dominates_or_equals(&c));
+        assert!(!c.is_concurrent(&a));
+
+        // Merge b into c -> {node1: 2, node2: 1}
+        c.merge(&b);
+        assert!(c.dominates_or_equals(&a));
+        assert!(c.dominates_or_equals(&b));
+        assert!(!c.is_concurrent(&b));
     }
 
     #[test]
