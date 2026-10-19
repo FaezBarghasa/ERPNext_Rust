@@ -33,7 +33,7 @@ pub enum DatabaseBackend {
 impl Default for DatabaseBackend {
     fn default() -> Self {
         Self::SurrealKv {
-            base_path: "./data/tenants".to_string(),
+            base_path: "./data/surrealkv".to_string(),
         }
     }
 }
@@ -185,6 +185,7 @@ type TenantPoolMap = Arc<RwLock<HashMap<TenantId, TenantPoolEntry>>>;
 /// Dynamic Connection Pool Manager for multi-tenant database handles.
 #[derive(Clone)]
 pub struct ConnectionPoolManager {
+    master_engine: Arc<RwLock<Option<Surreal<surrealdb::engine::local::Db>>>>,
     pools: TenantPoolMap,
     inactivity_threshold: Duration,
     backend: DatabaseBackend,
@@ -201,6 +202,7 @@ impl ConnectionPoolManager {
     #[must_use]
     pub fn new(inactivity_threshold: Duration) -> Self {
         Self {
+            master_engine: Arc::new(RwLock::new(None)),
             pools: Arc::new(RwLock::new(HashMap::new())),
             inactivity_threshold,
             backend: DatabaseBackend::default(),
@@ -211,6 +213,7 @@ impl ConnectionPoolManager {
     #[must_use]
     pub fn in_memory(inactivity_threshold: Duration) -> Self {
         Self {
+            master_engine: Arc::new(RwLock::new(None)),
             pools: Arc::new(RwLock::new(HashMap::new())),
             inactivity_threshold,
             backend: DatabaseBackend::Memory,
@@ -221,10 +224,42 @@ impl ConnectionPoolManager {
     #[must_use]
     pub fn with_backend(inactivity_threshold: Duration, backend: DatabaseBackend) -> Self {
         Self {
+            master_engine: Arc::new(RwLock::new(None)),
             pools: Arc::new(RwLock::new(HashMap::new())),
             inactivity_threshold,
             backend,
         }
+    }
+
+    async fn get_or_init_master(
+        &self,
+    ) -> Result<Surreal<surrealdb::engine::local::Db>, TenantError> {
+        {
+            let guard = self.master_engine.read().await;
+            if let Some(engine) = &*guard {
+                return Ok(engine.clone());
+            }
+        }
+        let mut guard = self.master_engine.write().await;
+        if let Some(engine) = &*guard {
+            return Ok(engine.clone());
+        }
+
+        let db = match &self.backend {
+            DatabaseBackend::Memory => Surreal::new::<Mem>(())
+                .await
+                .map_err(|e| TenantError::ConnectionFailed(e.to_string()))?,
+            DatabaseBackend::SurrealKv { base_path } => {
+                tokio::fs::create_dir_all(base_path).await.map_err(|e| {
+                    TenantError::ConnectionFailed(format!("Failed to create storage data dir: {e}"))
+                })?;
+                Surreal::new::<SurrealKv>(base_path)
+                    .await
+                    .map_err(|e| TenantError::ConnectionFailed(e.to_string()))?
+            }
+        };
+        *guard = Some(db.clone());
+        Ok(db)
     }
 
     /// Retrieves an active connection handle for the tenant, initializing if missing.
@@ -246,22 +281,11 @@ impl ConnectionPoolManager {
             return Ok(client.clone());
         }
 
-        let db = match &self.backend {
-            DatabaseBackend::Memory => Surreal::new::<Mem>(())
-                .await
-                .map_err(|e| TenantError::ConnectionFailed(e.to_string()))?,
-            DatabaseBackend::SurrealKv { base_path } => {
-                let tenant_dir = format!("{}/{}", base_path, tenant.0);
-                tokio::fs::create_dir_all(&tenant_dir).await.map_err(|e| {
-                    TenantError::ConnectionFailed(format!("Failed to create tenant data dir: {e}"))
-                })?;
-                Surreal::new::<SurrealKv>(&tenant_dir)
-                    .await
-                    .map_err(|e| TenantError::ConnectionFailed(e.to_string()))?
-            }
-        };
+        let master = self.get_or_init_master().await?;
+        let db = master.clone();
 
-        let ns = format!("tenant_{}", tenant.0.replace('-', "_"));
+        let clean_tenant = tenant.0.replace('-', "_");
+        let ns = format!("tenant_{clean_tenant}");
         db.use_ns(&ns)
             .use_db("erp")
             .await
@@ -529,5 +553,33 @@ mod tenant_unit_tests {
 
         // Cleanup test directory
         let _ = std::fs::remove_dir_all(&temp_dir);
+    }
+
+    #[tokio::test]
+    async fn test_single_engine_multi_tenant_namespace_isolation() {
+        let pool = ConnectionPoolManager::in_memory(Duration::from_secs(300));
+        let t1 = TenantId("alpha-shop".into());
+        let t2 = TenantId("beta-clinic".into());
+
+        let s1 = pool.get_or_initialize_client(&t1).await.unwrap();
+        let s2 = pool.get_or_initialize_client(&t2).await.unwrap();
+
+        // 1. Tenant 1 writes private data into its namespace
+        s1.query("CREATE item:item_100 CONTENT { title: 'Alpha Secret Gadget', price: 99.0 };")
+            .await
+            .unwrap()
+            .check()
+            .unwrap();
+
+        // 2. Tenant 2 queries item:item_100 in its own namespace -> should return nothing
+        let mut res2 = s2.query("SELECT * FROM item:item_100;").await.unwrap();
+        let items2: Vec<serde_json::Value> = res2.take(0).unwrap_or_default();
+        assert!(items2.is_empty(), "Tenant 2 leaked data from Tenant 1!");
+
+        // 3. Tenant 1 queries item:item_100 -> finds its record
+        let mut res1 = s1.query("SELECT * FROM item:item_100;").await.unwrap();
+        let items1: Vec<serde_json::Value> = res1.take(0).unwrap_or_default();
+        assert_eq!(items1.len(), 1);
+        assert_eq!(items1[0]["title"], "Alpha Secret Gadget");
     }
 }
