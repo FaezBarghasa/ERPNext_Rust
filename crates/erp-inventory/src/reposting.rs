@@ -3,9 +3,10 @@ use compact_str::CompactString;
 use rayon::prelude::*;
 use rust_decimal::Decimal;
 use serde::{Deserialize, Serialize};
-use std::collections::HashMap;
+use std::collections::{BTreeSet, HashMap};
 use std::collections::hash_map::DefaultHasher;
 use std::hash::{Hash, Hasher};
+use std::sync::{Condvar, Mutex};
 
 /// Configuration settings for Parallel Stock Reposting Engine.
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
@@ -76,6 +77,132 @@ impl ItemPartitionQueue {
     /// Retrieves all jobs within a specific partition for worker execution.
     pub fn drain_partition(&mut self, partition_idx: usize) -> Vec<RepostItemJob> {
         self.partitions.remove(&partition_idx).unwrap_or_default()
+    }
+}
+
+/// Unique identifier for an `(item_code, warehouse)` partition bin.
+///
+/// Implements canonical lexicographical ordering: first by `item_code`, then by `warehouse`.
+#[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
+pub struct PartitionKey {
+    pub item_code: CompactString,
+    pub warehouse: CompactString,
+}
+
+impl PartitionKey {
+    #[must_use]
+    pub fn new(item_code: impl Into<CompactString>, warehouse: impl Into<CompactString>) -> Self {
+        Self {
+            item_code: item_code.into(),
+            warehouse: warehouse.into(),
+        }
+    }
+}
+
+/// Deadlock-free Ordered-Key Lock Coordinator for parallel stock ledger reposting.
+///
+/// Prevents cyclic lock inversion deadlocks during inter-warehouse transfers
+/// by sorting partition keys alphabetically before acquiring locks.
+#[derive(Default, Debug)]
+pub struct OrderedPartitionLockManager {
+    locked_keys: Mutex<BTreeSet<PartitionKey>>,
+    condvar: Condvar,
+}
+
+/// RAII Guard holding exclusive write access across multiple partition bins in strict lexicographical order.
+pub struct OrderedPartitionLocks<'a> {
+    manager: &'a OrderedPartitionLockManager,
+    pub locked_keys: Vec<PartitionKey>,
+}
+
+impl Drop for OrderedPartitionLocks<'_> {
+    fn drop(&mut self) {
+        let mut locked = self.manager.locked_keys.lock().unwrap();
+        for key in &self.locked_keys {
+            locked.remove(key);
+        }
+        self.manager.condvar.notify_all();
+    }
+}
+
+impl OrderedPartitionLockManager {
+    /// Creates a new lock manager.
+    #[must_use]
+    pub fn new() -> Self {
+        Self::default()
+    }
+
+    /// Sorts and deduplicates partition keys in canonical alphabetical order.
+    #[must_use]
+    pub fn canonicalize_keys(keys: &[PartitionKey]) -> Vec<PartitionKey> {
+        let mut sorted = keys.to_vec();
+        sorted.sort();
+        sorted.dedup();
+        sorted
+    }
+
+    /// Acquires write locks for an arbitrary collection of partition keys in strict alphabetical order.
+    ///
+    /// If any requested partition is currently locked, blocks until all requested partitions
+    /// become available simultaneously, eliminating hold-and-wait deadlocks.
+    pub fn acquire_locks<'a>(&'a self, keys: &[PartitionKey]) -> OrderedPartitionLocks<'a> {
+        let sorted_keys = Self::canonicalize_keys(keys);
+        if sorted_keys.is_empty() {
+            return OrderedPartitionLocks {
+                manager: self,
+                locked_keys: Vec::new(),
+            };
+        }
+
+        let mut locked = self.locked_keys.lock().unwrap();
+        loop {
+            let conflict = sorted_keys.iter().any(|k| locked.contains(k));
+            if !conflict {
+                for k in &sorted_keys {
+                    locked.insert(k.clone());
+                }
+                break;
+            }
+            locked = self.condvar.wait(locked).unwrap();
+        }
+
+        OrderedPartitionLocks {
+            manager: self,
+            locked_keys: sorted_keys,
+        }
+    }
+
+    /// Acquires write locks for an inter-warehouse transfer touching both source and destination warehouses.
+    ///
+    /// Guarantees that whether a transfer is WH-A -> WH-B or WH-B -> WH-A, locks are always
+    /// acquired in sorted alphabetical order, preventing cyclic wait deadlocks.
+    pub fn acquire_transfer_locks<'a>(
+        &'a self,
+        item_code: &str,
+        source_warehouse: &str,
+        target_warehouse: &str,
+    ) -> OrderedPartitionLocks<'a> {
+        let key1 = PartitionKey::new(item_code, source_warehouse);
+        let key2 = PartitionKey::new(item_code, target_warehouse);
+        self.acquire_locks(&[key1, key2])
+    }
+
+    /// Executes an operation within the critical section holding ordered partition locks.
+    pub fn with_locks<R>(&self, keys: &[PartitionKey], op: impl FnOnce() -> R) -> R {
+        let _guard = self.acquire_locks(keys);
+        op()
+    }
+
+    /// Executes an inter-warehouse transfer operation holding ordered partition locks.
+    pub fn with_transfer_locks<R>(
+        &self,
+        item_code: &str,
+        source_warehouse: &str,
+        target_warehouse: &str,
+        op: impl FnOnce() -> R,
+    ) -> R {
+        let _guard = self.acquire_transfer_locks(item_code, source_warehouse, target_warehouse);
+        op()
     }
 }
 
@@ -163,6 +290,22 @@ impl ParallelStockRepostingEngine {
 
         total
     }
+
+    /// Recalculates inter-warehouse stock ledger entries for a transfer voucher
+    /// safely holding ordered partition locks across both warehouses to prevent deadlocks.
+    pub fn repost_inter_warehouse_transfer(
+        lock_mgr: &OrderedPartitionLockManager,
+        item_code: &str,
+        source_wh: &str,
+        dest_wh: &str,
+        source_entries: &mut [StockLedgerEntry],
+        dest_entries: &mut [StockLedgerEntry],
+    ) -> (usize, usize) {
+        let _guard = lock_mgr.acquire_transfer_locks(item_code, source_wh, dest_wh);
+        let src_count = Self::repost_single_partition(source_entries);
+        let dst_count = Self::repost_single_partition(dest_entries);
+        (src_count, dst_count)
+    }
 }
 
 #[cfg(test)]
@@ -170,6 +313,8 @@ mod tests {
     use super::*;
     use chrono::NaiveDate;
     use rust_decimal_macros::dec;
+    use std::sync::Arc;
+    use std::thread;
 
     #[test]
     fn test_partition_queue_deterministic_routing() {
@@ -258,5 +403,134 @@ mod tests {
             assert_eq!(part[1].stock_value, dec!(3500));
             assert_eq!(part[1].stock_value_difference, dec!(-1500));
         }
+    }
+
+    #[test]
+    fn test_ordered_partition_keys_canonical_sorting() {
+        let k1 = PartitionKey::new("ITEM-Z", "WH-B");
+        let k2 = PartitionKey::new("ITEM-A", "WH-Z");
+        let k3 = PartitionKey::new("ITEM-A", "WH-A");
+        let k4 = PartitionKey::new("ITEM-Z", "WH-A");
+
+        let canonical = OrderedPartitionLockManager::canonicalize_keys(&[k1, k2, k3, k4]);
+        assert_eq!(canonical.len(), 4);
+        assert_eq!(canonical[0].item_code, "ITEM-A");
+        assert_eq!(canonical[0].warehouse, "WH-A");
+        assert_eq!(canonical[1].item_code, "ITEM-A");
+        assert_eq!(canonical[1].warehouse, "WH-Z");
+        assert_eq!(canonical[2].item_code, "ITEM-Z");
+        assert_eq!(canonical[2].warehouse, "WH-A");
+        assert_eq!(canonical[3].item_code, "ITEM-Z");
+        assert_eq!(canonical[3].warehouse, "WH-B");
+    }
+
+    #[test]
+    fn test_ordered_partition_lock_deadlock_freedom_under_high_concurrency() {
+        let lock_manager = Arc::new(OrderedPartitionLockManager::new());
+        let iterations = 100;
+        let mut handles = Vec::new();
+
+        // 10 threads running WH-A -> WH-B transfer
+        for _ in 0..10 {
+            let mgr = Arc::clone(&lock_manager);
+            handles.push(thread::spawn(move || {
+                for _ in 0..iterations {
+                    mgr.with_transfer_locks("WIDGET-01", "WH-A", "WH-B", || {
+                        thread::yield_now();
+                    });
+                }
+            }));
+        }
+
+        // 10 threads running inverse transfer WH-B -> WH-A simultaneously
+        for _ in 0..10 {
+            let mgr = Arc::clone(&lock_manager);
+            handles.push(thread::spawn(move || {
+                for _ in 0..iterations {
+                    mgr.with_transfer_locks("WIDGET-01", "WH-B", "WH-A", || {
+                        thread::yield_now();
+                    });
+                }
+            }));
+        }
+
+        for h in handles {
+            h.join().expect("Thread joined without deadlocking");
+        }
+    }
+
+    #[test]
+    fn test_repost_inter_warehouse_transfer_execution() {
+        let lock_manager = OrderedPartitionLockManager::new();
+        let dt = NaiveDate::from_ymd_opt(2026, 1, 1)
+            .unwrap()
+            .and_hms_opt(12, 0, 0)
+            .unwrap();
+
+        let mut src_entries = vec![
+            StockLedgerEntry {
+                name: "SLE-SRC-01".into(),
+                item_code: "STEEL-BAR".into(),
+                warehouse: "WH-RAW".into(),
+                posting_datetime: dt,
+                voucher_type: "Purchase Receipt".into(),
+                voucher_no: "PR-01".into(),
+                actual_qty: dec!(50),
+                incoming_rate: dec!(20),
+                outgoing_rate: dec!(0),
+                stock_value_difference: dec!(0),
+                qty_after_transaction: dec!(0),
+                stock_value: dec!(0),
+                valuation_rate: dec!(0),
+            },
+            StockLedgerEntry {
+                name: "SLE-SRC-02".into(),
+                item_code: "STEEL-BAR".into(),
+                warehouse: "WH-RAW".into(),
+                posting_datetime: dt,
+                voucher_type: "Stock Entry".into(),
+                voucher_no: "SE-XFER-01".into(),
+                actual_qty: dec!(-20),
+                incoming_rate: dec!(0),
+                outgoing_rate: dec!(0),
+                stock_value_difference: dec!(0),
+                qty_after_transaction: dec!(0),
+                stock_value: dec!(0),
+                valuation_rate: dec!(0),
+            },
+        ];
+
+        let mut dst_entries = vec![StockLedgerEntry {
+            name: "SLE-DST-01".into(),
+            item_code: "STEEL-BAR".into(),
+            warehouse: "WH-FINISHED".into(),
+            posting_datetime: dt,
+            voucher_type: "Stock Entry".into(),
+            voucher_no: "SE-XFER-01".into(),
+            actual_qty: dec!(20),
+            incoming_rate: dec!(20),
+            outgoing_rate: dec!(0),
+            stock_value_difference: dec!(0),
+            qty_after_transaction: dec!(0),
+            stock_value: dec!(0),
+            valuation_rate: dec!(0),
+        }];
+
+        let (src_processed, dst_processed) =
+            ParallelStockRepostingEngine::repost_inter_warehouse_transfer(
+                &lock_manager,
+                "STEEL-BAR",
+                "WH-RAW",
+                "WH-FINISHED",
+                &mut src_entries,
+                &mut dst_entries,
+            );
+
+        assert_eq!(src_processed, 2);
+        assert_eq!(dst_processed, 1);
+        assert_eq!(src_entries[1].qty_after_transaction, dec!(30));
+        assert_eq!(src_entries[1].valuation_rate, dec!(20));
+        assert_eq!(dst_entries[0].qty_after_transaction, dec!(20));
+        assert_eq!(dst_entries[0].valuation_rate, dec!(20));
     }
 }

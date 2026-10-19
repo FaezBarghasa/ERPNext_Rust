@@ -28,7 +28,8 @@ pub use landed_cost_voucher::{
 };
 pub use reconciliation::{BatchAuditReport, BatchDiscrepancy, BatchRecalculator};
 pub use reposting::{
-    ItemPartitionQueue, ParallelRepostingSettings, ParallelStockRepostingEngine, RepostItemJob,
+    ItemPartitionQueue, OrderedPartitionLockManager, OrderedPartitionLocks, ParallelRepostingSettings,
+    ParallelStockRepostingEngine, PartitionKey, RepostItemJob,
 };
 pub use reservation::{
     ReservationStatus, ReservationType, StockReservationEngine, StockReservationEntry,
