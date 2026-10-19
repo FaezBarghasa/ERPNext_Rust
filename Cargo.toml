@@ -121,6 +121,8 @@ dioxus = { version = "0.7.10", default-features = false, features = [
     "html",
 ] }
 proptest = "1.6"
+base64 = "0.22.1"
+chacha20poly1305 = "0.10.1"
 
 
 [profile.release]
