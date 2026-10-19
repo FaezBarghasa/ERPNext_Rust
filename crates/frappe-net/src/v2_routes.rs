@@ -250,13 +250,7 @@ pub async fn evaluate_route_permission(
             target_permlevel,
         )
     } else {
-        check_permission(
-            &ctx.claims.roles,
-            &[],
-            doctype,
-            perm,
-            target_permlevel,
-        )
+        check_permission(&ctx.claims.roles, &[], doctype, perm, target_permlevel)
     }
 }
 
@@ -403,6 +397,7 @@ pub async fn v2_get_document(
     req: HttpRequest,
     path: web::Path<(String, String)>,
     pool_mgr: web::Data<ConnectionPoolManager>,
+    rbac_state: Option<web::Data<DynamicRbacState>>,
 ) -> impl Responder {
     let (doctype, name) = path.into_inner();
     let tenant_id = match req.extensions().get::<TenantId>() {
@@ -410,12 +405,20 @@ pub async fn v2_get_document(
         None => return HttpResponse::BadRequest().body("Missing tenant context"),
     };
 
-    if let Some(ctx) = req.extensions().get::<SecurityContext>()
-        && !check_permission(&ctx.claims.roles, &[], Permission::Read, 0)
-    {
-        return HttpResponse::Forbidden().json(serde_json::json!({
-            "error": "Permission Denied: insufficient read privileges"
-        }));
+    if let Some(ctx) = req.extensions().get::<SecurityContext>() {
+        let allowed = evaluate_route_permission(
+            Some(ctx),
+            rbac_state.as_ref(),
+            &doctype,
+            Permission::Read,
+            0,
+        )
+        .await;
+        if !allowed {
+            return HttpResponse::Forbidden().json(serde_json::json!({
+                "error": format!("Permission Denied: insufficient read privileges for DocType '{doctype}'")
+            }));
+        }
     }
 
     let client = match pool_mgr.get_or_initialize_client(&tenant_id).await {
@@ -477,6 +480,7 @@ pub async fn v2_print_document(
     req: HttpRequest,
     path: web::Path<(String, String)>,
     pool_mgr: web::Data<ConnectionPoolManager>,
+    rbac_state: Option<web::Data<DynamicRbacState>>,
 ) -> impl Responder {
     let (doctype, name) = path.into_inner();
     let tenant_id = match req.extensions().get::<TenantId>() {
@@ -484,12 +488,20 @@ pub async fn v2_print_document(
         None => return HttpResponse::BadRequest().body("Missing tenant context"),
     };
 
-    if let Some(ctx) = req.extensions().get::<SecurityContext>()
-        && !check_permission(&ctx.claims.roles, &[], Permission::Read, 0)
-    {
-        return HttpResponse::Forbidden().json(serde_json::json!({
-            "error": "Permission Denied: insufficient read privileges"
-        }));
+    if let Some(ctx) = req.extensions().get::<SecurityContext>() {
+        let allowed = evaluate_route_permission(
+            Some(ctx),
+            rbac_state.as_ref(),
+            &doctype,
+            Permission::Read,
+            0,
+        )
+        .await;
+        if !allowed {
+            return HttpResponse::Forbidden().json(serde_json::json!({
+                "error": format!("Permission Denied: insufficient read privileges for DocType '{doctype}'")
+            }));
+        }
     }
 
     let client = match pool_mgr.get_or_initialize_client(&tenant_id).await {
@@ -527,6 +539,7 @@ pub async fn v2_create_document(
     path: web::Path<String>,
     payload: web::Json<serde_json::Value>,
     pool_mgr: web::Data<ConnectionPoolManager>,
+    rbac_state: Option<web::Data<DynamicRbacState>>,
 ) -> impl Responder {
     let doctype = path.into_inner();
     let tenant_id = match req.extensions().get::<TenantId>() {
@@ -534,12 +547,20 @@ pub async fn v2_create_document(
         None => return HttpResponse::BadRequest().body("Missing tenant context"),
     };
 
-    if let Some(ctx) = req.extensions().get::<SecurityContext>()
-        && !check_permission(&ctx.claims.roles, &[], Permission::Create, 0)
-    {
-        return HttpResponse::Forbidden().json(serde_json::json!({
-            "error": "Permission Denied: insufficient create privileges"
-        }));
+    if let Some(ctx) = req.extensions().get::<SecurityContext>() {
+        let allowed = evaluate_route_permission(
+            Some(ctx),
+            rbac_state.as_ref(),
+            &doctype,
+            Permission::Create,
+            0,
+        )
+        .await;
+        if !allowed {
+            return HttpResponse::Forbidden().json(serde_json::json!({
+                "error": format!("Permission Denied: insufficient create privileges for DocType '{doctype}'")
+            }));
+        }
     }
 
     let client = match pool_mgr.get_or_initialize_client(&tenant_id).await {
@@ -682,6 +703,7 @@ pub async fn v2_update_document(
     path: web::Path<(String, String)>,
     payload: web::Json<serde_json::Value>,
     pool_mgr: web::Data<ConnectionPoolManager>,
+    rbac_state: Option<web::Data<DynamicRbacState>>,
 ) -> impl Responder {
     let (doctype, name) = path.into_inner();
     let tenant_id = match req.extensions().get::<TenantId>() {
@@ -689,12 +711,20 @@ pub async fn v2_update_document(
         None => return HttpResponse::BadRequest().body("Missing tenant context"),
     };
 
-    if let Some(ctx) = req.extensions().get::<SecurityContext>()
-        && !check_permission(&ctx.claims.roles, &[], Permission::Write, 0)
-    {
-        return HttpResponse::Forbidden().json(serde_json::json!({
-            "error": "Permission Denied: insufficient write privileges"
-        }));
+    if let Some(ctx) = req.extensions().get::<SecurityContext>() {
+        let allowed = evaluate_route_permission(
+            Some(ctx),
+            rbac_state.as_ref(),
+            &doctype,
+            Permission::Write,
+            0,
+        )
+        .await;
+        if !allowed {
+            return HttpResponse::Forbidden().json(serde_json::json!({
+                "error": format!("Permission Denied: insufficient write privileges for DocType '{doctype}'")
+            }));
+        }
     }
 
     let client = match pool_mgr.get_or_initialize_client(&tenant_id).await {
@@ -740,6 +770,7 @@ pub async fn v2_delete_document(
     req: HttpRequest,
     path: web::Path<(String, String)>,
     pool_mgr: web::Data<ConnectionPoolManager>,
+    rbac_state: Option<web::Data<DynamicRbacState>>,
 ) -> impl Responder {
     let (doctype, name) = path.into_inner();
     let tenant_id = match req.extensions().get::<TenantId>() {
@@ -747,12 +778,20 @@ pub async fn v2_delete_document(
         None => return HttpResponse::BadRequest().body("Missing tenant context"),
     };
 
-    if let Some(ctx) = req.extensions().get::<SecurityContext>()
-        && !check_permission(&ctx.claims.roles, &[], Permission::Delete, 0)
-    {
-        return HttpResponse::Forbidden().json(serde_json::json!({
-            "error": "Permission Denied: insufficient delete privileges"
-        }));
+    if let Some(ctx) = req.extensions().get::<SecurityContext>() {
+        let allowed = evaluate_route_permission(
+            Some(ctx),
+            rbac_state.as_ref(),
+            &doctype,
+            Permission::Delete,
+            0,
+        )
+        .await;
+        if !allowed {
+            return HttpResponse::Forbidden().json(serde_json::json!({
+                "error": format!("Permission Denied: insufficient delete privileges for DocType '{doctype}'")
+            }));
+        }
     }
 
     let client = match pool_mgr.get_or_initialize_client(&tenant_id).await {
@@ -795,6 +834,7 @@ pub async fn v2_submit_document(
     path: web::Path<(String, String)>,
     pool_mgr: web::Data<ConnectionPoolManager>,
     controller_reg: Option<web::Data<ControllerRegistry>>,
+    rbac_state: Option<web::Data<DynamicRbacState>>,
 ) -> impl Responder {
     let (doctype, name) = path.into_inner();
     let tenant_id = match req.extensions().get::<TenantId>() {
@@ -826,12 +866,20 @@ pub async fn v2_submit_document(
         permissions: vec![],
     });
 
-    if let Some(ctx) = req.extensions().get::<SecurityContext>()
-        && !check_permission(&ctx.claims.roles, &[], Permission::Submit, 0)
-    {
-        return HttpResponse::Forbidden().json(serde_json::json!({
-            "error": "Permission Denied: insufficient submit privileges"
-        }));
+    if let Some(ctx) = req.extensions().get::<SecurityContext>() {
+        let allowed = evaluate_route_permission(
+            Some(ctx),
+            rbac_state.as_ref(),
+            &doctype,
+            Permission::Submit,
+            0,
+        )
+        .await;
+        if !allowed {
+            return HttpResponse::Forbidden().json(serde_json::json!({
+                "error": format!("Permission Denied: insufficient submit privileges for DocType '{doctype}'")
+            }));
+        }
     }
 
     let client = match pool_mgr.get_or_initialize_client(&tenant_id).await {
@@ -1405,6 +1453,7 @@ pub async fn v2_cancel_document(
     path: web::Path<(String, String)>,
     pool_mgr: web::Data<ConnectionPoolManager>,
     controller_reg: Option<web::Data<ControllerRegistry>>,
+    rbac_state: Option<web::Data<DynamicRbacState>>,
 ) -> impl Responder {
     let (doctype, name) = path.into_inner();
     let tenant_id = match req.extensions().get::<TenantId>() {
@@ -1436,12 +1485,20 @@ pub async fn v2_cancel_document(
         permissions: vec![],
     });
 
-    if let Some(ctx) = req.extensions().get::<SecurityContext>()
-        && !check_permission(&ctx.claims.roles, &[], Permission::Cancel, 0)
-    {
-        return HttpResponse::Forbidden().json(serde_json::json!({
-            "error": "Permission Denied: insufficient cancel privileges"
-        }));
+    if let Some(ctx) = req.extensions().get::<SecurityContext>() {
+        let allowed = evaluate_route_permission(
+            Some(ctx),
+            rbac_state.as_ref(),
+            &doctype,
+            Permission::Cancel,
+            0,
+        )
+        .await;
+        if !allowed {
+            return HttpResponse::Forbidden().json(serde_json::json!({
+                "error": format!("Permission Denied: insufficient cancel privileges for DocType '{doctype}'")
+            }));
+        }
     }
 
     let client = match pool_mgr.get_or_initialize_client(&tenant_id).await {
@@ -1626,6 +1683,7 @@ pub async fn v2_amend_document(
     req: HttpRequest,
     path: web::Path<(String, String)>,
     pool_mgr: web::Data<ConnectionPoolManager>,
+    rbac_state: Option<web::Data<DynamicRbacState>>,
 ) -> impl Responder {
     let (doctype, name) = path.into_inner();
     let tenant_id = match req.extensions().get::<TenantId>() {
@@ -1633,12 +1691,20 @@ pub async fn v2_amend_document(
         None => return HttpResponse::BadRequest().body("Missing tenant context"),
     };
 
-    if let Some(ctx) = req.extensions().get::<SecurityContext>()
-        && !check_permission(&ctx.claims.roles, &[], Permission::Create, 0)
-    {
-        return HttpResponse::Forbidden().json(serde_json::json!({
-            "error": "Permission Denied: insufficient create privileges"
-        }));
+    if let Some(ctx) = req.extensions().get::<SecurityContext>() {
+        let allowed = evaluate_route_permission(
+            Some(ctx),
+            rbac_state.as_ref(),
+            &doctype,
+            Permission::Create,
+            0,
+        )
+        .await;
+        if !allowed {
+            return HttpResponse::Forbidden().json(serde_json::json!({
+                "error": format!("Permission Denied: insufficient create privileges for DocType '{doctype}'")
+            }));
+        }
     }
 
     let client = match pool_mgr.get_or_initialize_client(&tenant_id).await {
