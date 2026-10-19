@@ -229,12 +229,44 @@ pub fn compile_filters_to_surrealql(filters_json: &str) -> Option<String> {
     None
 }
 
+/// Helper to evaluate route permission against DynamicRolePermissionRegistry.
+pub async fn evaluate_route_permission(
+    ctx: Option<&SecurityContext>,
+    rbac_state: Option<&web::Data<DynamicRbacState>>,
+    doctype: &str,
+    perm: Permission,
+    target_permlevel: u8,
+) -> bool {
+    let Some(ctx) = ctx else {
+        return false;
+    };
+    if let Some(state) = rbac_state {
+        let reg = state.registry.read().await;
+        check_permission(
+            &ctx.claims.roles,
+            &reg.permission_edges,
+            doctype,
+            perm,
+            target_permlevel,
+        )
+    } else {
+        check_permission(
+            &ctx.claims.roles,
+            &[],
+            doctype,
+            perm,
+            target_permlevel,
+        )
+    }
+}
+
 /// Handler for listing documents: `GET /api/v2/document/{doctype}`
 pub async fn v2_list_document(
     req: HttpRequest,
     path: web::Path<String>,
     query: web::Query<V2ListQuery>,
     pool_mgr: web::Data<ConnectionPoolManager>,
+    rbac_state: Option<web::Data<DynamicRbacState>>,
 ) -> impl Responder {
     let doctype = path.into_inner();
     let tenant_id = match req.extensions().get::<TenantId>() {
@@ -242,12 +274,20 @@ pub async fn v2_list_document(
         None => return HttpResponse::BadRequest().body("Missing tenant context"),
     };
 
-    if let Some(ctx) = req.extensions().get::<SecurityContext>()
-        && !check_permission(&ctx.claims.roles, &[], Permission::Read, 0)
-    {
-        return HttpResponse::Forbidden().json(serde_json::json!({
-            "error": "Permission Denied: insufficient read privileges"
-        }));
+    if let Some(ctx) = req.extensions().get::<SecurityContext>() {
+        let allowed = evaluate_route_permission(
+            Some(ctx),
+            rbac_state.as_ref(),
+            &doctype,
+            Permission::Read,
+            0,
+        )
+        .await;
+        if !allowed {
+            return HttpResponse::Forbidden().json(serde_json::json!({
+                "error": format!("Permission Denied: insufficient read privileges for DocType '{doctype}'")
+            }));
+        }
     }
 
     let client = match pool_mgr.get_or_initialize_client(&tenant_id).await {
@@ -278,12 +318,56 @@ pub async fn v2_list_document(
         "*".to_string()
     };
 
-    let where_clause = query
+    let rls_clause = if let Some(ctx) = req.extensions().get::<SecurityContext>() {
+        let is_admin = ctx
+            .claims
+            .roles
+            .iter()
+            .any(|r| r == ROLE_SYSTEM_MANAGER || r == ROLE_ADMINISTRATOR);
+        if !is_admin {
+            if let Some(state) = &rbac_state {
+                let users_guard = state.users.read().await;
+                if let Some(user) = users_guard
+                    .iter()
+                    .find(|u| u.id == ctx.claims.sub || u.email == ctx.claims.sub)
+                {
+                    if !user.allowed_companies.is_empty()
+                        && !user.allowed_companies.contains(&"*".to_string())
+                    {
+                        let formatted = user
+                            .allowed_companies
+                            .iter()
+                            .map(|c| format!("\"{c}\""))
+                            .collect::<Vec<_>>()
+                            .join(", ");
+                        Some(format!("(company IN [{formatted}] OR company IS NULL)"))
+                    } else {
+                        None
+                    }
+                } else {
+                    None
+                }
+            } else {
+                None
+            }
+        } else {
+            None
+        }
+    } else {
+        None
+    };
+
+    let query_filter_clause = query
         .filters
         .as_deref()
-        .and_then(compile_filters_to_surrealql)
-        .map(|c| format!("WHERE {c}"))
-        .unwrap_or_default();
+        .and_then(compile_filters_to_surrealql);
+
+    let where_clause = match (query_filter_clause, rls_clause) {
+        (Some(q), Some(r)) => format!("WHERE ({q}) AND ({r})"),
+        (Some(q), None) => format!("WHERE {q}"),
+        (None, Some(r)) => format!("WHERE {r}"),
+        (None, None) => String::new(),
+    };
 
     let order_clause = if let Some(ref o) = query.order_by {
         if SAFE_ORDER_REGEX.is_match(o.trim()) {

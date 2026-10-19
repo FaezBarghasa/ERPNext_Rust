@@ -2,6 +2,7 @@
 
 use crate::middleware::auth::SecurityContext;
 use crate::tenant::{ConnectionPoolManager, TenantId};
+use crate::v2_routes::DynamicRbacState;
 use actix_web::{HttpMessage, HttpRequest, HttpResponse, Responder, web};
 use frappe_framework::{Document, DocumentController};
 use frappe_meta::{DocTypeSchema, Permission, check_permission};
@@ -11,6 +12,27 @@ use std::sync::LazyLock;
 
 static SAFE_ID_REGEX: LazyLock<Regex> =
     LazyLock::new(|| Regex::new(r"^[a-zA-Z0-9_-]+$").expect("Regex compile"));
+
+async fn check_route_perm(
+    ctx: &SecurityContext,
+    rbac_state: Option<&web::Data<DynamicRbacState>>,
+    doctype: &str,
+    perm: Permission,
+    permlevel: u8,
+) -> bool {
+    if let Some(state) = rbac_state {
+        let reg = state.registry.read().await;
+        check_permission(
+            &ctx.claims.roles,
+            &reg.permission_edges,
+            doctype,
+            perm,
+            permlevel,
+        )
+    } else {
+        check_permission(&ctx.claims.roles, &[], doctype, perm, permlevel)
+    }
+}
 
 #[derive(Debug, Deserialize)]
 pub struct ListQuery {
@@ -25,6 +47,7 @@ pub async fn list_resource(
     path: web::Path<String>,
     query: web::Query<ListQuery>,
     pool_mgr: web::Data<ConnectionPoolManager>,
+    rbac_state: Option<web::Data<DynamicRbacState>>,
 ) -> impl Responder {
     let doctype = path.into_inner();
     let tenant_id = match req.extensions().get::<TenantId>() {
@@ -33,10 +56,10 @@ pub async fn list_resource(
     };
 
     if let Some(ctx) = req.extensions().get::<SecurityContext>()
-        && !check_permission(&ctx.claims.roles, &[], Permission::Read, 0)
+        && !check_route_perm(ctx, rbac_state.as_ref(), &doctype, Permission::Read, 0).await
     {
         return HttpResponse::Forbidden().json(serde_json::json!({
-            "error": "Permission Denied: insufficient read privileges"
+            "error": format!("Permission Denied: insufficient read privileges for DocType '{doctype}'")
         }));
     }
 
@@ -73,6 +96,7 @@ pub async fn get_resource(
     req: HttpRequest,
     path: web::Path<(String, String)>,
     pool_mgr: web::Data<ConnectionPoolManager>,
+    rbac_state: Option<web::Data<DynamicRbacState>>,
 ) -> impl Responder {
     let (doctype, id) = path.into_inner();
     let tenant_id = match req.extensions().get::<TenantId>() {
@@ -81,10 +105,10 @@ pub async fn get_resource(
     };
 
     if let Some(ctx) = req.extensions().get::<SecurityContext>()
-        && !check_permission(&ctx.claims.roles, &[], Permission::Read, 0)
+        && !check_route_perm(ctx, rbac_state.as_ref(), &doctype, Permission::Read, 0).await
     {
         return HttpResponse::Forbidden().json(serde_json::json!({
-            "error": "Permission Denied: insufficient read privileges"
+            "error": format!("Permission Denied: insufficient read privileges for DocType '{doctype}'")
         }));
     }
 
@@ -117,6 +141,7 @@ pub async fn create_resource(
     path: web::Path<String>,
     body: web::Json<serde_json::Value>,
     pool_mgr: web::Data<ConnectionPoolManager>,
+    rbac_state: Option<web::Data<DynamicRbacState>>,
 ) -> impl Responder {
     let doctype = path.into_inner();
     let tenant_id = match req.extensions().get::<TenantId>() {
@@ -125,10 +150,10 @@ pub async fn create_resource(
     };
 
     if let Some(ctx) = req.extensions().get::<SecurityContext>()
-        && !check_permission(&ctx.claims.roles, &[], Permission::Create, 0)
+        && !check_route_perm(ctx, rbac_state.as_ref(), &doctype, Permission::Create, 0).await
     {
         return HttpResponse::Forbidden().json(serde_json::json!({
-            "error": "Permission Denied: insufficient create privileges"
+            "error": format!("Permission Denied: insufficient create privileges for DocType '{doctype}'")
         }));
     }
 
@@ -188,6 +213,7 @@ pub async fn delete_resource(
     req: HttpRequest,
     path: web::Path<(String, String)>,
     pool_mgr: web::Data<ConnectionPoolManager>,
+    rbac_state: Option<web::Data<DynamicRbacState>>,
 ) -> impl Responder {
     let (doctype, id) = path.into_inner();
     let tenant_id = match req.extensions().get::<TenantId>() {
@@ -196,10 +222,10 @@ pub async fn delete_resource(
     };
 
     if let Some(ctx) = req.extensions().get::<SecurityContext>()
-        && !check_permission(&ctx.claims.roles, &[], Permission::Delete, 0)
+        && !check_route_perm(ctx, rbac_state.as_ref(), &doctype, Permission::Delete, 0).await
     {
         return HttpResponse::Forbidden().json(serde_json::json!({
-            "error": "Permission Denied: insufficient delete privileges"
+            "error": format!("Permission Denied: insufficient delete privileges for DocType '{doctype}'")
         }));
     }
 

@@ -2547,14 +2547,33 @@ async fn create_webhook_subscription_handler(
     req: HttpRequest,
     pool_mgr: web::Data<ConnectionPoolManager>,
     payload: web::Json<frappe_framework::WebhookSubscription>,
+    rbac_state: Option<web::Data<DynamicRbacState>>,
 ) -> impl Responder {
     TOTAL_REQUESTS.fetch_add(1, Ordering::Relaxed);
-    if let Some(ctx) = req.extensions().get::<SecurityContext>()
-        && !check_permission(&ctx.claims.roles, &[], Permission::Write, 0)
-    {
-        return HttpResponse::Forbidden().json(serde_json::json!({
-            "error": "Permission Denied: insufficient write privileges"
-        }));
+    if let Some(ctx) = req.extensions().get::<SecurityContext>() {
+        let allowed = if let Some(state) = &rbac_state {
+            let reg = state.registry.read().await;
+            check_permission(
+                &ctx.claims.roles,
+                &reg.permission_edges,
+                "Webhook Subscription",
+                Permission::Write,
+                0,
+            )
+        } else {
+            check_permission(
+                &ctx.claims.roles,
+                &[],
+                "Webhook Subscription",
+                Permission::Write,
+                0,
+            )
+        };
+        if !allowed {
+            return HttpResponse::Forbidden().json(serde_json::json!({
+                "error": "Permission Denied: insufficient write privileges"
+            }));
+        }
     }
 
     let tenant_id = req
@@ -2585,14 +2604,33 @@ async fn create_webhook_subscription_handler(
 async fn list_webhook_subscriptions_handler(
     req: HttpRequest,
     pool_mgr: web::Data<ConnectionPoolManager>,
+    rbac_state: Option<web::Data<DynamicRbacState>>,
 ) -> impl Responder {
     TOTAL_REQUESTS.fetch_add(1, Ordering::Relaxed);
-    if let Some(ctx) = req.extensions().get::<SecurityContext>()
-        && !check_permission(&ctx.claims.roles, &[], Permission::Read, 0)
-    {
-        return HttpResponse::Forbidden().json(serde_json::json!({
-            "error": "Permission Denied: insufficient read privileges"
-        }));
+    if let Some(ctx) = req.extensions().get::<SecurityContext>() {
+        let allowed = if let Some(state) = &rbac_state {
+            let reg = state.registry.read().await;
+            check_permission(
+                &ctx.claims.roles,
+                &reg.permission_edges,
+                "Webhook Subscription",
+                Permission::Read,
+                0,
+            )
+        } else {
+            check_permission(
+                &ctx.claims.roles,
+                &[],
+                "Webhook Subscription",
+                Permission::Read,
+                0,
+            )
+        };
+        if !allowed {
+            return HttpResponse::Forbidden().json(serde_json::json!({
+                "error": "Permission Denied: insufficient read privileges"
+            }));
+        }
     }
 
     let tenant_id = req
@@ -2620,14 +2658,33 @@ async fn delete_webhook_subscription_handler(
     path: web::Path<String>,
     req: HttpRequest,
     pool_mgr: web::Data<ConnectionPoolManager>,
+    rbac_state: Option<web::Data<DynamicRbacState>>,
 ) -> impl Responder {
     TOTAL_REQUESTS.fetch_add(1, Ordering::Relaxed);
-    if let Some(ctx) = req.extensions().get::<SecurityContext>()
-        && !check_permission(&ctx.claims.roles, &[], Permission::Write, 0)
-    {
-        return HttpResponse::Forbidden().json(serde_json::json!({
-            "error": "Permission Denied: insufficient write privileges"
-        }));
+    if let Some(ctx) = req.extensions().get::<SecurityContext>() {
+        let allowed = if let Some(state) = &rbac_state {
+            let reg = state.registry.read().await;
+            check_permission(
+                &ctx.claims.roles,
+                &reg.permission_edges,
+                "Webhook Subscription",
+                Permission::Write,
+                0,
+            )
+        } else {
+            check_permission(
+                &ctx.claims.roles,
+                &[],
+                "Webhook Subscription",
+                Permission::Write,
+                0,
+            )
+        };
+        if !allowed {
+            return HttpResponse::Forbidden().json(serde_json::json!({
+                "error": "Permission Denied: insufficient write privileges"
+            }));
+        }
     }
 
     let id = path.into_inner();
@@ -2668,14 +2725,33 @@ struct RunPluginPayload {
 async fn run_plugin_handler(
     req: HttpRequest,
     payload: web::Json<RunPluginPayload>,
+    rbac_state: Option<web::Data<DynamicRbacState>>,
 ) -> impl Responder {
     TOTAL_REQUESTS.fetch_add(1, Ordering::Relaxed);
-    if let Some(ctx) = req.extensions().get::<SecurityContext>()
-        && !check_permission(&ctx.claims.roles, &[], Permission::Execute, 0)
-    {
-        return HttpResponse::Forbidden().json(serde_json::json!({
-            "error": "Permission Denied: insufficient execute privileges for plugins"
-        }));
+    if let Some(ctx) = req.extensions().get::<SecurityContext>() {
+        let allowed = if let Some(state) = &rbac_state {
+            let reg = state.registry.read().await;
+            check_permission(
+                &ctx.claims.roles,
+                &reg.permission_edges,
+                "Plugin",
+                Permission::Execute,
+                0,
+            )
+        } else {
+            check_permission(
+                &ctx.claims.roles,
+                &[],
+                "Plugin",
+                Permission::Execute,
+                0,
+            )
+        };
+        if !allowed {
+            return HttpResponse::Forbidden().json(serde_json::json!({
+                "error": "Permission Denied: insufficient execute privileges for plugins"
+            }));
+        }
     }
 
     let inner = payload.into_inner();
