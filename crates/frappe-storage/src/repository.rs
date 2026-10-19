@@ -292,5 +292,41 @@ mod tests {
             .unwrap();
         assert_eq!(bound.len(), 1);
         assert_eq!(bound[0].name, "Alice Security");
+
+        // 4. Comment injection and null byte rejection
+        let res_comment: Result<Vec<MockCustomer>, RepositoryError> = repo
+            .query_where("customers", "email = 'x' -- comment")
+            .await;
+        assert!(matches!(
+            res_comment,
+            Err(RepositoryError::InvalidIdentifier(_))
+        ));
+
+        let res_block_comment: Result<Vec<MockCustomer>, RepositoryError> = repo
+            .query_where("customers", "email = 'x' /* block */")
+            .await;
+        assert!(matches!(
+            res_block_comment,
+            Err(RepositoryError::InvalidIdentifier(_))
+        ));
+
+        let res_null_byte: Result<Vec<MockCustomer>, RepositoryError> =
+            repo.query_where("customers", "email = 'x\0'").await;
+        assert!(matches!(
+            res_null_byte,
+            Err(RepositoryError::InvalidIdentifier(_))
+        ));
+
+        // 5. Schema mismatch in select_all returns Serialization error
+        repo.client()
+            .query("CREATE customers:corrupt CONTENT { id: 'corrupt', name: 12345, email: true };")
+            .await
+            .unwrap();
+        let res_corrupt: Result<Vec<MockCustomer>, RepositoryError> =
+            repo.select_all("customers").await;
+        assert!(matches!(
+            res_corrupt,
+            Err(RepositoryError::Serialization(_))
+        ));
     }
 }
