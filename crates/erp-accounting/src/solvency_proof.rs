@@ -184,7 +184,7 @@ impl ZkSolvencyEngine {
         let mut current_level: Vec<MerkleSumNode> = accounts.iter().map(Self::build_leaf).collect();
 
         while current_level.len() > 1 {
-            let mut next_level = Vec::with_capacity((current_level.len() + 1) / 2);
+            let mut next_level = Vec::with_capacity(current_level.len().div_ceil(2));
             for chunk in current_level.chunks(2) {
                 if chunk.len() == 2 {
                     next_level.push(Self::combine_nodes(&chunk[0], &chunk[1]));
@@ -238,7 +238,7 @@ impl ZkSolvencyEngine {
         let mut current_idx = target_idx;
 
         while current_level.len() > 1 {
-            let mut next_level = Vec::with_capacity((current_level.len() + 1) / 2);
+            let mut next_level = Vec::with_capacity(current_level.len().div_ceil(2));
             for (chunk_idx, chunk) in current_level.chunks(2).enumerate() {
                 if chunk.len() == 2 {
                     let combined = Self::combine_nodes(&chunk[0], &chunk[1]);

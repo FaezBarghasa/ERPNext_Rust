@@ -4,9 +4,10 @@
 //! HKDF-HMAC-SHA256 tenant key derivation from a 256-bit Master Key Encryption Key (KEK),
 //! and random 96-bit nonces per field encryption operation.
 
-use chacha20poly1305::aead::{Aead, AeadCore, OsRng, Payload};
+use chacha20poly1305::aead::{Aead, Payload};
 use chacha20poly1305::{ChaCha20Poly1305, Key, KeyInit, Nonce};
 use hmac::{Hmac, Mac};
+use rand::RngExt;
 use sha2::Sha256;
 use thiserror::Error;
 
@@ -55,8 +56,10 @@ impl EnvelopeEncryption {
         associated_data: &[u8],
     ) -> Vec<u8> {
         let dek = self.derive_tenant_dek(tenant_id);
-        let cipher = ChaCha20Poly1305::new(Key::from_slice(&dek));
-        let nonce = ChaCha20Poly1305::generate_nonce(&mut OsRng);
+        let cipher = ChaCha20Poly1305::new(&Key::from(dek));
+        let mut nonce_bytes = [0u8; 12];
+        rand::rng().fill(&mut nonce_bytes);
+        let nonce = Nonce::from(nonce_bytes);
 
         let payload = Payload {
             msg: plaintext,
@@ -87,8 +90,11 @@ impl EnvelopeEncryption {
 
         let (nonce_bytes, ciphertext_with_tag) = payload.split_at(12);
         let dek = self.derive_tenant_dek(tenant_id);
-        let cipher = ChaCha20Poly1305::new(Key::from_slice(&dek));
-        let nonce = Nonce::from_slice(nonce_bytes);
+        let cipher = ChaCha20Poly1305::new(&Key::from(dek));
+        let nonce_array: [u8; 12] = nonce_bytes
+            .try_into()
+            .map_err(|_| EncryptionError::DecryptionFailed)?;
+        let nonce = Nonce::from(nonce_array);
 
         let payload = Payload {
             msg: ciphertext_with_tag,
@@ -96,7 +102,7 @@ impl EnvelopeEncryption {
         };
 
         cipher
-            .decrypt(nonce, payload)
+            .decrypt(&nonce, payload)
             .map_err(|_| EncryptionError::DecryptionFailed)
     }
 }

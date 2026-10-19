@@ -80,7 +80,7 @@ compact_str = { version = "0.10.0", features = ["serde"] }
 futures-util = "0.3.34"
 hex = "0.4.3"
 hmac = "0.13.0"
-heapless = { version = "0.8", default-features = false }
+heapless = { version = "0.9.3", default-features = false }
 rand = "0.10.3"
 rand_distr = "0.6.0"
 rayon = "1.12.0"
@@ -121,8 +121,8 @@ dioxus = { version = "0.7.10", default-features = false, features = [
     "html",
 ] }
 proptest = "1.6"
-base64 = "0.22.1"
-chacha20poly1305 = "0.10.1"
+base64 = "0.23.1"
+chacha20poly1305 = "0.11.0"
 
 
 [profile.release]
