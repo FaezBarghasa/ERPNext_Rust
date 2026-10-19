@@ -302,10 +302,13 @@ impl DeduplicatedStorage {
     /// Checks whether the given content hash exists either in memory or on disk.
     #[must_use]
     pub fn exists(&self, content_hash: &str) -> bool {
-        if let Ok(payloads) = self.payloads.read() {
-            if payloads.contains_key(content_hash) {
-                return true;
-            }
+        if self
+            .payloads
+            .read()
+            .map(|p| p.contains_key(content_hash))
+            .unwrap_or(false)
+        {
+            return true;
         }
         if let Some(ref root) = self.root_path {
             let shard = if content_hash.len() >= 2 {

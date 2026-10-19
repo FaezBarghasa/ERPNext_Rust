@@ -65,6 +65,7 @@ use frappe_meta::security_rules::{
     validate_password_complexity, verify_password_reset_token,
 };
 use frappe_meta::{DocTypeSchema, lookup_schema};
+use frappe_storage::drive::DeduplicatedStorage;
 use frappe_storage::execute_transaction;
 use regex::Regex;
 use rust_decimal::Decimal;
@@ -1778,9 +1779,14 @@ pub async fn upload_file_handler(
 
     let processed = match actix_web::web::block(
         move || -> Result<(Vec<u8>, DetectedFileType, String, u64), String> {
-            let raw_bytes = hex::decode(&content_b64)
-                .or_else(|_| Ok::<Vec<u8>, hex::FromHexError>(content_b64.as_bytes().to_vec()))
-                .map_err(|e| format!("Invalid file payload: {e}"))?;
+            use base64::Engine;
+            use base64::engine::general_purpose::{STANDARD, URL_SAFE};
+
+            let trimmed = content_b64.trim();
+            let raw_bytes = STANDARD
+                .decode(trimmed)
+                .or_else(|_| URL_SAFE.decode(trimmed))
+                .map_err(|e| format!("Invalid Base64 payload: {e}"))?;
 
             let detected_type = validate_file_upload(&file_name, &raw_bytes, 50 * 1024 * 1024)
                 .map_err(|e| e.to_string())?;
@@ -1834,6 +1840,23 @@ pub async fn upload_file_handler(
 
     let (final_bytes, detected_type, hash, file_size) = processed;
 
+    // Store binary payload in durable DeduplicatedStorage (CAS)
+    let drive_file = match rbac_state.storage.store_file(
+        hash.clone(),
+        payload.file_name.clone(),
+        None,
+        detected_type.mime_type().to_string(),
+        "system".into(),
+        &final_bytes,
+    ) {
+        Ok((df, _is_dup)) => df,
+        Err(e) => {
+            return HttpResponse::InternalServerError()
+                .body(format!("Failed to store file in CAS: {e}"));
+        }
+    };
+
+    // In SurrealDB, store file metadata record WITHOUT embedding raw bytes or hex strings into JSON
     let file_record = serde_json::json!({
         "id": hash,
         "file_name": payload.file_name,
@@ -1841,7 +1864,7 @@ pub async fn upload_file_handler(
         "mime_type": detected_type.mime_type(),
         "file_size": file_size,
         "is_private": payload.is_private.unwrap_or(false),
-        "data": hex::encode(&final_bytes),
+        "file_path": drive_file.file_path,
         "created_at": Utc::now().to_rfc3339(),
     });
 
@@ -1863,8 +1886,28 @@ pub async fn upload_file_handler(
 pub async fn download_file_handler(
     path: web::Path<String>,
     pool_mgr: web::Data<ConnectionPoolManager>,
+    rbac_state: Option<web::Data<DynamicRbacState>>,
 ) -> impl Responder {
     let hash = path.into_inner();
+
+    // 1. Fast path: Read from DeduplicatedStorage (memory cache or CAS disk)
+    if let Some(ref rbac) = rbac_state {
+        if let Ok(bytes) = rbac.storage.read_by_hash(&hash) {
+            return HttpResponse::Ok()
+                .insert_header(("Content-Type", "application/octet-stream"))
+                .insert_header(("ETag", format!("\"{hash}\"")))
+                .insert_header(("Cache-Control", "public, max-age=31536000, immutable"))
+                .insert_header((
+                    "Alt-Svc",
+                    crate::quic_h3_stream::QuicH3StreamingEngine::generate_alt_svc_header(
+                        4433, 86400,
+                    ),
+                ))
+                .body(bytes);
+        }
+    }
+
+    // 2. Fallback to SurrealDB drive_file for legacy records that stored raw hex data
     let client = match pool_mgr
         .get_or_initialize_client(&TenantId("default".into()))
         .await
@@ -1880,6 +1923,9 @@ pub async fn download_file_handler(
             match records.into_iter().next() {
                 Some(r) => {
                     let raw_data = r.get("data").and_then(|d| d.as_str()).unwrap_or_default();
+                    if raw_data.is_empty() {
+                        return HttpResponse::NotFound().body("File payload not found in storage");
+                    }
                     let bytes =
                         hex::decode(raw_data).unwrap_or_else(|_| raw_data.as_bytes().to_vec());
                     HttpResponse::Ok()
@@ -1915,12 +1961,21 @@ pub async fn download_image_handler(
     path: web::Path<String>,
     query: web::Query<ImageTransformQuery>,
     pool_mgr: Option<web::Data<ConnectionPoolManager>>,
+    rbac_state: Option<web::Data<DynamicRbacState>>,
 ) -> impl Responder {
     let hash = path.into_inner();
     let q = query.into_inner();
 
-    // 1. Fetch file bytes from DB if pool is available, else fallback to memory cache/synthetic bytes
-    let raw_bytes: Option<Vec<u8>> = if let Some(mgr) = pool_mgr {
+    // 1. Fetch file bytes from CAS storage, or DB if pool is available, else fallback to memory cache/synthetic bytes
+    let raw_bytes: Option<Vec<u8>> = if let Some(ref rbac) = rbac_state {
+        rbac.storage.read_by_hash(&hash).ok()
+    } else {
+        None
+    };
+
+    let raw_bytes: Option<Vec<u8>> = if raw_bytes.is_some() {
+        raw_bytes
+    } else if let Some(mgr) = pool_mgr {
         if let Ok(client) = mgr
             .get_or_initialize_client(&TenantId("default".into()))
             .await
@@ -2502,56 +2557,64 @@ pub async fn quic_status_handler() -> impl Responder {
 pub async fn h3_stream_file_handler(
     path: web::Path<String>,
     pool_mgr: web::Data<ConnectionPoolManager>,
+    rbac_state: Option<web::Data<DynamicRbacState>>,
 ) -> impl Responder {
     let hash = path.into_inner();
-    let client = match pool_mgr
-        .get_or_initialize_client(&TenantId("default".into()))
-        .await
-    {
-        Ok(c) => c,
-        Err(e) => return HttpResponse::InternalServerError().body(e.to_string()),
+
+    // 1. Try reading from CAS storage first
+    let cas_bytes = rbac_state
+        .as_ref()
+        .and_then(|r| r.storage.read_by_hash(&hash).ok());
+
+    let bytes = if let Some(b) = cas_bytes {
+        b
+    } else {
+        let client = match pool_mgr
+            .get_or_initialize_client(&TenantId("default".into()))
+            .await
+        {
+            Ok(c) => c,
+            Err(e) => return HttpResponse::InternalServerError().body(e.to_string()),
+        };
+
+        let sql = "SELECT * FROM drive_file WHERE content_hash = $content_hash;";
+        match client.query(sql).bind(("content_hash", hash.clone())).await {
+            Ok(mut res) => {
+                let records: Vec<serde_json::Value> = res.take(0).unwrap_or_default();
+                match records.into_iter().next() {
+                    Some(r) => {
+                        let raw_data = r.get("data").and_then(|d| d.as_str()).unwrap_or_default();
+                        hex::decode(raw_data).unwrap_or_else(|_| raw_data.as_bytes().to_vec())
+                    }
+                    None => return HttpResponse::NotFound().body("File not found"),
+                }
+            }
+            Err(e) => return HttpResponse::InternalServerError().body(e.to_string()),
+        }
     };
 
-    let sql = "SELECT * FROM drive_file WHERE content_hash = $content_hash;";
-    match client.query(sql).bind(("content_hash", hash.clone())).await {
-        Ok(mut res) => {
-            let records: Vec<serde_json::Value> = res.take(0).unwrap_or_default();
-            match records.into_iter().next() {
-                Some(r) => {
-                    let raw_data = r.get("data").and_then(|d| d.as_str()).unwrap_or_default();
-                    let bytes =
-                        hex::decode(raw_data).unwrap_or_else(|_| raw_data.as_bytes().to_vec());
+    let peer_addr = std::net::SocketAddr::from(([127, 0, 0, 1], 4433));
+    let mut engine = crate::quic_h3_stream::QuicH3StreamingEngine::new(peer_addr);
+    let stream_id = engine.create_bidirectional_stream();
 
-                    let peer_addr = std::net::SocketAddr::from(([127, 0, 0, 1], 4433));
-                    let mut engine = crate::quic_h3_stream::QuicH3StreamingEngine::new(peer_addr);
-                    let stream_id = engine.create_bidirectional_stream();
+    // Chunk into 64 KB HTTP/3 DATA frames
+    let frames = engine
+        .stream_file_asset_h3(stream_id, &bytes, 64 * 1024)
+        .unwrap_or_default();
 
-                    // Chunk into 64 KB HTTP/3 DATA frames
-                    let frames = engine
-                        .stream_file_asset_h3(stream_id, &bytes, 64 * 1024)
-                        .unwrap_or_default();
-
-                    let mut concatenated_stream = Vec::new();
-                    for f in frames {
-                        concatenated_stream.extend_from_slice(&f);
-                    }
-
-                    HttpResponse::Ok()
-                        .insert_header(("Content-Type", "application/octet-stream"))
-                        .insert_header(("X-QUIC-Stream-ID", stream_id.to_string()))
-                        .insert_header((
-                            "Alt-Svc",
-                            crate::quic_h3_stream::QuicH3StreamingEngine::generate_alt_svc_header(
-                                4433, 86400,
-                            ),
-                        ))
-                        .body(concatenated_stream)
-                }
-                None => HttpResponse::NotFound().body("File not found in CAS storage"),
-            }
-        }
-        Err(e) => HttpResponse::InternalServerError().body(e.to_string()),
+    let mut concatenated_stream = Vec::new();
+    for f in frames {
+        concatenated_stream.extend_from_slice(&f);
     }
+
+    HttpResponse::Ok()
+        .insert_header(("Content-Type", "application/octet-stream"))
+        .insert_header(("X-QUIC-Stream-ID", stream_id.to_string()))
+        .insert_header((
+            "Alt-Svc",
+            crate::quic_h3_stream::QuicH3StreamingEngine::generate_alt_svc_header(4433, 86400),
+        ))
+        .body(concatenated_stream)
 }
 
 /// Handler for Real-Time Mutation Push over HTTP/3 Stream: `POST /api/v2/stream/h3/telemetry`
@@ -2619,6 +2682,7 @@ pub struct DynamicRbacState {
     pub music_catalog: Arc<RwLock<HashMap<String, erp_cms::audio_intelligence::TrackLinerNotes>>>,
     pub radio_registry: Arc<erp_cms::audio_live_radio::LiveRadioRegistry>,
     pub bookmark_registry: Arc<erp_cms::audio_book_sync::AudioBookmarkRegistry>,
+    pub storage: Arc<DeduplicatedStorage>,
 }
 
 impl std::fmt::Debug for DynamicRbacState {
@@ -2794,6 +2858,7 @@ impl Default for DynamicRbacState {
             bookmark_registry: Arc::new(
                 erp_cms::audio_book_sync::AudioBookmarkRegistry::with_demo_chapters(),
             ),
+            storage: Arc::new(DeduplicatedStorage::new()),
         }
     }
 }
@@ -9936,10 +10001,14 @@ mod tests {
             crop: Some("0.5,0.5".into()),
             fmt: Some("webp".into()),
         });
-        let img_resp =
-            download_image_handler(web::Path::from("sample_hash".to_string()), img_query, None)
-                .await
-                .respond_to(&actix_web::test::TestRequest::default().to_http_request());
+        let img_resp = download_image_handler(
+            web::Path::from("sample_hash".to_string()),
+            img_query,
+            None,
+            None,
+        )
+        .await
+        .respond_to(&actix_web::test::TestRequest::default().to_http_request());
         assert_eq!(img_resp.status(), actix_web::http::StatusCode::OK);
         assert_eq!(
             img_resp.headers().get("Content-Type").unwrap(),
@@ -10038,5 +10107,188 @@ mod tests {
             Permission::Read,
             0,
         ));
+    }
+
+    #[tokio::test]
+    async fn test_cas_disk_durability_upload_and_download_flow() {
+        use base64::Engine;
+        use base64::engine::general_purpose::STANDARD;
+
+        let pool_mgr = web::Data::new(ConnectionPoolManager::in_memory(
+            std::time::Duration::from_secs(300),
+        ));
+        let test_dir = std::env::temp_dir().join(format!(
+            "erp_net_cas_{}_{}",
+            std::process::id(),
+            std::time::SystemTime::now()
+                .duration_since(std::time::UNIX_EPOCH)
+                .map(|d| d.as_nanos())
+                .unwrap_or(0)
+        ));
+        let mut rbac_state_inner = DynamicRbacState::default();
+        rbac_state_inner.storage = Arc::new(DeduplicatedStorage::with_path(&test_dir));
+        let rbac_state = web::Data::new(rbac_state_inner);
+
+        // 1. Upload valid Base64 document
+        let raw_content = b"%PDF-1.4\n%CAS-Durability-Test-Document\nHello ERPNext CAS Storage!";
+        let encoded_b64 = STANDARD.encode(raw_content);
+
+        let upload_req = actix_web::test::TestRequest::post()
+            .uri("/api/v2/method/upload_file")
+            .to_http_request();
+        let upload_payload = web::Json(UploadFilePayload {
+            file_name: "test_doc.pdf".into(),
+            content_base64: encoded_b64,
+            is_private: Some(false),
+        });
+
+        let upload_resp = upload_file_handler(
+            upload_req.clone(),
+            upload_payload,
+            pool_mgr.clone(),
+            rbac_state.clone(),
+        )
+        .await
+        .respond_to(&upload_req);
+
+        assert_eq!(upload_resp.status(), actix_web::http::StatusCode::OK);
+        let body_bytes = actix_web::body::to_bytes(upload_resp.into_body())
+            .await
+            .ok()
+            .expect("read body");
+        let body_json: serde_json::Value =
+            serde_json::from_slice(&body_bytes).expect("parse json");
+        let hash = body_json["content_hash"]
+            .as_str()
+            .expect("hash string")
+            .to_string();
+        assert!(!hash.is_empty());
+        assert_eq!(
+            body_json["file_size"].as_u64(),
+            Some(raw_content.len() as u64)
+        );
+
+        // Verify storage in CAS engine and on disk
+        assert!(rbac_state.storage.exists(&hash));
+        let cas_read = rbac_state
+            .storage
+            .read_by_hash(&hash)
+            .expect("read from CAS");
+        assert_eq!(cas_read, raw_content);
+        assert!(rbac_state.storage.get_file_path(&hash).is_some());
+
+        // Verify SurrealDB record has no embedded raw "data" field
+        let client = pool_mgr
+            .get_or_initialize_client(&TenantId("default".into()))
+            .await
+            .unwrap();
+        let mut db_res = client
+            .query("SELECT * FROM drive_file WHERE content_hash = $h;")
+            .bind(("h", hash.clone()))
+            .await
+            .expect("query drive_file");
+        let records: Vec<serde_json::Value> = db_res.take(0).unwrap();
+        assert_eq!(records.len(), 1);
+        assert!(
+            records[0].get("data").is_none(),
+            "Raw payload bytes must NOT be embedded in SurrealDB JSON"
+        );
+        assert!(
+            records[0].get("file_path").is_some(),
+            "CAS file_path must be present in SurrealDB metadata"
+        );
+
+        // 2. Download from CAS via /files/{hash}
+        let dl_req = actix_web::test::TestRequest::get()
+            .uri(&format!("/files/{hash}"))
+            .to_http_request();
+        let dl_resp = download_file_handler(
+            web::Path::from(hash.clone()),
+            pool_mgr.clone(),
+            Some(rbac_state.clone()),
+        )
+        .await
+        .respond_to(&dl_req);
+
+        assert_eq!(dl_resp.status(), actix_web::http::StatusCode::OK);
+        assert_eq!(
+            dl_resp.headers().get("Content-Type").unwrap(),
+            "application/octet-stream"
+        );
+        assert_eq!(
+            dl_resp.headers().get("ETag").unwrap().to_str().unwrap(),
+            format!("\"{hash}\"")
+        );
+        let dl_bytes = actix_web::body::to_bytes(dl_resp.into_body())
+            .await
+            .ok()
+            .expect("read dl body");
+        assert_eq!(dl_bytes.as_ref(), raw_content);
+
+        // 3. Reject malformed Base64 payload with HTTP 400 Bad Request
+        let bad_upload_req = actix_web::test::TestRequest::post()
+            .uri("/api/v2/method/upload_file")
+            .to_http_request();
+        let bad_payload = web::Json(UploadFilePayload {
+            file_name: "corrupt.pdf".into(),
+            content_base64: "!!! NOT VALID BASE64 ???".into(),
+            is_private: Some(false),
+        });
+        let bad_resp = upload_file_handler(
+            bad_upload_req.clone(),
+            bad_payload,
+            pool_mgr.clone(),
+            rbac_state.clone(),
+        )
+        .await
+        .respond_to(&bad_upload_req);
+        assert_eq!(bad_resp.status(), actix_web::http::StatusCode::BAD_REQUEST);
+
+        // 4. Download non-existent hash returns 404
+        let nf_req = actix_web::test::TestRequest::get().to_http_request();
+        let nf_resp = download_file_handler(
+            web::Path::from(
+                "0000000000000000000000000000000000000000000000000000000000000000".to_string(),
+            ),
+            pool_mgr.clone(),
+            Some(rbac_state.clone()),
+        )
+        .await
+        .respond_to(&nf_req);
+        assert_eq!(nf_resp.status(), actix_web::http::StatusCode::NOT_FOUND);
+
+        // 5. Test backwards compatibility: download legacy SurrealDB record with embedded hex "data"
+        let legacy_content = b"Legacy In-Database Payload 1990s style";
+        let legacy_hash = "legacy_content_hash_12345";
+        let legacy_record = serde_json::json!({
+            "id": legacy_hash,
+            "content_hash": legacy_hash,
+            "file_name": "legacy.txt",
+            "data": hex::encode(legacy_content),
+            "file_size": legacy_content.len(),
+            "created_at": chrono::Utc::now().to_rfc3339(),
+        });
+        let _ = client
+            .query("CREATE drive_file CONTENT $doc;")
+            .bind(("doc", legacy_record))
+            .await;
+
+        let legacy_req = actix_web::test::TestRequest::get().to_http_request();
+        let legacy_resp = download_file_handler(
+            web::Path::from(legacy_hash.to_string()),
+            pool_mgr.clone(),
+            Some(rbac_state.clone()),
+        )
+        .await
+        .respond_to(&legacy_req);
+        assert_eq!(legacy_resp.status(), actix_web::http::StatusCode::OK);
+        let legacy_dl_bytes = actix_web::body::to_bytes(legacy_resp.into_body())
+            .await
+            .ok()
+            .expect("read legacy body");
+        assert_eq!(legacy_dl_bytes.as_ref(), legacy_content);
+
+        // Cleanup
+        let _ = std::fs::remove_dir_all(&test_dir);
     }
 }
