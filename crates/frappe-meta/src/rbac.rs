@@ -667,24 +667,28 @@ pub struct EffectiveDocTypePermissions {
     pub is_admin_bypass: bool,
 }
 
-/// Evaluates whether a user with given roles is permitted to perform an operation.
+/// Evaluates whether a user with given roles is permitted to perform an operation on a target DocType.
 #[must_use]
 pub fn check_permission(
     user_roles: &[String],
     permission_edges: &[HasPermissionEdge],
+    target_doctype: &str,
     perm: Permission,
     target_permlevel: u8,
 ) -> bool {
-    // System Manager bypass
+    // System Manager and Administrator bypass
     if user_roles
         .iter()
-        .any(|r| r == "System Manager" || r == "Administrator")
+        .any(|r| r == ROLE_SYSTEM_MANAGER || r == ROLE_ADMINISTRATOR)
     {
         return true;
     }
 
     permission_edges.iter().any(|edge| {
-        user_roles.contains(&edge.role) && edge.permlevel <= target_permlevel && edge.allows(perm)
+        edge.doctype.eq_ignore_ascii_case(target_doctype)
+            && user_roles.contains(&edge.role)
+            && edge.permlevel <= target_permlevel
+            && edge.allows(perm)
     })
 }
 
@@ -978,6 +982,66 @@ mod tests {
             "Sales Order",
             "SO-2026-0002",
             Permission::Read
+        ));
+    }
+
+    #[test]
+    fn test_check_permission_doctype_scoped() {
+        let reg = DynamicRolePermissionRegistry::with_defaults();
+        let accountant = vec![ROLE_ACCOUNTANT_USER.to_string()];
+        let worker = vec![ROLE_WORKER_USER.to_string()];
+        let admin = vec![ROLE_ADMINISTRATOR.to_string()];
+
+        // 1. Accountant can read Sales Invoice
+        assert!(check_permission(
+            &accountant,
+            &reg.permission_edges,
+            "Sales Invoice",
+            Permission::Read,
+            0
+        ));
+
+        // 2. Accountant cannot create Timesheet (only worker has create)
+        assert!(!check_permission(
+            &accountant,
+            &reg.permission_edges,
+            "Timesheet",
+            Permission::Create,
+            0
+        ));
+
+        // 3. Worker can read Job Card, but NOT GL Entry
+        assert!(check_permission(
+            &worker,
+            &reg.permission_edges,
+            "Job Card",
+            Permission::Read,
+            0
+        ));
+        assert!(!check_permission(
+            &worker,
+            &reg.permission_edges,
+            "GL Entry",
+            Permission::Read,
+            0
+        ));
+
+        // 4. Doctype scoping prevents cross-doctype permission leakage
+        assert!(!check_permission(
+            &worker,
+            &reg.permission_edges,
+            "Sales Invoice",
+            Permission::Read,
+            0
+        ));
+
+        // 5. Admin bypasses all checks on any doctype
+        assert!(check_permission(
+            &admin,
+            &[],
+            "AnyDocType",
+            Permission::Delete,
+            0
         ));
     }
 }

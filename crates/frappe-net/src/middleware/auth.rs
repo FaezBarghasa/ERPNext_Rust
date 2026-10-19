@@ -67,24 +67,26 @@ impl SecurityContext {
         }
     }
 
-    /// Evaluates whether the security context has permission for a specific operation.
+    /// Evaluates whether the security context has permission for a specific operation on a target DocType.
     pub fn check_perm(
         &self,
         permission_edges: &[HasPermissionEdge],
+        target_doctype: &str,
         perm: Permission,
         permlevel: u8,
     ) -> bool {
-        check_permission(&self.claims.roles, permission_edges, perm, permlevel)
+        check_permission(&self.claims.roles, permission_edges, target_doctype, perm, permlevel)
     }
 
-    /// Enforces that the security context has permission for a specific operation, returning an error if denied.
+    /// Enforces that the security context has permission for a specific operation on a target DocType, returning an error if denied.
     pub fn require_perm(
         &self,
         permission_edges: &[HasPermissionEdge],
+        target_doctype: &str,
         perm: Permission,
         permlevel: u8,
     ) -> Result<(), AuthError> {
-        if self.check_perm(permission_edges, perm, permlevel) {
+        if self.check_perm(permission_edges, target_doctype, perm, permlevel) {
             Ok(())
         } else {
             Err(AuthError::PermissionDenied(perm))
