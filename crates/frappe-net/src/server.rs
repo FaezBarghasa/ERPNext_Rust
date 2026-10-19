@@ -2542,7 +2542,7 @@ async fn get_analytics_summary_handler(
 // Webhook Subscription Management Handlers (RBAC Hardened)
 // ---------------------------------------------------------------------------
 
-#[instrument(skip(req, pool_mgr, payload))]
+#[instrument(skip(req, pool_mgr, payload, rbac_state))]
 async fn create_webhook_subscription_handler(
     req: HttpRequest,
     pool_mgr: web::Data<ConnectionPoolManager>,
@@ -2552,14 +2552,17 @@ async fn create_webhook_subscription_handler(
     TOTAL_REQUESTS.fetch_add(1, Ordering::Relaxed);
     if let Some(ctx) = req.extensions().get::<SecurityContext>() {
         let allowed = if let Some(state) = &rbac_state {
-            let reg = state.registry.read().await;
-            check_permission(
-                &ctx.claims.roles,
-                &reg.permission_edges,
-                "Webhook Subscription",
-                Permission::Write,
-                0,
-            )
+            if let Ok(reg) = state.registry.read() {
+                check_permission(
+                    &ctx.claims.roles,
+                    &reg.permission_edges,
+                    "Webhook Subscription",
+                    Permission::Write,
+                    0,
+                )
+            } else {
+                false
+            }
         } else {
             check_permission(
                 &ctx.claims.roles,
@@ -2600,7 +2603,7 @@ async fn create_webhook_subscription_handler(
     }
 }
 
-#[instrument(skip(req, pool_mgr))]
+#[instrument(skip(req, pool_mgr, rbac_state))]
 async fn list_webhook_subscriptions_handler(
     req: HttpRequest,
     pool_mgr: web::Data<ConnectionPoolManager>,
@@ -2609,14 +2612,17 @@ async fn list_webhook_subscriptions_handler(
     TOTAL_REQUESTS.fetch_add(1, Ordering::Relaxed);
     if let Some(ctx) = req.extensions().get::<SecurityContext>() {
         let allowed = if let Some(state) = &rbac_state {
-            let reg = state.registry.read().await;
-            check_permission(
-                &ctx.claims.roles,
-                &reg.permission_edges,
-                "Webhook Subscription",
-                Permission::Read,
-                0,
-            )
+            if let Ok(reg) = state.registry.read() {
+                check_permission(
+                    &ctx.claims.roles,
+                    &reg.permission_edges,
+                    "Webhook Subscription",
+                    Permission::Read,
+                    0,
+                )
+            } else {
+                false
+            }
         } else {
             check_permission(
                 &ctx.claims.roles,
@@ -2653,7 +2659,7 @@ async fn list_webhook_subscriptions_handler(
     }
 }
 
-#[instrument(skip(req, pool_mgr))]
+#[instrument(skip(req, pool_mgr, rbac_state))]
 async fn delete_webhook_subscription_handler(
     path: web::Path<String>,
     req: HttpRequest,
@@ -2663,14 +2669,17 @@ async fn delete_webhook_subscription_handler(
     TOTAL_REQUESTS.fetch_add(1, Ordering::Relaxed);
     if let Some(ctx) = req.extensions().get::<SecurityContext>() {
         let allowed = if let Some(state) = &rbac_state {
-            let reg = state.registry.read().await;
-            check_permission(
-                &ctx.claims.roles,
-                &reg.permission_edges,
-                "Webhook Subscription",
-                Permission::Write,
-                0,
-            )
+            if let Ok(reg) = state.registry.read() {
+                check_permission(
+                    &ctx.claims.roles,
+                    &reg.permission_edges,
+                    "Webhook Subscription",
+                    Permission::Write,
+                    0,
+                )
+            } else {
+                false
+            }
         } else {
             check_permission(
                 &ctx.claims.roles,
@@ -2730,14 +2739,17 @@ async fn run_plugin_handler(
     TOTAL_REQUESTS.fetch_add(1, Ordering::Relaxed);
     if let Some(ctx) = req.extensions().get::<SecurityContext>() {
         let allowed = if let Some(state) = &rbac_state {
-            let reg = state.registry.read().await;
-            check_permission(
-                &ctx.claims.roles,
-                &reg.permission_edges,
-                "Plugin",
-                Permission::Execute,
-                0,
-            )
+            if let Ok(reg) = state.registry.read() {
+                check_permission(
+                    &ctx.claims.roles,
+                    &reg.permission_edges,
+                    "Plugin",
+                    Permission::Execute,
+                    0,
+                )
+            } else {
+                false
+            }
         } else {
             check_permission(
                 &ctx.claims.roles,

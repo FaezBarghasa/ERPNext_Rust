@@ -230,7 +230,7 @@ pub fn compile_filters_to_surrealql(filters_json: &str) -> Option<String> {
 }
 
 /// Helper to evaluate route permission against DynamicRolePermissionRegistry.
-pub async fn evaluate_route_permission(
+pub fn evaluate_route_permission(
     ctx: Option<&SecurityContext>,
     rbac_state: Option<&web::Data<DynamicRbacState>>,
     doctype: &str,
@@ -241,14 +241,17 @@ pub async fn evaluate_route_permission(
         return false;
     };
     if let Some(state) = rbac_state {
-        let reg = state.registry.read().await;
-        check_permission(
-            &ctx.claims.roles,
-            &reg.permission_edges,
-            doctype,
-            perm,
-            target_permlevel,
-        )
+        if let Ok(reg) = state.registry.read() {
+            check_permission(
+                &ctx.claims.roles,
+                &reg.permission_edges,
+                doctype,
+                perm,
+                target_permlevel,
+            )
+        } else {
+            false
+        }
     } else {
         check_permission(&ctx.claims.roles, &[], doctype, perm, target_permlevel)
     }
@@ -275,8 +278,7 @@ pub async fn v2_list_document(
             &doctype,
             Permission::Read,
             0,
-        )
-        .await;
+        );
         if !allowed {
             return HttpResponse::Forbidden().json(serde_json::json!({
                 "error": format!("Permission Denied: insufficient read privileges for DocType '{doctype}'")
@@ -320,21 +322,24 @@ pub async fn v2_list_document(
             .any(|r| r == ROLE_SYSTEM_MANAGER || r == ROLE_ADMINISTRATOR);
         if !is_admin {
             if let Some(state) = &rbac_state {
-                let users_guard = state.users.read().await;
-                if let Some(user) = users_guard
-                    .iter()
-                    .find(|u| u.id == ctx.claims.sub || u.email == ctx.claims.sub)
-                {
-                    if !user.allowed_companies.is_empty()
-                        && !user.allowed_companies.contains(&"*".to_string())
+                if let Ok(users_guard) = state.users.read() {
+                    if let Some(user) = users_guard
+                        .iter()
+                        .find(|u| u.id == ctx.claims.sub || u.email == ctx.claims.sub)
                     {
-                        let formatted = user
-                            .allowed_companies
-                            .iter()
-                            .map(|c| format!("\"{c}\""))
-                            .collect::<Vec<_>>()
-                            .join(", ");
-                        Some(format!("(company IN [{formatted}] OR company IS NULL)"))
+                        if !user.allowed_companies.is_empty()
+                            && !user.allowed_companies.contains(&"*".to_string())
+                        {
+                            let formatted = user
+                                .allowed_companies
+                                .iter()
+                                .map(|c| format!("\"{c}\""))
+                                .collect::<Vec<_>>()
+                                .join(", ");
+                            Some(format!("(company IN [{formatted}] OR company IS NULL)"))
+                        } else {
+                            None
+                        }
                     } else {
                         None
                     }
@@ -412,8 +417,7 @@ pub async fn v2_get_document(
             &doctype,
             Permission::Read,
             0,
-        )
-        .await;
+        );
         if !allowed {
             return HttpResponse::Forbidden().json(serde_json::json!({
                 "error": format!("Permission Denied: insufficient read privileges for DocType '{doctype}'")
@@ -495,8 +499,7 @@ pub async fn v2_print_document(
             &doctype,
             Permission::Read,
             0,
-        )
-        .await;
+        );
         if !allowed {
             return HttpResponse::Forbidden().json(serde_json::json!({
                 "error": format!("Permission Denied: insufficient read privileges for DocType '{doctype}'")
@@ -554,8 +557,7 @@ pub async fn v2_create_document(
             &doctype,
             Permission::Create,
             0,
-        )
-        .await;
+        );
         if !allowed {
             return HttpResponse::Forbidden().json(serde_json::json!({
                 "error": format!("Permission Denied: insufficient create privileges for DocType '{doctype}'")
@@ -718,8 +720,7 @@ pub async fn v2_update_document(
             &doctype,
             Permission::Write,
             0,
-        )
-        .await;
+        );
         if !allowed {
             return HttpResponse::Forbidden().json(serde_json::json!({
                 "error": format!("Permission Denied: insufficient write privileges for DocType '{doctype}'")
@@ -785,8 +786,7 @@ pub async fn v2_delete_document(
             &doctype,
             Permission::Delete,
             0,
-        )
-        .await;
+        );
         if !allowed {
             return HttpResponse::Forbidden().json(serde_json::json!({
                 "error": format!("Permission Denied: insufficient delete privileges for DocType '{doctype}'")
@@ -873,8 +873,7 @@ pub async fn v2_submit_document(
             &doctype,
             Permission::Submit,
             0,
-        )
-        .await;
+        );
         if !allowed {
             return HttpResponse::Forbidden().json(serde_json::json!({
                 "error": format!("Permission Denied: insufficient submit privileges for DocType '{doctype}'")
@@ -1492,8 +1491,7 @@ pub async fn v2_cancel_document(
             &doctype,
             Permission::Cancel,
             0,
-        )
-        .await;
+        );
         if !allowed {
             return HttpResponse::Forbidden().json(serde_json::json!({
                 "error": format!("Permission Denied: insufficient cancel privileges for DocType '{doctype}'")
@@ -1698,8 +1696,7 @@ pub async fn v2_amend_document(
             &doctype,
             Permission::Create,
             0,
-        )
-        .await;
+        );
         if !allowed {
             return HttpResponse::Forbidden().json(serde_json::json!({
                 "error": format!("Permission Denied: insufficient create privileges for DocType '{doctype}'")
@@ -2622,6 +2619,12 @@ pub struct DynamicRbacState {
     pub music_catalog: Arc<RwLock<HashMap<String, erp_cms::audio_intelligence::TrackLinerNotes>>>,
     pub radio_registry: Arc<erp_cms::audio_live_radio::LiveRadioRegistry>,
     pub bookmark_registry: Arc<erp_cms::audio_book_sync::AudioBookmarkRegistry>,
+}
+
+impl std::fmt::Debug for DynamicRbacState {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("DynamicRbacState").finish()
+    }
 }
 
 impl Default for DynamicRbacState {

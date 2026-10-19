@@ -13,7 +13,7 @@ use std::sync::LazyLock;
 static SAFE_ID_REGEX: LazyLock<Regex> =
     LazyLock::new(|| Regex::new(r"^[a-zA-Z0-9_-]+$").expect("Regex compile"));
 
-async fn check_route_perm(
+fn check_route_perm(
     ctx: &SecurityContext,
     rbac_state: Option<&web::Data<DynamicRbacState>>,
     doctype: &str,
@@ -21,14 +21,17 @@ async fn check_route_perm(
     permlevel: u8,
 ) -> bool {
     if let Some(state) = rbac_state {
-        let reg = state.registry.read().await;
-        check_permission(
-            &ctx.claims.roles,
-            &reg.permission_edges,
-            doctype,
-            perm,
-            permlevel,
-        )
+        if let Ok(reg) = state.registry.read() {
+            check_permission(
+                &ctx.claims.roles,
+                &reg.permission_edges,
+                doctype,
+                perm,
+                permlevel,
+            )
+        } else {
+            false
+        }
     } else {
         check_permission(&ctx.claims.roles, &[], doctype, perm, permlevel)
     }
@@ -56,7 +59,7 @@ pub async fn list_resource(
     };
 
     if let Some(ctx) = req.extensions().get::<SecurityContext>()
-        && !check_route_perm(ctx, rbac_state.as_ref(), &doctype, Permission::Read, 0).await
+        && !check_route_perm(ctx, rbac_state.as_ref(), &doctype, Permission::Read, 0)
     {
         return HttpResponse::Forbidden().json(serde_json::json!({
             "error": format!("Permission Denied: insufficient read privileges for DocType '{doctype}'")
@@ -105,7 +108,7 @@ pub async fn get_resource(
     };
 
     if let Some(ctx) = req.extensions().get::<SecurityContext>()
-        && !check_route_perm(ctx, rbac_state.as_ref(), &doctype, Permission::Read, 0).await
+        && !check_route_perm(ctx, rbac_state.as_ref(), &doctype, Permission::Read, 0)
     {
         return HttpResponse::Forbidden().json(serde_json::json!({
             "error": format!("Permission Denied: insufficient read privileges for DocType '{doctype}'")
@@ -150,7 +153,7 @@ pub async fn create_resource(
     };
 
     if let Some(ctx) = req.extensions().get::<SecurityContext>()
-        && !check_route_perm(ctx, rbac_state.as_ref(), &doctype, Permission::Create, 0).await
+        && !check_route_perm(ctx, rbac_state.as_ref(), &doctype, Permission::Create, 0)
     {
         return HttpResponse::Forbidden().json(serde_json::json!({
             "error": format!("Permission Denied: insufficient create privileges for DocType '{doctype}'")
@@ -222,7 +225,7 @@ pub async fn delete_resource(
     };
 
     if let Some(ctx) = req.extensions().get::<SecurityContext>()
-        && !check_route_perm(ctx, rbac_state.as_ref(), &doctype, Permission::Delete, 0).await
+        && !check_route_perm(ctx, rbac_state.as_ref(), &doctype, Permission::Delete, 0)
     {
         return HttpResponse::Forbidden().json(serde_json::json!({
             "error": format!("Permission Denied: insufficient delete privileges for DocType '{doctype}'")
