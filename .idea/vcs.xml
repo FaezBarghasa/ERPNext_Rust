@@ -2,5 +2,8 @@
 <project version="4">
   <component name="VcsDirectoryMappings">
     <mapping directory="" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/third_party/erpnext" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/third_party/frappe" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/third_party/frappe-ui" vcs="Git" />
   </component>
 </project>

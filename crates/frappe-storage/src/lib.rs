@@ -139,13 +139,41 @@ impl LiveDiff {
     }
 }
 
-/// Helper function to generate SurrealQL RELATE graph edge statement.
+/// Helper function to generate SurrealQL RELATE graph edge statement with sanitized identifiers.
+///
+/// NOTE: For strongly typed parameter bindings with arbitrary payloads, prefer
+/// [`crate::surreal::execute_relate`].
 #[must_use]
 pub fn relate(a: &str, verb: &str, b: &str, attrs: &str) -> String {
-    if attrs.is_empty() {
-        format!("RELATE {a}->{verb}->{b};")
+    // Strip control characters, semicolons, and comment prefixes to prevent injection
+    let clean_a: String = a
+        .chars()
+        .filter(|c| c.is_alphanumeric() || matches!(c, '_' | ':' | '-'))
+        .collect();
+    let clean_verb: String = verb
+        .chars()
+        .filter(|c| c.is_alphanumeric() || *c == '_')
+        .collect();
+    let clean_b: String = b
+        .chars()
+        .filter(|c| c.is_alphanumeric() || matches!(c, '_' | ':' | '-'))
+        .collect();
+
+    // Ensure attrs cannot chain SQL commands or include comments
+    let safe_attrs = if attrs.contains(';')
+        || attrs.contains("--")
+        || attrs.contains("/*")
+        || attrs.contains('\0')
+    {
+        ""
     } else {
-        format!("RELATE {a}->{verb}->{b} SET {attrs};")
+        attrs.trim()
+    };
+
+    if safe_attrs.is_empty() {
+        format!("RELATE {clean_a}->{clean_verb}->{clean_b};")
+    } else {
+        format!("RELATE {clean_a}->{clean_verb}->{clean_b} SET {safe_attrs};")
     }
 }
 

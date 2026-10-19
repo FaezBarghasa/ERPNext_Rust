@@ -70,6 +70,24 @@ pub async fn execute_relate<C: Connection>(
     to_record: &str,
     payload: Option<&serde_json::Value>,
 ) -> Result<()> {
+    if from_record.contains(';')
+        || from_record.contains('\0')
+        || from_record.contains("--")
+        || from_record.contains("/*")
+        || edge_table.contains(';')
+        || edge_table.contains('\0')
+        || edge_table.contains("--")
+        || edge_table.contains("/*")
+        || to_record.contains(';')
+        || to_record.contains('\0')
+        || to_record.contains("--")
+        || to_record.contains("/*")
+    {
+        return Err(surrealdb::Error::thrown(
+            "Unsafe characters or SQL comments detected in RELATE parameters".to_string(),
+        ));
+    }
+
     let query = if payload.is_some() {
         format!("RELATE {from_record}->{edge_table}->{to_record} CONTENT $payload;")
     } else {
