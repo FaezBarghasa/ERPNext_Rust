@@ -3,8 +3,8 @@ use compact_str::CompactString;
 use rayon::prelude::*;
 use rust_decimal::Decimal;
 use serde::{Deserialize, Serialize};
-use std::collections::{BTreeSet, HashMap};
 use std::collections::hash_map::DefaultHasher;
+use std::collections::{BTreeSet, HashMap};
 use std::hash::{Hash, Hasher};
 use std::sync::{Condvar, Mutex};
 
