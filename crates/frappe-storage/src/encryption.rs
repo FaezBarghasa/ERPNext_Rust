@@ -38,8 +38,8 @@ impl EnvelopeEncryption {
     /// Derives a deterministic 256-bit tenant Data Encryption Key (DEK) using HMAC-SHA256.
     #[must_use]
     pub fn derive_tenant_dek(&self, tenant_id: &str) -> [u8; 32] {
-        let mut mac = HmacSha256::new_from_slice(&self.master_kek)
-            .expect("HMAC can accept key of any size");
+        let mut mac =
+            HmacSha256::new_from_slice(&self.master_kek).expect("HMAC can accept key of any size");
         mac.update(b"tenant-dek:");
         mac.update(tenant_id.as_bytes());
         mac.finalize().into_bytes().into()
@@ -166,13 +166,7 @@ mod tests {
         assert_ne!(c1, c2);
 
         // Both decrypt to identical plaintext
-        assert_eq!(
-            encryption.decrypt_field(tenant, &c1, aad).unwrap(),
-            secret
-        );
-        assert_eq!(
-            encryption.decrypt_field(tenant, &c2, aad).unwrap(),
-            secret
-        );
+        assert_eq!(encryption.decrypt_field(tenant, &c1, aad).unwrap(), secret);
+        assert_eq!(encryption.decrypt_field(tenant, &c2, aad).unwrap(), secret);
     }
 }

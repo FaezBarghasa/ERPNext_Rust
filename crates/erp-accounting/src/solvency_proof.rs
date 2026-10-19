@@ -283,9 +283,7 @@ impl ZkSolvencyEngine {
     }
 
     /// Cryptographically verifies an Account Inclusion Proof against the committed root in $O(\log N)$ time.
-    pub fn verify_account_proof(
-        proof: &AccountInclusionProof,
-    ) -> Result<bool, SolvencyProofError> {
+    pub fn verify_account_proof(proof: &AccountInclusionProof) -> Result<bool, SolvencyProofError> {
         let leaf = AccountLeaf {
             account_id: proof.account_id.clone(),
             category: proof.category,
@@ -341,14 +339,54 @@ mod tests {
 
     fn sample_balance_sheet() -> Vec<AccountLeaf> {
         vec![
-            AccountLeaf::new("1110 - Operating Cash", AccountCategory::Asset, dec!(250000.00), "salt_1"),
-            AccountLeaf::new("1120 - Treasury Bonds", AccountCategory::Asset, dec!(750000.00), "salt_2"),
-            AccountLeaf::new("1200 - Accounts Receivable", AccountCategory::Asset, dec!(180000.00), "salt_3"),
-            AccountLeaf::new("1300 - Raw Materials Inventory", AccountCategory::Asset, dec!(320000.00), "salt_4"),
-            AccountLeaf::new("2110 - Trade Creditors AP", AccountCategory::Liability, dec!(140000.00), "salt_5"),
-            AccountLeaf::new("2120 - Short-Term Bank Facility", AccountCategory::Liability, dec!(260000.00), "salt_6"),
-            AccountLeaf::new("2210 - Output VAT Payable", AccountCategory::Liability, dec!(35000.00), "salt_7"),
-            AccountLeaf::new("3110 - Share Capital", AccountCategory::Equity, dec!(1000000.00), "salt_8"),
+            AccountLeaf::new(
+                "1110 - Operating Cash",
+                AccountCategory::Asset,
+                dec!(250000.00),
+                "salt_1",
+            ),
+            AccountLeaf::new(
+                "1120 - Treasury Bonds",
+                AccountCategory::Asset,
+                dec!(750000.00),
+                "salt_2",
+            ),
+            AccountLeaf::new(
+                "1200 - Accounts Receivable",
+                AccountCategory::Asset,
+                dec!(180000.00),
+                "salt_3",
+            ),
+            AccountLeaf::new(
+                "1300 - Raw Materials Inventory",
+                AccountCategory::Asset,
+                dec!(320000.00),
+                "salt_4",
+            ),
+            AccountLeaf::new(
+                "2110 - Trade Creditors AP",
+                AccountCategory::Liability,
+                dec!(140000.00),
+                "salt_5",
+            ),
+            AccountLeaf::new(
+                "2120 - Short-Term Bank Facility",
+                AccountCategory::Liability,
+                dec!(260000.00),
+                "salt_6",
+            ),
+            AccountLeaf::new(
+                "2210 - Output VAT Payable",
+                AccountCategory::Liability,
+                dec!(35000.00),
+                "salt_7",
+            ),
+            AccountLeaf::new(
+                "3110 - Share Capital",
+                AccountCategory::Equity,
+                dec!(1000000.00),
+                "salt_8",
+            ),
         ]
     }
 
@@ -362,7 +400,10 @@ mod tests {
 
         let duration = start.elapsed();
         // Verification / generation SLA: < 15ms
-        assert!(duration.as_millis() < 15, "Proof generation exceeded 15ms SLA");
+        assert!(
+            duration.as_millis() < 15,
+            "Proof generation exceeded 15ms SLA"
+        );
 
         // Total Assets: 250k + 750k + 180k + 320k = 1,500,000.00
         assert_eq!(proof.total_assets, dec!(1500000.00));
@@ -377,7 +418,12 @@ mod tests {
     fn test_insolvent_balance_sheet_rejection() {
         let accounts = vec![
             AccountLeaf::new("1110 - Bank", AccountCategory::Asset, dec!(50000.00), "s1"),
-            AccountLeaf::new("2110 - Term Loan", AccountCategory::Liability, dec!(200000.00), "s2"),
+            AccountLeaf::new(
+                "2110 - Term Loan",
+                AccountCategory::Liability,
+                dec!(200000.00),
+                "s2",
+            ),
         ];
 
         let err = ZkSolvencyEngine::generate_solvency_proof(&accounts);
@@ -399,13 +445,16 @@ mod tests {
         assert_eq!(proof.steps.len(), 3); // log2(8) = 3 steps
 
         let start = Instant::now();
-        let is_valid = ZkSolvencyEngine::verify_account_proof(&proof)
-            .expect("Proof verification failed");
+        let is_valid =
+            ZkSolvencyEngine::verify_account_proof(&proof).expect("Proof verification failed");
         let duration = start.elapsed();
 
         assert!(is_valid);
         // Non-interactive verification: < 1ms
-        assert!(duration.as_millis() < 5, "Verification took longer than 5ms");
+        assert!(
+            duration.as_millis() < 5,
+            "Verification took longer than 5ms"
+        );
 
         // Tampering detection: Altering balance causes verification failure
         let mut tampered_proof = proof.clone();

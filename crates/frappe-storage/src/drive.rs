@@ -143,7 +143,7 @@ impl DeduplicatedStorage {
             .collect();
 
         // 1. Physical disk persistence
-        let (file_path_str, disk_duplicate) = if let Some(ref root) = self.root_path {
+        let file_path_str = if let Some(ref root) = self.root_path {
             let shard = if content_hash.len() >= 2 {
                 &content_hash[0..2]
             } else {
@@ -152,8 +152,7 @@ impl DeduplicatedStorage {
             let shard_dir = root.join(shard);
             let target_path = shard_dir.join(&content_hash);
 
-            let existed = target_path.exists();
-            if !existed {
+            if !target_path.exists() {
                 std::fs::create_dir_all(&shard_dir)?;
                 let tmp_filename = format!(
                     "{}.tmp.{}_{}",
@@ -178,9 +177,9 @@ impl DeduplicatedStorage {
                 .unwrap_or_else(|_| target_path.clone())
                 .to_string_lossy()
                 .to_string();
-            (Some(canonical), existed)
+            Some(canonical)
         } else {
-            (None, false)
+            None
         };
 
         // 2. In-memory cache & deduplication check
@@ -189,8 +188,8 @@ impl DeduplicatedStorage {
             .write()
             .map_err(|e| StorageError::UploadFailed(e.to_string()))?;
 
-        let is_duplicate = payloads.contains_key(&content_hash) || disk_duplicate;
-        if !payloads.contains_key(&content_hash) {
+        let is_duplicate = payloads.contains_key(&content_hash);
+        if !is_duplicate {
             payloads.insert(content_hash.clone(), data.to_vec());
         }
 
@@ -512,7 +511,9 @@ mod tests {
             owner: "admin".into(),
             is_public: false,
         };
-        storage.create_folder(folder.clone()).expect("create folder");
+        storage
+            .create_folder(folder.clone())
+            .expect("create folder");
         let retrieved = storage.get_folder("folder_finance").expect("get folder");
         assert_eq!(retrieved, folder);
 

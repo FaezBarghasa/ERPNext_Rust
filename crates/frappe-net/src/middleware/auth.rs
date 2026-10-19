@@ -75,7 +75,13 @@ impl SecurityContext {
         perm: Permission,
         permlevel: u8,
     ) -> bool {
-        check_permission(&self.claims.roles, permission_edges, target_doctype, perm, permlevel)
+        check_permission(
+            &self.claims.roles,
+            permission_edges,
+            target_doctype,
+            perm,
+            permlevel,
+        )
     }
 
     /// Enforces that the security context has permission for a specific operation on a target DocType, returning an error if denied.

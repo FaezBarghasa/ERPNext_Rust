@@ -23,14 +23,14 @@ pub mod print_format;
 pub mod purchase_invoice;
 pub mod receivables;
 pub mod report_engine;
+pub mod solvency_proof;
 pub mod tax_engine;
 pub mod tax_withholding;
 pub mod treasury;
-pub mod solvency_proof;
 
 pub use solvency_proof::{
-    AccountCategory, AccountInclusionProof, AccountLeaf, BalanceSheetSolvencyProof,
-    MerkleSumNode, MerkleSumProofStep, SolvencyProofError, ZkSolvencyEngine,
+    AccountCategory, AccountInclusionProof, AccountLeaf, BalanceSheetSolvencyProof, MerkleSumNode,
+    MerkleSumProofStep, SolvencyProofError, ZkSolvencyEngine,
 };
 
 pub use payment_entry::{

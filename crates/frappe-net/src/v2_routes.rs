@@ -1891,20 +1891,19 @@ pub async fn download_file_handler(
     let hash = path.into_inner();
 
     // 1. Fast path: Read from DeduplicatedStorage (memory cache or CAS disk)
-    if let Some(ref rbac) = rbac_state {
-        if let Ok(bytes) = rbac.storage.read_by_hash(&hash) {
-            return HttpResponse::Ok()
-                .insert_header(("Content-Type", "application/octet-stream"))
-                .insert_header(("ETag", format!("\"{hash}\"")))
-                .insert_header(("Cache-Control", "public, max-age=31536000, immutable"))
-                .insert_header((
-                    "Alt-Svc",
-                    crate::quic_h3_stream::QuicH3StreamingEngine::generate_alt_svc_header(
-                        4433, 86400,
-                    ),
-                ))
-                .body(bytes);
-        }
+    if let Some(bytes) = rbac_state
+        .as_ref()
+        .and_then(|r| r.storage.read_by_hash(&hash).ok())
+    {
+        return HttpResponse::Ok()
+            .insert_header(("Content-Type", "application/octet-stream"))
+            .insert_header(("ETag", format!("\"{hash}\"")))
+            .insert_header(("Cache-Control", "public, max-age=31536000, immutable"))
+            .insert_header((
+                "Alt-Svc",
+                crate::quic_h3_stream::QuicH3StreamingEngine::generate_alt_svc_header(4433, 86400),
+            ))
+            .body(bytes);
     }
 
     // 2. Fallback to SurrealDB drive_file for legacy records that stored raw hex data
@@ -10156,8 +10155,7 @@ mod tests {
             .await
             .ok()
             .expect("read body");
-        let body_json: serde_json::Value =
-            serde_json::from_slice(&body_bytes).expect("parse json");
+        let body_json: serde_json::Value = serde_json::from_slice(&body_bytes).expect("parse json");
         let hash = body_json["content_hash"]
             .as_str()
             .expect("hash string")

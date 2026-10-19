@@ -2751,13 +2751,7 @@ async fn run_plugin_handler(
                 false
             }
         } else {
-            check_permission(
-                &ctx.claims.roles,
-                &[],
-                "Plugin",
-                Permission::Execute,
-                0,
-            )
+            check_permission(&ctx.claims.roles, &[], "Plugin", Permission::Execute, 0)
         };
         if !allowed {
             return HttpResponse::Forbidden().json(serde_json::json!({
