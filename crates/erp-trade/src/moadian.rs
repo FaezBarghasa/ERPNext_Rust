@@ -6,12 +6,17 @@
 //! - Automated VAT calculation (10% standard rate) and discount proration
 //! - Cryptographic canonical JSON SHA-256 payload digest for INTA API submission.
 
+use base64::engine::general_purpose::STANDARD as BASE64_STANDARD;
+use base64::Engine;
 use chrono::{DateTime, Utc};
 use compact_str::CompactString;
+use p256::ecdsa::signature::{Signer, Verifier};
+use p256::ecdsa::{Signature, SigningKey, VerifyingKey};
 use rust_decimal::Decimal;
 use rust_decimal_macros::dec;
 use serde::{Deserialize, Serialize};
 use sha2::{Digest, Sha256};
+use std::collections::BTreeMap;
 use thiserror::Error;
 
 /// Moadian e-invoicing errors.
@@ -25,6 +30,12 @@ pub enum MoadianError {
     MissingSellerTaxId,
     #[error("Invoice contains no item lines")]
     EmptyInvoice,
+    #[error("Serialization error: {0}")]
+    SerializationError(String),
+    #[error("Signing error: {0}")]
+    SigningError(String),
+    #[error("Verification error: {0}")]
+    VerificationError(String),
 }
 
 /// Invoice subject status (ins).
@@ -239,14 +250,95 @@ impl MoadianInvoicePayload {
         })
     }
 
+    /// Produces a canonical JSON string with sorted keys at all levels and compact formatting.
+    pub fn to_canonical_json(&self) -> Result<String, MoadianError> {
+        let val = serde_json::to_value(self)
+            .map_err(|e| MoadianError::SerializationError(e.to_string()))?;
+        let canonical_val = Self::canonicalize_value(val);
+        serde_json::to_string(&canonical_val)
+            .map_err(|e| MoadianError::SerializationError(e.to_string()))
+    }
+
+    fn canonicalize_value(val: serde_json::Value) -> serde_json::Value {
+        match val {
+            serde_json::Value::Object(map) => {
+                let mut btree = BTreeMap::new();
+                for (k, v) in map {
+                    btree.insert(k, Self::canonicalize_value(v));
+                }
+                serde_json::Value::Object(btree.into_iter().collect())
+            }
+            serde_json::Value::Array(arr) => {
+                serde_json::Value::Array(arr.into_iter().map(Self::canonicalize_value).collect())
+            }
+            other => other,
+        }
+    }
+
     /// Computes canonical SHA-256 payload digest for digital signing.
     #[must_use]
     pub fn compute_payload_hash(&self) -> String {
-        let json_bytes = serde_json::to_vec(self).unwrap_or_default();
+        let json_bytes = self.to_canonical_json().unwrap_or_else(|_| serde_json::to_string(self).unwrap_or_default());
         let mut hasher = Sha256::new();
-        hasher.update(&json_bytes);
+        hasher.update(json_bytes.as_bytes());
         hex::encode(hasher.finalize())
     }
+
+    /// Signs the canonical payload using ECDSA P-256 / SHA-256 and formats the envelope for INTA API v2.
+    pub fn sign_envelope(
+        &self,
+        fiscal_id: &str,
+        signing_key: &SigningKey,
+        encryption_key_id: Option<&str>,
+    ) -> Result<MoadianSignedEnvelope, MoadianError> {
+        let canonical_json = self.to_canonical_json()?;
+        let signature_base64 = sign_canonical_payload(&canonical_json, signing_key)?;
+
+        Ok(MoadianSignedEnvelope {
+            packet_type: "INVOICE.V02".to_string(),
+            fiscal_id: fiscal_id.to_string(),
+            data: canonical_json,
+            encryption_key_id: encryption_key_id.map(ToString::to_string),
+            signature: signature_base64,
+        })
+    }
+}
+
+/// Signed Moadian E-Invoice packet formatted according to INTA API v2 specifications.
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+pub struct MoadianSignedEnvelope {
+    #[serde(rename = "packetType")]
+    pub packet_type: String, // "INVOICE.V02"
+    #[serde(rename = "fiscalId")]
+    pub fiscal_id: String,
+    pub data: String, // Canonical JSON payload
+    #[serde(rename = "encryptionKeyId", skip_serializing_if = "Option::is_none")]
+    pub encryption_key_id: Option<String>,
+    pub signature: String, // Base64 DER ECDSA P-256 signature
+}
+
+/// Signs canonical UTF-8 JSON bytes using ECDSA P-256 and returns a Base64-encoded DER signature.
+pub fn sign_canonical_payload(
+    canonical_json: &str,
+    signing_key: &SigningKey,
+) -> Result<String, MoadianError> {
+    let signature: Signature = signing_key.sign(canonical_json.as_bytes());
+    let der_bytes = signature.to_der();
+    Ok(BASE64_STANDARD.encode(der_bytes.as_bytes()))
+}
+
+/// Verifies a Base64-encoded DER ECDSA P-256 signature against canonical JSON payload.
+pub fn verify_canonical_payload_signature(
+    canonical_json: &str,
+    signature_base64: &str,
+    verifying_key: &VerifyingKey,
+) -> Result<bool, MoadianError> {
+    let der_bytes = BASE64_STANDARD
+        .decode(signature_base64.trim())
+        .map_err(|e| MoadianError::VerificationError(format!("Invalid Base64 signature: {e}")))?;
+    let signature = Signature::from_der(&der_bytes)
+        .map_err(|e| MoadianError::VerificationError(format!("Invalid DER signature: {e}")))?;
+    Ok(verifying_key.verify(canonical_json.as_bytes(), &signature).is_ok())
 }
 
 #[cfg(test)]
@@ -312,4 +404,75 @@ mod tests {
         let hash = invoice.compute_payload_hash();
         assert_eq!(hash.len(), 64); // SHA-256 hex string
     }
+
+    #[test]
+    fn test_moadian_canonical_json_and_ecdsa_p256_signing() {
+        let dt = DateTime::from_timestamp(1760616000, 0).unwrap();
+        let tax_id = MoadianTaxIdGenerator::generate_tax_id("A12345", dt, 99).unwrap();
+
+        let items = vec![MoadianItemLine::new(
+            "2710000000001",
+            "High-Precision Thermal Sensor",
+            dec!(1.0),
+            dec!(500.0),
+            Decimal::ZERO,
+            dec!(10.0),
+        )];
+
+        let invoice = MoadianInvoicePayload::new(MoadianInvoiceParams {
+            taxid: &tax_id,
+            inno: "INV-2026-999",
+            seller_tax_id: "14009999999",
+            buyer_national_id: None,
+            buyer_tax_id: None,
+            posting_datetime: dt,
+            status: MoadianInvoiceStatus::Main,
+            items,
+        })
+        .unwrap();
+
+        // 1. Verify canonical JSON serialization produces deterministic sorted keys
+        let canonical_json = invoice.to_canonical_json().expect("Canonical JSON");
+        assert!(canonical_json.starts_with(r#"{"body":[{"#));
+        assert!(canonical_json.contains(r#""header":{"#));
+
+        // 2. Instantiate a deterministic P-256 signing key
+        let test_scalar = [
+            0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0a, 0x0b, 0x0c, 0x0d, 0x0e,
+            0x0f, 0x10, 0x11, 0x12, 0x13, 0x14, 0x15, 0x16, 0x17, 0x18, 0x19, 0x1a, 0x1b, 0x1c,
+            0x1d, 0x1e, 0x1f, 0x20,
+        ];
+        let signing_key = SigningKey::from_slice(&test_scalar).expect("Deterministic valid P-256 scalar");
+        let verifying_key = VerifyingKey::from(&signing_key);
+
+        // 3. Sign invoice envelope
+        let envelope = invoice
+            .sign_envelope("A12345", &signing_key, Some("KEY-01"))
+            .expect("Sign envelope");
+
+        assert_eq!(envelope.packet_type, "INVOICE.V02");
+        assert_eq!(envelope.fiscal_id, "A12345");
+        assert_eq!(envelope.encryption_key_id.as_deref(), Some("KEY-01"));
+        assert!(!envelope.signature.is_empty());
+
+        // 4. Verify valid signature
+        let is_valid = verify_canonical_payload_signature(
+            &envelope.data,
+            &envelope.signature,
+            &verifying_key,
+        )
+        .expect("Verify signature");
+        assert!(is_valid, "Signature must verify successfully");
+
+        // 5. Verify tampered payload fails verification
+        let tampered_data = envelope.data.replace("INV-2026-999", "INV-2026-TAMPERED");
+        let is_valid_tampered = verify_canonical_payload_signature(
+            &tampered_data,
+            &envelope.signature,
+            &verifying_key,
+        )
+        .expect("Verify signature");
+        assert!(!is_valid_tampered, "Tampered payload must fail signature check");
+    }
 }
+

@@ -2342,6 +2342,7 @@ dependencies = [
 name = "erp-trade"
 version = "0.3.0"
 dependencies = [
+ "base64 0.23.1",
  "chrono",
  "compact_str",
  "erp-accounting",
@@ -2349,6 +2350,7 @@ dependencies = [
  "frappe-framework",
  "frappe-meta",
  "hex",
+ "p256",
  "rust_decimal",
  "rust_decimal_macros",
  "serde",
