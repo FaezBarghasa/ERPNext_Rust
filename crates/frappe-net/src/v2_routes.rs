@@ -8,7 +8,23 @@
 //! - `/api/v2/document/:doctype/:name/amend` (Amend cancelled document: creates draft clone)
 //! - `/api/v2/method/upload_file` (Content-Addressable Storage upload with SHA-256 deduplication)
 //! - `/files/:hash` (Streaming file asset download with caching headers)
-//! - System endpoints: `/api/v2/method/login`, `logout`, `ping`.
+pub mod accounting;
+pub mod admin;
+pub mod audio;
+pub mod auth;
+pub mod document;
+pub mod inventory;
+pub mod media;
+pub mod trade;
+
+pub use accounting::configure as configure_accounting_routes;
+pub use admin::configure as configure_admin_routes;
+pub use audio::configure as configure_audio_routes;
+pub use auth::configure as configure_auth_routes;
+pub use document::configure as configure_document_routes;
+pub use inventory::configure as configure_inventory_routes;
+pub use media::configure as configure_media_routes;
+pub use trade::configure as configure_trade_routes;
 
 use crate::middleware::auth::{SecurityContext, get_master_token_secret};
 use crate::middleware::ip_filter::{IpFilterRule, IpRuleRegistry};
@@ -10124,8 +10140,10 @@ mod tests {
                 .map(|d| d.as_nanos())
                 .unwrap_or(0)
         ));
-        let mut rbac_state_inner = DynamicRbacState::default();
-        rbac_state_inner.storage = Arc::new(DeduplicatedStorage::with_path(&test_dir));
+        let rbac_state_inner = DynamicRbacState {
+            storage: Arc::new(DeduplicatedStorage::with_path(&test_dir)),
+            ..Default::default()
+        };
         let rbac_state = web::Data::new(rbac_state_inner);
 
         // 1. Upload valid Base64 document
