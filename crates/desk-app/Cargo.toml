@@ -27,3 +27,4 @@ smallvec = { workspace = true }
 thiserror = { workspace = true }
 tokio = { workspace = true }
 dioxus = { workspace = true }
+actix-web = { workspace = true }

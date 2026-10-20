@@ -301,88 +301,77 @@ async fn main() {
 }
 
 async fn run_standalone_desk_server(port: u16) {
-    use tokio::io::{AsyncReadExt, AsyncWriteExt};
-    use tokio::net::TcpListener;
+    use actix_web::{web, App, HttpResponse, HttpServer, Responder};
 
-    let addr = format!("127.0.0.1:{port}");
-    let listener = match TcpListener::bind(&addr).await {
-        Ok(l) => l,
-        Err(e) => {
-            eprintln!("Failed to bind to {addr}: {e}");
-            return;
-        }
-    };
+    let addr = ("127.0.0.1", port);
     println!();
-    println!("🚀 RustNext Standalone Desk server active!");
-    println!("   → Desk Home:      http://{addr}/desk");
-    println!("   → List View:      http://{addr}/desk/list/sales_invoice");
-    println!("   → Form View:      http://{addr}/desk/form/sales_invoice/new");
-    println!("   → Admin Cockpit:  http://{addr}/admin");
-    println!("   → Worker Kiosk:   http://{addr}/worker");
+    println!("🚀 RustNext Standalone Desk server active (Actix-Web SSR)! ");
+    println!("   → Desk Home:      http://127.0.0.1:{port}/desk");
+    println!("   → List View:      http://127.0.0.1:{port}/desk/list/sales_invoice");
+    println!("   → Form View:      http://127.0.0.1:{port}/desk/form/sales_invoice/new");
+    println!("   → Admin Cockpit:  http://127.0.0.1:{port}/admin");
+    println!("   → Worker Kiosk:   http://127.0.0.1:{port}/worker");
+    println!("   → Health Check:   http://127.0.0.1:{port}/api/health");
     println!("   Press Ctrl+C to terminate.");
 
-    while let Ok((mut socket, _)) = listener.accept().await {
-        tokio::spawn(async move {
-            let mut buf = [0u8; 4096];
-            if let Ok(n) = socket.read(&mut buf).await {
-                if n == 0 {
-                    return;
-                }
-                let req_str = String::from_utf8_lossy(&buf[..n]);
-                let path = req_str
-                    .lines()
-                    .next()
-                    .and_then(|l| l.split_whitespace().nth(1))
-                    .unwrap_or("/");
+    let server = HttpServer::new(|| {
+        App::new()
+            .route("/", web::get().to(handle_desk_home))
+            .route("/desk", web::get().to(handle_desk_home))
+            .route("/desk/list/{doctype}", web::get().to(handle_list_view))
+            .route("/desk/form/{doctype}/{docname}", web::get().to(handle_form_view))
+            .route("/admin", web::get().to(handle_admin_cockpit))
+            .route("/worker", web::get().to(handle_worker_kiosk))
+            .route("/api/health", web::get().to(handle_health_check))
+    })
+    .bind(addr);
 
-                let (status, content_type, body) = if path == "/" || path == "/desk" {
-                    (
-                        "200 OK",
-                        "text/html; charset=utf-8",
-                        desk_components::render_desk_shell_html("Enterprise Desk", "Administrator"),
-                    )
-                } else if let Some(doctype) = path.strip_prefix("/desk/list/") {
-                    (
-                        "200 OK",
-                        "text/html; charset=utf-8",
-                        desk_components::render_list_view_html(doctype, "Administrator"),
-                    )
-                } else if let Some(sub) = path.strip_prefix("/desk/form/") {
-                    let parts: Vec<&str> = sub.split('/').collect();
-                    let doctype = parts.first().copied().unwrap_or("document");
-                    let docname = parts.get(1).copied().unwrap_or("new");
-                    (
-                        "200 OK",
-                        "text/html; charset=utf-8",
-                        desk_components::render_form_view_html(doctype, docname, "Administrator"),
-                    )
-                } else if path == "/admin" {
-                    (
-                        "200 OK",
-                        "text/html; charset=utf-8",
-                        desk_app::render_admin_cockpit_html("Administrator"),
-                    )
-                } else if path == "/worker" {
-                    (
-                        "200 OK",
-                        "text/html; charset=utf-8",
-                        desk_app::render_worker_kiosk_html("Operator"),
-                    )
-                } else {
-                    (
-                        "200 OK",
-                        "text/html; charset=utf-8",
-                        desk_components::render_desk_shell_html("Enterprise Desk", "Administrator"),
-                    )
-                };
-
-                let response = format!(
-                    "HTTP/1.1 {status}\r\nContent-Type: {content_type}\r\nContent-Length: {}\r\nConnection: close\r\n\r\n{}",
-                    body.len(),
-                    body
-                );
-                let _ = socket.write_all(response.as_bytes()).await;
+    match server {
+        Ok(srv) => {
+            if let Err(e) = srv.run().await {
+                eprintln!("Server error: {e}");
             }
-        });
+        }
+        Err(e) => {
+            eprintln!("Failed to bind to 127.0.0.1:{port}: {e}");
+        }
     }
+}
+
+async fn handle_desk_home() -> impl actix_web::Responder {
+    actix_web::HttpResponse::Ok()
+        .content_type("text/html; charset=utf-8")
+        .body(desk_components::render_desk_shell_html("Enterprise Desk", "Administrator"))
+}
+
+async fn handle_list_view(path: actix_web::web::Path<String>) -> impl actix_web::Responder {
+    let doctype = path.into_inner();
+    actix_web::HttpResponse::Ok()
+        .content_type("text/html; charset=utf-8")
+        .body(desk_components::render_list_view_html(&doctype, "Administrator"))
+}
+
+async fn handle_form_view(path: actix_web::web::Path<(String, String)>) -> impl actix_web::Responder {
+    let (doctype, docname) = path.into_inner();
+    actix_web::HttpResponse::Ok()
+        .content_type("text/html; charset=utf-8")
+        .body(desk_components::render_form_view_html(&doctype, &docname, "Administrator"))
+}
+
+async fn handle_admin_cockpit() -> impl actix_web::Responder {
+    actix_web::HttpResponse::Ok()
+        .content_type("text/html; charset=utf-8")
+        .body(desk_app::render_admin_cockpit_html("Administrator"))
+}
+
+async fn handle_worker_kiosk() -> impl actix_web::Responder {
+    actix_web::HttpResponse::Ok()
+        .content_type("text/html; charset=utf-8")
+        .body(desk_app::render_worker_kiosk_html("Operator"))
+}
+
+async fn handle_health_check() -> impl actix_web::Responder {
+    actix_web::HttpResponse::Ok()
+        .content_type("application/json")
+        .body(r#"{"status":"healthy","runtime":"Dioxus 0.7 + Actix-Web SSR","version":"0.3.0"}"#)
 }

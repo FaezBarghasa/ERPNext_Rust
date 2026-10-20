@@ -1575,6 +1575,238 @@ pub fn render_form_view_html(doctype: &str, docname: &str, user_name: &str) -> S
     )
 }
 
+use crate::primitives::AwesomeBarItem;
+use dioxus::prelude::*;
+
+#[derive(Clone, Copy, PartialEq, Eq, Debug, Default, Serialize, Deserialize)]
+pub enum ThemeMode {
+    #[default]
+    Dark,
+    Light,
+    System,
+}
+
+/// Dioxus 0.7 Reactive AwesomeBar omnibar component.
+#[component]
+pub fn AwesomeBar(
+    items: Vec<AwesomeBarItem>,
+    on_select: Option<EventHandler<String>>,
+) -> Element {
+    let mut query = use_signal(String::new);
+    let mut is_open = use_signal(|| false);
+    let mut selected_idx = use_signal(|| 0usize);
+
+    let q = query.read().to_lowercase();
+    let filtered_items: Vec<_> = items
+        .iter()
+        .filter(|item| {
+            if q.is_empty() {
+                true
+            } else {
+                item.title.to_lowercase().contains(&q)
+                    || item.group.to_lowercase().contains(&q)
+                    || item.route.as_ref().map(|r| r.to_lowercase().contains(&q)).unwrap_or(false)
+            }
+        })
+        .cloned()
+        .collect();
+
+    rsx! {
+        div { class: "awesome-bar-container relative w-full",
+            div { class: "awesome-bar-input-wrap flex items-center bg-zinc-900 border border-zinc-700 rounded-md px-3 py-1.5 focus-within:border-blue-500",
+                span { class: "text-zinc-500 mr-2 text-sm", "🔍" }
+                input {
+                    r#type: "text",
+                    class: "awesome-bar-input bg-transparent text-sm text-zinc-100 placeholder-zinc-500 outline-none w-full",
+                    placeholder: "Search DocTypes, reports, actions (Ctrl+K)...",
+                    value: "{query}",
+                    oninput: move |evt| {
+                        query.set(evt.value());
+                        is_open.set(true);
+                        selected_idx.set(0);
+                    },
+                    onfocus: move |_| is_open.set(true),
+                }
+                if !query.read().is_empty() {
+                    button {
+                        class: "text-zinc-500 hover:text-zinc-200 text-xs ml-2 cursor-pointer",
+                        onclick: move |_| {
+                            query.set(String::new());
+                            selected_idx.set(0);
+                        },
+                        "✕"
+                    }
+                }
+            }
+            if *is_open.read() && !filtered_items.is_empty() {
+                ul { class: "awesome-bar-dropdown absolute left-0 right-0 top-full mt-1.5 bg-zinc-900 border border-zinc-700 rounded-md shadow-2xl max-h-64 overflow-y-auto z-50 divide-y divide-zinc-800",
+                    for (idx, item) in filtered_items.iter().enumerate() {
+                        {
+                            let is_active = *selected_idx.read() == idx;
+                            let route_opt = item.route.clone();
+                            rsx! {
+                                li {
+                                    key: "{item.id}",
+                                    class: if is_active { "px-3 py-2 cursor-pointer bg-zinc-800 text-zinc-100 flex items-center justify-between text-sm" } else { "px-3 py-2 cursor-pointer hover:bg-zinc-800/60 text-zinc-300 flex items-center justify-between text-sm" },
+                                    onclick: move |_| {
+                                        if let Some(ref r) = route_opt {
+                                            if let Some(ref handler) = on_select {
+                                                handler.call(r.to_string());
+                                            }
+                                        }
+                                        is_open.set(false);
+                                    },
+                                    div { class: "flex items-center gap-2",
+                                        span { class: "text-xs px-1 py-0.5 rounded bg-zinc-800 border border-zinc-700 text-zinc-400", "{item.group}" }
+                                        span { class: "font-medium text-zinc-100", "{item.title}" }
+                                    }
+                                    if let Some(ref shortcut) = item.shortcut {
+                                        span { class: "text-xs font-mono text-zinc-500", "{shortcut}" }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+/// Dioxus 0.7 Reactive Enterprise Desk Shell Root Component.
+#[component]
+pub fn DeskShell(
+    user_name: String,
+    workspaces: Vec<WorkspaceModule>,
+    children: Element,
+) -> Element {
+    let mut theme = use_signal(|| ThemeMode::Dark);
+    let mut sidebar_collapsed = use_signal(|| false);
+    let mut active_route = use_signal(|| "/desk".to_string());
+
+    let theme_class = match *theme.read() {
+        ThemeMode::Dark => "theme-dark bg-zinc-950 text-zinc-100",
+        ThemeMode::Light => "theme-light bg-slate-50 text-slate-900",
+        ThemeMode::System => "theme-system bg-zinc-900 text-zinc-100",
+    };
+
+    let collapsed = *sidebar_collapsed.read();
+
+    let awesome_items: Vec<AwesomeBarItem> = workspaces
+        .iter()
+        .flat_map(|w| {
+            let mod_title = w.title.clone();
+            w.doctypes.iter().map(move |dt| AwesomeBarItem {
+                id: format!("dt:{dt}").into(),
+                title: format!("{dt} List").into(),
+                group: mod_title.clone(),
+                route: Some(format!("/desk/list/{}", dt.to_lowercase().replace(' ', "_")).into()),
+                shortcut: None,
+            })
+        })
+        .collect();
+
+    rsx! {
+        div { class: "desk-shell min-h-screen flex flex-col font-sans {theme_class}",
+            // Top Navigation Bar
+            header { class: "desk-topbar h-14 border-b border-zinc-800 flex items-center justify-between px-4 sticky top-0 z-40 bg-zinc-950/90 backdrop-blur",
+                div { class: "flex items-center gap-3",
+                    button {
+                        class: "sidebar-toggle p-1.5 rounded border border-zinc-800 hover:bg-zinc-800 text-zinc-300 cursor-pointer",
+                        onclick: move |_| sidebar_collapsed.set(!collapsed),
+                        "☰"
+                    }
+                    div { class: "flex items-center gap-2",
+                        span { class: "w-3 h-3 rounded-full bg-blue-500 inline-block animate-pulse" }
+                        span { class: "font-bold text-base tracking-tight text-white", "RustNext Enterprise Desk" }
+                    }
+                }
+
+                div { class: "w-96 max-w-full px-2",
+                    AwesomeBar {
+                        items: awesome_items,
+                        on_select: move |route: String| {
+                            active_route.set(route);
+                        }
+                    }
+                }
+
+                div { class: "flex items-center gap-3",
+                    button {
+                        class: "theme-toggle px-2.5 py-1 text-xs rounded border border-zinc-700 hover:bg-zinc-800 text-zinc-300 cursor-pointer",
+                        onclick: move |_| {
+                            let next = match *theme.read() {
+                                ThemeMode::Dark => ThemeMode::Light,
+                                ThemeMode::Light => ThemeMode::System,
+                                ThemeMode::System => ThemeMode::Dark,
+                            };
+                            theme.set(next);
+                        },
+                        "Theme: {theme:?}"
+                    }
+                    div { class: "user-badge flex items-center gap-2 px-2.5 py-1 rounded bg-zinc-900 border border-zinc-800",
+                        span { class: "text-xs font-medium text-zinc-300", "{user_name}" }
+                    }
+                }
+            }
+
+            // Body Layout
+            div { class: "desk-body flex flex-1 overflow-hidden",
+                // Sidebar
+                aside {
+                    class: if collapsed { "desk-sidebar w-16 border-r border-zinc-800 p-2 flex flex-col transition-all duration-200 bg-zinc-950" } else { "desk-sidebar w-64 border-r border-zinc-800 p-3 flex flex-col transition-all duration-200 bg-zinc-950" },
+                    nav { class: "space-y-1 overflow-y-auto flex-1",
+                        for ws in &workspaces {
+                            {
+                                let ws_route = ws.route.to_string();
+                                let is_active = *active_route.read() == ws_route;
+                                rsx! {
+                                    button {
+                                        key: "{ws.id}",
+                                        class: if is_active { "w-full text-left px-3 py-2 rounded text-sm font-medium bg-blue-600/20 text-blue-400 border border-blue-500/30 flex items-center gap-2.5 cursor-pointer" } else { "w-full text-left px-3 py-2 rounded text-sm font-medium text-zinc-400 hover:bg-zinc-900 hover:text-zinc-200 flex items-center gap-2.5 cursor-pointer" },
+                                        onclick: move |_| active_route.set(ws_route.clone()),
+                                        if !collapsed {
+                                            div { class: "flex flex-col min-w-0 flex-1",
+                                                span { class: "font-medium text-zinc-200 truncate", "{ws.title}" }
+                                                span { class: "text-[11px] text-zinc-500 truncate", "{ws.badge}" }
+                                            }
+                                        } else {
+                                            span { class: "text-xs font-bold text-center w-full", "{&ws.id[..2.min(ws.id.len())]}" }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+
+                // Main Content
+                main { class: "desk-main-viewport flex-1 overflow-y-auto p-6 bg-zinc-900/40",
+                    {children}
+                }
+            }
+        }
+    }
+}
+
+/// Helper rendering a DeskShell with children into an HTML string using Dioxus 0.7 SSR.
+pub fn render_desk_shell_component(user_name: &str, workspaces: &[WorkspaceModule], content_html: &str) -> String {
+    let mut vdom = VirtualDom::new_with_props(
+        DeskShell,
+        DeskShellProps {
+            user_name: user_name.to_string(),
+            workspaces: workspaces.to_vec(),
+            children: rsx! {
+                div {
+                    dangerous_inner_html: "{content_html}"
+                }
+            },
+        },
+    );
+    vdom.rebuild_in_place();
+    dioxus::ssr::render(&vdom)
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

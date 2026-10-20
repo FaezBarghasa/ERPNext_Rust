@@ -278,6 +278,140 @@ impl EditableChildTableGrid {
     }
 }
 
+use dioxus::prelude::*;
+
+/// Dioxus 0.7 Reactive Virtualized Data Grid Component.
+#[component]
+pub fn VirtualizedDataGrid(
+    headers: Vec<String>,
+    rows: Vec<Vec<String>>,
+    row_height: usize,
+    viewport_height: usize,
+) -> Element {
+    let mut scroll_offset = use_signal(|| 0usize);
+    let mut active_cell = use_signal(|| CellCoordinate { row: 0, col: 0 });
+    let mut search_filter = use_signal(String::new);
+
+    let filter_text = search_filter.read().to_lowercase();
+    let filtered_rows: Vec<Vec<String>> = if filter_text.is_empty() {
+        rows.clone()
+    } else {
+        rows.iter()
+            .filter(|r| r.iter().any(|cell| cell.to_lowercase().contains(&filter_text)))
+            .cloned()
+            .collect()
+    };
+
+    let total = filtered_rows.len();
+    let effective_h = row_height.max(24);
+    let (start_idx, count) = visible_slice(total, effective_h, *scroll_offset.read(), viewport_height);
+    let end_idx = (start_idx + count).min(total);
+    let visible_rows = if start_idx < total {
+        &filtered_rows[start_idx..end_idx]
+    } else {
+        &[]
+    };
+
+    let total_height = total * effective_h;
+    let top_spacer = start_idx * effective_h;
+
+    rsx! {
+        div { class: "virtualized-grid-wrapper flex flex-col border border-zinc-800 rounded-lg overflow-hidden bg-zinc-950 text-zinc-100",
+            // Toolbar with reactive search
+            div { class: "grid-toolbar p-3 border-b border-zinc-800 flex items-center justify-between bg-zinc-900/50",
+                div { class: "flex items-center gap-2",
+                    input {
+                        r#type: "text",
+                        class: "px-3 py-1.5 text-xs bg-zinc-900 border border-zinc-700 rounded text-zinc-200 outline-none w-64 placeholder-zinc-500",
+                        placeholder: "Filter grid rows in real-time...",
+                        value: "{search_filter}",
+                        oninput: move |evt| {
+                            search_filter.set(evt.value());
+                            scroll_offset.set(0);
+                        }
+                    }
+                }
+                div { class: "text-xs font-mono text-zinc-400",
+                    "Showing {start_idx}..{end_idx} of {total} rows"
+                }
+            }
+
+            // Virtualized Scroll Container
+            div {
+                class: "grid-scroll-viewport overflow-y-auto relative",
+                style: "height: {viewport_height}px;",
+                div {
+                    class: "grid-total-height-shim relative w-full",
+                    style: "height: {total_height}px;",
+                    div {
+                        class: "grid-visible-slice-container absolute left-0 right-0",
+                        style: "transform: translateY({top_spacer}px);",
+                        table { class: "w-full text-left text-sm border-collapse",
+                            thead { class: "bg-zinc-900/90 sticky top-0 border-b border-zinc-800 text-xs text-zinc-400 uppercase tracking-wider font-semibold",
+                                tr {
+                                    th { class: "p-2 w-12 text-center", "#" }
+                                    for h in &headers {
+                                        th { class: "p-2", "{h}" }
+                                    }
+                                }
+                            }
+                            tbody { class: "divide-y divide-zinc-800/60 font-mono text-xs",
+                                for (rel_idx, row) in visible_rows.iter().enumerate() {
+                                    {
+                                        let abs_row = start_idx + rel_idx;
+                                        rsx! {
+                                            tr {
+                                                key: "{abs_row}",
+                                                class: "hover:bg-zinc-900/40 transition-colors",
+                                                td { class: "p-2 text-center text-zinc-500 select-none", "{abs_row + 1}" }
+                                                for (col_idx, cell) in row.iter().enumerate() {
+                                                    {
+                                                        let is_selected = active_cell.read().row == abs_row && active_cell.read().col == col_idx;
+                                                        rsx! {
+                                                            td {
+                                                                key: "{col_idx}",
+                                                                class: if is_selected { "p-2 bg-blue-600/30 text-blue-200 outline outline-1 outline-blue-500 cursor-pointer" } else { "p-2 text-zinc-300 cursor-pointer" },
+                                                                onclick: move |_| {
+                                                                    active_cell.set(CellCoordinate { row: abs_row, col: col_idx });
+                                                                },
+                                                                "{cell}"
+                                                            }
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+/// Helper rendering VirtualizedDataGrid into an HTML string using Dioxus 0.7 SSR.
+pub fn render_virtualized_grid_component(
+    headers: &[String],
+    rows: &[Vec<String>],
+    row_height: usize,
+    viewport_height: usize,
+) -> String {
+    let mut vdom = VirtualDom::new_with_props(
+        VirtualizedDataGrid,
+        VirtualizedDataGridProps {
+            headers: headers.to_vec(),
+            rows: rows.to_vec(),
+            row_height,
+            viewport_height,
+        },
+    );
+    vdom.rebuild_in_place();
+    dioxus::ssr::render(&vdom)
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

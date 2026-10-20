@@ -18,7 +18,8 @@ pub use report_query::{
 };
 
 pub use desk_shell::{
-    WorkspaceModule, get_desk_workspaces, render_desk_shell_html, render_form_view_html,
+    AwesomeBar, DeskShell, ThemeMode, WorkspaceModule, get_desk_workspaces,
+    render_desk_shell_component, render_desk_shell_html, render_form_view_html,
     render_list_view_html,
 };
 
@@ -28,11 +29,14 @@ pub use form_engine::{
     CompiledFormLayout, DynamicFieldState, DynamicFormEvaluator, FieldInspectorInfo, FormColumn,
     FormLayoutEngine, FormLayoutWidget, FormSection, FormTab, FormTimelineEvent, FormTimelineModel,
 };
-pub use forms::{DocTypeForm, DynamicFormModel, FormFieldWidget, eval_depends_on};
+pub use forms::{
+    DocTypeForm, DynamicFormModel, FormFieldWidget, eval_depends_on,
+    render_doctype_form_component,
+};
 pub use gantt::{GanttDependencyLink, GanttTaskRow, GanttViewModel};
 pub use grid::{
     CellCoordinate, CellSelectionRange, EditableChildTableGrid, GridNavDirection,
-    VirtualizedGridState, visible_slice,
+    VirtualizedDataGrid, VirtualizedGridState, render_virtualized_grid_component, visible_slice,
 };
 pub use primitives::{
     AlertModel, AlertVariant, AttachedFile, AutocompleteModel, AutocompleteOption, AvatarModel,
