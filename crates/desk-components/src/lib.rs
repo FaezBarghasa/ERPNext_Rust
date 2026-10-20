@@ -30,8 +30,7 @@ pub use form_engine::{
     FormLayoutEngine, FormLayoutWidget, FormSection, FormTab, FormTimelineEvent, FormTimelineModel,
 };
 pub use forms::{
-    DocTypeForm, DynamicFormModel, FormFieldWidget, eval_depends_on,
-    render_doctype_form_component,
+    DocTypeForm, DynamicFormModel, FormFieldWidget, eval_depends_on, render_doctype_form_component,
 };
 pub use gantt::{GanttDependencyLink, GanttTaskRow, GanttViewModel};
 pub use grid::{

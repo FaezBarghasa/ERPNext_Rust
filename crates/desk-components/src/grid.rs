@@ -297,14 +297,18 @@ pub fn VirtualizedDataGrid(
         rows.clone()
     } else {
         rows.iter()
-            .filter(|r| r.iter().any(|cell| cell.to_lowercase().contains(&filter_text)))
+            .filter(|r| {
+                r.iter()
+                    .any(|cell| cell.to_lowercase().contains(&filter_text))
+            })
             .cloned()
             .collect()
     };
 
     let total = filtered_rows.len();
     let effective_h = row_height.max(24);
-    let (start_idx, count) = visible_slice(total, effective_h, *scroll_offset.read(), viewport_height);
+    let (start_idx, count) =
+        visible_slice(total, effective_h, *scroll_offset.read(), viewport_height);
     let end_idx = (start_idx + count).min(total);
     let visible_rows = if start_idx < total {
         &filtered_rows[start_idx..end_idx]

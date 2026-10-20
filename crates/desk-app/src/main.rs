@@ -299,9 +299,8 @@ async fn main() {
         run_standalone_desk_server(port).await;
     }
 }
-
 async fn run_standalone_desk_server(port: u16) {
-    use actix_web::{web, App, HttpResponse, HttpServer, Responder};
+    use actix_web::{App, HttpServer, web};
 
     let addr = ("127.0.0.1", port);
     println!();
@@ -319,7 +318,10 @@ async fn run_standalone_desk_server(port: u16) {
             .route("/", web::get().to(handle_desk_home))
             .route("/desk", web::get().to(handle_desk_home))
             .route("/desk/list/{doctype}", web::get().to(handle_list_view))
-            .route("/desk/form/{doctype}/{docname}", web::get().to(handle_form_view))
+            .route(
+                "/desk/form/{doctype}/{docname}",
+                web::get().to(handle_form_view),
+            )
             .route("/admin", web::get().to(handle_admin_cockpit))
             .route("/worker", web::get().to(handle_worker_kiosk))
             .route("/api/health", web::get().to(handle_health_check))
@@ -341,21 +343,33 @@ async fn run_standalone_desk_server(port: u16) {
 async fn handle_desk_home() -> impl actix_web::Responder {
     actix_web::HttpResponse::Ok()
         .content_type("text/html; charset=utf-8")
-        .body(desk_components::render_desk_shell_html("Enterprise Desk", "Administrator"))
+        .body(desk_components::render_desk_shell_html(
+            "Enterprise Desk",
+            "Administrator",
+        ))
 }
 
 async fn handle_list_view(path: actix_web::web::Path<String>) -> impl actix_web::Responder {
     let doctype = path.into_inner();
     actix_web::HttpResponse::Ok()
         .content_type("text/html; charset=utf-8")
-        .body(desk_components::render_list_view_html(&doctype, "Administrator"))
+        .body(desk_components::render_list_view_html(
+            &doctype,
+            "Administrator",
+        ))
 }
 
-async fn handle_form_view(path: actix_web::web::Path<(String, String)>) -> impl actix_web::Responder {
+async fn handle_form_view(
+    path: actix_web::web::Path<(String, String)>,
+) -> impl actix_web::Responder {
     let (doctype, docname) = path.into_inner();
     actix_web::HttpResponse::Ok()
         .content_type("text/html; charset=utf-8")
-        .body(desk_components::render_form_view_html(&doctype, &docname, "Administrator"))
+        .body(desk_components::render_form_view_html(
+            &doctype,
+            &docname,
+            "Administrator",
+        ))
 }
 
 async fn handle_admin_cockpit() -> impl actix_web::Responder {

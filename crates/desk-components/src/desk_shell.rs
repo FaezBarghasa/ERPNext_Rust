@@ -1588,10 +1588,7 @@ pub enum ThemeMode {
 
 /// Dioxus 0.7 Reactive AwesomeBar omnibar component.
 #[component]
-pub fn AwesomeBar(
-    items: Vec<AwesomeBarItem>,
-    on_select: Option<EventHandler<String>>,
-) -> Element {
+pub fn AwesomeBar(items: Vec<AwesomeBarItem>, on_select: Option<EventHandler<String>>) -> Element {
     let mut query = use_signal(String::new);
     let mut is_open = use_signal(|| false);
     let mut selected_idx = use_signal(|| 0usize);
@@ -1605,7 +1602,11 @@ pub fn AwesomeBar(
             } else {
                 item.title.to_lowercase().contains(&q)
                     || item.group.to_lowercase().contains(&q)
-                    || item.route.as_ref().map(|r| r.to_lowercase().contains(&q)).unwrap_or(false)
+                    || item
+                        .route
+                        .as_ref()
+                        .map(|r| r.to_lowercase().contains(&q))
+                        .unwrap_or(false)
             }
         })
         .cloned()
@@ -1649,10 +1650,8 @@ pub fn AwesomeBar(
                                     key: "{item.id}",
                                     class: if is_active { "px-3 py-2 cursor-pointer bg-zinc-800 text-zinc-100 flex items-center justify-between text-sm" } else { "px-3 py-2 cursor-pointer hover:bg-zinc-800/60 text-zinc-300 flex items-center justify-between text-sm" },
                                     onclick: move |_| {
-                                        if let Some(ref r) = route_opt {
-                                            if let Some(ref handler) = on_select {
-                                                handler.call(r.to_string());
-                                            }
+                                        if let (Some(r), Some(handler)) = (&route_opt, &on_select) {
+                                            handler.call(r.to_string());
                                         }
                                         is_open.set(false);
                                     },
@@ -1790,7 +1789,11 @@ pub fn DeskShell(
 }
 
 /// Helper rendering a DeskShell with children into an HTML string using Dioxus 0.7 SSR.
-pub fn render_desk_shell_component(user_name: &str, workspaces: &[WorkspaceModule], content_html: &str) -> String {
+pub fn render_desk_shell_component(
+    user_name: &str,
+    workspaces: &[WorkspaceModule],
+    content_html: &str,
+) -> String {
     let mut vdom = VirtualDom::new_with_props(
         DeskShell,
         DeskShellProps {
