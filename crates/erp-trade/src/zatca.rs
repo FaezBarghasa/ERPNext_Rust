@@ -68,6 +68,19 @@ pub struct ZatcaUblInvoiceParams<'a> {
     pub lines: Vec<ZatcaInvoiceLine>,
 }
 
+/// Parameters for generating ZATCA Phase 2 TLV QR Code.
+#[derive(Debug, Clone)]
+pub struct ZatcaQrParams<'a> {
+    pub seller_name: &'a str,
+    pub vat_number: &'a str,
+    pub timestamp_iso: &'a str,
+    pub invoice_total: &'a str,
+    pub vat_total: &'a str,
+    pub invoice_hash: &'a str,
+    pub ecdsa_signature: Option<&'a [u8]>,
+    pub ecdsa_public_key: Option<&'a [u8]>,
+}
+
 pub struct ZatcaPhase2Engine;
 
 impl ZatcaPhase2Engine {
@@ -217,29 +230,20 @@ impl ZatcaPhase2Engine {
     /// - Tag 7: ECDSA Digital Signature (Optional in sandbox, mandatory in production)
     /// - Tag 8: ECDSA Public Key Certificate (Optional)
     #[must_use]
-    pub fn generate_phase2_tlv_qr_base64(
-        seller_name: &str,
-        vat_number: &str,
-        timestamp_iso: &str,
-        invoice_total: &str,
-        vat_total: &str,
-        invoice_hash: &str,
-        ecdsa_signature: Option<&[u8]>,
-        ecdsa_public_key: Option<&[u8]>,
-    ) -> String {
+    pub fn generate_phase2_tlv_qr_base64(params: &ZatcaQrParams<'_>) -> String {
         let mut tlv_bytes = Vec::new();
-        tlv_bytes.extend_from_slice(&Self::encode_tlv_tag(1, seller_name.as_bytes()));
-        tlv_bytes.extend_from_slice(&Self::encode_tlv_tag(2, vat_number.as_bytes()));
-        tlv_bytes.extend_from_slice(&Self::encode_tlv_tag(3, timestamp_iso.as_bytes()));
-        tlv_bytes.extend_from_slice(&Self::encode_tlv_tag(4, invoice_total.as_bytes()));
-        tlv_bytes.extend_from_slice(&Self::encode_tlv_tag(5, vat_total.as_bytes()));
-        tlv_bytes.extend_from_slice(&Self::encode_tlv_tag(6, invoice_hash.as_bytes()));
+        tlv_bytes.extend_from_slice(&Self::encode_tlv_tag(1, params.seller_name.as_bytes()));
+        tlv_bytes.extend_from_slice(&Self::encode_tlv_tag(2, params.vat_number.as_bytes()));
+        tlv_bytes.extend_from_slice(&Self::encode_tlv_tag(3, params.timestamp_iso.as_bytes()));
+        tlv_bytes.extend_from_slice(&Self::encode_tlv_tag(4, params.invoice_total.as_bytes()));
+        tlv_bytes.extend_from_slice(&Self::encode_tlv_tag(5, params.vat_total.as_bytes()));
+        tlv_bytes.extend_from_slice(&Self::encode_tlv_tag(6, params.invoice_hash.as_bytes()));
 
-        if let Some(sig) = ecdsa_signature {
+        if let Some(sig) = params.ecdsa_signature {
             tlv_bytes.extend_from_slice(&Self::encode_tlv_tag(7, sig));
         }
 
-        if let Some(pubkey) = ecdsa_public_key {
+        if let Some(pubkey) = params.ecdsa_public_key {
             tlv_bytes.extend_from_slice(&Self::encode_tlv_tag(8, pubkey));
         }
 
@@ -258,16 +262,16 @@ impl ZatcaPhase2Engine {
         vat_total: &str,
         invoice_hash: &str,
     ) -> String {
-        Self::generate_phase2_tlv_qr_base64(
+        Self::generate_phase2_tlv_qr_base64(&ZatcaQrParams {
             seller_name,
             vat_number,
             timestamp_iso,
             invoice_total,
             vat_total,
             invoice_hash,
-            None,
-            None,
-        )
+            ecdsa_signature: None,
+            ecdsa_public_key: None,
+        })
     }
 }
 
@@ -346,16 +350,16 @@ mod tests {
         // 8-Tag TLV QR generation with signature
         let dummy_sig = vec![0x30, 0x45, 0x02, 0x20, 0xaa, 0xbb];
         let dummy_pubkey = vec![0x04, 0x11, 0x22, 0x33];
-        let qr = ZatcaPhase2Engine::generate_phase2_tlv_qr_base64(
-            params.seller_name,
-            params.seller_vat,
-            "2026-10-20T10:00:00Z",
-            "1265.00",
-            "165.00",
-            &digest,
-            Some(&dummy_sig),
-            Some(&dummy_pubkey),
-        );
+        let qr = ZatcaPhase2Engine::generate_phase2_tlv_qr_base64(&ZatcaQrParams {
+            seller_name: params.seller_name,
+            vat_number: params.seller_vat,
+            timestamp_iso: "2026-10-20T10:00:00Z",
+            invoice_total: "1265.00",
+            vat_total: "165.00",
+            invoice_hash: &digest,
+            ecdsa_signature: Some(&dummy_sig),
+            ecdsa_public_key: Some(&dummy_pubkey),
+        });
         assert!(!qr.is_empty());
     }
 }

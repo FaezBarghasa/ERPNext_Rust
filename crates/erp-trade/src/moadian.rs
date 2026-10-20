@@ -6,8 +6,8 @@
 //! - Automated VAT calculation (10% standard rate) and discount proration
 //! - Cryptographic canonical JSON SHA-256 payload digest for INTA API submission.
 
-use base64::engine::general_purpose::STANDARD as BASE64_STANDARD;
 use base64::Engine;
+use base64::engine::general_purpose::STANDARD as BASE64_STANDARD;
 use chrono::{DateTime, Utc};
 use compact_str::CompactString;
 use p256::ecdsa::signature::{Signer, Verifier};
@@ -278,7 +278,9 @@ impl MoadianInvoicePayload {
     /// Computes canonical SHA-256 payload digest for digital signing.
     #[must_use]
     pub fn compute_payload_hash(&self) -> String {
-        let json_bytes = self.to_canonical_json().unwrap_or_else(|_| serde_json::to_string(self).unwrap_or_default());
+        let json_bytes = self
+            .to_canonical_json()
+            .unwrap_or_else(|_| serde_json::to_string(self).unwrap_or_default());
         let mut hasher = Sha256::new();
         hasher.update(json_bytes.as_bytes());
         hex::encode(hasher.finalize())
@@ -338,7 +340,9 @@ pub fn verify_canonical_payload_signature(
         .map_err(|e| MoadianError::VerificationError(format!("Invalid Base64 signature: {e}")))?;
     let signature = Signature::from_der(&der_bytes)
         .map_err(|e| MoadianError::VerificationError(format!("Invalid DER signature: {e}")))?;
-    Ok(verifying_key.verify(canonical_json.as_bytes(), &signature).is_ok())
+    Ok(verifying_key
+        .verify(canonical_json.as_bytes(), &signature)
+        .is_ok())
 }
 
 #[cfg(test)]
@@ -442,7 +446,8 @@ mod tests {
             0x0f, 0x10, 0x11, 0x12, 0x13, 0x14, 0x15, 0x16, 0x17, 0x18, 0x19, 0x1a, 0x1b, 0x1c,
             0x1d, 0x1e, 0x1f, 0x20,
         ];
-        let signing_key = SigningKey::from_slice(&test_scalar).expect("Deterministic valid P-256 scalar");
+        let signing_key =
+            SigningKey::from_slice(&test_scalar).expect("Deterministic valid P-256 scalar");
         let verifying_key = VerifyingKey::from(&signing_key);
 
         // 3. Sign invoice envelope
@@ -456,23 +461,19 @@ mod tests {
         assert!(!envelope.signature.is_empty());
 
         // 4. Verify valid signature
-        let is_valid = verify_canonical_payload_signature(
-            &envelope.data,
-            &envelope.signature,
-            &verifying_key,
-        )
-        .expect("Verify signature");
+        let is_valid =
+            verify_canonical_payload_signature(&envelope.data, &envelope.signature, &verifying_key)
+                .expect("Verify signature");
         assert!(is_valid, "Signature must verify successfully");
 
         // 5. Verify tampered payload fails verification
         let tampered_data = envelope.data.replace("INV-2026-999", "INV-2026-TAMPERED");
-        let is_valid_tampered = verify_canonical_payload_signature(
-            &tampered_data,
-            &envelope.signature,
-            &verifying_key,
-        )
-        .expect("Verify signature");
-        assert!(!is_valid_tampered, "Tampered payload must fail signature check");
+        let is_valid_tampered =
+            verify_canonical_payload_signature(&tampered_data, &envelope.signature, &verifying_key)
+                .expect("Verify signature");
+        assert!(
+            !is_valid_tampered,
+            "Tampered payload must fail signature check"
+        );
     }
 }
-
