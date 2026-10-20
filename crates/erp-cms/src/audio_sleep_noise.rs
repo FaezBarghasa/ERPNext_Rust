@@ -358,7 +358,7 @@ mod tests {
         let mut sum = 0.0f32;
         for _ in 0..1000 {
             let s = pink.next_sample();
-            assert!(s >= -1.0 && s <= 1.0);
+            assert!((-1.0..=1.0).contains(&s));
             sum += s;
         }
         let mean = sum / 1000.0;
@@ -371,7 +371,7 @@ mod tests {
         let mut brown = BrownNoiseGenerator::new(42);
         for _ in 0..2000 {
             let s = brown.next_sample();
-            assert!(s >= -1.0 && s <= 1.0);
+            assert!((-1.0..=1.0).contains(&s));
         }
     }
 
@@ -380,8 +380,8 @@ mod tests {
         let mut binaural = BinauralBeatGenerator::new(200.0, 4.0, 44100);
         for _ in 0..100 {
             let (l, r) = binaural.next_stereo_sample();
-            assert!(l >= -1.0 && l <= 1.0);
-            assert!(r >= -1.0 && r <= 1.0);
+            assert!((-1.0..=1.0).contains(&l));
+            assert!((-1.0..=1.0).contains(&r));
         }
     }
 
