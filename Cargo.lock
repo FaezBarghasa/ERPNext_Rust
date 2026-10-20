@@ -2130,6 +2130,7 @@ version = "0.3.0"
 dependencies = [
  "chrono",
  "compact_str",
+ "erp-software",
  "erp-trade",
  "frappe-framework",
  "frappe-meta",
