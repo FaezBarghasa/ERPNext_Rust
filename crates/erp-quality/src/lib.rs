@@ -1,4 +1,4 @@
-//! `erp-quality` — Enterprise Quality Control, NCR & CAPA Engine for `rustnext`.
+//! `erp-quality` — Enterprise Quality Control, NCR & CAPA Engine for `rust-web-land (rwl)`.
 //!
 //! Provides comprehensive ISO 9001 quality management:
 //! - Inspection: `QualityInspection`, `QualityInspectionTemplate`, `QualityReading`

@@ -1,4 +1,4 @@
-//! ERPNext Clean-Room Plugin SDK for Rust & Dioxus (WASM-only).
+//! rust-web-land (rwl) Clean-Room Plugin SDK for Rust & Dioxus (WASM-only).
 //!
 //! Provides the primary interfaces, context types, and execution contracts for
 //! authoring sandboxed WASM components (`wasm32-wasip2`).
