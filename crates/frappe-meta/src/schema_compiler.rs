@@ -98,6 +98,23 @@ pub fn compile_to_surrealql(schema: &DocTypeSchema) -> Result<Vec<String>, Schem
         }
     }
 
+    // Secondary composite indexes for hot ledger tables (general ledger and stock ledger)
+    if table == "gl_entry" || table == "gl_entries" {
+        statements.push(format!(
+            "DEFINE INDEX idx_{table}_account_posting_date ON TABLE {table} FIELDS account, posting_date;"
+        ));
+        statements.push(format!(
+            "DEFINE INDEX idx_{table}_voucher ON TABLE {table} FIELDS voucher_type, voucher_no;"
+        ));
+    } else if table == "stock_ledger_entry" || table == "stock_ledger_entries" {
+        statements.push(format!(
+            "DEFINE INDEX idx_{table}_item_warehouse ON TABLE {table} FIELDS item_code, warehouse;"
+        ));
+        statements.push(format!(
+            "DEFINE INDEX idx_{table}_posting_date ON TABLE {table} FIELDS posting_date;"
+        ));
+    }
+
     Ok(statements)
 }
 

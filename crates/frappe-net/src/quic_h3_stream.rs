@@ -638,6 +638,13 @@ impl QuicH3StreamingEngine {
             .get_mut(&stream_id)
             .ok_or(QuicH3Error::StreamNotFound(stream_id))?;
 
+        if stream.bytes_sent + (asset_bytes.len() as u64) > stream.max_stream_data {
+            return Err(QuicH3Error::FlowControlExceeded {
+                allowed: stream.max_stream_data,
+                attempted: stream.bytes_sent + (asset_bytes.len() as u64),
+            });
+        }
+
         let mut frames = Vec::new();
         let mut offset = 0;
 

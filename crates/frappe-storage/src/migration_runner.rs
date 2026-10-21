@@ -60,6 +60,8 @@ DEFINE TABLE ip_rules SCHEMALESS;
         surql: r#"
 DEFINE TABLE accounts SCHEMALESS;
 DEFINE TABLE gl_entries SCHEMALESS;
+DEFINE INDEX idx_gl_entries_account_posting_date ON TABLE gl_entries FIELDS account, posting_date;
+DEFINE INDEX idx_gl_entries_voucher ON TABLE gl_entries FIELDS voucher_type, voucher_no;
 DEFINE TABLE journal_entries SCHEMALESS;
 DEFINE TABLE payment_entries SCHEMALESS;
 DEFINE TABLE period_close_vouchers SCHEMALESS;
@@ -74,6 +76,8 @@ DEFINE TABLE items SCHEMALESS;
 DEFINE TABLE item_groups SCHEMALESS;
 DEFINE TABLE warehouses SCHEMALESS;
 DEFINE TABLE stock_ledger_entries SCHEMALESS;
+DEFINE INDEX idx_sle_item_warehouse ON TABLE stock_ledger_entries FIELDS item_code, warehouse;
+DEFINE INDEX idx_sle_posting_date ON TABLE stock_ledger_entries FIELDS posting_date;
 DEFINE TABLE stock_entries SCHEMALESS;
 DEFINE TABLE batches SCHEMALESS;
 DEFINE TABLE serial_numbers SCHEMALESS;

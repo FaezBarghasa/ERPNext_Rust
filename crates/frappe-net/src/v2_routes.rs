@@ -219,7 +219,9 @@ pub struct UploadFilePayload {
 /// Sanitizes a string literal by escaping backslashes and double quotes.
 #[must_use]
 pub fn sanitize_surrealql_string(val: &str) -> String {
-    val.replace('\\', "\\\\").replace('"', "\\\"")
+    val.replace('\\', "\\\\")
+        .replace('"', "\\\"")
+        .replace('\'', "\\'")
 }
 
 /// Helper function to convert JSON filter list `[["status", "=", "Open"]]` into a safe SurrealQL WHERE clause.
@@ -956,7 +958,6 @@ pub async fn v2_submit_document(
     };
 
     let table = doctype.to_lowercase().replace(' ', "_");
-    let sanitized_name = sanitize_surrealql_string(&name);
     let now = Utc::now().to_rfc3339();
 
     // 1. Fetch current document state
@@ -1574,7 +1575,6 @@ pub async fn v2_cancel_document(
     };
 
     let table = doctype.to_lowercase().replace(' ', "_");
-    let sanitized_name = sanitize_surrealql_string(&name);
     let now = Utc::now().to_rfc3339();
 
     // 1. Fetch current document state to verify it is currently submitted (1)
@@ -2194,7 +2194,11 @@ pub async fn login_handler(
     };
 
     // 2. Query user record from SurrealDB
-    let query_sql = format!("SELECT * FROM user:{}", sanitize_surrealql_string(user_id));
+    let clean_user_id: String = user_id
+        .chars()
+        .filter(|c| c.is_alphanumeric() || *c == '_')
+        .collect();
+    let query_sql = format!("SELECT * FROM user:{clean_user_id};");
     let user_record: Option<serde_json::Value> = match client.query(&query_sql).await {
         Ok(mut res) => res.take(0).unwrap_or(None),
         Err(_) => None,
@@ -2240,10 +2244,9 @@ pub async fn login_handler(
                         if let Ok(hashed) = hash_password(password) {
                             let _ = client
                                 .query(format!(
-                                    "CREATE user:{} SET full_name = 'Administrator', password_hash = '{}', roles = ['System Manager', 'Administrator'];",
-                                    sanitize_surrealql_string(user_id),
-                                    hashed
+                                    "CREATE user:{clean_user_id} SET full_name = 'Administrator', password_hash = $hash, roles = ['System Manager', 'Administrator'];"
                                 ))
+                                .bind(("hash", hashed))
                                 .await;
                         }
                         (
@@ -2355,6 +2358,14 @@ pub async fn login_handler(
 
     let (raw_refresh, refresh_record) = issue_refresh_token(user_id, &tenant_id.0, roles.clone());
     if let Ok(mut rft_guard) = rbac_state.refresh_tokens.write() {
+        if rft_guard.len() >= 10_000 {
+            rft_guard.retain(|_, r| r.is_valid());
+            if rft_guard.len() >= 10_000 {
+                if let Some(oldest) = rft_guard.keys().next().cloned() {
+                    rft_guard.remove(&oldest);
+                }
+            }
+        }
         rft_guard.insert(refresh_record.token_hash.clone(), refresh_record.clone());
     }
 
@@ -2404,13 +2415,8 @@ pub async fn auth_refresh_token_handler(
             .cloned()
             .unwrap_or_else(|| TenantId("default".into()));
         if let Ok(client) = mgr.get_or_initialize_client(&tenant_id).await {
-            let sanitized = sanitize_surrealql_string(&token_hash);
-            if let Ok(mut res) = client
-                .query(format!(
-                    "SELECT * FROM refresh_tokens WHERE token_hash = '{sanitized}';"
-                ))
-                .await
-            {
+            let sql = "SELECT * FROM refresh_tokens WHERE token_hash = $hash;";
+            if let Ok(mut res) = client.query(sql).bind(("hash", token_hash.clone())).await {
                 let rows: Vec<serde_json::Value> = res.take(0).unwrap_or_default();
                 let db_records: Vec<RefreshTokenRecord> = rows
                     .into_iter()
@@ -2419,6 +2425,9 @@ pub async fn auth_refresh_token_handler(
                 if let Some(r) = db_records.into_iter().next()
                     && let Ok(mut guard) = rbac_state.refresh_tokens.write()
                 {
+                    if guard.len() >= 10_000 {
+                        guard.retain(|_, rec| rec.is_valid());
+                    }
                     guard.insert(token_hash.clone(), r);
                 }
             }
@@ -2458,6 +2467,14 @@ pub async fn auth_refresh_token_handler(
     };
 
     let (new_raw_refresh, new_refresh_rec) = issue_refresh_token(&user_id, &tenant_id, roles);
+    if rft_guard.len() >= 10_000 {
+        rft_guard.retain(|_, r| r.is_valid());
+        if rft_guard.len() >= 10_000 {
+            if let Some(oldest) = rft_guard.keys().next().cloned() {
+                rft_guard.remove(&oldest);
+            }
+        }
+    }
     rft_guard.insert(new_refresh_rec.token_hash.clone(), new_refresh_rec.clone());
 
     if let Some(mgr) = &pool_mgr {
@@ -4164,6 +4181,11 @@ pub async fn trade_create_coupon_handler(
     coupon.description = p.description;
 
     if let Ok(mut lock) = state.coupons.write() {
+        if lock.len() >= 10_000 && !lock.contains_key(&coupon.code) {
+            if let Some(first_key) = lock.keys().next().cloned() {
+                lock.remove(&first_key);
+            }
+        }
         lock.insert(coupon.code.clone(), coupon.clone());
     }
 
@@ -4289,9 +4311,9 @@ pub async fn trade_list_reviews_handler(
     query: web::Query<ListReviewsQuery>,
     pool_mgr: Option<web::Data<ConnectionPoolManager>>,
 ) -> impl Responder {
-    let mut reviews = state.reviews.read().map(|r| r.clone()).unwrap_or_default();
+    let is_empty = state.reviews.read().map(|r| r.is_empty()).unwrap_or(true);
 
-    if reviews.is_empty()
+    if is_empty
         && let Some(mgr) = &pool_mgr
     {
         let tenant_id = req
@@ -4309,34 +4331,37 @@ pub async fn trade_list_reviews_handler(
                 .collect();
             if !db_reviews.is_empty() {
                 if let Ok(mut lock) = state.reviews.write() {
-                    *lock = db_reviews.clone();
+                    *lock = db_reviews;
                 }
-                reviews = db_reviews;
             }
         }
     }
 
-    let filtered: Vec<ProductReview> = reviews
-        .into_iter()
-        .filter(|r| {
-            if let Some(ref item) = query.item_code
-                && !r.item_code.eq_ignore_ascii_case(item)
-            {
-                return false;
-            }
-            if let Some(ref st) = query.status {
-                match st.to_lowercase().as_str() {
-                    "approved" => r.status == ReviewStatus::Approved,
-                    "pending" => r.status == ReviewStatus::Pending,
-                    "rejected" => r.status == ReviewStatus::Rejected,
-                    "flagged" => r.status == ReviewStatus::Flagged,
-                    _ => true,
+    let filtered: Vec<ProductReview> = if let Ok(lock) = state.reviews.read() {
+        lock.iter()
+            .filter(|r| {
+                if let Some(ref item) = query.item_code
+                    && !r.item_code.eq_ignore_ascii_case(item)
+                {
+                    return false;
                 }
-            } else {
-                true
-            }
-        })
-        .collect();
+                if let Some(ref st) = query.status {
+                    match st.to_lowercase().as_str() {
+                        "approved" => r.status == ReviewStatus::Approved,
+                        "pending" => r.status == ReviewStatus::Pending,
+                        "rejected" => r.status == ReviewStatus::Rejected,
+                        "flagged" => r.status == ReviewStatus::Flagged,
+                        _ => true,
+                    }
+                } else {
+                    true
+                }
+            })
+            .cloned()
+            .collect()
+    } else {
+        Vec::new()
+    };
 
     let summary = query
         .item_code
@@ -4380,6 +4405,9 @@ pub async fn trade_submit_review_handler(
     };
 
     if let Ok(mut lock) = state.reviews.write() {
+        if lock.len() >= 10_000 {
+            lock.remove(0);
+        }
         lock.push(review.clone());
     }
 
@@ -4506,13 +4534,8 @@ pub async fn trade_get_wishlist_handler(
             .cloned()
             .unwrap_or_else(|| TenantId("default".into()));
         if let Ok(client) = mgr.get_or_initialize_client(&tenant_id).await {
-            let sanitized_uid = sanitize_surrealql_string(&uid);
-            if let Ok(mut res) = client
-                .query(format!(
-                    "SELECT * FROM wishlists WHERE user_id = '{sanitized_uid}';"
-                ))
-                .await
-            {
+            let sql = "SELECT * FROM wishlists WHERE user_id = $uid;";
+            if let Ok(mut res) = client.query(sql).bind(("uid", uid.clone())).await {
                 let rows: Vec<serde_json::Value> = res.take(0).unwrap_or_default();
                 let db_lists: Vec<Wishlist> = rows
                     .into_iter()
@@ -4520,6 +4543,11 @@ pub async fn trade_get_wishlist_handler(
                     .collect();
                 if let Some(wl) = db_lists.into_iter().next() {
                     if let Ok(mut lock) = state.wishlists.write() {
+                        if lock.len() >= 10_000 && !lock.contains_key(&uid) {
+                            if let Some(oldest) = lock.keys().next().cloned() {
+                                lock.remove(&oldest);
+                            }
+                        }
                         lock.insert(uid.clone(), wl.clone());
                     }
                     wishlist = Some(wl);
@@ -4563,6 +4591,11 @@ pub async fn trade_add_wishlist_item_handler(
         Err(_) => return HttpResponse::InternalServerError().body("Lock error"),
     };
 
+    if lock.len() >= 10_000 && !lock.contains_key(&uid) {
+        if let Some(oldest) = lock.keys().next().cloned() {
+            lock.remove(&oldest);
+        }
+    }
     let wl = lock
         .entry(uid.clone())
         .or_insert_with(|| Wishlist::new(format!("wl_{uid}"), uid.clone(), "Default Wishlist"));
