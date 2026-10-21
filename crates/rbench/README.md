@@ -1,6 +1,6 @@
 # `rbench` — Site Orchestration, Packaging & High-Throughput Load Testing CLI
 
-`rbench` is the unified command-line tool for multi-tenant site provisioning, automated migrations, distribution packaging, TypeScript SDK generation, and high-concurrency load testing for the pure-Rust enterprise platform.
+`rbench` is the site orchestration and verification command-line tool for multi-tenant site provisioning, automated migrations, distribution packaging, TypeScript SDK generation, and high-concurrency load testing for `rust-web-land` (`rwl`).
 
 ---
 

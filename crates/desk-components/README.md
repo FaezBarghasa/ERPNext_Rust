@@ -1,6 +1,6 @@
 # `desk-components` — Reactive UI Component Library & Visual Workspace Views
 
-`desk-components` provides the shared UI building blocks, dynamic form synthesis engines, virtualized grids, and interactive operational visualizations for the ERPNext Rust client layer across Desktop, Web, and Mobile.
+`desk-components` provides the shared UI building blocks, dynamic form synthesis engines, virtualized grids, and interactive operational visualizations for the `rust-web-land` (`rwl`) client layer across Desktop, Web, and Mobile.
 
 ---
 

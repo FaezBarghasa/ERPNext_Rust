@@ -6,7 +6,7 @@ Content-addressable deduplicated drive storage engine and SurrealDB database abs
 
 ## 📦 Overview
 
-`frappe-storage` provides high-throughput persistent storage, multi-model database mappings, and deduplicated object drive capabilities.
+`frappe-storage` provides high-throughput persistent storage, multi-model database mappings, CRDT mesh synchronization, and deduplicated object drive capabilities for `rust-web-land` (`rwl`).
 
 ### Key Capabilities
 

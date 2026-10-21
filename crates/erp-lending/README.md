@@ -6,7 +6,7 @@ Loan disbursements, compounding interest accruals, and precision amortization sc
 
 ## 📦 Overview
 
-`erp-lending` delivers precision financial calculations for loan portfolios, repayment schedules, and interest accounting.
+`erp-lending` delivers precision financial calculations for loan portfolios, repayment schedules, and interest accounting for `rust-web-land` (`rwl`).
 
 ### Key Capabilities
 

@@ -6,7 +6,7 @@ High-performance, local-first Content Management System, Visual Canvas Page Buil
 
 ## 📦 Overview
 
-`erp-cms` powers the content, visual assembly, and rich media streaming layers of the `rustnext` platform. It is engineered with zero-allocation compiled SSR, sub-10ms TTFB, hardware-accelerated video/audio transcoding pipelines, standards-compliant streaming protocols, and Subsonic API compatibility.
+`erp-cms` powers the content, visual assembly, and rich media streaming layers of the `rust-web-land` (`rwl`) platform. It is engineered with zero-allocation compiled SSR, sub-10ms TTFB, hardware-accelerated video/audio transcoding pipelines, standards-compliant streaming protocols, and Subsonic API compatibility.
 
 ---
 

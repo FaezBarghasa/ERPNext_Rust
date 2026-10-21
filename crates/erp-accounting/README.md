@@ -6,7 +6,7 @@ Double-entry general ledger, multi-currency conversion, Chart of Accounts, Asset
 
 ## 📦 Overview
 
-`erp-accounting` guarantees mathematical and financial consistency through strictly balanced, immutable General Ledger entries.
+`erp-accounting` guarantees mathematical and financial consistency for `rust-web-land` (`rwl`) through strictly balanced, immutable General Ledger entries.
 
 ### Key Capabilities
 

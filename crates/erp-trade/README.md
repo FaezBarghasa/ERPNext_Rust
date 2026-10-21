@@ -6,7 +6,7 @@ Pricing rule engines, item taxes, landed cost allocations, and purchasing/sales 
 
 ## 📦 Overview
 
-`erp-trade` handles commercial transactions, pricing rules, tax calculations, and landed cost distribution for ERPNext Rust.
+`erp-trade` handles commercial transactions, pricing rules, tax calculations, and landed cost distribution for `rust-web-land` (`rwl`).
 
 ### Key Capabilities
 

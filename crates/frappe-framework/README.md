@@ -6,7 +6,7 @@ Document model abstractions, strict lifecycle state machines, and sandboxed scri
 
 ## 📦 Overview
 
-`frappe-framework` implements the core document lifecycle transitions and dual-engine sandboxing environment for ERPNext Rust.
+`frappe-framework` implements the core document lifecycle transitions and dual-engine sandboxing environment for `rust-web-land` (`rwl`).
 
 ### Key Capabilities
 

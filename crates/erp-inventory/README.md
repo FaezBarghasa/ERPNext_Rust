@@ -6,7 +6,7 @@ Real-time stock ledger, warehouse hierarchy, FIFO queue valuation, and batch/ser
 
 ## 📦 Overview
 
-`erp-inventory` manages stock balances, valuation rates, and bin transfers across multi-tier warehouses.
+`erp-inventory` manages stock balances, valuation rates, and bin transfers across multi-tier warehouses for `rust-web-land` (`rwl`).
 
 ### Key Capabilities
 

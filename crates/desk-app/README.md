@@ -1,6 +1,6 @@
 # `desk-app` — Cross-Platform Universal Shell, Persona Projections & Edge HAL
 
-`desk-app` is the client runtime shell for the enterprise OS, built in pure Rust with Dioxus. It runs natively across desktop workstations (Linux, macOS, Windows) and mobile handhelds (Android, iOS) as well as offline-capable Progressive Web Apps (PWA).
+`desk-app` is the client runtime shell and native visual desktop studio for `rust-web-land` (`rwl`), built in pure Rust with Dioxus. It runs natively across desktop workstations (Linux, macOS, Windows) and mobile handhelds (Android, iOS) as well as offline-capable Progressive Web Apps (PWA).
 
 ---
 

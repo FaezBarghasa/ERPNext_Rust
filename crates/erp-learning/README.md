@@ -6,7 +6,7 @@ Course syllabi, student enrollments, lesson tracking, and automated quiz evaluat
 
 ## 📦 Overview
 
-`erp-learning` powers training management, LMS course structures, and student grading.
+`erp-learning` powers training management, LMS course structures, and student grading for `rust-web-land` (`rwl`).
 
 ### Key Capabilities
 

@@ -6,7 +6,7 @@ Support ticket lifecycles, Service Level Agreements (SLA), escalation matrices, 
 
 ## 📦 Overview
 
-`erp-support` manages incoming customer issues, SLA resolution deadlines, and escalation hierarchies.
+`erp-support` manages incoming customer issues, SLA resolution deadlines, and escalation hierarchies for `rust-web-land` (`rwl`).
 
 ### Key Capabilities
 

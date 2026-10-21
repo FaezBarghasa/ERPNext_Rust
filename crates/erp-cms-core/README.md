@@ -6,7 +6,7 @@
 
 ## 📦 Overview
 
-`erp-cms-core` provides bare-metal compatible CMS and streaming data structures engineered for zero dynamic memory allocation, guaranteed deterministic execution, and formal hardware verification on embedded targets (`thumbv7em-none-eabihf`, `thumbv6m-none-eabi`, `riscv32imac-unknown-none-elf`).
+`erp-cms-core` provides bare-metal compatible CMS and streaming data structures for `rust-web-land` (`rwl`), engineered for zero dynamic memory allocation, guaranteed deterministic execution, and formal hardware verification on embedded targets (`thumbv7em-none-eabihf`, `thumbv6m-none-eabi`, `riscv32imac-unknown-none-elf`).
 
 ### Key Capabilities
 

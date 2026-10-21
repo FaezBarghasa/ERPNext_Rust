@@ -6,7 +6,7 @@ Multilevel Bill of Materials (BOM) explosion, Work Orders, Workstations, and Mat
 
 ## 📦 Overview
 
-`erp-manufacturing` powers production planning, multi-tier assembly trees, scrap rate factors, and inventory requirement forecasts.
+`erp-manufacturing` powers production planning, multi-tier assembly trees, scrap rate factors, and inventory requirement forecasts for `rust-web-land` (`rwl`).
 
 ### Key Capabilities
 

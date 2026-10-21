@@ -6,7 +6,7 @@ Lead intake pipelines, deal stages, communication tracking, and weighted opportu
 
 ## 📦 Overview
 
-`erp-crm` organizes lead acquisition, qualification workflows, and sales pipelines.
+`erp-crm` organizes lead acquisition, qualification workflows, and sales pipelines for `rust-web-land` (`rwl`).
 
 ### Key Capabilities
 

@@ -1,6 +1,6 @@
 # frappe-meta
 
-DocType schema compiler, dynamic naming series, RBAC permission validator, and declarative migration runner for ERPNext Rust.
+DocType schema compiler, dynamic naming series, RBAC permission validator, and declarative migration runner for `rust-web-land` (`rwl`).
 
 ---
 

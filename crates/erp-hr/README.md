@@ -6,7 +6,7 @@ Employee directory, shift attendance logs, salary structures, statutory deductio
 
 ## 📦 Overview
 
-`erp-hr` provides human resource management and payroll computation adhering to statutory earnings and deductions.
+`erp-hr` provides human resource management and payroll computation for `rust-web-land` (`rwl`) adhering to statutory earnings and deductions.
 
 ### Key Capabilities
 
