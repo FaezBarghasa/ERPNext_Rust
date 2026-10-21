@@ -305,7 +305,7 @@ impl WorkflowEngine {
                         target_field,
                         script,
                     } => {
-                        let res = self.rhai.eval_expression::<rhai::Dynamic>(script, doc);
+                        let res = self.rhai.eval_expression::<rhai::Dynamic>(script, &doc.data);
                         match res {
                             Ok(val) => {
                                 let json_val = if let Ok(s) = val.clone().into_string() {
