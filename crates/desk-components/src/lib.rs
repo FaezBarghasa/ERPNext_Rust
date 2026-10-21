@@ -10,7 +10,13 @@ pub mod resources;
 pub mod signals;
 pub mod spc_view;
 pub mod views;
+pub mod visual_builder;
 pub mod wms_view;
+
+pub use visual_builder::{
+    BoxModelProperties, ComponentCategory, PaletteItem, VisualStudioState, get_component_palette,
+    render_visual_builder_html,
+};
 
 pub use report_query::{
     DeclarativeReport, FilterOperator, ReportDataChunk, ReportFilter, ReportPagination,

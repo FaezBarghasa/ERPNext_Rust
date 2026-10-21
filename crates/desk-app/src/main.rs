@@ -307,7 +307,7 @@ async fn run_standalone_desk_server(port: u16) {
     println!("🚀 RustNext Standalone Desk server active (Actix-Web SSR)! ");
     println!("   → Desk Home:      http://127.0.0.1:{port}/desk");
     println!("   → List View:      http://127.0.0.1:{port}/desk/list/sales_invoice");
-    println!("   → Form View:      http://127.0.0.1:{port}/desk/form/sales_invoice/new");
+    println!("   → Visual Studio:  http://127.0.0.1:{port}/builder");
     println!("   → Admin Cockpit:  http://127.0.0.1:{port}/admin");
     println!("   → Worker Kiosk:   http://127.0.0.1:{port}/worker");
     println!("   → Health Check:   http://127.0.0.1:{port}/api/health");
@@ -317,6 +317,8 @@ async fn run_standalone_desk_server(port: u16) {
         App::new()
             .route("/", web::get().to(handle_desk_home))
             .route("/desk", web::get().to(handle_desk_home))
+            .route("/builder", web::get().to(handle_visual_builder))
+            .route("/studio", web::get().to(handle_visual_builder))
             .route("/desk/list/{doctype}", web::get().to(handle_list_view))
             .route(
                 "/desk/form/{doctype}/{docname}",
@@ -382,6 +384,13 @@ async fn handle_worker_kiosk() -> impl actix_web::Responder {
     actix_web::HttpResponse::Ok()
         .content_type("text/html; charset=utf-8")
         .body(desk_app::render_worker_kiosk_html("Operator"))
+}
+
+async fn handle_visual_builder() -> impl actix_web::Responder {
+    let state = desk_components::VisualStudioState::new();
+    actix_web::HttpResponse::Ok()
+        .content_type("text/html; charset=utf-8")
+        .body(desk_components::render_visual_builder_html(&state))
 }
 
 async fn handle_health_check() -> impl actix_web::Responder {
