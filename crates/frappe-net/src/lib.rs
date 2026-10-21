@@ -40,6 +40,9 @@ pub use v2_routes::{
     logout_handler, ping_handler, quic_status_handler, streaming_master_playlist_handler,
     streaming_playback_progress_handler, streaming_rtmp_auth_handler, streaming_rtmp_done_handler,
     streaming_segment_handler, streaming_upload_chunk_handler, streaming_variant_playlist_handler,
-    upload_file_handler, v2_amend_document, v2_cancel_document, v2_create_document,
-    v2_delete_document, v2_get_document, v2_list_document, v2_submit_document, v2_update_document,
+    upload_file_handler, v2_add_custom_field, v2_amend_document, v2_cancel_document,
+    v2_create_custom_doctype, v2_create_document, v2_delete_custom_doctype, v2_delete_document,
+    v2_export_meta_snapshot, v2_get_document, v2_get_meta_doctype, v2_import_meta_snapshot,
+    v2_list_document, v2_list_meta_doctypes, v2_submit_document, v2_update_custom_doctype,
+    v2_update_document,
 };

@@ -4,6 +4,7 @@ pub mod auth;
 pub mod class_inheritance;
 pub mod custom_fields;
 pub mod dynamic_doc;
+pub mod dynamic_registry;
 pub mod generated;
 pub mod graph_schema;
 pub mod hooks_meta;
@@ -39,6 +40,7 @@ pub use ai_schema::{AiSchemaSynthesizer, SynthesisResult, SynthesizedEntity, Syn
 pub use class_inheritance::ClassInheritanceRegistry;
 pub use custom_fields::{CustomDocType, CustomField, CustomFieldManager};
 pub use dynamic_doc::{DocValue, DynamicDocument, SurrealDdlGenerator};
+pub use dynamic_registry::{DynamicSchemaRegistry, global_schema_registry};
 pub use graph_schema::{
     EdgeAttribute, GraphEdgeSchema, RelationType, bom_explosion_query, compile_all_graph_edges,
     document_lineage_query, relate_statement, standard_erpnext_graph_edges,

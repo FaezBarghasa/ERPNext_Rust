@@ -21,7 +21,11 @@ pub use accounting::configure as configure_accounting_routes;
 pub use admin::configure as configure_admin_routes;
 pub use audio::configure as configure_audio_routes;
 pub use auth::configure as configure_auth_routes;
-pub use document::configure as configure_document_routes;
+pub use document::{
+    configure as configure_document_routes, v2_add_custom_field, v2_create_custom_doctype,
+    v2_delete_custom_doctype, v2_export_meta_snapshot, v2_get_meta_doctype,
+    v2_import_meta_snapshot, v2_list_meta_doctypes, v2_update_custom_doctype,
+};
 pub use inventory::configure as configure_inventory_routes;
 pub use media::configure as configure_media_routes;
 pub use trade::configure as configure_trade_routes;
@@ -597,8 +601,9 @@ pub async fn v2_create_document(
         _ => return HttpResponse::BadRequest().body("Payload must be a JSON object"),
     };
 
-    // 1. Schema lookup & validation
-    let schema_opt = frappe_meta::registry::lookup_schema(&doctype);
+    // 1. Schema lookup & validation via DynamicSchemaRegistry
+    let dynamic_registry = frappe_meta::global_schema_registry();
+    let schema_opt = dynamic_registry.get_schema(&doctype);
     if let Some(ref schema) = schema_opt {
         // Enforce required fields if strict validation requested or default missing fields
         let is_strict_validation = req.headers().contains_key("x-validate-schema")
@@ -613,6 +618,13 @@ pub async fn v2_create_document(
                     }));
                 }
             }
+        }
+        if is_strict_validation
+            && let Err(e) = dynamic_registry.validate_document_payload(&doctype, &serde_json::Value::Object(doc_map.clone()))
+        {
+            return HttpResponse::BadRequest().json(serde_json::json!({
+                "error": e.to_string()
+            }));
         }
     }
 
@@ -764,6 +776,19 @@ pub async fn v2_update_document(
         "modified".into(),
         serde_json::Value::String(Utc::now().to_rfc3339()),
     );
+
+    let dynamic_registry = frappe_meta::global_schema_registry();
+    if let Some(_schema) = dynamic_registry.get_schema(&doctype) {
+        let is_strict_validation = req.headers().contains_key("x-validate-schema")
+            || req.headers().contains_key("x-strict-schema");
+        if is_strict_validation
+            && let Err(e) = dynamic_registry.validate_document_payload(&doctype, &serde_json::Value::Object(doc_map.clone()))
+        {
+            return HttpResponse::BadRequest().json(serde_json::json!({
+                "error": e.to_string()
+            }));
+        }
+    }
 
     let sanitized_name = sanitize_surrealql_string(&name);
     let query_sql = format!("UPDATE {table} MERGE $doc WHERE name = '{sanitized_name}';");
