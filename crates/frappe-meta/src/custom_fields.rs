@@ -11,7 +11,7 @@ use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 
 /// Runtime Custom Field definition attached to an existing DocType.
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Default)]
 pub struct CustomField {
     /// Name of the target DocType being extended (e.g. "Sales Invoice").
     pub dt: CompactString,

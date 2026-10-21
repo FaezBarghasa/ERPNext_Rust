@@ -55,10 +55,11 @@ pub enum NamingRule {
 }
 
 /// Universal Field Types matching all 40+ Frappe Framework field types.
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Default)]
 #[serde(tag = "type", content = "options")]
 pub enum FieldType {
     // Text & String Primitives
+    #[default]
     Data,
     DataWithPreset { preset: DataPreset },
     LongText,

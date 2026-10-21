@@ -620,7 +620,8 @@ pub async fn v2_create_document(
             }
         }
         if is_strict_validation
-            && let Err(e) = dynamic_registry.validate_document_payload(&doctype, &serde_json::Value::Object(doc_map.clone()))
+            && let Err(e) = dynamic_registry
+                .validate_document_payload(&doctype, &serde_json::Value::Object(doc_map.clone()))
         {
             return HttpResponse::BadRequest().json(serde_json::json!({
                 "error": e.to_string()
@@ -782,7 +783,8 @@ pub async fn v2_update_document(
         let is_strict_validation = req.headers().contains_key("x-validate-schema")
             || req.headers().contains_key("x-strict-schema");
         if is_strict_validation
-            && let Err(e) = dynamic_registry.validate_document_payload(&doctype, &serde_json::Value::Object(doc_map.clone()))
+            && let Err(e) = dynamic_registry
+                .validate_document_payload(&doctype, &serde_json::Value::Object(doc_map.clone()))
         {
             return HttpResponse::BadRequest().json(serde_json::json!({
                 "error": e.to_string()
@@ -10331,5 +10333,74 @@ mod tests {
 
         // Cleanup
         let _ = std::fs::remove_dir_all(&test_dir);
+    }
+
+    #[tokio::test]
+    async fn test_dynamic_meta_doctype_routes_lifecycle() {
+        let req = actix_web::test::TestRequest::default().to_http_request();
+
+        // 1. List initial doctypes (should contain standard doctypes)
+        let list_resp = v2_list_meta_doctypes().await.respond_to(&req);
+        assert_eq!(list_resp.status(), actix_web::http::StatusCode::OK);
+
+        // 2. Create custom doctype "FleetVehicle"
+        let custom_dt = frappe_meta::CustomDocType {
+            name: "FleetVehicle".into(),
+            module: "Logistics".into(),
+            is_submittable: false,
+            is_child_table: false,
+            fields: vec![
+                frappe_meta::CustomField {
+                    fieldname: "license_plate".into(),
+                    label: "License Plate".into(),
+                    fieldtype: frappe_meta::schema::FieldType::Data,
+                    reqd: true,
+                    ..Default::default()
+                },
+                frappe_meta::CustomField {
+                    fieldname: "mileage".into(),
+                    label: "Mileage".into(),
+                    fieldtype: frappe_meta::schema::FieldType::Int,
+                    ..Default::default()
+                },
+            ],
+        };
+
+        let create_resp = v2_create_custom_doctype(req.clone(), web::Json(custom_dt), None)
+            .await
+            .respond_to(&req);
+        assert_eq!(create_resp.status(), actix_web::http::StatusCode::CREATED);
+
+        // 3. Get schema of "FleetVehicle"
+        let get_resp = v2_get_meta_doctype(web::Path::from("FleetVehicle".to_string()))
+            .await
+            .respond_to(&req);
+        assert_eq!(get_resp.status(), actix_web::http::StatusCode::OK);
+
+        // 4. Add custom field "fuel_type"
+        let new_field = frappe_meta::CustomField {
+            dt: "FleetVehicle".into(),
+            fieldname: "fuel_type".into(),
+            label: "Fuel Type".into(),
+            fieldtype: frappe_meta::schema::FieldType::Data,
+            ..Default::default()
+        };
+        let add_field_resp = v2_add_custom_field(
+            web::Path::from("FleetVehicle".to_string()),
+            web::Json(new_field),
+        )
+        .await
+        .respond_to(&req);
+        assert_eq!(add_field_resp.status(), actix_web::http::StatusCode::OK);
+
+        // 5. Export schema snapshot
+        let export_resp = v2_export_meta_snapshot().await.respond_to(&req);
+        assert_eq!(export_resp.status(), actix_web::http::StatusCode::OK);
+
+        // 6. Delete custom doctype "FleetVehicle"
+        let delete_resp = v2_delete_custom_doctype(web::Path::from("FleetVehicle".to_string()))
+            .await
+            .respond_to(&req);
+        assert_eq!(delete_resp.status(), actix_web::http::StatusCode::OK);
     }
 }
