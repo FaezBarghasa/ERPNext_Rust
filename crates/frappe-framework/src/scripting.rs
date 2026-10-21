@@ -92,6 +92,22 @@ impl RhaiHookEngine {
             .map_err(|e| ScriptError::SyntaxError(e.to_string()))
     }
 
+    /// Evaluates a Rhai expression against a JSON document, returning the typed result.
+    pub fn eval_expression<T: Send + Sync + Clone + 'static>(
+        &self,
+        expr: &str,
+        doc: &serde_json::Value,
+    ) -> Result<T, ScriptError> {
+        let mut scope = Scope::new();
+        let doc_dynamic = rhai::serde::to_dynamic(doc)
+            .map_err(|e| ScriptError::ExecutionFailed(e.to_string()))?;
+        scope.push("doc", doc_dynamic);
+
+        self.engine
+            .eval_with_scope::<T>(&mut scope, expr)
+            .map_err(|e| ScriptError::ExecutionFailed(e.to_string()))
+    }
+
     /// Executes a script on a mutable JSON document in the specified lifecycle event.
     pub fn dispatch_hook(
         &self,

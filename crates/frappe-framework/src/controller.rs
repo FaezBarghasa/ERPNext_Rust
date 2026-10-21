@@ -82,6 +82,7 @@ pub trait DocController: Send + Sync {
 #[derive(Default, Clone)]
 pub struct ControllerRegistry {
     controllers: HashMap<CompactString, Arc<dyn DocController>>,
+    workflow_engine: Option<Arc<crate::workflow_nodes::WorkflowEngine>>,
 }
 
 impl ControllerRegistry {
@@ -89,6 +90,41 @@ impl ControllerRegistry {
     #[must_use]
     pub fn new() -> Self {
         Self::default()
+    }
+
+    /// Attaches a workflow automation engine to the registry.
+    #[must_use]
+    pub fn with_workflow_engine(mut self, engine: Arc<crate::workflow_nodes::WorkflowEngine>) -> Self {
+        self.workflow_engine = Some(engine);
+        self
+    }
+
+    /// Sets the workflow engine on an existing registry.
+    pub fn set_workflow_engine(&mut self, engine: Arc<crate::workflow_nodes::WorkflowEngine>) {
+        self.workflow_engine = Some(engine);
+    }
+
+    /// Returns a reference to the optional workflow engine.
+    #[must_use]
+    pub fn workflow_engine(&self) -> Option<&Arc<crate::workflow_nodes::WorkflowEngine>> {
+        self.workflow_engine.as_ref()
+    }
+
+    /// Dispatches workflow automation nodes for a given document and lifecycle event.
+    pub fn dispatch_workflow_nodes(
+        &self,
+        doctype: &str,
+        event: crate::scripting::LifecycleEvent,
+        doc: &mut Document,
+    ) -> Result<Option<crate::workflow_nodes::WorkflowExecutionReport>, DocumentError> {
+        if let Some(engine) = &self.workflow_engine {
+            match engine.execute_for_doc(doctype, event, doc) {
+                Ok(report) => Ok(Some(report)),
+                Err(e) => Err(DocumentError::WorkflowError(e.to_string())),
+            }
+        } else {
+            Ok(None)
+        }
     }
 
     /// Registers a typed controller for a specific DocType.

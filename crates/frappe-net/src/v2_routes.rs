@@ -1823,12 +1823,14 @@ pub async fn upload_file_handler(
     let processed = match actix_web::web::block(
         move || -> Result<(Vec<u8>, DetectedFileType, String, u64), String> {
             use base64::Engine;
-            use base64::engine::general_purpose::{STANDARD, URL_SAFE};
+            use base64::engine::general_purpose::{STANDARD, STANDARD_NO_PAD, URL_SAFE, URL_SAFE_NO_PAD};
 
             let trimmed = content_b64.trim();
             let raw_bytes = STANDARD
                 .decode(trimmed)
                 .or_else(|_| URL_SAFE.decode(trimmed))
+                .or_else(|_| STANDARD_NO_PAD.decode(trimmed))
+                .or_else(|_| URL_SAFE_NO_PAD.decode(trimmed))
                 .map_err(|e| format!("Invalid Base64 payload: {e}"))?;
 
             let detected_type = validate_file_upload(&file_name, &raw_bytes, 50 * 1024 * 1024)

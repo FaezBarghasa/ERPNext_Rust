@@ -34,6 +34,7 @@ pub mod wasmtime_sandbox {
 }
 pub mod webhook;
 pub mod workflow_approval;
+pub mod workflow_nodes;
 
 pub use auto_repeat::{
     AutoRepeatEngine, AutoRepeatFrequency, AutoRepeatRecord, AutoRepeatStatus, GeneratedDocument,
@@ -69,6 +70,10 @@ pub use social::{
 pub use workflow_approval::{
     ApprovalWorkflow, DocumentVersionRecord, DocumentVersioningEngine, WorkflowApprovalLog,
     WorkflowError, WorkflowStateNode, WorkflowTransitionOutcome, WorkflowTransitionRule,
+};
+pub use workflow_nodes::{
+    AutomationAction, ComparisonOp, ConditionRule, VisualWorkflow, VisualWorkflowNode,
+    WorkflowEngine, WorkflowExecutionReport, WorkflowNodeError,
 };
 
 pub use ai_tools::{

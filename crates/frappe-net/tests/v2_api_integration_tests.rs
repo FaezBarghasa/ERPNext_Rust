@@ -112,9 +112,11 @@ async fn test_v2_file_upload_and_download_integration() {
         .set_json(&upload_payload)
         .to_request();
     let resp = test::call_service(&app, req).await;
-    assert!(resp.status().is_success());
-
-    let body: serde_json::Value = test::read_body_json(resp).await;
+    let status = resp.status();
+    let body_bytes = test::read_body(resp).await;
+    let body_str = String::from_utf8_lossy(&body_bytes);
+    assert!(status.is_success(), "Upload failed: status={status}, body={body_str}");
+    let body: serde_json::Value = serde_json::from_str(&body_str).unwrap();
     let file_url = body.get("file_url").and_then(|u| u.as_str()).unwrap();
     let content_hash = body.get("content_hash").and_then(|h| h.as_str()).unwrap();
 

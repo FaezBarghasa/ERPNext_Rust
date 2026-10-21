@@ -40,6 +40,9 @@ pub enum DocumentError {
     /// Document not found.
     #[error("Document not found: {0}")]
     DocumentNotFound(String),
+    /// Workflow automation error.
+    #[error("Workflow automation error: {0}")]
+    WorkflowError(String),
 }
 
 /// In-memory representation of a Frappe document instance.
