@@ -1592,6 +1592,7 @@ version = "0.3.0"
 dependencies = [
  "compact_str",
  "dioxus",
+ "erp-cms",
  "frappe-meta",
  "rhai",
  "rust_decimal",
