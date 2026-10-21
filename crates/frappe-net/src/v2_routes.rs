@@ -10959,6 +10959,7 @@ mod tests {
         assert_eq!(list_resp.status(), actix_web::http::StatusCode::OK);
         let list_bytes = actix_web::body::to_bytes(list_resp.into_body())
             .await
+            .ok()
             .expect("read list body");
         let list_json: serde_json::Value =
             serde_json::from_slice(&list_bytes).expect("parse list json");
@@ -10973,16 +10974,12 @@ mod tests {
         // Save updated menu tree
         let custom_menu = desk_components::MenuTree {
             location: desk_components::MenuTreeLocation::HeaderNav,
-            title: "Custom Header Nav".into(),
-            items: vec![desk_components::MenuItem {
-                id: "nav_analytics".into(),
-                label: "Analytics".into(),
-                icon: Some("chart-bar".into()),
-                route: "/desk/analytics".into(),
-                badge: Some("New".into()),
-                roles: vec!["System Manager".into()],
-                children: Vec::new(),
-            }],
+            tenant_id: "default".into(),
+            items: vec![desk_components::MenuItem::new(
+                "nav_analytics",
+                "Analytics",
+                "/desk/analytics",
+            )],
         };
         let save_resp = save_menu_tree_handler(
             web::Path::from("header_nav".to_string()),
@@ -10994,16 +10991,17 @@ mod tests {
         assert_eq!(save_resp.status(), actix_web::http::StatusCode::OK);
 
         // 2. AwesomeBar / Universal Search
-        let search_query = web::Query(AwesomebarSearchQuery {
-            q: "Sales".into(),
+        let search_query = web::Query(SearchQuery {
+            q: Some("Sales".into()),
             limit: Some(10),
         });
-        let search_resp = awesomebar_search_handler(search_query, rbac_state.clone())
+        let search_resp = awesomebar_search_handler(search_query)
             .await
             .respond_to(&actix_web::test::TestRequest::get().to_http_request());
         assert_eq!(search_resp.status(), actix_web::http::StatusCode::OK);
         let search_bytes = actix_web::body::to_bytes(search_resp.into_body())
             .await
+            .ok()
             .expect("read search body");
         let search_json: serde_json::Value =
             serde_json::from_slice(&search_bytes).expect("parse search json");
@@ -11011,9 +11009,12 @@ mod tests {
 
         // 3. In-App Notifications & Sound Alerts
         // Sound config get & update
-        let sound_get_resp = get_sound_config_handler(rbac_state.clone())
-            .await
-            .respond_to(&actix_web::test::TestRequest::get().to_http_request());
+        let sound_get_resp = get_sound_config_handler(
+            actix_web::test::TestRequest::get().to_http_request(),
+            rbac_state.clone(),
+        )
+        .await
+        .respond_to(&actix_web::test::TestRequest::get().to_http_request());
         assert_eq!(sound_get_resp.status(), actix_web::http::StatusCode::OK);
 
         let sound_update_payload = web::Json(frappe_framework::notification::SoundAlertConfig {
@@ -11022,27 +11023,36 @@ mod tests {
             vibration: true,
             mute_all: false,
         });
-        let sound_upd_resp = update_sound_config_handler(sound_update_payload, rbac_state.clone())
-            .await
-            .respond_to(&actix_web::test::TestRequest::put().to_http_request());
+        let sound_upd_resp = update_sound_config_handler(
+            actix_web::test::TestRequest::put().to_http_request(),
+            sound_update_payload,
+            rbac_state.clone(),
+        )
+        .await
+        .respond_to(&actix_web::test::TestRequest::put().to_http_request());
         assert_eq!(sound_upd_resp.status(), actix_web::http::StatusCode::OK);
 
         // Post a notification to inbox
         let notif = frappe_framework::notification::NotificationMessage::new(
             "notif_001",
+            "default",
+            "Administrator",
             "Batch Job Complete",
             "Import of 500 rows finished successfully.",
-            frappe_framework::notification::NotificationPriority::Normal,
         )
         .with_sound_alert(frappe_framework::notification::SoundAlertKind::SuccessTrill);
-        rbac_state.notifications_inbox.push_for_user("usr_admin", notif);
+        rbac_state.notifications_inbox.push(notif);
 
-        let inbox_resp = get_notifications_inbox_handler(rbac_state.clone())
-            .await
-            .respond_to(&actix_web::test::TestRequest::get().to_http_request());
+        let inbox_resp = get_notifications_inbox_handler(
+            actix_web::test::TestRequest::get().to_http_request(),
+            rbac_state.clone(),
+        )
+        .await
+        .respond_to(&actix_web::test::TestRequest::get().to_http_request());
         assert_eq!(inbox_resp.status(), actix_web::http::StatusCode::OK);
         let inbox_bytes = actix_web::body::to_bytes(inbox_resp.into_body())
             .await
+            .ok()
             .expect("read inbox body");
         let inbox_json: serde_json::Value =
             serde_json::from_slice(&inbox_bytes).expect("parse inbox json");
@@ -11050,6 +11060,7 @@ mod tests {
 
         // Mark read
         let mark_resp = mark_notification_read_handler(
+            actix_web::test::TestRequest::post().to_http_request(),
             web::Path::from("notif_001".to_string()),
             rbac_state.clone(),
         )
@@ -11058,19 +11069,31 @@ mod tests {
         assert_eq!(mark_resp.status(), actix_web::http::StatusCode::OK);
 
         // Mark all read
-        let mark_all_resp = mark_all_notifications_read_handler(rbac_state.clone())
-            .await
-            .respond_to(&actix_web::test::TestRequest::post().to_http_request());
+        let mark_all_resp = mark_all_notifications_read_handler(
+            actix_web::test::TestRequest::post().to_http_request(),
+            rbac_state.clone(),
+        )
+        .await
+        .respond_to(&actix_web::test::TestRequest::post().to_http_request());
         assert_eq!(mark_all_resp.status(), actix_web::http::StatusCode::OK);
 
         // Clear notifications
-        let clear_resp = clear_notifications_handler(rbac_state.clone())
-            .await
-            .respond_to(&actix_web::test::TestRequest::delete().to_http_request());
+        let clear_resp = clear_notifications_handler(
+            actix_web::test::TestRequest::delete().to_http_request(),
+            rbac_state.clone(),
+        )
+        .await
+        .respond_to(&actix_web::test::TestRequest::delete().to_http_request());
         assert_eq!(clear_resp.status(), actix_web::http::StatusCode::OK);
 
         // 4. Media Library & Asset Manager
-        let media_resp = media_assets_list_handler(rbac_state.clone())
+        let media_query = web::Query(MediaAssetQuery {
+            mime_prefix: None,
+            q: None,
+            limit: Some(10),
+            offset: Some(0),
+        });
+        let media_resp = media_assets_list_handler(media_query, rbac_state.clone())
             .await
             .respond_to(&actix_web::test::TestRequest::get().to_http_request());
         assert_eq!(media_resp.status(), actix_web::http::StatusCode::OK);
@@ -11079,8 +11102,7 @@ mod tests {
             image_width: 1920,
             image_height: 1080,
             target_aspect_ratio: 1.0,
-            focal_point_x: Some(0.5),
-            focal_point_y: Some(0.5),
+            focal_point: (0.5, 0.5),
         });
         let crop_resp = media_crop_calculate_handler(crop_payload)
             .await
@@ -11088,11 +11110,12 @@ mod tests {
         assert_eq!(crop_resp.status(), actix_web::http::StatusCode::OK);
         let crop_bytes = actix_web::body::to_bytes(crop_resp.into_body())
             .await
+            .ok()
             .expect("read crop body");
         let crop_json: serde_json::Value =
             serde_json::from_slice(&crop_bytes).expect("parse crop json");
-        assert_eq!(crop_json["crop"]["width"], 1080);
-        assert_eq!(crop_json["crop"]["height"], 1080);
+        assert_eq!(crop_json["crop"]["crop_width"], 1080);
+        assert_eq!(crop_json["crop"]["crop_height"], 1080);
 
         let dupes_resp = media_duplicates_handler(rbac_state.clone())
             .await
@@ -11126,6 +11149,7 @@ mod tests {
         assert_eq!(restore_resp.status(), actix_web::http::StatusCode::OK);
         let restore_bytes = actix_web::body::to_bytes(restore_resp.into_body())
             .await
+            .ok()
             .expect("read restore body");
         let restore_json: serde_json::Value =
             serde_json::from_slice(&restore_bytes).expect("parse restore json");
@@ -11134,8 +11158,7 @@ mod tests {
 
         // 6. Import/Export Studio
         let auto_map_payload = web::Json(AutoMapPayload {
-            doctype: "Item".into(),
-            csv_headers: vec!["Item Code".into(), "Item Name".into(), "Standard Rate".into()],
+            headers: vec!["Item Code".into(), "Item Name".into(), "Standard Rate".into()],
         });
         let auto_map_resp = import_auto_map_handler(auto_map_payload)
             .await
@@ -11143,6 +11166,7 @@ mod tests {
         assert_eq!(auto_map_resp.status(), actix_web::http::StatusCode::OK);
         let map_bytes = actix_web::body::to_bytes(auto_map_resp.into_body())
             .await
+            .ok()
             .expect("read map body");
         let map_json: serde_json::Value =
             serde_json::from_slice(&map_bytes).expect("parse map json");
@@ -11160,6 +11184,7 @@ mod tests {
         assert_eq!(exec_resp.status(), actix_web::http::StatusCode::OK);
         let exec_bytes = actix_web::body::to_bytes(exec_resp.into_body())
             .await
+            .ok()
             .expect("read exec body");
         let exec_json: serde_json::Value =
             serde_json::from_slice(&exec_bytes).expect("parse exec json");
@@ -11181,7 +11206,7 @@ mod tests {
 
         // 7. Internationalization & Localization (i18n)
         let rtl_query = web::Query(DetectRtlQuery {
-            lang: "fa".into(),
+            lang: Some("fa".into()),
         });
         let rtl_resp = i18n_detect_rtl_handler(rtl_query)
             .await
@@ -11189,6 +11214,7 @@ mod tests {
         assert_eq!(rtl_resp.status(), actix_web::http::StatusCode::OK);
         let rtl_bytes = actix_web::body::to_bytes(rtl_resp.into_body())
             .await
+            .ok()
             .expect("read rtl body");
         let rtl_json: serde_json::Value =
             serde_json::from_slice(&rtl_bytes).expect("parse rtl json");
@@ -11203,9 +11229,9 @@ mod tests {
         .respond_to(&actix_web::test::TestRequest::get().to_http_request());
         assert_eq!(trans_get_resp.status(), actix_web::http::StatusCode::OK);
 
-        let save_trans_payload = web::Json(SaveTranslationsPayload {
-            lang: "fa".into(),
-            dictionary: HashMap::from([("Orders".into(), "سفارشات".into())]),
+        let save_trans_payload = web::Json(SaveTranslationPayload {
+            language: "fa".into(),
+            terms: HashMap::from([("Orders".into(), "سفارشات".into())]),
         });
         let trans_save_resp = i18n_save_translations_handler(save_trans_payload, rbac_state.clone())
             .await
@@ -11213,9 +11239,9 @@ mod tests {
         assert_eq!(trans_save_resp.status(), actix_web::http::StatusCode::OK);
 
         let fmt_curr_payload = web::Json(FormatCurrencyPayload {
-            amount: dec!(1250.75),
+            amount: 1250.75,
             currency: "USD".into(),
-            locale: Some("en".into()),
+            locale: "en".into(),
         });
         let fmt_resp = i18n_format_currency_handler(fmt_curr_payload)
             .await
@@ -11223,6 +11249,7 @@ mod tests {
         assert_eq!(fmt_resp.status(), actix_web::http::StatusCode::OK);
         let fmt_bytes = actix_web::body::to_bytes(fmt_resp.into_body())
             .await
+            .ok()
             .expect("read fmt body");
         let fmt_json: serde_json::Value =
             serde_json::from_slice(&fmt_bytes).expect("parse fmt json");
@@ -11236,10 +11263,11 @@ mod tests {
 
         let update_theme_payload = web::Json(desk_components::ThemeConfig {
             mode: desk_components::ThemeMode::Cyberpunk,
-            brand_accent: "#00ffff".into(),
+            brand_color: "#00ffff".into(),
             border_radius_px: 2,
             font_family: "Consolas".into(),
             glassmorphism: true,
+            custom_css: compact_str::CompactString::default(),
         });
         let theme_upd_resp = theme_update_handler(update_theme_payload, rbac_state.clone())
             .await
@@ -11252,8 +11280,9 @@ mod tests {
         assert_eq!(css_resp.status(), actix_web::http::StatusCode::OK);
         let css_bytes = actix_web::body::to_bytes(css_resp.into_body())
             .await
+            .ok()
             .expect("read css body");
         let css_str = std::str::from_utf8(&css_bytes).expect("parse utf8 css");
-        assert!(css_str.contains("--brand-accent: #00ffff;"));
+        assert!(css_str.contains("--brand-primary: #00ffff;"));
     }
 }
