@@ -24,7 +24,21 @@ pub async fn open_tenant_surrealkv(
     tenant_ns: &str,
     db: &str,
 ) -> Result<Surreal<Db>> {
-    let s = Surreal::new::<SurrealKv>(path.as_ref()).await?;
+    let p = path.as_ref();
+    let s = match Surreal::new::<SurrealKv>(p).await {
+        Ok(s) => s,
+        Err(e) => {
+            let err_msg = e.to_string();
+            if err_msg.contains("LOCK") || err_msg.contains("locked") {
+                tracing::warn!(
+                    "SurrealKV database at {:?} is locked by another running process: {}",
+                    p,
+                    err_msg
+                );
+            }
+            return Err(e);
+        }
+    };
     s.use_ns(tenant_ns).use_db(db).await?;
     Ok(s)
 }

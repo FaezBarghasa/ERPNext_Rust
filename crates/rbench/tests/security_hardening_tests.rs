@@ -155,3 +155,47 @@ fn test_wasmtime_high_throughput_module_caching_performance() {
         "Module must be cached and reused across all 50 executions"
     );
 }
+
+#[test]
+fn test_quic_h3_flow_control_enforcement() {
+    use frappe_net::quic_h3_stream::{QuicH3Error, QuicH3StreamingEngine};
+
+    let peer_addr = "127.0.0.1:4433".parse().unwrap();
+    let mut engine = QuicH3StreamingEngine::new(peer_addr);
+
+    let stream_id = engine.create_bidirectional_stream();
+    // Default max_stream_data is 16 MB.
+    // Streaming an asset exceeding max_stream_data must return FlowControlExceeded.
+    let oversized_chunk = vec![0u8; 17 * 1024 * 1024];
+    let res = engine.stream_file_asset_h3(stream_id, &oversized_chunk, 64 * 1024);
+
+    assert!(matches!(
+        res,
+        Err(QuicH3Error::FlowControlExceeded {
+            allowed: 16777216,
+            attempted: 17825792
+        })
+    ));
+}
+
+#[tokio::test]
+async fn test_secondary_composite_index_ddl_execution() {
+    let db = open_tenant("idx_tenant", "idx_db")
+        .await
+        .expect("Open tenant DB");
+
+    // Execute composite indexes on gl_entries and stock_ledger_entries
+    let ddl_statements = [
+        "DEFINE TABLE gl_entries SCHEMALESS;",
+        "DEFINE INDEX idx_gl_entries_account_posting_date ON TABLE gl_entries FIELDS account, posting_date;",
+        "DEFINE INDEX idx_gl_entries_voucher ON TABLE gl_entries FIELDS voucher_type, voucher_no;",
+        "DEFINE TABLE stock_ledger_entries SCHEMALESS;",
+        "DEFINE INDEX idx_sle_item_warehouse ON TABLE stock_ledger_entries FIELDS item_code, warehouse;",
+        "DEFINE INDEX idx_sle_posting_date ON TABLE stock_ledger_entries FIELDS posting_date;",
+    ];
+
+    for stmt in ddl_statements {
+        let res = db.query(stmt).await;
+        assert!(res.is_ok(), "DDL failed for: {stmt} -> {:?}", res.err());
+    }
+}

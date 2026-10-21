@@ -1464,9 +1464,10 @@ pub async fn v2_submit_document(
     }
 
     // Persist parent doc update and all generated ledger entries within a single atomic ACID transaction
+    let clean_name = sanitize_surrealql_string(&name);
     let mut tx_stmts = Vec::new();
     tx_stmts.push(format!(
-        "UPDATE {table} SET docstatus = 1, modified = '{now}', status = IF status = NONE OR status = 'Draft' THEN 'Submitted' ELSE status END WHERE name = '{sanitized_name}';"
+        "UPDATE {table} SET docstatus = 1, modified = '{now}', status = IF status = NONE OR status = 'Draft' THEN 'Submitted' ELSE status END WHERE name = '{clean_name}';"
     ));
 
     for gl in &generated_gl_entries {
@@ -1623,9 +1624,10 @@ pub async fn v2_cancel_document(
         }));
     }
 
+    let clean_name = sanitize_surrealql_string(&name);
     let mut tx_stmts = Vec::new();
     tx_stmts.push(format!(
-        "UPDATE {table} SET docstatus = 2, modified = '{now}', status = 'Cancelled' WHERE name = '{sanitized_name}';"
+        "UPDATE {table} SET docstatus = 2, modified = '{now}', status = 'Cancelled' WHERE name = '{clean_name}';"
     ));
 
     // 3. Query and generate reversing GL entries inside transaction
@@ -2360,10 +2362,10 @@ pub async fn login_handler(
     if let Ok(mut rft_guard) = rbac_state.refresh_tokens.write() {
         if rft_guard.len() >= 10_000 {
             rft_guard.retain(|_, r| r.is_valid());
-            if rft_guard.len() >= 10_000 {
-                if let Some(oldest) = rft_guard.keys().next().cloned() {
-                    rft_guard.remove(&oldest);
-                }
+            if rft_guard.len() >= 10_000
+                && let Some(oldest) = rft_guard.keys().next().cloned()
+            {
+                rft_guard.remove(&oldest);
             }
         }
         rft_guard.insert(refresh_record.token_hash.clone(), refresh_record.clone());
@@ -2469,10 +2471,10 @@ pub async fn auth_refresh_token_handler(
     let (new_raw_refresh, new_refresh_rec) = issue_refresh_token(&user_id, &tenant_id, roles);
     if rft_guard.len() >= 10_000 {
         rft_guard.retain(|_, r| r.is_valid());
-        if rft_guard.len() >= 10_000 {
-            if let Some(oldest) = rft_guard.keys().next().cloned() {
-                rft_guard.remove(&oldest);
-            }
+        if rft_guard.len() >= 10_000
+            && let Some(oldest) = rft_guard.keys().next().cloned()
+        {
+            rft_guard.remove(&oldest);
         }
     }
     rft_guard.insert(new_refresh_rec.token_hash.clone(), new_refresh_rec.clone());
@@ -4181,10 +4183,11 @@ pub async fn trade_create_coupon_handler(
     coupon.description = p.description;
 
     if let Ok(mut lock) = state.coupons.write() {
-        if lock.len() >= 10_000 && !lock.contains_key(&coupon.code) {
-            if let Some(first_key) = lock.keys().next().cloned() {
-                lock.remove(&first_key);
-            }
+        if lock.len() >= 10_000
+            && !lock.contains_key(&coupon.code)
+            && let Some(first_key) = lock.keys().next().cloned()
+        {
+            lock.remove(&first_key);
         }
         lock.insert(coupon.code.clone(), coupon.clone());
     }
@@ -4313,9 +4316,7 @@ pub async fn trade_list_reviews_handler(
 ) -> impl Responder {
     let is_empty = state.reviews.read().map(|r| r.is_empty()).unwrap_or(true);
 
-    if is_empty
-        && let Some(mgr) = &pool_mgr
-    {
+    if is_empty && let Some(mgr) = &pool_mgr {
         let tenant_id = req
             .extensions()
             .get::<TenantId>()
@@ -4329,10 +4330,10 @@ pub async fn trade_list_reviews_handler(
                 .into_iter()
                 .filter_map(|r| serde_json::from_value(r).ok())
                 .collect();
-            if !db_reviews.is_empty() {
-                if let Ok(mut lock) = state.reviews.write() {
-                    *lock = db_reviews;
-                }
+            if !db_reviews.is_empty()
+                && let Ok(mut lock) = state.reviews.write()
+            {
+                *lock = db_reviews;
             }
         }
     }
@@ -4543,10 +4544,11 @@ pub async fn trade_get_wishlist_handler(
                     .collect();
                 if let Some(wl) = db_lists.into_iter().next() {
                     if let Ok(mut lock) = state.wishlists.write() {
-                        if lock.len() >= 10_000 && !lock.contains_key(&uid) {
-                            if let Some(oldest) = lock.keys().next().cloned() {
-                                lock.remove(&oldest);
-                            }
+                        if lock.len() >= 10_000
+                            && !lock.contains_key(&uid)
+                            && let Some(oldest) = lock.keys().next().cloned()
+                        {
+                            lock.remove(&oldest);
                         }
                         lock.insert(uid.clone(), wl.clone());
                     }
@@ -4591,10 +4593,11 @@ pub async fn trade_add_wishlist_item_handler(
         Err(_) => return HttpResponse::InternalServerError().body("Lock error"),
     };
 
-    if lock.len() >= 10_000 && !lock.contains_key(&uid) {
-        if let Some(oldest) = lock.keys().next().cloned() {
-            lock.remove(&oldest);
-        }
+    if lock.len() >= 10_000
+        && !lock.contains_key(&uid)
+        && let Some(oldest) = lock.keys().next().cloned()
+    {
+        lock.remove(&oldest);
     }
     let wl = lock
         .entry(uid.clone())
@@ -4819,6 +4822,12 @@ pub async fn trade_rma_submit_handler(
     let req_record = RmaRecord::new(rma_id, p.order_id, p.customer_id, p.items, p.reason);
 
     if let Ok(mut lock) = state.rma_records.write() {
+        if lock.len() >= 10_000
+            && !lock.contains_key(&req_record.rma_id)
+            && let Some(first_key) = lock.keys().next().cloned()
+        {
+            lock.remove(&first_key);
+        }
         lock.insert(req_record.rma_id.clone(), req_record.clone());
     }
 
@@ -5594,6 +5603,12 @@ pub async fn emdash_save_document_handler(
         .collect();
 
     if let Ok(mut lock) = state.emdash_documents.write() {
+        if lock.len() >= 5_000
+            && !lock.contains_key(&id)
+            && let Some(first_key) = lock.keys().next().cloned()
+        {
+            lock.remove(&first_key);
+        }
         lock.insert(id.clone(), doc.clone());
     }
 
@@ -6666,7 +6681,16 @@ pub async fn audio_add_comment_handler(
         created_at: Utc::now().timestamp(),
     };
 
-    let mut timelines = state.audio_timelines.write().unwrap();
+    let mut timelines = match state.audio_timelines.write() {
+        Ok(t) => t,
+        Err(_) => return HttpResponse::InternalServerError().body("Lock error"),
+    };
+    if timelines.len() >= 5_000
+        && !timelines.contains_key(&p.track_id)
+        && let Some(first_key) = timelines.keys().next().cloned()
+    {
+        timelines.remove(&first_key);
+    }
     let timeline = timelines.entry(p.track_id).or_default();
     timeline.add_comment(comment.clone());
 
@@ -6690,9 +6714,12 @@ pub async fn audio_get_comments_handler(
     query: web::Query<AudioCommentsQuery>,
 ) -> impl Responder {
     let track_id = path.into_inner();
-    let timelines = state.audio_timelines.read().unwrap();
     let empty_timeline = erp_cms::audio_waveform::TimedCommentTimeline::new();
-    let timeline = timelines.get(&track_id).unwrap_or(&empty_timeline);
+    let guard = state.audio_timelines.read().ok();
+    let timeline = guard
+        .as_ref()
+        .and_then(|g| g.get(&track_id))
+        .unwrap_or(&empty_timeline);
 
     let duration_ms = query.duration_ms.unwrap_or(180_000);
     let buckets = query.buckets.unwrap_or(20);
@@ -7911,12 +7938,13 @@ pub async fn inventory_stock_balance_handler(
             .cloned()
             .unwrap_or_else(|| TenantId("default".into()));
         if let Ok(client) = mgr.get_or_initialize_client(&tenant_id).await {
-            let sanitized_wh = sanitize_surrealql_string(&warehouse);
-            let sanitized_item = sanitize_surrealql_string(&item_code);
-            let sql = format!(
-                "SELECT * FROM stock_ledger_entry WHERE warehouse = '{sanitized_wh}' AND item_code = '{sanitized_item}' ORDER BY posting_date ASC, name ASC;"
-            );
-            if let Ok(mut res) = client.query(&sql).await {
+            let sql = "SELECT * FROM stock_ledger_entry WHERE warehouse = $wh AND item_code = $item ORDER BY posting_date ASC, name ASC;";
+            if let Ok(mut res) = client
+                .query(sql)
+                .bind(("wh", warehouse.clone()))
+                .bind(("item", item_code.clone()))
+                .await
+            {
                 let rows: Vec<serde_json::Value> = res.take(0).unwrap_or_default();
                 let entries: Vec<StockLedgerEntry> = rows
                     .into_iter()
