@@ -1591,6 +1591,7 @@ dependencies = [
 name = "desk-components"
 version = "0.3.0"
 dependencies = [
+ "chrono",
  "compact_str",
  "dioxus",
  "erp-cms",

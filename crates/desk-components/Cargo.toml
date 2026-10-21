@@ -16,3 +16,4 @@ rhai = { workspace = true }
 rust_decimal = { workspace = true }
 rust_decimal_macros = { workspace = true }
 erp-cms = { workspace = true }
+chrono = { workspace = true }
