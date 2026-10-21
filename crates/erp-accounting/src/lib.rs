@@ -22,6 +22,7 @@ pub mod pos;
 pub mod print_format;
 pub mod purchase_invoice;
 pub mod receivables;
+pub mod regional_tax;
 pub mod report_engine;
 pub mod solvency_proof;
 pub mod tax_engine;
@@ -68,8 +69,9 @@ pub use multibook::{
     AccountingBook, MultiBookJournalLine, MultiBookPostingEngine, MultiBookTransaction,
 };
 pub use payment_gateway::{
-    MockPaymentGateway, PaymentError, PaymentGatewayProcessor, PaymentIntent, PaymentMethod,
-    PaymentReconciliationEngine, PaymentStatus,
+    MockPaymentGateway, PayPalGatewayProcessor, PaymentError, PaymentGatewayProcessor,
+    PaymentIntent, PaymentMethod, PaymentReconciliationEngine, PaymentStatus,
+    StripeGatewayProcessor,
 };
 pub use payment_ledger::{PaymentLedgerEngine, PaymentLedgerEntry};
 pub use print_format::{
@@ -77,6 +79,11 @@ pub use print_format::{
     PrintableTaxCharge,
 };
 pub use receivables::{ArApEngine, OpenInvoice, PaymentAllocationResult};
+pub use regional_tax::{
+    AuditReport, InvoiceSequenceAuditor, InvoiceSequenceRecord, RegionalTaxAssessment,
+    RegionalTaxEngine, RegionalTaxError, RegionalTaxLine, TaxJurisdiction, TaxParty,
+    TaxTreatment, TaxableLineItem,
+};
 pub use report_engine::{
     FinancialReportEngine, FinancialReportRow, ReportError, ReportRowType, StatementLine,
 };
