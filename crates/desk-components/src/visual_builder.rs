@@ -9,6 +9,9 @@
 //! - Components & Variants: Main component & instances, variant sets with state properties, component properties (Text, Boolean, InstanceSwap, Variant), and design system analytics.
 //! - One-click export for lean deployment (< 1GB RAM budget).
 
+pub mod sss_rank;
+pub use sss_rank::*;
+
 use compact_str::CompactString;
 use erp_cms::builder_core::{CanvasBlock, CanvasBreakpoint, CanvasInteractionMode};
 use serde::{Deserialize, Serialize};
@@ -901,6 +904,7 @@ pub struct VisualStudioState {
     pub variable_collections: Vec<VariableCollection>,
     pub libraries: Vec<ComponentLibrary>,
     pub analytics: DesignSystemAnalytics,
+    pub sss_rank: SssRankState,
 }
 
 impl Default for VisualStudioState {
@@ -1141,7 +1145,30 @@ impl VisualStudioState {
                 detachment_count: 2,
                 adoption_rate_pct: 95.4,
             },
+            sss_rank: SssRankState::default(),
         }
+    }
+
+    /// Sets the active application mode across the 12 SSS+ workflow modes.
+    pub fn set_mode(&mut self, mode: ApplicationMode) {
+        self.sss_rank.active_mode = mode;
+    }
+
+    /// Returns the currently active SSS+ application mode.
+    #[must_use]
+    pub fn mode(&self) -> ApplicationMode {
+        self.sss_rank.active_mode
+    }
+
+    /// Accesses the underlying SSS+ Rank state engine.
+    #[must_use]
+    pub fn sss_rank(&self) -> &SssRankState {
+        &self.sss_rank
+    }
+
+    /// Mutable access to the SSS+ Rank state engine.
+    pub fn sss_rank_mut(&mut self) -> &mut SssRankState {
+        &mut self.sss_rank
     }
 
     /// Selects a canvas block.
@@ -1536,6 +1563,91 @@ pub fn render_visual_builder_html(state: &VisualStudioState) -> String {
         "border-gray-800 bg-gray-950 shadow-2xl"
     };
 
+    let modes = [
+        ApplicationMode::Whiteboard,
+        ApplicationMode::Wireframe,
+        ApplicationMode::Design,
+        ApplicationMode::Build,
+        ApplicationMode::Motion,
+        ApplicationMode::Content,
+        ApplicationMode::Logic,
+        ApplicationMode::Commerce,
+        ApplicationMode::Preview,
+        ApplicationMode::Client,
+        ApplicationMode::Dev,
+        ApplicationMode::Optimize,
+    ];
+    let mut modes_html = String::new();
+    for m in modes {
+        let is_active = state.sss_rank.active_mode == m;
+        let active_cls = if is_active {
+            "bg-cyan-500/20 text-cyan-300 border-cyan-500/60 font-semibold shadow-sm"
+        } else {
+            "text-gray-400 hover:text-gray-200 hover:bg-gray-800/40 border-transparent"
+        };
+        modes_html.push_str(&format!(
+            r#"<button title="{purpose}" class="px-2.5 py-1 rounded-md text-[11px] border transition-all whitespace-nowrap {active_cls}">{label}</button>"#,
+            purpose = m.purpose(),
+            active_cls = active_cls,
+            label = m.label()
+        ));
+    }
+
+    let client_banner = if state.sss_rank.active_mode == ApplicationMode::Client {
+        r#"<div class="bg-amber-500/10 border-b border-amber-500/30 px-4 py-1.5 text-xs text-amber-300 flex items-center justify-between shrink-0">
+            <span class="flex items-center gap-2"><span>🛡️</span> <strong>Client Safe Mode:</strong> Layout, design tokens, and logic nodes are locked. Content-only inline editing permitted.</span>
+            <span class="text-[10px] text-amber-400/80 uppercase font-mono px-2 py-0.5 rounded bg-amber-500/20 border border-amber-500/40">White-Label Approval Gate</span>
+        </div>"#
+    } else {
+        ""
+    };
+
+    let launch_gate_pill = if state.sss_rank.launch_gate.can_publish() {
+        r#"<div class="hidden xl:flex items-center gap-2 px-2.5 py-1 rounded-lg bg-emerald-950/50 border border-emerald-500/50 text-[11px] font-mono text-emerald-400">
+            <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+            <span>WCAG AAA (100%)</span>
+            <span class="text-gray-600">•</span>
+            <span>LCP 1.2s</span>
+            <span class="text-gray-600">•</span>
+            <span class="font-bold">Launch: READY</span>
+        </div>"#
+    } else {
+        r#"<div class="hidden xl:flex items-center gap-2 px-2.5 py-1 rounded-lg bg-amber-950/50 border border-amber-500/50 text-[11px] font-mono text-amber-400">
+            <span class="w-2 h-2 rounded-full bg-amber-400"></span>
+            <span>QA Warnings</span>
+        </div>"#
+    };
+
+    let timeline_dock = format!(
+        r#"<!-- SSS+ Motion Studio Timeline Dock -->
+        <div class="h-28 border-t border-gray-800/80 bg-gray-900/95 backdrop-blur-md px-4 py-2 flex flex-col z-20 shrink-0">
+            <div class="flex items-center justify-between mb-1.5">
+                <div class="flex items-center gap-2">
+                    <span class="text-xs font-bold text-gray-200 uppercase tracking-wider flex items-center gap-1.5">
+                        <span class="text-cyan-400">⏱️</span> Motion Studio Timeline
+                    </span>
+                    <span class="text-[10px] text-gray-400 font-mono">({time_ms}ms / {duration_ms}ms • 60 FPS)</span>
+                </div>
+                <div class="flex items-center gap-2">
+                    <button class="px-2 py-0.5 rounded bg-gray-800 border border-gray-700 text-[10px] text-gray-300 hover:text-cyan-400">
+                        {play_state}
+                    </button>
+                    <span class="text-[10px] text-emerald-400 font-mono">prefers-reduced-motion: Auto Fallback</span>
+                </div>
+            </div>
+            <div class="flex-1 bg-gray-950 border border-gray-800 rounded-lg p-2 flex items-center gap-4">
+                <span class="text-xs font-mono text-cyan-400 w-36 truncate">{track_target} : {track_prop}</span>
+                <input type="range" min="0" max="{duration_ms}" value="{time_ms}" class="flex-1 accent-cyan-500 h-1.5 bg-gray-800 rounded cursor-pointer">
+                <span class="text-xs font-mono text-gray-400">Bezier Curve: [0.25, 0.1, 0.25, 1.0]</span>
+            </div>
+        </div>"#,
+        time_ms = state.sss_rank.motion_timeline.current_time_ms,
+        duration_ms = state.sss_rank.motion_timeline.duration_ms,
+        play_state = if state.sss_rank.motion_timeline.is_playing { "Pause" } else { "Play" },
+        track_target = state.sss_rank.motion_timeline.tracks.first().map_or("hero", |t| t.target_id.as_str()),
+        track_prop = state.sss_rank.motion_timeline.tracks.first().map_or("opacity", |t| t.property_name.as_str())
+    );
+
     format!(
         r#"<!DOCTYPE html>
 <html lang="en" class="dark">
@@ -1583,6 +1695,7 @@ pub fn render_visual_builder_html(state: &VisualStudioState) -> String {
 
         <!-- Viewport Zoom Controls & Export Actions -->
         <div class="flex items-center gap-2">
+            {launch_gate_pill}
             <div class="flex items-center gap-1 px-2 py-1 bg-gray-800/60 border border-gray-700/60 rounded-lg text-xs font-mono text-gray-300">
                 <span title="Zoom: Shift+1 (Fit), Shift+2 (Sel), Cmd+0 (Reset)">{zoom_pct}%</span>
                 <button title="Toggle Outline Mode (Ctrl+Y)" class="ml-1 text-gray-400 hover:text-cyan-400 text-xs">
@@ -1594,6 +1707,15 @@ pub fn render_visual_builder_html(state: &VisualStudioState) -> String {
             </button>
         </div>
     </header>
+
+    <!-- SSS+ Rank 12-Mode Navigation Strip -->
+    <div class="h-10 border-b border-gray-800/80 bg-gray-900/60 backdrop-blur px-4 flex items-center gap-1.5 overflow-x-auto z-20 shrink-0">
+        <span class="text-[10px] font-bold uppercase tracking-wider text-gray-500 mr-2 shrink-0">Mode:</span>
+        {modes_html}
+    </div>
+
+    <!-- Client Safe Mode Banner (if Client mode active) -->
+    {client_banner}
 
     <!-- Main Workspace: Left Sidebar + Infinite Canvas + Right Inspector -->
     <div class="flex flex-1 overflow-hidden relative">
@@ -1741,12 +1863,18 @@ pub fn render_visual_builder_html(state: &VisualStudioState) -> String {
             </div>
         </aside>
     </div>
+
+    <!-- SSS+ Motion Studio Timeline Dock -->
+    {timeline_dock}
 </body>
 </html>"#,
         active_page_name = state.pages.iter().find(|p| p.id == state.active_page_id).map_or("Home Page", |p| p.name.as_str()),
         tools_html = tools_html,
+        launch_gate_pill = launch_gate_pill,
         zoom_pct = (state.viewport.zoom_level * 100.0) as u32,
         outline_indicator = if state.viewport.outline_mode { "Outline ON" } else { "Wireframe" },
+        modes_html = modes_html,
+        client_banner = client_banner,
         layers_tab_cls = if state.active_sidebar_tab == SidebarTab::Layers { "border-cyan-500 text-cyan-400" } else { "border-transparent text-gray-400" },
         assets_tab_cls = if state.active_sidebar_tab == SidebarTab::Assets { "border-cyan-500 text-cyan-400" } else { "border-transparent text-gray-400" },
         pages_tab_cls = if state.active_sidebar_tab == SidebarTab::Pages { "border-cyan-500 text-cyan-400" } else { "border-transparent text-gray-400" },
@@ -1769,7 +1897,8 @@ pub fn render_visual_builder_html(state: &VisualStudioState) -> String {
         arc_ratio = state.properties.arc.ratio,
         underline_color = state.properties.underline.color,
         underline_offset = state.properties.underline.offset_px,
-        tailwind_preview = dev_mode.tailwind_code
+        tailwind_preview = dev_mode.tailwind_code,
+        timeline_dock = timeline_dock
     )
 }
 
@@ -1924,5 +2053,23 @@ mod tests {
         assert!(html.contains("Prototype Triggers"));
         assert!(html.contains("Dev Mode"));
         assert!(html.contains("Deploy Bundle"));
+    }
+
+    #[test]
+    fn test_sss_rank_mode_switching_and_html_render() {
+        let mut state = VisualStudioState::new();
+        assert_eq!(state.mode(), ApplicationMode::Design);
+
+        state.set_mode(ApplicationMode::Client);
+        assert_eq!(state.mode(), ApplicationMode::Client);
+
+        let html = render_visual_builder_html(&state);
+        assert!(html.contains("Client Safe Mode"));
+        assert!(html.contains("White-Label Approval Gate"));
+        assert!(html.contains("Motion Studio Timeline"));
+        assert!(html.contains("WCAG AAA"));
+        assert!(html.contains("Mode:"));
+        assert!(html.contains("Whiteboard Mode"));
+        assert!(html.contains("Commerce Mode"));
     }
 }
