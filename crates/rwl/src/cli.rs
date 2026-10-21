@@ -173,10 +173,14 @@ pub async fn run() -> anyhow::Result<()> {
 
             let registry = frappe_framework::BlueprintRegistry::new();
             let bp_package = registry.get(&blueprint);
-            let bp_name = bp_package.map(|b| b.metadata.name.as_str()).unwrap_or("Custom");
+            let bp_name = bp_package
+                .map(|b| b.metadata.name.as_str())
+                .unwrap_or("Custom");
             let doctype_count = bp_package.map(|b| b.doctypes.len()).unwrap_or(0);
             let page_count = bp_package.map(|b| b.pages.len()).unwrap_or(0);
-            let wf_count = bp_package.map(|b| b.workflow_automations.len()).unwrap_or(0);
+            let wf_count = bp_package
+                .map(|b| b.workflow_automations.len())
+                .unwrap_or(0);
 
             let manifest = serde_json::json!({
                 "name": name,
@@ -194,8 +198,10 @@ pub async fn run() -> anyhow::Result<()> {
             if let Some(pkg) = bp_package {
                 let bp_path = project_path.join("blueprint.json");
                 tokio::fs::write(&bp_path, serde_json::to_string_pretty(pkg)?).await?;
-                println!("   ↳ Installed Blueprint: {} ({} DocTypes, {} Pages, {} Workflows)",
-                    pkg.metadata.name, doctype_count, page_count, wf_count);
+                println!(
+                    "   ↳ Installed Blueprint: {} ({} DocTypes, {} Pages, {} Workflows)",
+                    pkg.metadata.name, doctype_count, page_count, wf_count
+                );
             }
             println!("✅ Successfully created '{name}/rwl.json' ready to edit in studio!");
         }
@@ -228,11 +234,16 @@ pub async fn run() -> anyhow::Result<()> {
             println!("📁 Output Directory: '{}'", report.output_dir);
             println!("   ↳ Total Files Written: {}", report.files_written.len());
             println!("   ↳ Total Bytes:         {} bytes", report.total_bytes);
-            println!("   ↳ Hard Memory Ceiling: {} MB RAM", report.memory_budget_mb);
+            println!(
+                "   ↳ Hard Memory Ceiling: {} MB RAM",
+                report.memory_budget_mb
+            );
             for f in &report.files_written {
                 println!("   - {f}");
             }
-            println!("✅ Deployment package generated successfully in '{output}' ready for 1-click deployment!");
+            println!(
+                "✅ Deployment package generated successfully in '{output}' ready for 1-click deployment!"
+            );
         }
 
         Commands::Status => {

@@ -211,10 +211,16 @@ impl DocTypeDiffEngine {
                 Some(remote_dt) => {
                     // DocType exists on both sides: compare fields
                     let mut field_diffs = Vec::new();
-                    let remote_fields: HashMap<&str, &FieldSnapshot> =
-                        remote_dt.fields.iter().map(|f| (f.name.as_str(), f)).collect();
-                    let local_fields: HashMap<&str, &FieldSnapshot> =
-                        local_dt.fields.iter().map(|f| (f.name.as_str(), f)).collect();
+                    let remote_fields: HashMap<&str, &FieldSnapshot> = remote_dt
+                        .fields
+                        .iter()
+                        .map(|f| (f.name.as_str(), f))
+                        .collect();
+                    let local_fields: HashMap<&str, &FieldSnapshot> = local_dt
+                        .fields
+                        .iter()
+                        .map(|f| (f.name.as_str(), f))
+                        .collect();
 
                     // Added or Modified fields
                     for local_f in &local_dt.fields {
@@ -495,10 +501,8 @@ mod tests {
         let new_doctype = DocTypeSnapshot::new("Warehouse_Zone", "Stock")
             .with_field(FieldSnapshot::new("zone_code", "Data").required());
 
-        let diffs = DocTypeDiffEngine::diff_doctypes(
-            &[local_doctype, new_doctype],
-            &[remote_doctype],
-        );
+        let diffs =
+            DocTypeDiffEngine::diff_doctypes(&[local_doctype, new_doctype], &[remote_doctype]);
 
         assert_eq!(diffs.len(), 2);
 
@@ -509,7 +513,10 @@ mod tests {
         assert_eq!(item_diff.field_diffs[0].kind, FieldDiffKind::Added);
         assert!(!item_diff.is_destructive);
 
-        let zone_diff = diffs.iter().find(|d| d.doctype_name == "Warehouse_Zone").unwrap();
+        let zone_diff = diffs
+            .iter()
+            .find(|d| d.doctype_name == "Warehouse_Zone")
+            .unwrap();
         assert_eq!(zone_diff.kind, DocTypeDiffKind::Created);
         assert!(!zone_diff.is_destructive);
     }
@@ -543,19 +550,30 @@ mod tests {
         let sql = DocTypeDiffEngine::generate_non_destructive_surrealql(&diffs);
 
         assert_eq!(sql.len(), 1);
-        assert_eq!(sql[0], "DEFINE FIELD standard_rate ON TABLE item TYPE decimal;");
+        assert_eq!(
+            sql[0],
+            "DEFINE FIELD standard_rate ON TABLE item TYPE decimal;"
+        );
     }
 
     #[test]
     fn test_page_diff_tracking() {
         let remote_pages = vec![
             (CompactString::from("home"), CompactString::from("Home"), 5),
-            (CompactString::from("old_pricing"), CompactString::from("Old Pricing"), 3),
+            (
+                CompactString::from("old_pricing"),
+                CompactString::from("Old Pricing"),
+                3,
+            ),
         ];
 
         let local_pages = vec![
             (CompactString::from("home"), CompactString::from("Home"), 8), // Updated
-            (CompactString::from("new_about"), CompactString::from("About"), 4), // Created
+            (
+                CompactString::from("new_about"),
+                CompactString::from("About"),
+                4,
+            ), // Created
         ];
 
         let diffs = DocTypeDiffEngine::diff_pages(&local_pages, &remote_pages);
@@ -576,17 +594,12 @@ mod tests {
     #[test]
     fn test_upgrade_patch_bundle_integrity_checksum() {
         let remote = vec![DocTypeSnapshot::new("Item", "Stock")];
-        let local = vec![DocTypeSnapshot::new("Item", "Stock")
-            .with_field(FieldSnapshot::new("barcode", "Data"))];
+        let local = vec![
+            DocTypeSnapshot::new("Item", "Stock").with_field(FieldSnapshot::new("barcode", "Data")),
+        ];
 
-        let bundle = DocTypeDiffEngine::build_upgrade_patch(
-            "0.3.0",
-            "0.3.1",
-            &local,
-            &remote,
-            &[],
-            &[],
-        );
+        let bundle =
+            DocTypeDiffEngine::build_upgrade_patch("0.3.0", "0.3.1", &local, &remote, &[], &[]);
 
         assert!(DocTypeDiffEngine::verify_patch_checksum(&bundle));
         assert!(!bundle.checksum_sha256.is_empty());

@@ -125,9 +125,7 @@ pub fn configure(cfg: &mut web::ServiceConfig) {
 // 1. Navigation & Menu Builder Handlers
 // =========================================================================
 
-pub async fn list_all_menus_handler(
-    rbac_state: web::Data<DynamicRbacState>,
-) -> impl Responder {
+pub async fn list_all_menus_handler(rbac_state: web::Data<DynamicRbacState>) -> impl Responder {
     let menus = match rbac_state.menus.read() {
         Ok(m) => m,
         Err(_) => {
@@ -225,9 +223,7 @@ pub struct SearchIndexItem {
     pub description: String,
 }
 
-pub async fn awesomebar_search_handler(
-    query: web::Query<SearchQuery>,
-) -> impl Responder {
+pub async fn awesomebar_search_handler(query: web::Query<SearchQuery>) -> impl Responder {
     let q = query.q.as_deref().unwrap_or("").trim().to_lowercase();
     let limit = query.limit.unwrap_or(20);
 
@@ -327,7 +323,9 @@ pub async fn get_notifications_inbox_handler(
         .and_then(|h| h.to_str().ok())
         .unwrap_or("Administrator");
 
-    let items = rbac_state.notifications_inbox.get_user_notifications(user_id);
+    let items = rbac_state
+        .notifications_inbox
+        .get_user_notifications(user_id);
     let unread = rbac_state.notifications_inbox.unread_count(user_id);
 
     HttpResponse::Ok().json(serde_json::json!({
@@ -511,9 +509,7 @@ pub struct CropResult {
     pub crop_height: u32,
 }
 
-pub async fn media_crop_calculate_handler(
-    payload: web::Json<MediaCropPayload>,
-) -> impl Responder {
+pub async fn media_crop_calculate_handler(payload: web::Json<MediaCropPayload>) -> impl Responder {
     let p = payload.into_inner();
     let img_w = p.image_width as f32;
     let img_h = p.image_height as f32;
@@ -547,9 +543,7 @@ pub async fn media_crop_calculate_handler(
     }))
 }
 
-pub async fn media_duplicates_handler(
-    rbac_state: web::Data<DynamicRbacState>,
-) -> impl Responder {
+pub async fn media_duplicates_handler(rbac_state: web::Data<DynamicRbacState>) -> impl Responder {
     let catalog = match rbac_state.media_catalog.read() {
         Ok(c) => c,
         Err(_) => {
@@ -658,12 +652,11 @@ pub struct AutoMapPayload {
     pub headers: Vec<String>,
 }
 
-pub async fn import_auto_map_handler(
-    payload: web::Json<AutoMapPayload>,
-) -> impl Responder {
+pub async fn import_auto_map_handler(payload: web::Json<AutoMapPayload>) -> impl Responder {
     let schema = FuzzyMatcher::default_item_schema();
     let header_refs: Vec<&str> = payload.headers.iter().map(AsRef::as_ref).collect();
-    let mappings: Vec<ColumnMappingItem> = ImportExportStudio::suggest_mappings(&header_refs, &schema);
+    let mappings: Vec<ColumnMappingItem> =
+        ImportExportStudio::suggest_mappings(&header_refs, &schema);
 
     HttpResponse::Ok().json(serde_json::json!({
         "status": "OK",
@@ -679,9 +672,7 @@ pub struct ImportExecutePayload {
     pub dry_run: Option<bool>,
 }
 
-pub async fn import_execute_handler(
-    payload: web::Json<ImportExecutePayload>,
-) -> impl Responder {
+pub async fn import_execute_handler(payload: web::Json<ImportExecutePayload>) -> impl Responder {
     let schema = FuzzyMatcher::default_item_schema();
     let dry_run = payload.dry_run.unwrap_or(false);
 
@@ -689,11 +680,8 @@ pub async fn import_execute_handler(
         dry_run,
         ..Default::default()
     };
-    let (rows, summary) = StreamingPipelineProcessor::process_csv_stream(
-        &payload.csv_content,
-        &schema,
-        &config,
-    );
+    let (rows, summary) =
+        StreamingPipelineProcessor::process_csv_stream(&payload.csv_content, &schema, &config);
 
     let error_csv = if summary.failed_rows > 0 {
         Some(ImportExportStudio::generate_error_csv(&summary.errors))
@@ -733,7 +721,10 @@ pub async fn export_doctype_dataset_handler(
     match ImportExportStudio::export_dataset(&p.rows, &p.fields, format) {
         Ok(bytes) => {
             let (content_type, filename) = match format {
-                ExportFormat::Json => ("application/json", format!("{}.json", p.doctype.to_lowercase())),
+                ExportFormat::Json => (
+                    "application/json",
+                    format!("{}.json", p.doctype.to_lowercase()),
+                ),
                 ExportFormat::Csv => ("text/csv", format!("{}.csv", p.doctype.to_lowercase())),
             };
 
@@ -819,9 +810,7 @@ pub struct DetectRtlQuery {
     pub lang: Option<String>,
 }
 
-pub async fn i18n_detect_rtl_handler(
-    query: web::Query<DetectRtlQuery>,
-) -> impl Responder {
+pub async fn i18n_detect_rtl_handler(query: web::Query<DetectRtlQuery>) -> impl Responder {
     let lang = query.lang.as_deref().unwrap_or("en");
     let rtl = is_rtl(lang);
 
@@ -859,9 +848,7 @@ pub async fn i18n_format_currency_handler(
 // 8. Theme Customizer Handlers
 // =========================================================================
 
-pub async fn theme_get_handler(
-    rbac_state: web::Data<DynamicRbacState>,
-) -> impl Responder {
+pub async fn theme_get_handler(rbac_state: web::Data<DynamicRbacState>) -> impl Responder {
     let theme = match rbac_state.theme_config.read() {
         Ok(t) => t,
         Err(_) => {
@@ -909,7 +896,5 @@ pub async fn theme_get_compiled_css_handler(
 
     let css = theme.compile_css();
 
-    HttpResponse::Ok()
-        .content_type("text/css")
-        .body(css)
+    HttpResponse::Ok().content_type("text/css").body(css)
 }

@@ -94,7 +94,10 @@ impl ControllerRegistry {
 
     /// Attaches a workflow automation engine to the registry.
     #[must_use]
-    pub fn with_workflow_engine(mut self, engine: Arc<crate::workflow_nodes::WorkflowEngine>) -> Self {
+    pub fn with_workflow_engine(
+        mut self,
+        engine: Arc<crate::workflow_nodes::WorkflowEngine>,
+    ) -> Self {
         self.workflow_engine = Some(engine);
         self
     }

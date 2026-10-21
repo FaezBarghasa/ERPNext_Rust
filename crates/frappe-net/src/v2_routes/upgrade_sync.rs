@@ -88,7 +88,10 @@ pub fn configure(cfg: &mut web::ServiceConfig) {
         "/api/v2/admin/upgrade/status",
         web::get().to(get_upgrade_status_handler),
     )
-    .route("/api/v2/admin/upgrade", web::post().to(apply_upgrade_handler))
+    .route(
+        "/api/v2/admin/upgrade",
+        web::post().to(apply_upgrade_handler),
+    )
     .route(
         "/api/v2/admin/upgrade/rollback",
         web::post().to(rollback_upgrade_handler),

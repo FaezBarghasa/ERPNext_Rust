@@ -21,24 +21,24 @@ use std::collections::HashMap;
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, Default)]
 pub enum CanvasTool {
     #[default]
-    Move,         // 'V' - Select and move objects
-    Frame,        // 'F' - Artboards/screen containers
-    Section,      // 'Shift + S' - Organizes groups of frames
-    Rectangle,    // 'R' - Rectangles and cards
-    Line,         // 'L' - Vector lines
-    Ellipse,      // 'O' - Circles and arcs
-    Polygon,      // Polygons and triangles
-    Star,         // Star shapes
-    Pen,          // 'P' - Vector path illustration
-    Pencil,       // 'Shift + P' - Freehand sketching (hold Shift for straight lines)
-    Scale,        // 'K' - Proportionally resize layers, strokes & effects
-    Text,         // 'T' - Text content
-    Slice,        // 'S' - Custom export regions across frames
-    Comment,      // 'C' - Canvas-level feedback
-    Measurement,  // 'Shift + M' - Pin exact spacing measurements
-    Annotation,   // 'Y' or 'Shift + T' - Add categorized notes (Problem, Todo, Dev note)
-    Eyedropper,   // 'I' - Sample colors; hold Shift to grab variable/style
-    Hand,         // 'H' or hold Space - Pan canvas
+    Move, // 'V' - Select and move objects
+    Frame,       // 'F' - Artboards/screen containers
+    Section,     // 'Shift + S' - Organizes groups of frames
+    Rectangle,   // 'R' - Rectangles and cards
+    Line,        // 'L' - Vector lines
+    Ellipse,     // 'O' - Circles and arcs
+    Polygon,     // Polygons and triangles
+    Star,        // Star shapes
+    Pen,         // 'P' - Vector path illustration
+    Pencil,      // 'Shift + P' - Freehand sketching (hold Shift for straight lines)
+    Scale,       // 'K' - Proportionally resize layers, strokes & effects
+    Text,        // 'T' - Text content
+    Slice,       // 'S' - Custom export regions across frames
+    Comment,     // 'C' - Canvas-level feedback
+    Measurement, // 'Shift + M' - Pin exact spacing measurements
+    Annotation,  // 'Y' or 'Shift + T' - Add categorized notes (Problem, Todo, Dev note)
+    Eyedropper,  // 'I' - Sample colors; hold Shift to grab variable/style
+    Hand,        // 'H' or hold Space - Pan canvas
 }
 
 impl CanvasTool {
@@ -1253,7 +1253,9 @@ impl VisualStudioState {
     /// Ungroups selected group layer (Ctrl + Shift + G).
     pub fn ungroup_selected(&mut self) {
         if let Some(pos) = self.selected_block_id.as_ref().and_then(|current| {
-            self.layers.iter().position(|l| l.id == *current && l.kind == "group")
+            self.layers
+                .iter()
+                .position(|l| l.id == *current && l.kind == "group")
         }) {
             let group = self.layers.remove(pos);
             for child in group.children {
@@ -1296,7 +1298,9 @@ impl VisualStudioState {
     /// Paste to Replace (Shift + ⌘/Ctrl + R): Replaces selected block in place.
     pub fn paste_to_replace(&mut self, new_block: CanvasBlock) {
         if let Some(pos) = self.selected_block_id.as_ref().and_then(|sel| {
-            self.root_blocks.iter().position(|_b| sel.as_str() == "hero_section" || sel.as_str() == "card_profile")
+            self.root_blocks
+                .iter()
+                .position(|_b| sel.as_str() == "hero_section" || sel.as_str() == "card_profile")
         }) {
             self.root_blocks[pos] = new_block;
         }
@@ -1324,11 +1328,13 @@ impl VisualStudioState {
             self.properties.width_px *= factor;
             self.properties.height_px *= factor;
             self.properties.stroke_width_px *= factor;
-            self.properties.border_radius_px = (self.properties.border_radius_px as f32 * factor) as u32;
+            self.properties.border_radius_px =
+                (self.properties.border_radius_px as f32 * factor) as u32;
             self.properties.font_size_px = (self.properties.font_size_px as f32 * factor) as u32;
             self.properties.padding_top = (self.properties.padding_top as f32 * factor) as i32;
             self.properties.padding_right = (self.properties.padding_right as f32 * factor) as i32;
-            self.properties.padding_bottom = (self.properties.padding_bottom as f32 * factor) as i32;
+            self.properties.padding_bottom =
+                (self.properties.padding_bottom as f32 * factor) as i32;
             self.properties.padding_left = (self.properties.padding_left as f32 * factor) as i32;
         }
     }
@@ -1357,7 +1363,10 @@ impl VisualStudioState {
     pub fn instant_spacing_measurement(&self, from_id: &str, to_id: &str) -> Option<f32> {
         self.measurements
             .iter()
-            .find(|m| (m.from_id == from_id && m.to_id == to_id) || (m.from_id == to_id && m.to_id == from_id))
+            .find(|m| {
+                (m.from_id == from_id && m.to_id == to_id)
+                    || (m.from_id == to_id && m.to_id == from_id)
+            })
             .map(|m| m.distance_px)
             .or(Some(24.0)) // Default accurate simulated distance
     }
@@ -1378,7 +1387,8 @@ impl VisualStudioState {
 
     /// Adds a dynamic data binding for a block.
     pub fn bind_data(&mut self, block_id: &str, doctype_query: &str) {
-        self.data_bindings.insert(block_id.into(), doctype_query.into());
+        self.data_bindings
+            .insert(block_id.into(), doctype_query.into());
     }
 
     /// Generates developer mode code payloads across CSS, Tailwind, SwiftUI, Compose, and tokens.
@@ -1387,30 +1397,60 @@ impl VisualStudioState {
         let p = &self.properties;
         let css_code = format!(
             "/* Generated by rust-web-land Dev Mode */\n.layer-selected {{\n  position: relative;\n  width: {:.1}px;\n  height: {:.1}px;\n  padding: {}px {}px {}px {}px;\n  margin: {}px {}px {}px {}px;\n  background-color: {};\n  color: {};\n  border: {:.1}px solid {};\n  border-radius: {}px;\n  font-family: {};\n  font-size: {}px;\n  backdrop-filter: blur({}px);\n}}",
-            p.width_px, p.height_px,
-            p.padding_top, p.padding_right, p.padding_bottom, p.padding_left,
-            p.margin_top, p.margin_right, p.margin_bottom, p.margin_left,
-            p.bg_color, p.text_color, p.stroke_width_px, p.border_color, p.border_radius_px,
-            p.font_family, p.font_size_px, p.glass_blur_px
+            p.width_px,
+            p.height_px,
+            p.padding_top,
+            p.padding_right,
+            p.padding_bottom,
+            p.padding_left,
+            p.margin_top,
+            p.margin_right,
+            p.margin_bottom,
+            p.margin_left,
+            p.bg_color,
+            p.text_color,
+            p.stroke_width_px,
+            p.border_color,
+            p.border_radius_px,
+            p.font_family,
+            p.font_size_px,
+            p.glass_blur_px
         );
 
         let tailwind_code = format!(
             "w-[{:.0}px] h-[{:.0}px] pt-[{}px] pr-[{}px] pb-[{}px] pl-[{}px] rounded-[{}px] bg-[{}] text-[{}] border border-[{}] backdrop-blur-[{}px]",
-            p.width_px, p.height_px,
-            p.padding_top, p.padding_right, p.padding_bottom, p.padding_left,
-            p.border_radius_px, p.bg_color, p.text_color, p.border_color, p.glass_blur_px
+            p.width_px,
+            p.height_px,
+            p.padding_top,
+            p.padding_right,
+            p.padding_bottom,
+            p.padding_left,
+            p.border_radius_px,
+            p.bg_color,
+            p.text_color,
+            p.border_color,
+            p.glass_blur_px
         );
 
         let swiftui_code = format!(
             "// SwiftUI representation\nRectangle()\n  .fill(Color(hex: \"{}\"))\n  .frame(width: {:.1}, height: {:.1})\n  .cornerRadius({:.1})\n  .padding(EdgeInsets(top: {:.1}, leading: {:.1}, bottom: {:.1}, trailing: {:.1}))",
-            p.bg_color, p.width_px, p.height_px, p.border_radius_px as f32,
-            p.padding_top as f32, p.padding_left as f32, p.padding_bottom as f32, p.padding_right as f32
+            p.bg_color,
+            p.width_px,
+            p.height_px,
+            p.border_radius_px as f32,
+            p.padding_top as f32,
+            p.padding_left as f32,
+            p.padding_bottom as f32,
+            p.padding_right as f32
         );
 
         let compose_code = format!(
             "// Jetpack Compose representation\nBox(\n  modifier = Modifier\n    .size({:.1}.dp, {:.1}.dp)\n    .clip(RoundedCornerShape({}.dp))\n    .background(Color(0xFF{}))\n    .padding({}.dp)\n)",
-            p.width_px, p.height_px, p.border_radius_px,
-            p.bg_color.trim_start_matches('#'), p.padding_top
+            p.width_px,
+            p.height_px,
+            p.border_radius_px,
+            p.bg_color.trim_start_matches('#'),
+            p.padding_top
         );
 
         let tokens_json = serde_json::to_string_pretty(&self.variable_collections)
@@ -1435,21 +1475,51 @@ pub fn render_visual_builder_html(state: &VisualStudioState) -> String {
 
     let tools = [
         (CanvasTool::Move, "M3 3l7.07 16.97 2.51-7.39 7.39-2.51L3 3z"),
-        (CanvasTool::Frame, "M4 5a1 1 0 011-1h14a1 1 0 011 1v14a1 1 0 01-1 1H5a1 1 0 01-1-1V5z"),
-        (CanvasTool::Section, "M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"),
+        (
+            CanvasTool::Frame,
+            "M4 5a1 1 0 011-1h14a1 1 0 011 1v14a1 1 0 01-1 1H5a1 1 0 01-1-1V5z",
+        ),
+        (
+            CanvasTool::Section,
+            "M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10",
+        ),
         (CanvasTool::Rectangle, "M4 4h16v16H4V4z"),
         (CanvasTool::Line, "M4 20L20 4"),
         (CanvasTool::Ellipse, "M12 21a9 9 0 100-18 9 9 0 000 18z"),
-        (CanvasTool::Pen, "M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"),
-        (CanvasTool::Pencil, "M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z"),
-        (CanvasTool::Scale, "M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4"),
+        (
+            CanvasTool::Pen,
+            "M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z",
+        ),
+        (
+            CanvasTool::Pencil,
+            "M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z",
+        ),
+        (
+            CanvasTool::Scale,
+            "M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4",
+        ),
         (CanvasTool::Text, "M4 6h16M12 6v14"),
-        (CanvasTool::Slice, "M14.121 14.121L19 19m-7-7l7-7m-7 7l-2.879 2.879a3 3 0 11-4.242-4.242L10.757 7.757m0 0l2.122-2.121a3 3 0 014.242 4.242L14.12 12"),
-        (CanvasTool::Comment, "M8 10h.01M12 10h.01M16 10h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"),
+        (
+            CanvasTool::Slice,
+            "M14.121 14.121L19 19m-7-7l7-7m-7 7l-2.879 2.879a3 3 0 11-4.242-4.242L10.757 7.757m0 0l2.122-2.121a3 3 0 014.242 4.242L14.12 12",
+        ),
+        (
+            CanvasTool::Comment,
+            "M8 10h.01M12 10h.01M16 10h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z",
+        ),
         (CanvasTool::Measurement, "M6 6h12M6 18h12M9 6v12m6-12v12"),
-        (CanvasTool::Annotation, "M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z"),
-        (CanvasTool::Eyedropper, "M7 21a4 4 0 01-4-4c0-1.473 1.333-3.473 4-6 .714-.68 1.488-1.375 2.324-2.083l.898.898a1 1 0 001.414 0l3.889-3.889a2 2 0 112.828 2.828l-3.889 3.89a1 1 0 000 1.414l.898.898C14.748 15.688 13.527 16.714 12 18c-2.527 2.667-4.527 4-5 3z"),
-        (CanvasTool::Hand, "M7 11.5V14m0-2.5v-6a1.5 1.5 0 113 0m-3 6a1.5 1.5 0 00-3 0v2a7.5 7.5 0 0015 0v-5a1.5 1.5 0 00-3 0m-6-3V11m0-5.5v-1a1.5 1.5 0 013 0v1m0 0V11m0-5.5a1.5 1.5 0 013 0v3m0 0V11"),
+        (
+            CanvasTool::Annotation,
+            "M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z",
+        ),
+        (
+            CanvasTool::Eyedropper,
+            "M7 21a4 4 0 01-4-4c0-1.473 1.333-3.473 4-6 .714-.68 1.488-1.375 2.324-2.083l.898.898a1 1 0 001.414 0l3.889-3.889a2 2 0 112.828 2.828l-3.889 3.89a1 1 0 000 1.414l.898.898C14.748 15.688 13.527 16.714 12 18c-2.527 2.667-4.527 4-5 3z",
+        ),
+        (
+            CanvasTool::Hand,
+            "M7 11.5V14m0-2.5v-6a1.5 1.5 0 113 0m-3 6a1.5 1.5 0 00-3 0v2a7.5 7.5 0 0015 0v-5a1.5 1.5 0 00-3 0m-6-3V11m0-5.5v-1a1.5 1.5 0 013 0v1m0 0V11m0-5.5a1.5 1.5 0 013 0v3m0 0V11",
+        ),
     ];
 
     let mut tools_html = String::new();
@@ -1499,11 +1569,12 @@ pub fn render_visual_builder_html(state: &VisualStudioState) -> String {
         ));
         if !layer.collapsed {
             for child in &layer.children {
-                let child_selected = if state.selected_block_id.as_deref() == Some(child.id.as_str()) {
-                    "bg-cyan-950/60 text-cyan-300 border-cyan-600/60"
-                } else {
-                    "text-gray-400 hover:bg-gray-800/40 border-transparent"
-                };
+                let child_selected =
+                    if state.selected_block_id.as_deref() == Some(child.id.as_str()) {
+                        "bg-cyan-950/60 text-cyan-300 border-cyan-600/60"
+                    } else {
+                        "text-gray-400 hover:bg-gray-800/40 border-transparent"
+                    };
                 layers_html.push_str(&format!(
                     r#"<div class="ml-4 flex items-center justify-between px-2 py-1 rounded-md border text-xs font-mono {child_selected} cursor-pointer">
                         <div class="flex items-center gap-1.5 truncate">
@@ -1643,9 +1714,23 @@ pub fn render_visual_builder_html(state: &VisualStudioState) -> String {
         </div>"#,
         time_ms = state.sss_rank.motion_timeline.current_time_ms,
         duration_ms = state.sss_rank.motion_timeline.duration_ms,
-        play_state = if state.sss_rank.motion_timeline.is_playing { "Pause" } else { "Play" },
-        track_target = state.sss_rank.motion_timeline.tracks.first().map_or("hero", |t| t.target_id.as_str()),
-        track_prop = state.sss_rank.motion_timeline.tracks.first().map_or("opacity", |t| t.property_name.as_str())
+        play_state = if state.sss_rank.motion_timeline.is_playing {
+            "Pause"
+        } else {
+            "Play"
+        },
+        track_target = state
+            .sss_rank
+            .motion_timeline
+            .tracks
+            .first()
+            .map_or("hero", |t| t.target_id.as_str()),
+        track_prop = state
+            .sss_rank
+            .motion_timeline
+            .tracks
+            .first()
+            .map_or("opacity", |t| t.property_name.as_str())
     );
 
     format!(
@@ -1868,24 +1953,56 @@ pub fn render_visual_builder_html(state: &VisualStudioState) -> String {
     {timeline_dock}
 </body>
 </html>"#,
-        active_page_name = state.pages.iter().find(|p| p.id == state.active_page_id).map_or("Home Page", |p| p.name.as_str()),
+        active_page_name = state
+            .pages
+            .iter()
+            .find(|p| p.id == state.active_page_id)
+            .map_or("Home Page", |p| p.name.as_str()),
         tools_html = tools_html,
         launch_gate_pill = launch_gate_pill,
         zoom_pct = (state.viewport.zoom_level * 100.0) as u32,
-        outline_indicator = if state.viewport.outline_mode { "Outline ON" } else { "Wireframe" },
+        outline_indicator = if state.viewport.outline_mode {
+            "Outline ON"
+        } else {
+            "Wireframe"
+        },
         modes_html = modes_html,
         client_banner = client_banner,
-        layers_tab_cls = if state.active_sidebar_tab == SidebarTab::Layers { "border-cyan-500 text-cyan-400" } else { "border-transparent text-gray-400" },
-        assets_tab_cls = if state.active_sidebar_tab == SidebarTab::Assets { "border-cyan-500 text-cyan-400" } else { "border-transparent text-gray-400" },
-        pages_tab_cls = if state.active_sidebar_tab == SidebarTab::Pages { "border-cyan-500 text-cyan-400" } else { "border-transparent text-gray-400" },
+        layers_tab_cls = if state.active_sidebar_tab == SidebarTab::Layers {
+            "border-cyan-500 text-cyan-400"
+        } else {
+            "border-transparent text-gray-400"
+        },
+        assets_tab_cls = if state.active_sidebar_tab == SidebarTab::Assets {
+            "border-cyan-500 text-cyan-400"
+        } else {
+            "border-transparent text-gray-400"
+        },
+        pages_tab_cls = if state.active_sidebar_tab == SidebarTab::Pages {
+            "border-cyan-500 text-cyan-400"
+        } else {
+            "border-transparent text-gray-400"
+        },
         layers_html = layers_html,
         palette_html = palette_html,
         pages_html = pages_html,
         viewport_width = viewport_width,
         outline_class = outline_class,
-        design_tab_cls = if state.active_inspector_tab == InspectorTab::Design { "border-cyan-500 text-cyan-400" } else { "border-transparent text-gray-400" },
-        proto_tab_cls = if state.active_inspector_tab == InspectorTab::Prototype { "border-cyan-500 text-cyan-400" } else { "border-transparent text-gray-400" },
-        dev_tab_cls = if state.active_inspector_tab == InspectorTab::DevMode { "border-cyan-500 text-cyan-400" } else { "border-transparent text-gray-400" },
+        design_tab_cls = if state.active_inspector_tab == InspectorTab::Design {
+            "border-cyan-500 text-cyan-400"
+        } else {
+            "border-transparent text-gray-400"
+        },
+        proto_tab_cls = if state.active_inspector_tab == InspectorTab::Prototype {
+            "border-cyan-500 text-cyan-400"
+        } else {
+            "border-transparent text-gray-400"
+        },
+        dev_tab_cls = if state.active_inspector_tab == InspectorTab::DevMode {
+            "border-cyan-500 text-cyan-400"
+        } else {
+            "border-transparent text-gray-400"
+        },
         width_px = state.properties.width_px,
         height_px = state.properties.height_px,
         pad_top = state.properties.padding_top,
@@ -1910,11 +2027,31 @@ mod tests {
     fn test_component_palette_inventory() {
         let palette = get_component_palette();
         assert!(palette.len() >= 10);
-        assert!(palette.iter().any(|p| p.category == ComponentCategory::Structure));
-        assert!(palette.iter().any(|p| p.category == ComponentCategory::Typography));
-        assert!(palette.iter().any(|p| p.category == ComponentCategory::Forms));
-        assert!(palette.iter().any(|p| p.category == ComponentCategory::DataViews));
-        assert!(palette.iter().any(|p| p.category == ComponentCategory::Navigation));
+        assert!(
+            palette
+                .iter()
+                .any(|p| p.category == ComponentCategory::Structure)
+        );
+        assert!(
+            palette
+                .iter()
+                .any(|p| p.category == ComponentCategory::Typography)
+        );
+        assert!(
+            palette
+                .iter()
+                .any(|p| p.category == ComponentCategory::Forms)
+        );
+        assert!(
+            palette
+                .iter()
+                .any(|p| p.category == ComponentCategory::DataViews)
+        );
+        assert!(
+            palette
+                .iter()
+                .any(|p| p.category == ComponentCategory::Navigation)
+        );
     }
 
     #[test]
@@ -2023,9 +2160,21 @@ mod tests {
         assert_eq!(state.variable_collections.len(), 1);
         let coll = &state.variable_collections[0];
         assert_eq!(coll.modes, vec!["Light", "Dark", "Mobile"]);
-        assert!(coll.variables.iter().any(|v| v.var_type == VariableType::Color));
-        assert!(coll.variables.iter().any(|v| v.var_type == VariableType::Number));
-        assert!(coll.variables.iter().any(|v| v.var_type == VariableType::Easing));
+        assert!(
+            coll.variables
+                .iter()
+                .any(|v| v.var_type == VariableType::Color)
+        );
+        assert!(
+            coll.variables
+                .iter()
+                .any(|v| v.var_type == VariableType::Number)
+        );
+        assert!(
+            coll.variables
+                .iter()
+                .any(|v| v.var_type == VariableType::Easing)
+        );
     }
 
     #[test]

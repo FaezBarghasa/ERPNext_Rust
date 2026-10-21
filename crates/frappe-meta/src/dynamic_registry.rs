@@ -59,7 +59,10 @@ impl DynamicSchemaRegistry {
     }
 
     /// Registers or updates a full `DocTypeSchema`.
-    pub fn register_schema(&self, mut schema: DocTypeSchema) -> Result<Arc<DocTypeSchema>, SchemaError> {
+    pub fn register_schema(
+        &self,
+        mut schema: DocTypeSchema,
+    ) -> Result<Arc<DocTypeSchema>, SchemaError> {
         schema.validate()?;
         let key = CompactString::new(&schema.name);
 
@@ -76,7 +79,10 @@ impl DynamicSchemaRegistry {
     }
 
     /// Dynamically creates a new user-defined custom DocType at runtime.
-    pub fn create_custom_doctype(&self, custom: CustomDocType) -> Result<Arc<DocTypeSchema>, SchemaError> {
+    pub fn create_custom_doctype(
+        &self,
+        custom: CustomDocType,
+    ) -> Result<Arc<DocTypeSchema>, SchemaError> {
         let schema = custom.into_doctype_schema();
         self.register_schema(schema)
     }
@@ -198,7 +204,12 @@ impl DynamicSchemaRegistry {
             {
                 match &field.fieldtype {
                     FieldType::Int => {
-                        if !val.is_i64() && !val.as_str().map(|s| s.parse::<i64>().is_ok()).unwrap_or(false) {
+                        if !val.is_i64()
+                            && !val
+                                .as_str()
+                                .map(|s| s.parse::<i64>().is_ok())
+                                .unwrap_or(false)
+                        {
                             return Err(SchemaError::CompilationFailed(format!(
                                 "Field '{}' on DocType '{}' expects an integer, got: {val}",
                                 field.fieldname, schema.name
@@ -206,7 +217,13 @@ impl DynamicSchemaRegistry {
                         }
                     }
                     FieldType::Float | FieldType::Currency | FieldType::Percent => {
-                        if !val.is_f64() && !val.is_i64() && !val.as_str().map(|s| s.parse::<f64>().is_ok()).unwrap_or(false) {
+                        if !val.is_f64()
+                            && !val.is_i64()
+                            && !val
+                                .as_str()
+                                .map(|s| s.parse::<f64>().is_ok())
+                                .unwrap_or(false)
+                        {
                             return Err(SchemaError::CompilationFailed(format!(
                                 "Field '{}' on DocType '{}' expects a number, got: {val}",
                                 field.fieldname, schema.name
@@ -214,7 +231,8 @@ impl DynamicSchemaRegistry {
                         }
                     }
                     FieldType::Check => {
-                        if !val.is_boolean() && val.as_i64().map(|n| n == 0 || n == 1) != Some(true) {
+                        if !val.is_boolean() && val.as_i64().map(|n| n == 0 || n == 1) != Some(true)
+                        {
                             return Err(SchemaError::CompilationFailed(format!(
                                 "Field '{}' on DocType '{}' expects a boolean or 0/1, got: {val}",
                                 field.fieldname, schema.name
@@ -250,9 +268,7 @@ impl DynamicSchemaRegistry {
         })?;
 
         let table = format!("tab_{}", schema.name.to_lowercase().replace(' ', "_"));
-        let mut ddl = vec![
-            format!("DEFINE TABLE IF NOT EXISTS {table} SCHEMALESS;"),
-        ];
+        let mut ddl = vec![format!("DEFINE TABLE IF NOT EXISTS {table} SCHEMALESS;")];
 
         for field in &schema.fields {
             if field.fieldtype.is_layout_field() {
@@ -271,7 +287,8 @@ impl DynamicSchemaRegistry {
     /// Exports all dynamic schemas as a portable JSON snapshot.
     #[must_use]
     pub fn export_snapshot(&self) -> serde_json::Value {
-        let doctypes: Vec<DocTypeSchema> = self.list_doctypes().iter().map(|d| (**d).clone()).collect();
+        let doctypes: Vec<DocTypeSchema> =
+            self.list_doctypes().iter().map(|d| (**d).clone()).collect();
         serde_json::json!({
             "version": "1.0",
             "exported_at": chrono::Utc::now().to_rfc3339(),
@@ -350,7 +367,9 @@ mod tests {
         assert_eq!(schema.fields.len(), 2);
 
         // Retrieve schema
-        let fetched = registry.get_schema("CourseLesson").expect("DocType not found");
+        let fetched = registry
+            .get_schema("CourseLesson")
+            .expect("DocType not found");
         assert_eq!(fetched.module, "LMS");
 
         // Validate payload happy path
@@ -358,13 +377,21 @@ mod tests {
             "title": "Introduction to Rust Systems",
             "duration_minutes": 30
         });
-        assert!(registry.validate_document_payload("CourseLesson", &valid_payload).is_ok());
+        assert!(
+            registry
+                .validate_document_payload("CourseLesson", &valid_payload)
+                .is_ok()
+        );
 
         // Validate payload missing mandatory
         let invalid_payload = serde_json::json!({
             "duration_minutes": 30
         });
-        assert!(registry.validate_document_payload("CourseLesson", &invalid_payload).is_err());
+        assert!(
+            registry
+                .validate_document_payload("CourseLesson", &invalid_payload)
+                .is_err()
+        );
     }
 
     #[test]
@@ -409,9 +436,18 @@ mod tests {
 
         registry.create_custom_doctype(custom).unwrap();
         let ddl = registry.compile_surrealql_ddl("SaaSSubscription").unwrap();
-        assert!(ddl.iter().any(|stmt| stmt.contains("DEFINE TABLE IF NOT EXISTS tab_saassubscription")));
-        assert!(ddl.iter().any(|stmt| stmt.contains("DEFINE FIELD IF NOT EXISTS customer_id")));
-        assert!(ddl.iter().any(|stmt| stmt.contains("DEFINE FIELD IF NOT EXISTS monthly_rate")));
+        assert!(
+            ddl.iter()
+                .any(|stmt| stmt.contains("DEFINE TABLE IF NOT EXISTS tab_saassubscription"))
+        );
+        assert!(
+            ddl.iter()
+                .any(|stmt| stmt.contains("DEFINE FIELD IF NOT EXISTS customer_id"))
+        );
+        assert!(
+            ddl.iter()
+                .any(|stmt| stmt.contains("DEFINE FIELD IF NOT EXISTS monthly_rate"))
+        );
     }
 
     #[test]

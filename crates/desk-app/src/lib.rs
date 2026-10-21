@@ -17,9 +17,7 @@ pub use ci_cd_sync::{
     IncrementalSyncClient, ServerProfile, SyncAuthMethod, SyncError, SyncReport,
     generate_github_actions_workflow,
 };
-pub use deploy_exporter::{
-    DeployArtifact, DeployBundle, DeployConfig, DeployTarget, ExportReport,
-};
+pub use deploy_exporter::{DeployArtifact, DeployBundle, DeployConfig, DeployTarget, ExportReport};
 pub use edge_sync::{
     CloudSyncArbiter, EdgeMutationEnvelope, EdgeMutationKind, LocalMutationBuffer, VectorClock,
 };
@@ -32,4 +30,3 @@ pub use persona_shell::{
     PersonaRole, PersonaSessionState, PersonaShellConfig, render_admin_cockpit_html,
     render_worker_kiosk_html,
 };
-

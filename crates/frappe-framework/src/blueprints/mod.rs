@@ -238,7 +238,10 @@ mod tests {
     #[test]
     fn test_erp_blueprint_integrity() {
         let erp = erp_blueprint();
-        assert_eq!(erp.metadata.category, BlueprintCategory::CommerceAndOperations);
+        assert_eq!(
+            erp.metadata.category,
+            BlueprintCategory::CommerceAndOperations
+        );
         assert!(erp.doctypes.iter().any(|d| d.name == "Store Product"));
         assert!(erp.doctypes.iter().any(|d| d.name == "Ecommerce Order"));
         assert!(erp.pages.iter().any(|p| p.path == "/shop"));

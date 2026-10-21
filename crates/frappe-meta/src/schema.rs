@@ -61,7 +61,9 @@ pub enum FieldType {
     // Text & String Primitives
     #[default]
     Data,
-    DataWithPreset { preset: DataPreset },
+    DataWithPreset {
+        preset: DataPreset,
+    },
     LongText,
     SmallText, // Bounded 250 characters
     Text,
@@ -69,10 +71,18 @@ pub enum FieldType {
     Password, // Argon2id envelope encrypted at rest
 
     // Relational Primitives
-    Link { target_doctype: String },
-    DynamicLink { link_field: String },
-    Table { child_doctype: String },
-    TableMultiSelect { child_doctype: String },
+    Link {
+        target_doctype: String,
+    },
+    DynamicLink {
+        link_field: String,
+    },
+    Table {
+        child_doctype: String,
+    },
+    TableMultiSelect {
+        child_doctype: String,
+    },
 
     // Numeric & Financial Primitives
     Int,
@@ -88,7 +98,9 @@ pub enum FieldType {
     SmartDuration,
 
     // Code & Structured Markup
-    Code { language: Option<String> },
+    Code {
+        language: Option<String>,
+    },
     TextEditor,
     HtmlEditor,
     MarkdownEditor,
@@ -106,13 +118,17 @@ pub enum FieldType {
     GeoPoint,
 
     // Form Layout Primitives
-    SectionBreak { collapsible: bool },
+    SectionBreak {
+        collapsible: bool,
+    },
     ColumnBreak,
     TabBreak,
 
     // Behavioral Controls
     Check,
-    Select { options: Vec<String> },
+    Select {
+        options: Vec<String>,
+    },
     Button,
     Rating,
 }

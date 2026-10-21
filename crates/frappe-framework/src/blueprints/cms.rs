@@ -7,7 +7,9 @@
 
 use super::{BlueprintMetadata, BlueprintNavigationItem, BlueprintPackage, BlueprintPage};
 use crate::scripting::LifecycleEvent;
-use crate::workflow_nodes::{AutomationAction, ComparisonOp, ConditionRule, VisualWorkflow, VisualWorkflowNode};
+use crate::workflow_nodes::{
+    AutomationAction, ComparisonOp, ConditionRule, VisualWorkflow, VisualWorkflowNode,
+};
 use frappe_meta::{DocFieldSchema, DocPermSchema, DocTypeSchema, FieldType};
 use serde_json::json;
 
@@ -438,7 +440,8 @@ pub fn cms_blueprint() -> BlueprintPackage {
         BlueprintPage {
             path: "/".into(),
             title: "Home — Discover Stories".into(),
-            description: "Magazine-style home page with hero feature and latest publications.".into(),
+            description: "Magazine-style home page with hero feature and latest publications."
+                .into(),
             blocks_json: json!({
                 "type": "Container",
                 "max_width_px": 1280,

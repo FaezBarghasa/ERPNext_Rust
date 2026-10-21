@@ -45,9 +45,9 @@ pub use background::{
     SchedulerEngine, SchedulerInterval,
 };
 pub use blueprints::{
-    cms_blueprint, erp_blueprint, lms_blueprint, saas_blueprint, BlueprintCategory,
-    BlueprintError, BlueprintMetadata, BlueprintNavigationItem, BlueprintPackage, BlueprintPage,
-    BlueprintRegistry, InstallReport,
+    BlueprintCategory, BlueprintError, BlueprintMetadata, BlueprintNavigationItem,
+    BlueprintPackage, BlueprintPage, BlueprintRegistry, InstallReport, cms_blueprint,
+    erp_blueprint, lms_blueprint, saas_blueprint,
 };
 pub use email_account::{
     EmailAccount, EmailAccountPoller, EmailIngestionRecord, InboundEmailMessage,

@@ -7,7 +7,9 @@
 
 use super::{BlueprintMetadata, BlueprintNavigationItem, BlueprintPackage, BlueprintPage};
 use crate::scripting::LifecycleEvent;
-use crate::workflow_nodes::{AutomationAction, ComparisonOp, ConditionRule, VisualWorkflow, VisualWorkflowNode};
+use crate::workflow_nodes::{
+    AutomationAction, ComparisonOp, ConditionRule, VisualWorkflow, VisualWorkflowNode,
+};
 use frappe_meta::{DocFieldSchema, DocPermSchema, DocTypeSchema, FieldType};
 use serde_json::json;
 
@@ -296,7 +298,8 @@ pub fn erp_blueprint() -> BlueprintPackage {
         BlueprintPage {
             path: "/shop".into(),
             title: "Storefront — Products".into(),
-            description: "High-speed storefront displaying items with real-time stock status.".into(),
+            description: "High-speed storefront displaying items with real-time stock status."
+                .into(),
             blocks_json: json!({
                 "type": "Container",
                 "max_width_px": 1280,

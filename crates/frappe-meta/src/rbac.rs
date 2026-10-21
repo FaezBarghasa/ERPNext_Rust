@@ -1074,7 +1074,9 @@ impl RlsRegistry {
                 continue;
             }
             if rule.doctype.eq_ignore_ascii_case(doctype)
-                && session_roles.iter().any(|r| r.eq_ignore_ascii_case(&rule.role))
+                && session_roles
+                    .iter()
+                    .any(|r| r.eq_ignore_ascii_case(&rule.role))
             {
                 match &rule.condition_type {
                     RlsConditionType::DocOwnerEqualsSessionUser => {
@@ -1090,7 +1092,10 @@ impl RlsRegistry {
                             predicates.push(format!("(company IN [{comps}] OR company IS NULL)"));
                         }
                     }
-                    RlsConditionType::DocFieldMatchesUserAttribute { doc_field, user_attr } => {
+                    RlsConditionType::DocFieldMatchesUserAttribute {
+                        doc_field,
+                        user_attr,
+                    } => {
                         predicates.push(format!("({doc_field} = \"{user_attr}\")"));
                     }
                     RlsConditionType::CustomSurrealqlPredicate(pred) => {
@@ -1159,18 +1164,12 @@ impl PersonaAutoRouter {
         }
 
         // Priority 5: Student / Learner -> Course Classroom & Syllabus
-        if user_roles
-            .iter()
-            .any(|r| r == "Student" || r == "Learner")
-        {
+        if user_roles.iter().any(|r| r == "Student" || r == "Learner") {
             return ("/classroom", TargetPersona::StudentClassroom);
         }
 
         // Priority 6: Customer / Client -> Portal storefront
-        if user_roles
-            .iter()
-            .any(|r| r == "Customer" || r == "Client")
-        {
+        if user_roles.iter().any(|r| r == "Customer" || r == "Client") {
             return ("/portal", TargetPersona::CustomerPortal);
         }
 
@@ -1365,7 +1364,12 @@ mod tests {
         assert!(matrix.roles.contains(&ROLE_WORKER_USER.to_string()));
 
         // Worker originally cannot delete Job Card
-        let cell = matrix.cells.get("Job Card").unwrap().get(ROLE_WORKER_USER).unwrap();
+        let cell = matrix
+            .cells
+            .get("Job Card")
+            .unwrap()
+            .get(ROLE_WORKER_USER)
+            .unwrap();
         assert!(!cell.p_delete);
 
         // Update cell via matrix
@@ -1430,12 +1434,7 @@ mod tests {
             is_active: true,
         });
 
-        let cust_filter = reg.compile_where_clause(
-            "Customer",
-            "sales@corp.com",
-            &sales_roles,
-            &[],
-        );
+        let cust_filter = reg.compile_where_clause("Customer", "sales@corp.com", &sales_roles, &[]);
         assert_eq!(cust_filter, "(tier = 'VIP')");
 
         // 5. Delete rule
@@ -1459,7 +1458,8 @@ mod tests {
         assert_eq!(persona, TargetPersona::WarehouseWorker);
 
         // 3. Manufacturing User -> /factory
-        let (route, persona) = PersonaAutoRouter::resolve_route(&[ROLE_MANUFACTURING_USER.to_string()]);
+        let (route, persona) =
+            PersonaAutoRouter::resolve_route(&[ROLE_MANUFACTURING_USER.to_string()]);
         assert_eq!(route, "/factory");
         assert_eq!(persona, TargetPersona::ShopfloorMes);
 
@@ -1484,4 +1484,3 @@ mod tests {
         assert_eq!(persona, TargetPersona::AdminDesk);
     }
 }
-

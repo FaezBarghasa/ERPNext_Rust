@@ -140,15 +140,13 @@ impl ConditionRule {
                     (None, _) => false,
                 }
             }
-            Self::RhaiExpression { script } => {
-                match rhai.eval_expression::<bool>(script, doc) {
-                    Ok(result) => result,
-                    Err(e) => {
-                        tracing::warn!(target: "workflow", "Rhai condition error: {e}");
-                        false
-                    }
+            Self::RhaiExpression { script } => match rhai.eval_expression::<bool>(script, doc) {
+                Ok(result) => result,
+                Err(e) => {
+                    tracing::warn!(target: "workflow", "Rhai condition error: {e}");
+                    false
                 }
-            }
+            },
             Self::And(rules) => rules.iter().all(|r| r.evaluate(doc, rhai)),
             Self::Or(rules) => rules.iter().any(|r| r.evaluate(doc, rhai)),
         }
@@ -286,7 +284,10 @@ impl WorkflowEngine {
 
         for wf in workflows {
             // Check condition rules
-            let satisfies_all = wf.conditions.iter().all(|c| c.evaluate(&doc.data, &self.rhai));
+            let satisfies_all = wf
+                .conditions
+                .iter()
+                .all(|c| c.evaluate(&doc.data, &self.rhai));
             if !satisfies_all {
                 continue;
             }
@@ -305,7 +306,9 @@ impl WorkflowEngine {
                         target_field,
                         script,
                     } => {
-                        let res = self.rhai.eval_expression::<rhai::Dynamic>(script, &doc.data);
+                        let res = self
+                            .rhai
+                            .eval_expression::<rhai::Dynamic>(script, &doc.data);
                         match res {
                             Ok(val) => {
                                 let json_val = if let Ok(s) = val.clone().into_string() {

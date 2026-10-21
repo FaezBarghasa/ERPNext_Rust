@@ -7,7 +7,9 @@
 
 use super::{BlueprintMetadata, BlueprintNavigationItem, BlueprintPackage, BlueprintPage};
 use crate::scripting::LifecycleEvent;
-use crate::workflow_nodes::{AutomationAction, ComparisonOp, ConditionRule, VisualWorkflow, VisualWorkflowNode};
+use crate::workflow_nodes::{
+    AutomationAction, ComparisonOp, ConditionRule, VisualWorkflow, VisualWorkflowNode,
+};
 use frappe_meta::{DocFieldSchema, DocPermSchema, DocTypeSchema, FieldType};
 use serde_json::json;
 
@@ -319,7 +321,8 @@ pub fn saas_blueprint() -> BlueprintPackage {
         BlueprintPage {
             path: "/pricing".into(),
             title: "Pricing & Plans — Scale Confidently".into(),
-            description: "Transparent pricing table with monthly/annual toggle and instant checkout.".into(),
+            description:
+                "Transparent pricing table with monthly/annual toggle and instant checkout.".into(),
             blocks_json: json!({
                 "type": "Container",
                 "max_width_px": 1280,
@@ -474,14 +477,12 @@ pub fn saas_blueprint() -> BlueprintPackage {
             op: ComparisonOp::Equals,
             value: json!("Active"),
         }],
-        actions: vec![
-            AutomationAction::SendNotification {
-                channel: "Email".into(),
-                recipient: "billing@customer.com".into(),
-                subject: "Welcome to rust-web-land Platform".into(),
-                message: "Your account is activated and your API credentials are ready.".into(),
-            },
-        ],
+        actions: vec![AutomationAction::SendNotification {
+            channel: "Email".into(),
+            recipient: "billing@customer.com".into(),
+            subject: "Welcome to rust-web-land Platform".into(),
+            message: "Your account is activated and your API credentials are ready.".into(),
+        }],
     }];
 
     BlueprintPackage {

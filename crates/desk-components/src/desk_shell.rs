@@ -1847,7 +1847,11 @@ pub struct MenuItem {
 
 impl MenuItem {
     #[must_use]
-    pub fn new(id: impl Into<CompactString>, label: impl Into<CompactString>, route: impl Into<CompactString>) -> Self {
+    pub fn new(
+        id: impl Into<CompactString>,
+        label: impl Into<CompactString>,
+        route: impl Into<CompactString>,
+    ) -> Self {
         Self {
             id: id.into(),
             label: label.into(),
@@ -1895,8 +1899,16 @@ impl MenuTree {
                 location,
                 tenant_id: "default".into(),
                 items: vec![
-                    MenuItem::new("side_orders", "Orders & Fulfillment", "/desk/list/sales_order"),
-                    MenuItem::new("side_invoices", "Invoices & Receivables", "/desk/list/sales_invoice"),
+                    MenuItem::new(
+                        "side_orders",
+                        "Orders & Fulfillment",
+                        "/desk/list/sales_order",
+                    ),
+                    MenuItem::new(
+                        "side_invoices",
+                        "Invoices & Receivables",
+                        "/desk/list/sales_invoice",
+                    ),
                     MenuItem::new("side_items", "Products & Inventory", "/desk/list/item"),
                     MenuItem::new("side_users", "Users & Permissions", "/admin/users"),
                 ],
@@ -1964,7 +1976,9 @@ impl ThemeConfig {
             ThemeMode::Light => ("#ffffff", "#f8fafc", "#0f172a", "rgba(0,0,0,0.08)"),
             ThemeMode::Cyberpunk => ("#09090e", "#13131f", "#00ffcc", "rgba(0, 255, 204, 0.25)"),
             ThemeMode::RetroWave => ("#1a0826", "#290f3c", "#ff71ce", "rgba(255, 113, 206, 0.25)"),
-            ThemeMode::Dark | ThemeMode::System => ("#0f172a", "#1e293b", "#f8fafc", "rgba(255,255,255,0.08)"),
+            ThemeMode::Dark | ThemeMode::System => {
+                ("#0f172a", "#1e293b", "#f8fafc", "rgba(255,255,255,0.08)")
+            }
         };
 
         let backdrop = if self.glassmorphism {
@@ -1975,7 +1989,15 @@ impl ThemeConfig {
 
         format!(
             ":root {{\n  --brand-primary: {};\n  --radius: {}px;\n  --font-family: {};\n  --bg-primary: {};\n  --bg-secondary: {};\n  --text-primary: {};\n  --border: {};\n}}\n.glass {{ {} }}\n{}",
-            self.brand_color, self.border_radius_px, self.font_family, bg_primary, bg_secondary, text_primary, border, backdrop, self.custom_css
+            self.brand_color,
+            self.border_radius_px,
+            self.font_family,
+            bg_primary,
+            bg_secondary,
+            text_primary,
+            border,
+            backdrop,
+            self.custom_css
         )
     }
 }
@@ -2110,4 +2132,3 @@ mod tests {
         assert_eq!(format_currency(250000.0, "IRR", "fa"), "250000.00 تومان");
     }
 }
-

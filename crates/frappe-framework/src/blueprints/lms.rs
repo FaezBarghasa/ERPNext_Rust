@@ -7,7 +7,9 @@
 
 use super::{BlueprintMetadata, BlueprintNavigationItem, BlueprintPackage, BlueprintPage};
 use crate::scripting::LifecycleEvent;
-use crate::workflow_nodes::{AutomationAction, ComparisonOp, ConditionRule, VisualWorkflow, VisualWorkflowNode};
+use crate::workflow_nodes::{
+    AutomationAction, ComparisonOp, ConditionRule, VisualWorkflow, VisualWorkflowNode,
+};
 use frappe_meta::{DocFieldSchema, DocPermSchema, DocTypeSchema, FieldType};
 use serde_json::json;
 

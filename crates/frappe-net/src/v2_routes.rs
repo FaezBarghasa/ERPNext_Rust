@@ -23,11 +23,6 @@ pub use accounting::configure as configure_accounting_routes;
 pub use admin::configure as configure_admin_routes;
 pub use audio::configure as configure_audio_routes;
 pub use auth::configure as configure_auth_routes;
-pub use upgrade_sync::{
-    RollbackRequest, RollbackResult, UpgradeApplyResult, UpgradeHistoryRecord, UpgradeSnapshot,
-    UpgradeStatusResponse, apply_upgrade_handler, configure as configure_upgrade_sync_routes,
-    get_upgrade_history_handler, get_upgrade_status_handler, rollback_upgrade_handler,
-};
 pub use document::{
     configure as configure_document_routes, v2_add_custom_field, v2_create_custom_doctype,
     v2_delete_custom_doctype, v2_export_meta_snapshot, v2_get_meta_doctype,
@@ -38,6 +33,11 @@ pub use media::configure as configure_media_routes;
 pub use micro_features::configure as configure_micro_features_routes;
 pub use micro_features::*;
 pub use trade::configure as configure_trade_routes;
+pub use upgrade_sync::{
+    RollbackRequest, RollbackResult, UpgradeApplyResult, UpgradeHistoryRecord, UpgradeSnapshot,
+    UpgradeStatusResponse, apply_upgrade_handler, configure as configure_upgrade_sync_routes,
+    get_upgrade_history_handler, get_upgrade_status_handler, rollback_upgrade_handler,
+};
 
 use crate::middleware::auth::{SecurityContext, get_master_token_secret};
 use crate::middleware::ip_filter::{IpFilterRule, IpRuleRegistry};
@@ -86,10 +86,10 @@ use frappe_meta::auth::{
 use frappe_meta::mfa::{MfaRecord, TotpConfig, generate_otpauth_uri};
 use frappe_meta::rbac::{
     DynamicRolePermissionRegistry, MatrixPermissionCell, Permission, PersonaAutoRouter,
-    RlsFilterRule, RlsRegistry, TargetPersona, UserRecord, VisualPermissionMatrix,
-    check_permission, ROLE_ACCOUNTANT_USER, ROLE_ADMINISTRATOR, ROLE_CONTENT_CREATOR,
-    ROLE_MARKETING_ADMIN, ROLE_SYSTEM_MANAGER, ROLE_WAREHOUSE_MANAGER, ROLE_WEBSITE_UPDATER,
-    ROLE_WORKER_USER, STANDARD_ROLES,
+    ROLE_ACCOUNTANT_USER, ROLE_ADMINISTRATOR, ROLE_CONTENT_CREATOR, ROLE_MARKETING_ADMIN,
+    ROLE_SYSTEM_MANAGER, ROLE_WAREHOUSE_MANAGER, ROLE_WEBSITE_UPDATER, ROLE_WORKER_USER,
+    RlsFilterRule, RlsRegistry, STANDARD_ROLES, TargetPersona, UserRecord, VisualPermissionMatrix,
+    check_permission,
 };
 use frappe_meta::security_rules::{
     DetectedFileType, generate_password_reset_token, sanitize_svg, validate_file_upload,
@@ -1834,7 +1834,9 @@ pub async fn upload_file_handler(
     let processed = match actix_web::web::block(
         move || -> Result<(Vec<u8>, DetectedFileType, String, u64), String> {
             use base64::Engine;
-            use base64::engine::general_purpose::{STANDARD, STANDARD_NO_PAD, URL_SAFE, URL_SAFE_NO_PAD};
+            use base64::engine::general_purpose::{
+                STANDARD, STANDARD_NO_PAD, URL_SAFE, URL_SAFE_NO_PAD,
+            };
 
             let trimmed = content_b64.trim();
             let raw_bytes = STANDARD
@@ -2740,7 +2742,8 @@ pub struct DynamicRbacState {
     pub bookmark_registry: Arc<erp_cms::audio_book_sync::AudioBookmarkRegistry>,
     pub storage: Arc<DeduplicatedStorage>,
     pub menus: Arc<RwLock<HashMap<desk_components::MenuTreeLocation, desk_components::MenuTree>>>,
-    pub sound_configs: Arc<RwLock<HashMap<String, frappe_framework::notification::SoundAlertConfig>>>,
+    pub sound_configs:
+        Arc<RwLock<HashMap<String, frappe_framework::notification::SoundAlertConfig>>>,
     pub translations: Arc<RwLock<HashMap<String, HashMap<String, String>>>>,
     pub theme_config: Arc<RwLock<desk_components::ThemeConfig>>,
     pub upgrade_snapshots: Arc<RwLock<Vec<UpgradeSnapshot>>>,
@@ -3949,12 +3952,7 @@ pub async fn admin_compile_rls_filter_handler(
     };
 
     let allowed_companies = p.allowed_companies.unwrap_or_default();
-    let where_clause = rls.compile_where_clause(
-        &p.doctype,
-        &p.user,
-        &p.roles,
-        &allowed_companies,
-    );
+    let where_clause = rls.compile_where_clause(&p.doctype, &p.user, &p.roles, &allowed_companies);
 
     HttpResponse::Ok().json(serde_json::json!({
         "status": "OK",
@@ -10802,7 +10800,7 @@ mod tests {
 
     #[tokio::test]
     async fn test_visual_rbac_rls_persona_routing_lifecycle() {
-        use frappe_meta::rbac::{RlsConditionType, ROLE_SALES_USER};
+        use frappe_meta::rbac::{ROLE_SALES_USER, RlsConditionType};
         let rbac_state = web::Data::new(DynamicRbacState::default());
 
         // 1. GET Visual RBAC Matrix
@@ -10842,9 +10840,10 @@ mod tests {
                 },
             }]),
         });
-        let update_resp = admin_update_rbac_matrix_handler(update_matrix_payload, rbac_state.clone())
-            .await
-            .respond_to(&actix_web::test::TestRequest::post().to_http_request());
+        let update_resp =
+            admin_update_rbac_matrix_handler(update_matrix_payload, rbac_state.clone())
+                .await
+                .respond_to(&actix_web::test::TestRequest::post().to_http_request());
         assert_eq!(update_resp.status(), actix_web::http::StatusCode::OK);
 
         // Verify registry mutation
@@ -10927,9 +10926,10 @@ mod tests {
             roles: None,
             user_id: Some("usr_worker".into()),
         });
-        let user_route_resp = admin_resolve_persona_route_handler(user_route_payload, rbac_state.clone())
-            .await
-            .respond_to(&actix_web::test::TestRequest::post().to_http_request());
+        let user_route_resp =
+            admin_resolve_persona_route_handler(user_route_payload, rbac_state.clone())
+                .await
+                .respond_to(&actix_web::test::TestRequest::post().to_http_request());
         assert_eq!(user_route_resp.status(), actix_web::http::StatusCode::OK);
         let user_route_bytes = actix_web::body::to_bytes(user_route_resp.into_body())
             .await
@@ -10945,9 +10945,10 @@ mod tests {
             roles: Some("Customer".into()),
             user_id: None,
         });
-        let get_route_resp = admin_resolve_persona_route_get_handler(get_route_query, rbac_state.clone())
-            .await
-            .respond_to(&actix_web::test::TestRequest::get().to_http_request());
+        let get_route_resp =
+            admin_resolve_persona_route_get_handler(get_route_query, rbac_state.clone())
+                .await
+                .respond_to(&actix_web::test::TestRequest::get().to_http_request());
         assert_eq!(get_route_resp.status(), actix_web::http::StatusCode::OK);
         let get_route_bytes = actix_web::body::to_bytes(get_route_resp.into_body())
             .await
@@ -10975,12 +10976,18 @@ mod tests {
             .expect("read list body");
         let list_json: serde_json::Value =
             serde_json::from_slice(&list_bytes).expect("parse list json");
-        assert_eq!(list_json["menus"].as_object().expect("menus object").len(), 5);
+        assert_eq!(
+            list_json["menus"].as_object().expect("menus object").len(),
+            5
+        );
 
         // Get single menu tree
-        let get_menu_resp = get_menu_tree_handler(web::Path::from("header_nav".to_string()), rbac_state.clone())
-            .await
-            .respond_to(&actix_web::test::TestRequest::get().to_http_request());
+        let get_menu_resp = get_menu_tree_handler(
+            web::Path::from("header_nav".to_string()),
+            rbac_state.clone(),
+        )
+        .await
+        .respond_to(&actix_web::test::TestRequest::get().to_http_request());
         assert_eq!(get_menu_resp.status(), actix_web::http::StatusCode::OK);
 
         // Save updated menu tree
@@ -11017,7 +11024,12 @@ mod tests {
             .expect("read search body");
         let search_json: serde_json::Value =
             serde_json::from_slice(&search_bytes).expect("parse search json");
-        assert!(!search_json["results"].as_array().expect("results array").is_empty());
+        assert!(
+            !search_json["results"]
+                .as_array()
+                .expect("results array")
+                .is_empty()
+        );
 
         // 3. In-App Notifications & Sound Alerts
         // Sound config get & update
@@ -11152,12 +11164,9 @@ mod tests {
         let entry_id = audit_entry.id.clone();
         rbac_state.audit_trail.record(audit_entry);
 
-        let restore_resp = audit_log_restore_handler(
-            web::Path::from(entry_id),
-            rbac_state.clone(),
-        )
-        .await
-        .respond_to(&actix_web::test::TestRequest::post().to_http_request());
+        let restore_resp = audit_log_restore_handler(web::Path::from(entry_id), rbac_state.clone())
+            .await
+            .respond_to(&actix_web::test::TestRequest::post().to_http_request());
         assert_eq!(restore_resp.status(), actix_web::http::StatusCode::OK);
         let restore_bytes = actix_web::body::to_bytes(restore_resp.into_body())
             .await
@@ -11170,7 +11179,11 @@ mod tests {
 
         // 6. Import/Export Studio
         let auto_map_payload = web::Json(AutoMapPayload {
-            headers: vec!["Item Code".into(), "Item Name".into(), "Standard Rate".into()],
+            headers: vec![
+                "Item Code".into(),
+                "Item Name".into(),
+                "Standard Rate".into(),
+            ],
         });
         let auto_map_resp = import_auto_map_handler(auto_map_payload)
             .await
@@ -11182,7 +11195,13 @@ mod tests {
             .expect("read map body");
         let map_json: serde_json::Value =
             serde_json::from_slice(&map_bytes).expect("parse map json");
-        assert_eq!(map_json["mappings"].as_array().expect("mappings array").len(), 3);
+        assert_eq!(
+            map_json["mappings"]
+                .as_array()
+                .expect("mappings array")
+                .len(),
+            3
+        );
 
         let csv_data = "Item Code,Item Name,Standard Rate,Stock UOM\nITEM-A,Widget Alpha,25.50,Nos\nITEM-B,Widget Beta,42.00,Nos\n";
         let exec_payload = web::Json(ImportExecutePayload {
@@ -11233,21 +11252,20 @@ mod tests {
         assert_eq!(rtl_json["is_rtl"], true);
         assert_eq!(rtl_json["direction"], "rtl");
 
-        let trans_get_resp = i18n_get_translations_handler(
-            web::Path::from("fa".to_string()),
-            rbac_state.clone(),
-        )
-        .await
-        .respond_to(&actix_web::test::TestRequest::get().to_http_request());
+        let trans_get_resp =
+            i18n_get_translations_handler(web::Path::from("fa".to_string()), rbac_state.clone())
+                .await
+                .respond_to(&actix_web::test::TestRequest::get().to_http_request());
         assert_eq!(trans_get_resp.status(), actix_web::http::StatusCode::OK);
 
         let save_trans_payload = web::Json(SaveTranslationPayload {
             language: "fa".into(),
             terms: HashMap::from([("Orders".into(), "سفارشات".into())]),
         });
-        let trans_save_resp = i18n_save_translations_handler(save_trans_payload, rbac_state.clone())
-            .await
-            .respond_to(&actix_web::test::TestRequest::post().to_http_request());
+        let trans_save_resp =
+            i18n_save_translations_handler(save_trans_payload, rbac_state.clone())
+                .await
+                .respond_to(&actix_web::test::TestRequest::post().to_http_request());
         assert_eq!(trans_save_resp.status(), actix_web::http::StatusCode::OK);
 
         let fmt_curr_payload = web::Json(FormatCurrencyPayload {
@@ -11323,7 +11341,11 @@ mod tests {
             "v2.1",
             &[],
             &[],
-            &[(compact_str::CompactString::from("dashboard"), compact_str::CompactString::from("Executive Dashboard"), 4)],
+            &[(
+                compact_str::CompactString::from("dashboard"),
+                compact_str::CompactString::from("Executive Dashboard"),
+                4,
+            )],
             &[],
         );
         corrupted_patch.checksum_sha256 = "corrupted_checksum_abc123".into();
@@ -11331,15 +11353,25 @@ mod tests {
         let reject_resp = apply_upgrade_handler(rbac_state.clone(), web::Json(corrupted_patch))
             .await
             .respond_to(&actix_web::test::TestRequest::post().to_http_request());
-        assert_eq!(reject_resp.status(), actix_web::http::StatusCode::BAD_REQUEST);
+        assert_eq!(
+            reject_resp.status(),
+            actix_web::http::StatusCode::BAD_REQUEST
+        );
 
         // 3. Apply valid incremental upgrade patch
         let valid_patch = doctype_diff::DocTypeDiffEngine::build_upgrade_patch(
             "v2.0",
             "v2.1",
-            &[doctype_diff::DocTypeSnapshot::new("CustomerExtension", "Selling")],
+            &[doctype_diff::DocTypeSnapshot::new(
+                "CustomerExtension",
+                "Selling",
+            )],
             &[],
-            &[(compact_str::CompactString::from("sales_hub"), compact_str::CompactString::from("Sales Analytics Hub"), 8)],
+            &[(
+                compact_str::CompactString::from("sales_hub"),
+                compact_str::CompactString::from("Sales Analytics Hub"),
+                8,
+            )],
             &[],
         );
         let patch_id = valid_patch.patch_id.clone();

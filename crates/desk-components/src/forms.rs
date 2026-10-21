@@ -220,13 +220,14 @@ impl DynamicFormModel {
             }
 
             let widget = match &field.fieldtype {
-                FieldType::Data | FieldType::DataWithPreset { .. } | FieldType::Text | FieldType::ReadOnly => {
-                    FormFieldWidget::TextInput {
-                        fieldname: field.fieldname.clone(),
-                        label: field.label.clone(),
-                        reqd: field.reqd,
-                    }
-                }
+                FieldType::Data
+                | FieldType::DataWithPreset { .. }
+                | FieldType::Text
+                | FieldType::ReadOnly => FormFieldWidget::TextInput {
+                    fieldname: field.fieldname.clone(),
+                    label: field.label.clone(),
+                    reqd: field.reqd,
+                },
                 FieldType::LongText | FieldType::SmallText => FormFieldWidget::LongTextInput {
                     fieldname: field.fieldname.clone(),
                     label: field.label.clone(),
@@ -398,7 +399,11 @@ pub struct ConditionRule {
 
 impl ConditionRule {
     #[must_use]
-    pub fn new(source_field: impl Into<String>, operator: ConditionOperator, target_value: impl Into<String>) -> Self {
+    pub fn new(
+        source_field: impl Into<String>,
+        operator: ConditionOperator,
+        target_value: impl Into<String>,
+    ) -> Self {
         Self {
             source_field: source_field.into(),
             operator,
@@ -409,33 +414,44 @@ impl ConditionRule {
     /// Evaluates this rule against form values.
     #[must_use]
     pub fn evaluate(&self, form_values: &HashMap<String, String>) -> bool {
-        let current_val = form_values.get(&self.source_field).map(String::as_str).unwrap_or("");
+        let current_val = form_values
+            .get(&self.source_field)
+            .map(String::as_str)
+            .unwrap_or("");
         match self.operator {
             ConditionOperator::Equals => current_val == self.target_value,
             ConditionOperator::NotEquals => current_val != self.target_value,
             ConditionOperator::GreaterThan => {
-                if let (Ok(curr), Ok(target)) = (current_val.parse::<f64>(), self.target_value.parse::<f64>()) {
+                if let (Ok(curr), Ok(target)) =
+                    (current_val.parse::<f64>(), self.target_value.parse::<f64>())
+                {
                     curr > target
                 } else {
                     false
                 }
             }
             ConditionOperator::LessThan => {
-                if let (Ok(curr), Ok(target)) = (current_val.parse::<f64>(), self.target_value.parse::<f64>()) {
+                if let (Ok(curr), Ok(target)) =
+                    (current_val.parse::<f64>(), self.target_value.parse::<f64>())
+                {
                     curr < target
                 } else {
                     false
                 }
             }
             ConditionOperator::GreaterOrEqual => {
-                if let (Ok(curr), Ok(target)) = (current_val.parse::<f64>(), self.target_value.parse::<f64>()) {
+                if let (Ok(curr), Ok(target)) =
+                    (current_val.parse::<f64>(), self.target_value.parse::<f64>())
+                {
                     curr >= target
                 } else {
                     false
                 }
             }
             ConditionOperator::LessOrEqual => {
-                if let (Ok(curr), Ok(target)) = (current_val.parse::<f64>(), self.target_value.parse::<f64>()) {
+                if let (Ok(curr), Ok(target)) =
+                    (current_val.parse::<f64>(), self.target_value.parse::<f64>())
+                {
                     curr <= target
                 } else {
                     false
@@ -450,7 +466,12 @@ impl ConditionRule {
     /// Converts this rule into a serialized expression string.
     #[must_use]
     pub fn to_expression(&self) -> String {
-        format!("{} {} \"{}\"", self.source_field, self.operator.as_str(), self.target_value)
+        format!(
+            "{} {} \"{}\"",
+            self.source_field,
+            self.operator.as_str(),
+            self.target_value
+        )
     }
 }
 
@@ -500,7 +521,11 @@ impl ConditionGroup {
             LogicalCombinator::And => " && ",
             LogicalCombinator::Or => " || ",
         };
-        self.rules.iter().map(ConditionRule::to_expression).collect::<Vec<_>>().join(op_str)
+        self.rules
+            .iter()
+            .map(ConditionRule::to_expression)
+            .collect::<Vec<_>>()
+            .join(op_str)
     }
 }
 
@@ -516,10 +541,14 @@ pub fn eval_depends_on(expr: &str, form_values: &HashMap<String, String>) -> boo
     let expr_clean = expr.strip_prefix("eval:").unwrap_or(expr).trim();
 
     if expr_clean.contains("||") {
-        return expr_clean.split("||").any(|part| eval_single_depends_clause(part.trim(), form_values));
+        return expr_clean
+            .split("||")
+            .any(|part| eval_single_depends_clause(part.trim(), form_values));
     }
 
-    expr_clean.split("&&").all(|part| eval_single_depends_clause(part.trim(), form_values))
+    expr_clean
+        .split("&&")
+        .all(|part| eval_single_depends_clause(part.trim(), form_values))
 }
 
 fn eval_single_depends_clause(clause: &str, form_values: &HashMap<String, String>) -> bool {
@@ -563,7 +592,9 @@ fn eval_single_depends_clause(clause: &str, form_values: &HashMap<String, String
     } else {
         // Truthiness check
         let key = clause.trim().trim_start_matches("doc.");
-        form_values.get(key).is_some_and(|v| v == "true" || v == "1" || (!v.trim().is_empty() && v != "0"))
+        form_values
+            .get(key)
+            .is_some_and(|v| v == "true" || v == "1" || (!v.trim().is_empty() && v != "0"))
     }
 }
 
@@ -601,7 +632,8 @@ impl FormStateTracker {
     }
 
     pub fn set_field(&mut self, field: &str, val: &str) {
-        self.current_values.insert(field.to_string(), val.to_string());
+        self.current_values
+            .insert(field.to_string(), val.to_string());
     }
 
     #[must_use]
@@ -716,40 +748,63 @@ impl FormValidator {
                     }
                     FieldValidationRule::Email => {
                         if !val.is_empty() && (!val.contains('@') || !val.contains('.')) {
-                            errors.insert(field.clone(), "Please enter a valid email address".into());
+                            errors
+                                .insert(field.clone(), "Please enter a valid email address".into());
                         }
                     }
                     FieldValidationRule::Phone => {
-                        if !val.is_empty() && val.chars().filter(|c| c.is_ascii_digit()).count() < 7 {
-                            warnings.insert(field.clone(), "Phone number format may be incomplete".into());
+                        if !val.is_empty() && val.chars().filter(|c| c.is_ascii_digit()).count() < 7
+                        {
+                            warnings.insert(
+                                field.clone(),
+                                "Phone number format may be incomplete".into(),
+                            );
                         }
                     }
                     FieldValidationRule::Url => {
-                        if !val.is_empty() && !val.starts_with("http://") && !val.starts_with("https://") {
-                            errors.insert(field.clone(), "URL must start with http:// or https://".into());
+                        if !val.is_empty()
+                            && !val.starts_with("http://")
+                            && !val.starts_with("https://")
+                        {
+                            errors.insert(
+                                field.clone(),
+                                "URL must start with http:// or https://".into(),
+                            );
                         }
                     }
                     FieldValidationRule::MinLength(min) => {
                         if !val.is_empty() && val.len() < *min {
-                            errors.insert(field.clone(), format!("Minimum {min} characters required"));
+                            errors.insert(
+                                field.clone(),
+                                format!("Minimum {min} characters required"),
+                            );
                         }
                     }
                     FieldValidationRule::MaxLength(max) => {
                         if val.len() > *max {
-                            errors.insert(field.clone(), format!("Maximum length is {max} characters"));
+                            errors.insert(
+                                field.clone(),
+                                format!("Maximum length is {max} characters"),
+                            );
                         }
                     }
                     FieldValidationRule::NumericRange { min, max } => {
                         if !val.is_empty() {
                             if let Ok(num) = val.parse::<f64>() {
                                 if let Some(m) = min
-                                    && num < *m {
-                                        errors.insert(field.clone(), format!("Value must be at least {m}"));
-                                    }
+                                    && num < *m
+                                {
+                                    errors.insert(
+                                        field.clone(),
+                                        format!("Value must be at least {m}"),
+                                    );
+                                }
                                 if let Some(m) = max
-                                    && num > *m {
-                                        errors.insert(field.clone(), format!("Value cannot exceed {m}"));
-                                    }
+                                    && num > *m
+                                {
+                                    errors
+                                        .insert(field.clone(), format!("Value cannot exceed {m}"));
+                                }
                             } else {
                                 errors.insert(field.clone(), "Please enter a valid number".into());
                             }
@@ -1136,25 +1191,109 @@ mod tests {
     #[test]
     fn test_all_18_visual_field_types_integrity() {
         let widgets = vec![
-            FormFieldWidget::TextInput { fieldname: "name".into(), label: "Name".into(), reqd: true },
-            FormFieldWidget::LongTextInput { fieldname: "desc".into(), label: "Description".into(), reqd: false, rows: 5 },
-            FormFieldWidget::RichTextInput { fieldname: "content".into(), label: "Content".into(), reqd: false },
-            FormFieldWidget::MarkdownInput { fieldname: "notes".into(), label: "Notes".into(), reqd: false },
-            FormFieldWidget::PasswordInput { fieldname: "secret".into(), label: "Password".into(), reqd: true },
-            FormFieldWidget::NumberInput { fieldname: "qty".into(), label: "Quantity".into(), reqd: true },
-            FormFieldWidget::CurrencyInput { fieldname: "rate".into(), label: "Rate".into(), reqd: true },
-            FormFieldWidget::DatePicker { fieldname: "dob".into(), label: "Date of Birth".into(), reqd: false },
-            FormFieldWidget::TimePicker { fieldname: "time".into(), label: "Time".into(), reqd: false },
-            FormFieldWidget::DatetimePicker { fieldname: "ts".into(), label: "Timestamp".into(), reqd: false },
-            FormFieldWidget::Checkbox { fieldname: "is_active".into(), label: "Active".into(), default_checked: true },
-            FormFieldWidget::SelectDropdown { fieldname: "role".into(), label: "Role".into(), options: vec!["Admin".into()], reqd: true },
-            FormFieldWidget::LinkDropdown { fieldname: "cust".into(), label: "Customer".into(), target_doctype: "Customer".into(), endpoint: "/api/cust".into(), reqd: true },
-            FormFieldWidget::DynamicLinkDropdown { fieldname: "target".into(), label: "Target".into(), link_doctype_field: "doc_type".into(), reqd: false },
-            FormFieldWidget::TableSubgrid { fieldname: "items".into(), label: "Items".into(), child_doctype: "Sales Item".into() },
-            FormFieldWidget::AttachmentFile { fieldname: "file".into(), label: "File".into(), max_size_mb: 10, allowed_types: vec!["*".into()], reqd: false },
-            FormFieldWidget::ColorPicker { fieldname: "badge_color".into(), label: "Badge Color".into(), default_color: "#ff0000".into() },
-            FormFieldWidget::SignaturePad { fieldname: "sign".into(), label: "Signature".into(), reqd: true },
-            FormFieldWidget::CodeEditor { fieldname: "script".into(), label: "Script".into(), language: "javascript".into(), reqd: false },
+            FormFieldWidget::TextInput {
+                fieldname: "name".into(),
+                label: "Name".into(),
+                reqd: true,
+            },
+            FormFieldWidget::LongTextInput {
+                fieldname: "desc".into(),
+                label: "Description".into(),
+                reqd: false,
+                rows: 5,
+            },
+            FormFieldWidget::RichTextInput {
+                fieldname: "content".into(),
+                label: "Content".into(),
+                reqd: false,
+            },
+            FormFieldWidget::MarkdownInput {
+                fieldname: "notes".into(),
+                label: "Notes".into(),
+                reqd: false,
+            },
+            FormFieldWidget::PasswordInput {
+                fieldname: "secret".into(),
+                label: "Password".into(),
+                reqd: true,
+            },
+            FormFieldWidget::NumberInput {
+                fieldname: "qty".into(),
+                label: "Quantity".into(),
+                reqd: true,
+            },
+            FormFieldWidget::CurrencyInput {
+                fieldname: "rate".into(),
+                label: "Rate".into(),
+                reqd: true,
+            },
+            FormFieldWidget::DatePicker {
+                fieldname: "dob".into(),
+                label: "Date of Birth".into(),
+                reqd: false,
+            },
+            FormFieldWidget::TimePicker {
+                fieldname: "time".into(),
+                label: "Time".into(),
+                reqd: false,
+            },
+            FormFieldWidget::DatetimePicker {
+                fieldname: "ts".into(),
+                label: "Timestamp".into(),
+                reqd: false,
+            },
+            FormFieldWidget::Checkbox {
+                fieldname: "is_active".into(),
+                label: "Active".into(),
+                default_checked: true,
+            },
+            FormFieldWidget::SelectDropdown {
+                fieldname: "role".into(),
+                label: "Role".into(),
+                options: vec!["Admin".into()],
+                reqd: true,
+            },
+            FormFieldWidget::LinkDropdown {
+                fieldname: "cust".into(),
+                label: "Customer".into(),
+                target_doctype: "Customer".into(),
+                endpoint: "/api/cust".into(),
+                reqd: true,
+            },
+            FormFieldWidget::DynamicLinkDropdown {
+                fieldname: "target".into(),
+                label: "Target".into(),
+                link_doctype_field: "doc_type".into(),
+                reqd: false,
+            },
+            FormFieldWidget::TableSubgrid {
+                fieldname: "items".into(),
+                label: "Items".into(),
+                child_doctype: "Sales Item".into(),
+            },
+            FormFieldWidget::AttachmentFile {
+                fieldname: "file".into(),
+                label: "File".into(),
+                max_size_mb: 10,
+                allowed_types: vec!["*".into()],
+                reqd: false,
+            },
+            FormFieldWidget::ColorPicker {
+                fieldname: "badge_color".into(),
+                label: "Badge Color".into(),
+                default_color: "#ff0000".into(),
+            },
+            FormFieldWidget::SignaturePad {
+                fieldname: "sign".into(),
+                label: "Signature".into(),
+                reqd: true,
+            },
+            FormFieldWidget::CodeEditor {
+                fieldname: "script".into(),
+                label: "Script".into(),
+                language: "javascript".into(),
+                reqd: false,
+            },
         ];
 
         assert_eq!(widgets.len(), 19);
@@ -1166,8 +1305,16 @@ mod tests {
     #[test]
     fn test_visual_condition_builder_and_evaluation() {
         let mut group = ConditionGroup::new(LogicalCombinator::And);
-        group.add_rule(ConditionRule::new("is_corporate", ConditionOperator::Equals, "true"));
-        group.add_rule(ConditionRule::new("revenue", ConditionOperator::GreaterThan, "100000"));
+        group.add_rule(ConditionRule::new(
+            "is_corporate",
+            ConditionOperator::Equals,
+            "true",
+        ));
+        group.add_rule(ConditionRule::new(
+            "revenue",
+            ConditionOperator::GreaterThan,
+            "100000",
+        ));
 
         let mut values = HashMap::new();
         values.insert("is_corporate".into(), "true".into());
@@ -1188,8 +1335,14 @@ mod tests {
 
         assert!(eval_depends_on("status==Open", &values));
         assert!(!eval_depends_on("status==Closed", &values));
-        assert!(eval_depends_on("status==Open && workflow_state==Pending", &values));
-        assert!(!eval_depends_on("status==Open && workflow_state==Approved", &values));
+        assert!(eval_depends_on(
+            "status==Open && workflow_state==Pending",
+            &values
+        ));
+        assert!(!eval_depends_on(
+            "status==Open && workflow_state==Approved",
+            &values
+        ));
         assert!(eval_depends_on("grand_total > 1000", &values));
         assert!(!eval_depends_on("grand_total < 1000", &values));
     }
@@ -1226,7 +1379,13 @@ mod tests {
         let mut validator = FormValidator::new();
         validator.add_rule("email", FieldValidationRule::Required);
         validator.add_rule("email", FieldValidationRule::Email);
-        validator.add_rule("age", FieldValidationRule::NumericRange { min: Some(18.0), max: Some(120.0) });
+        validator.add_rule(
+            "age",
+            FieldValidationRule::NumericRange {
+                min: Some(18.0),
+                max: Some(120.0),
+            },
+        );
 
         let mut values = HashMap::new();
         values.insert("email".into(), "invalid-email".into());

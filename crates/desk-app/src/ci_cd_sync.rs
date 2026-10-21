@@ -7,9 +7,7 @@
 //! - Ready-to-use GitHub Actions / GitOps CI/CD workflow generator.
 
 use compact_str::{CompactString, ToCompactString};
-use doctype_diff::{
-    CustomScriptDiff, DocTypeDiffEngine, DocTypeSnapshot, UpgradePatchBundle,
-};
+use doctype_diff::{CustomScriptDiff, DocTypeDiffEngine, DocTypeSnapshot, UpgradePatchBundle};
 use serde::{Deserialize, Serialize};
 use thiserror::Error;
 
@@ -178,7 +176,9 @@ impl IncrementalSyncClient {
         }
 
         let mut log = Vec::new();
-        log.push(format!("Dry-run verified patch integrity: {}", patch.patch_id).to_compact_string());
+        log.push(
+            format!("Dry-run verified patch integrity: {}", patch.patch_id).to_compact_string(),
+        );
         log.push(
             format!(
                 "Payload includes {} doctype diffs, {} page diffs, {} DDL statements",

@@ -183,14 +183,20 @@ mod tests {
             serde_json::json!({ "item_code": "ITEM-001", "item_name": "Mechanical Keyboard", "rate": 150 }),
             serde_json::json!({ "item_code": "ITEM-002", "item_name": "Ergo Mouse, USB-C", "rate": 75 }),
         ];
-        let fields = vec!["item_code".to_string(), "item_name".to_string(), "rate".to_string()];
+        let fields = vec![
+            "item_code".to_string(),
+            "item_name".to_string(),
+            "rate".to_string(),
+        ];
 
-        let csv_bytes = ImportExportStudio::export_dataset(&rows, &fields, ExportFormat::Csv).unwrap();
+        let csv_bytes =
+            ImportExportStudio::export_dataset(&rows, &fields, ExportFormat::Csv).unwrap();
         let csv_text = String::from_utf8(csv_bytes).unwrap();
         assert!(csv_text.contains("item_code,item_name,rate"));
         assert!(csv_text.contains("\"Ergo Mouse, USB-C\""));
 
-        let json_bytes = ImportExportStudio::export_dataset(&rows, &fields, ExportFormat::Json).unwrap();
+        let json_bytes =
+            ImportExportStudio::export_dataset(&rows, &fields, ExportFormat::Json).unwrap();
         let json_val: Vec<serde_json::Value> = serde_json::from_slice(&json_bytes).unwrap();
         assert_eq!(json_val.len(), 2);
     }

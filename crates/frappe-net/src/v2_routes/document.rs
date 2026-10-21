@@ -45,13 +45,34 @@ pub fn configure(cfg: &mut web::ServiceConfig) {
     .route("/files/image/{hash}", web::get().to(download_image_handler))
     // Pure Dynamic Meta-Model Engine REST API routes
     .route("/api/v2/meta/doctype", web::get().to(v2_list_meta_doctypes))
-    .route("/api/v2/meta/doctype", web::post().to(v2_create_custom_doctype))
-    .route("/api/v2/meta/doctype/{name}", web::get().to(v2_get_meta_doctype))
-    .route("/api/v2/meta/doctype/{name}", web::put().to(v2_update_custom_doctype))
-    .route("/api/v2/meta/doctype/{name}", web::delete().to(v2_delete_custom_doctype))
-    .route("/api/v2/meta/doctype/{name}/custom_field", web::post().to(v2_add_custom_field))
-    .route("/api/v2/meta/snapshot", web::get().to(v2_export_meta_snapshot))
-    .route("/api/v2/meta/snapshot", web::post().to(v2_import_meta_snapshot));
+    .route(
+        "/api/v2/meta/doctype",
+        web::post().to(v2_create_custom_doctype),
+    )
+    .route(
+        "/api/v2/meta/doctype/{name}",
+        web::get().to(v2_get_meta_doctype),
+    )
+    .route(
+        "/api/v2/meta/doctype/{name}",
+        web::put().to(v2_update_custom_doctype),
+    )
+    .route(
+        "/api/v2/meta/doctype/{name}",
+        web::delete().to(v2_delete_custom_doctype),
+    )
+    .route(
+        "/api/v2/meta/doctype/{name}/custom_field",
+        web::post().to(v2_add_custom_field),
+    )
+    .route(
+        "/api/v2/meta/snapshot",
+        web::get().to(v2_export_meta_snapshot),
+    )
+    .route(
+        "/api/v2/meta/snapshot",
+        web::post().to(v2_import_meta_snapshot),
+    );
 }
 
 /// Handler for listing all DocTypes: `GET /api/v2/meta/doctype`
@@ -88,7 +109,9 @@ pub async fn v2_create_custom_doctype(
     let tenant_id_opt = req.extensions().get::<TenantId>().cloned();
     match registry.create_custom_doctype(custom) {
         Ok(schema) => {
-            let ddl = registry.compile_surrealql_ddl(&schema.name).unwrap_or_default();
+            let ddl = registry
+                .compile_surrealql_ddl(&schema.name)
+                .unwrap_or_default();
             if let (Some(pool), Some(tenant_id)) = (pool_mgr, tenant_id_opt)
                 && let Ok(client) = pool.get_or_initialize_client(&tenant_id).await
             {
@@ -120,7 +143,9 @@ pub async fn v2_update_custom_doctype(
     let tenant_id_opt = req.extensions().get::<TenantId>().cloned();
     match registry.update_custom_doctype(&name, custom) {
         Ok(schema) => {
-            let ddl = registry.compile_surrealql_ddl(&schema.name).unwrap_or_default();
+            let ddl = registry
+                .compile_surrealql_ddl(&schema.name)
+                .unwrap_or_default();
             if let (Some(pool), Some(tenant_id)) = (pool_mgr, tenant_id_opt)
                 && let Ok(client) = pool.get_or_initialize_client(&tenant_id).await
             {

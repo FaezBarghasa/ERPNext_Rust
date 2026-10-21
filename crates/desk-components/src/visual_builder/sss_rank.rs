@@ -278,7 +278,7 @@ impl Default for CssGridProperties {
 pub struct ScrollSnapConfig {
     pub enabled: bool,
     pub is_horizontal: bool,
-    pub snap_type: CompactString, // "mandatory" or "proximity"
+    pub snap_type: CompactString,  // "mandatory" or "proximity"
     pub snap_align: CompactString, // "start", "center", "end"
 }
 
@@ -336,9 +336,9 @@ impl FluidTypography {
 /// Variable font axes specification.
 #[derive(Debug, Clone, Copy, PartialEq, Serialize, Deserialize)]
 pub struct VariableFontAxes {
-    pub weight: u16,        // 100 - 900
-    pub width_pct: f32,     // 75.0 - 125.0
-    pub slant_deg: f32,     // -10.0 - 0.0
+    pub weight: u16,    // 100 - 900
+    pub width_pct: f32, // 75.0 - 125.0
+    pub slant_deg: f32, // -10.0 - 0.0
     pub optical_size_px: f32,
 }
 
@@ -825,10 +825,10 @@ impl Default for SeoMetadataAudit {
 pub enum ColorBlindnessKind {
     #[default]
     Normal,
-    Protanopia,   // Red weak
-    Deuteranopia, // Green weak
-    Tritanopia,   // Blue weak
-    Achromatopsia,// Total grayscale
+    Protanopia,    // Red weak
+    Deuteranopia,  // Green weak
+    Tritanopia,    // Blue weak
+    Achromatopsia, // Total grayscale
 }
 
 /// Accessibility (WCAG 2.1 / 2.2) Compliance Audit.
@@ -937,7 +937,9 @@ impl Default for LaunchReadinessGate {
 impl LaunchReadinessGate {
     #[must_use]
     pub fn can_publish(&self) -> bool {
-        self.checklist.iter().all(|item| !item.is_blocking || item.is_passed)
+        self.checklist
+            .iter()
+            .all(|item| !item.is_blocking || item.is_passed)
     }
 }
 

@@ -180,7 +180,10 @@ impl DeployBundle {
         });
 
         // Systemd target
-        if target == DeployTarget::Vps || target == DeployTarget::Systemd || target == DeployTarget::All {
+        if target == DeployTarget::Vps
+            || target == DeployTarget::Systemd
+            || target == DeployTarget::All
+        {
             self.artifacts.push(DeployArtifact {
                 relative_path: format!("{}.service", self.config.app_name).into(),
                 content: self.generate_systemd_unit(),
@@ -190,7 +193,10 @@ impl DeployBundle {
         }
 
         // Docker target
-        if target == DeployTarget::Vps || target == DeployTarget::Docker || target == DeployTarget::All {
+        if target == DeployTarget::Vps
+            || target == DeployTarget::Docker
+            || target == DeployTarget::All
+        {
             self.artifacts.push(DeployArtifact {
                 relative_path: "docker-compose.yml".into(),
                 content: self.generate_docker_compose(),
@@ -207,7 +213,10 @@ impl DeployBundle {
         }
 
         // Caddy Reverse Proxy (if domain specified or VPS mode)
-        if self.config.domain.is_some() || target == DeployTarget::Vps || target == DeployTarget::All {
+        if self.config.domain.is_some()
+            || target == DeployTarget::Vps
+            || target == DeployTarget::All
+        {
             self.artifacts.push(DeployArtifact {
                 relative_path: "Caddyfile".into(),
                 content: self.generate_caddyfile(),
@@ -458,11 +467,7 @@ target_headroom_mb = 174
 
     /// Generates Caddyfile with automatic TLS and modern compression.
     pub fn generate_caddyfile(&self) -> String {
-        let domain_str = self
-            .config
-            .domain
-            .as_deref()
-            .unwrap_or(":80");
+        let domain_str = self.config.domain.as_deref().unwrap_or(":80");
 
         format!(
             r#"# Caddy Reverse Proxy — Automatic HTTPS & Gzip/Zstd Compression
@@ -703,7 +708,9 @@ mod tests {
             ..DeployConfig::default()
         });
 
-        let report = bundle.export_to_directory(&temp_dir).expect("export to directory must succeed");
+        let report = bundle
+            .export_to_directory(&temp_dir)
+            .expect("export to directory must succeed");
         assert_eq!(report.status, "SUCCESS");
         assert!(report.files_written.contains(&"start.sh".into()));
         assert!(report.files_written.contains(&"docker-compose.yml".into()));
@@ -720,7 +727,9 @@ mod tests {
     #[test]
     fn test_compressed_bundle_generation() {
         let bundle = DeployBundle::new(DeployConfig::default());
-        let compressed = bundle.export_compressed_bundle().expect("compression must succeed");
+        let compressed = bundle
+            .export_compressed_bundle()
+            .expect("compression must succeed");
         assert!(!compressed.is_empty());
         // Zstd magic header: 0x28, 0xB5, 0x2F, 0xFD
         assert_eq!(compressed[0], 0x28);
