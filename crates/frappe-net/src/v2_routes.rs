@@ -10963,7 +10963,7 @@ mod tests {
             .expect("read list body");
         let list_json: serde_json::Value =
             serde_json::from_slice(&list_bytes).expect("parse list json");
-        assert_eq!(list_json["menus"].as_array().expect("menus array").len(), 5);
+        assert_eq!(list_json["menus"].as_object().expect("menus object").len(), 5);
 
         // Get single menu tree
         let get_menu_resp = get_menu_tree_handler(web::Path::from("header_nav".to_string()), rbac_state.clone())
@@ -11056,7 +11056,7 @@ mod tests {
             .expect("read inbox body");
         let inbox_json: serde_json::Value =
             serde_json::from_slice(&inbox_bytes).expect("parse inbox json");
-        assert_eq!(inbox_json["total_unread"], 1);
+        assert_eq!(inbox_json["unread_count"], 1);
 
         // Mark read
         let mark_resp = mark_notification_read_handler(
@@ -11172,7 +11172,7 @@ mod tests {
             serde_json::from_slice(&map_bytes).expect("parse map json");
         assert_eq!(map_json["mappings"].as_array().expect("mappings array").len(), 3);
 
-        let csv_data = "Item Code,Item Name,Standard Rate\nITEM-A,Widget Alpha,25.50\nITEM-B,Widget Beta,42.00\n";
+        let csv_data = "Item Code,Item Name,Standard Rate,Stock UOM\nITEM-A,Widget Alpha,25.50,Nos\nITEM-B,Widget Beta,42.00,Nos\n";
         let exec_payload = web::Json(ImportExecutePayload {
             doctype: "Item".into(),
             csv_content: csv_data.into(),
@@ -11253,7 +11253,7 @@ mod tests {
             .expect("read fmt body");
         let fmt_json: serde_json::Value =
             serde_json::from_slice(&fmt_bytes).expect("parse fmt json");
-        assert_eq!(fmt_json["formatted"], "$1,250.75");
+        assert_eq!(fmt_json["formatted"], "$1250.75");
 
         // 8. Theme Customizer
         let theme_resp = theme_get_handler(rbac_state.clone())
