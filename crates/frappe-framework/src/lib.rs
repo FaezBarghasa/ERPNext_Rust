@@ -1,6 +1,7 @@
 pub mod ai_tools;
 pub mod auto_repeat;
 pub mod background;
+pub mod blueprints;
 pub mod bpmn;
 pub mod controller;
 pub mod dmn;
@@ -42,6 +43,11 @@ pub use auto_repeat::{
 pub use background::{
     BackgroundJob, BackgroundJobQueue, JobMeshCoordinator, JobPriority, JobStatus, ScheduledTask,
     SchedulerEngine, SchedulerInterval,
+};
+pub use blueprints::{
+    cms_blueprint, erp_blueprint, lms_blueprint, saas_blueprint, BlueprintCategory,
+    BlueprintError, BlueprintMetadata, BlueprintNavigationItem, BlueprintPackage, BlueprintPage,
+    BlueprintRegistry, InstallReport,
 };
 pub use email_account::{
     EmailAccount, EmailAccountPoller, EmailIngestionRecord, InboundEmailMessage,
