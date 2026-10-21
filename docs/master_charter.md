@@ -1,8 +1,8 @@
-# Planetary-Scale Pure-Rust Enterprise Operating System: Master Architectural Evolution & Transcendence Plan
+# `rust-web-land` (`rwl`) — Master Architectural Evolution & Universal Operating Substrate Charter
 
 ## Executive Systems Charter & Architectural Thesis
 
-This document establishes the definitive, multi-stage engineering roadmap to evolve the pure-Rust enterprise platform (`rustnext`) into a planetary-scale Enterprise Resource Planning (ERP), Content Management System (CMS), and Digital Commerce Operating System.
+This document establishes the definitive, multi-stage engineering roadmap for `rust-web-land` (`rwl`): a universal, no-code web application builder and planetary-scale enterprise operating substrate in pure Rust.
 
 The platform eliminates interpreted runtimes, multi-tier daemon sprawl, and foreign database bridges. The entire operational architecture is strictly constructed on an uncompromised, three-pillar foundation:
 
@@ -22,7 +22,7 @@ The platform eliminates interpreted runtimes, multi-tier daemon sprawl, and fore
 |  └── Request-Scoped Session Multiplexer (Zero Cross-Tenant Contamination)                         |
 |                                     │                                                             |
 |                                     ▼                                                             |
-|  [ Execution Core (`rustnext` Static musl Binary Powered by Actix-web) ]                          |
+|  [ Execution Core (`rust-web-land` Static musl Binary Powered by Actix-web) ]                      |
 |  ├── Asynchronous Network Runtime: Actix-web Tokio Work-Stealing Reactor (`epoll` / `io_uring`)   |
 |  ├── Asynchronous Actor Arbiter & Persistent Queue Bus (`actix::Actor` + SurrealDB Backing)       |
 |  ├── Pure-Rust SSR Block Engine (Askama / Tera compiled templates in Actix handlers: $< 10ms)     |
@@ -55,7 +55,7 @@ The platform eliminates interpreted runtimes, multi-tier daemon sprawl, and fore
 
 ### Milestone 1.1: Single-Binary Distribution & Custom Memory Allocator
 
-* **Objective:** Produce a single, statically linked binary (`rustnext`) containing the Actix-web server, embedded SurrealDB persistence layer, Dioxus WebAssembly bundles, and Wasmtime runtime without external runtime dependencies (no Python, MariaDB, Redis, Node.js, or Nginx).
+* **Objective:** Produce a single, statically linked binary (`rust-web-land` / `rwl`) containing the Actix-web server, embedded SurrealDB persistence layer, Dioxus WebAssembly bundles, and Wasmtime runtime without external runtime dependencies (no Python, MariaDB, Redis, Node.js, or Nginx).
 
 * **Implementation Mechanics:**
   1. Configure `mimalloc` or `jemalloc` with aggressive page purging (`MALLOC_CONF="dirty_decay_ms:1000,muzzy_decay_ms:2000,background_thread:true"`) to prevent heap fragmentation under sustained, long-running workloads.
@@ -540,7 +540,7 @@ Permissions & Assertions     - CompactString Keys
 
 ### Milestone 5.5: The Universal Multi-Template Work-Type Engine & Dynamic Layout Protocol
 
-* **Objective:** Enable a single `rustnext` instance to host and render diverse commercial and operational website templates across any business work-type (luxury goods, high-velocity B2C retail, industrial B2B, developer SaaS, clinical medical, gastronomy, streaming media, and field kiosks) with zero custom code or recompilation.
+* **Objective:** Enable a single `rust-web-land` instance to host and render diverse commercial and operational website templates across any business work-type (luxury goods, high-velocity B2C retail, industrial B2B, developer SaaS, clinical medical, gastronomy, streaming media, and field kiosks) with zero custom code or recompilation.
 
 * **Implementation Mechanics:**
   1. **The Universal Template Manifest Schema (`ThemeManifest`):**
@@ -926,7 +926,7 @@ Permissions & Assertions     - CompactString Keys
 |                               AGENCY MULTI-TENANT FLEET TOPOLOGY                                  |
 |                                                                                                   |
 |  Single Commercial VPS ($50/mo Budget: 16GB RAM, 8 Cores)                                         |
-|  ├── Process: `rustnext start --cluster-mode` (Actix-web + SurrealDB)                             |
+|  ├── Process: `rwl serve` or `rust-web-land start` (Actix-web + SurrealDB)                         |
 |  ├── Dynamic SNI Router & Lock-Free Domain Table (`ArcSwap`)                                      |
 |  │                                                                                                |
 |  ├── Tenant 001: salon-artisan.de   (Isolated SurrealDB NS/DB, Custom Theme, Auto-TLS)            |
@@ -951,7 +951,7 @@ Permissions & Assertions     - CompactString Keys
 
 ### Milestone 10.2: Direct WooCommerce Migration Ingestion
 
-* **Objective:** Provide a fast migration path from legacy WordPress/WooCommerce installations into `rustnext` without requiring external database drivers.
+* **Objective:** Provide a fast migration path from legacy WordPress/WooCommerce installations into `rust-web-land` without requiring external database drivers.
 * **Implementation Mechanics:**
   1. Actix-web provides streaming ingestion endpoints accepting standard WooCommerce JSON exports or SQL dump files.
   2. Transform relational rows directly into native `tab_item`, `tab_customer`, and `tab_sales_invoice` SurrealDB records.
@@ -962,7 +962,7 @@ Permissions & Assertions     - CompactString Keys
 
 ### Milestone 10.3: Curated Prebuilt Template Sites Suite (Universal Work-Type Archetypes)
 
-* **Objective:** Embed six production-grade, end-to-end commercial and operational website templates directly into the `rustnext` binary. Every template integrates with the full enterprise suite (`erp-accounting`, `erp-inventory`, `erp-trade`, `erp-software`, `erp-wms`, `erp-manufacturing`, `erp-crm`, `erp-support`, `erp-learning`, `erp-ppm`, `frappe-storage`, and `frappe-framework`), providing specialized UI/UX paradigms while enforcing zero decimal drift and low RAM overhead.
+* **Objective:** Embed production-grade, end-to-end commercial and operational website templates directly into the `rust-web-land` binary. Every template integrates with the full enterprise suite (`erp-accounting`, `erp-inventory`, `erp-trade`, `erp-software`, `erp-wms`, `erp-manufacturing`, `erp-crm`, `erp-support`, `erp-learning`, `erp-ppm`, `frappe-storage`, and `frappe-framework`), providing specialized UI/UX paradigms while enforcing zero decimal drift and low RAM overhead ($\le 1\,\text{GB}$ VPS).
 
 ```
 +───────────────────────────────────────────────────────────────────────────────────────────────────+
@@ -1192,7 +1192,7 @@ Permissions & Assertions     - CompactString Keys
 * **Objective:** Enable system administrators, developers, and agency teams to provision, configure, seed, and launch any of the six prebuilt template sites in under 2 seconds via a single CLI invocation.
 
 ```
-       [ CLI Invocation: `./rustnext site deploy --template <slug>` ]
+       [ CLI Invocation: `rwl site deploy --template <slug>` ]
                                       │
                                       ▼
                   [ Step 1: Initialize Tenant Boundary ]
@@ -1225,16 +1225,16 @@ Permissions & Assertions     - CompactString Keys
 ```
 
 * **Implementation Mechanics:**
-  1. **The CLI Command Syntax (`crates/frappe-net/src/cli.rs`):**
+  1. **The CLI Command Syntax (`rwl` / `rbench`):**
      ```bash
-     ./rustnext site deploy \
+     rwl site deploy \
        --template <svod-streaming | lms-academy | digital-goods | b2b-industrial | b2c-retail | trading-exchange> \
        --site-name <client_domain> \
        --admin-email admin@domain.com \
        [--micro]
      ```
   2. **In-Memory Embedded Fixture Ingestion (`rust-embed`):**
-     All SurrealQL migration scripts, sample catalog assets, default block layouts, and design tokens compile directly into the static `rustnext` binary using `rust-embed`. The deployment runner streams these assets directly into memory buffers without filesystem disk I/O bottlenecks.
+     All SurrealQL migration scripts, sample catalog assets, default block layouts, and design tokens compile directly into the static `rust-web-land` binary using `rust-embed`. The deployment runner streams these assets directly into memory buffers without filesystem disk I/O bottlenecks.
   3. **Atomic Transactional Seed Pipeline:**
      The deployment engine executes the entire template seeding routine within a single SurrealDB transaction block (`BEGIN TRANSACTION ... COMMIT TRANSACTION`). If any step encounters an assertion failure, the transaction aborts completely, leaving zero orphan records.
   4. **Dynamic Domain & ACME Binding:**
@@ -1337,7 +1337,7 @@ Permissions & Assertions     - CompactString Keys
 
 | Capability Verification Gate | Target System Invariant | Algorithmic & Systems Benchmark |
 | :--- | :--- | :--- |
-| **Gate Alpha: Substrate & Isolation** | Statically compiled musl binary (`rustnext`) boots Actix-web with embedded SurrealKV under $64\,\text{MB}$ RAM. | p99 HTTP latency $< 2\,\text{ms}$ at $150{,}000\,\text{req/s}$; automated ACME certificates issue in $\le 4000\,\text{ms}$. |
+| **Gate Alpha: Substrate & Isolation** | Statically compiled musl binary (`rust-web-land`) boots Actix-web with embedded SurrealKV under $64\,\text{MB}$ RAM. | p99 HTTP latency $< 2\,\text{ms}$ at $150{,}000\,\text{req/s}$; automated ACME certificates issue in $\le 4000\,\text{ms}$. |
 | **Gate Beta: Metamodel & Scripting** | Dynamic DocTypes compile to SurrealQL DDL; Wasmtime sandbox traps panics and fuel exhaustion. | Zero host crashes across $1{,}000{,}000$ faulty plugin executions; zero compile-time schema dependencies. |
 | **Gate Gamma: Financial & Trade Parity** | Double-entry general ledger and SIMD-accelerated FIFO inventory maintain zero decimal drift in SurrealDB. | $100{,}000{,}000$ ledger lines balance to $0.00\text{dec}$; FIFO processes $2{,}000{,}000\,\text{layers/sec per core}$. |
 | **Gate Delta: Factory, PPM & Logistics** | Dual-engine CPM/CCPM scheduler, EVM metrics, and MILP makespan optimizer run concurrently via Actix workers. | $100{,}000$ Monte Carlo iterations complete in $< 850\,\text{ms}$; WMS Lin-Kernighan TSP pick path saves $\ge 35\%$ transit distance. |

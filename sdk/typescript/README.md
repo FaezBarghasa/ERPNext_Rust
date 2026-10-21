@@ -1,23 +1,23 @@
-# `@rustnext/sdk`
+# `@rust-web-land/sdk` (`@rwl/sdk`)
 
-Official typed TypeScript client library for interacting with the RustNext ERP & Frappe-Rust enterprise backend.
+Official typed TypeScript client SDK for interacting with the `rust-web-land` (`rwl`) backend, DocType models, and v2 APIs.
 
 ## Installation
 
 ```bash
-pnpm add @rustnext/sdk
+pnpm add @rust-web-land/sdk
 # or
-npm install @rustnext/sdk
+npm install @rust-web-land/sdk
 ```
 
 ## Quick Start
 
 ```typescript
-import { RustNextClient } from "@rustnext/sdk";
+import { RustWebLandClient } from "@rust-web-land/sdk";
 
-const client = new RustNextClient({
-  baseUrl: "https://erp.example.com",
-  apiKey: "rn_sec_...",
+const client = new RustWebLandClient({
+  baseUrl: "https://app.yourdomain.com",
+  apiKey: "rwl_sec_...",
   site: "default.localhost"
 });
 

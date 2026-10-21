@@ -1,8 +1,8 @@
-# Test-Driven Development (TDD) Guide
+# `rust-web-land` (`rwl`) — Test-Driven Development (TDD) Specification
 
 ## 1. TDD Philosophy & Engineering Invariants
 
-The `rustnext` workspace adheres to a strict Test-Driven Development methodology:
+The `rust-web-land` (`rwl`) workspace adheres to a strict Test-Driven Development methodology:
 
 1. **Red**: Write a failing unit or integration test defining domain invariants (e.g., zero accounting drift, WASI fuel exhaustion, FIFO layer consumption, ZK proof validity).
 2. **Green**: Implement the minimal, correct, memory-safe Rust logic satisfying the specification.

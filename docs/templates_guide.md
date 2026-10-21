@@ -1,6 +1,6 @@
-# Universal Work-Type Templates & Theme Engine Guide
+# `rust-web-land` (`rwl`) — Universal Template Suites & Theme Engine Guide
 
-This guide details the six prebuilt enterprise template suites embedded natively within `rustnext` (`erp-cms`), their real-world architectural benchmarks, module integrations, DocType schemata, and deployment workflows.
+This guide details the 10 prebuilt enterprise template suites embedded natively within `rust-web-land` (`rwl`) (`erp-cms`), their real-world architectural benchmarks, module integrations, DocType schemata, and deployment workflows.
 
 ---
 

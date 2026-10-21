@@ -6,7 +6,7 @@ Production Actix-Web, QUIC/HTTP3, and WebSocket gateway providing multi-tenant r
 
 ## 📦 Overview
 
-`frappe-net` implements the primary transport layer for the `rustnext` platform. It features multi-tenant resolution across subdomains, strict bitemporal audit trails, dynamic Role-Based Access Control (RBAC), multi-factor authentication (MFA), real-time LiveSync event broadcasting, and high-performance streaming APIs.
+`frappe-net` implements the primary transport layer for the `rust-web-land` (`rwl`) platform. It features multi-tenant resolution across subdomains, strict bitemporal audit trails, dynamic Role-Based Access Control (RBAC), multi-factor authentication (MFA), real-time LiveSync event broadcasting, and high-performance streaming APIs.
 
 ---
 

@@ -161,16 +161,25 @@ async fn metrics_handler() -> impl Responder {
     let uptime_secs = START_TIME.elapsed().as_secs();
 
     let metrics_text = format!(
-        "# HELP rustnext_http_requests_total Total number of HTTP requests processed.\n\
+        "# HELP rwl_http_requests_total Total number of HTTP requests processed.\n\
+         # TYPE rwl_http_requests_total counter\n\
+         rwl_http_requests_total {}\n\
+         # HELP rustnext_http_requests_total Total number of HTTP requests processed.\n\
          # TYPE rustnext_http_requests_total counter\n\
          rustnext_http_requests_total {}\n\
+         # HELP rwl_uptime_seconds Total runtime uptime in seconds.\n\
+         # TYPE rwl_uptime_seconds gauge\n\
+         rwl_uptime_seconds {}\n\
          # HELP rustnext_uptime_seconds Total runtime uptime in seconds.\n\
          # TYPE rustnext_uptime_seconds gauge\n\
          rustnext_uptime_seconds {}\n\
+         # HELP rwl_active_tenant_sessions Active cached tenant sessions count.\n\
+         # TYPE rwl_active_tenant_sessions gauge\n\
+         rwl_active_tenant_sessions 1\n\
          # HELP rustnext_active_tenant_sessions Active cached tenant sessions count.\n\
          # TYPE rustnext_active_tenant_sessions gauge\n\
          rustnext_active_tenant_sessions 1\n",
-        total_reqs, uptime_secs
+        total_reqs, total_reqs, uptime_secs, uptime_secs
     );
 
     HttpResponse::Ok()

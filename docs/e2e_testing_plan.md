@@ -21,7 +21,7 @@ This testing plan evaluates the platform purely from the perspective of an authe
                                             │ HTTP/3, WebSockets, DOM Events, Subsonic
                                             ▼
 ┌────────────────────────────────────────────────────────────────────────────────────────┐
-│                        Statically Compiled `rustnext` Target                           │
+│                        Statically Compiled `rust-web-land` Target                      │
 │     (Actix-web HTTP Gateway + Embedded SurrealDB + Dioxus WASM + Three.js Substrate)   │
 └────────────────────────────────────────────────────────────────────────────────────────┘
 ```
