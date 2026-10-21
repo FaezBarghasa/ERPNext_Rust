@@ -43,8 +43,40 @@ pub enum NotificationPriority {
     Urgent = 4,
 }
 
+/// Real-time audio sound alert kinds for in-app events.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize, Default)]
+pub enum SoundAlertKind {
+    #[default]
+    None,
+    Chime,
+    Ping,
+    SubtleBeep,
+    UrgentSiren,
+    SuccessTrill,
+}
+
+/// Sound alert settings for in-app notification center.
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct SoundAlertConfig {
+    pub sound: SoundAlertKind,
+    pub volume: f32, // 0.0 .. 1.0
+    pub vibration: bool,
+    pub mute_all: bool,
+}
+
+impl Default for SoundAlertConfig {
+    fn default() -> Self {
+        Self {
+            sound: SoundAlertKind::Chime,
+            volume: 0.8,
+            vibration: true,
+            mute_all: false,
+        }
+    }
+}
+
 /// Individual notification record.
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct NotificationMessage {
     pub id: String,
     pub tenant_id: String,
@@ -56,6 +88,7 @@ pub struct NotificationMessage {
     pub body_html: Option<String>,
     pub action_url: Option<String>,
     pub document_reference: Option<String>,
+    pub sound_alert: Option<SoundAlertKind>,
     pub read_at: Option<DateTime<Utc>>,
     pub created_at: DateTime<Utc>,
     pub metadata: serde_json::Value,
@@ -81,10 +114,17 @@ impl NotificationMessage {
             body_html: None,
             action_url: None,
             document_reference: None,
+            sound_alert: None,
             read_at: None,
             created_at: Utc::now(),
             metadata: serde_json::Value::Null,
         }
+    }
+
+    #[must_use]
+    pub fn with_sound_alert(mut self, sound: SoundAlertKind) -> Self {
+        self.sound_alert = Some(sound);
+        self
     }
 
     #[must_use]
@@ -255,6 +295,13 @@ impl NotificationInboxRegistry {
                     }
                 }
             }
+        }
+    }
+
+    /// Clears/deletes all notifications for a user.
+    pub fn clear_all(&self, user_id: &str) {
+        if let Ok(mut lock) = self.inboxes.write() {
+            lock.remove(user_id);
         }
     }
 }

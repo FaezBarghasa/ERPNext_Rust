@@ -26,7 +26,8 @@ pub use report_query::{
 };
 
 pub use desk_shell::{
-    AwesomeBar, DeskShell, ThemeMode, WorkspaceModule, get_desk_workspaces,
+    AwesomeBar, DeskShell, LanguageDirection, MenuItem, MenuTree, MenuTreeLocation, ThemeConfig,
+    ThemeMode, WorkspaceModule, format_currency, get_desk_workspaces, is_rtl,
     render_desk_shell_component, render_desk_shell_html, render_form_view_html,
     render_list_view_html,
 };

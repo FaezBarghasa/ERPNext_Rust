@@ -2627,6 +2627,7 @@ dependencies = [
  "erp-cms",
  "erp-crm",
  "erp-hr",
+ "erp-importer",
  "erp-inventory",
  "erp-manufacturing",
  "erp-ppm",

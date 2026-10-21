@@ -54,13 +54,15 @@ impl FuzzyMatcher {
 
         for (col_idx, &raw_header) in raw_headers.iter().enumerate() {
             let normalized_raw = raw_header.trim().to_lowercase();
+            let raw_underscored = normalized_raw.replace([' ', '-'], "_");
 
             let mut best_field: Option<CompactString> = None;
             let mut min_distance = usize::MAX;
 
             for target in schema {
-                // Exact field name match
-                if target.field_name.to_lowercase() == normalized_raw {
+                let target_lower = target.field_name.to_lowercase();
+                // Exact field name match (handling spaces and hyphens)
+                if target_lower == normalized_raw || target_lower == raw_underscored {
                     best_field = Some(target.field_name.clone());
                     break;
                 }

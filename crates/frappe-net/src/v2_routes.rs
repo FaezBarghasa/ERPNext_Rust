@@ -15,6 +15,7 @@ pub mod auth;
 pub mod document;
 pub mod inventory;
 pub mod media;
+pub mod micro_features;
 pub mod trade;
 
 pub use accounting::configure as configure_accounting_routes;
@@ -28,6 +29,8 @@ pub use document::{
 };
 pub use inventory::configure as configure_inventory_routes;
 pub use media::configure as configure_media_routes;
+pub use micro_features::configure as configure_micro_features_routes;
+pub use micro_features::*;
 pub use trade::configure as configure_trade_routes;
 
 use crate::middleware::auth::{SecurityContext, get_master_token_secret};
@@ -2730,6 +2733,10 @@ pub struct DynamicRbacState {
     pub radio_registry: Arc<erp_cms::audio_live_radio::LiveRadioRegistry>,
     pub bookmark_registry: Arc<erp_cms::audio_book_sync::AudioBookmarkRegistry>,
     pub storage: Arc<DeduplicatedStorage>,
+    pub menus: Arc<RwLock<HashMap<desk_components::MenuTreeLocation, desk_components::MenuTree>>>,
+    pub sound_configs: Arc<RwLock<HashMap<String, frappe_framework::notification::SoundAlertConfig>>>,
+    pub translations: Arc<RwLock<HashMap<String, HashMap<String, String>>>>,
+    pub theme_config: Arc<RwLock<desk_components::ThemeConfig>>,
 }
 
 impl std::fmt::Debug for DynamicRbacState {
@@ -2856,6 +2863,33 @@ impl Default for DynamicRbacState {
             "featured-products",
         ));
 
+        let mut default_menus = HashMap::new();
+        for loc in [
+            desk_components::MenuTreeLocation::HeaderNav,
+            desk_components::MenuTreeLocation::SidebarNav,
+            desk_components::MenuTreeLocation::FooterLinks,
+            desk_components::MenuTreeLocation::MobileDrawer,
+            desk_components::MenuTreeLocation::UserDropdown,
+        ] {
+            default_menus.insert(loc, desk_components::MenuTree::standard_default(loc));
+        }
+
+        let mut default_sound_configs = HashMap::new();
+        default_sound_configs.insert(
+            "usr_admin".into(),
+            frappe_framework::notification::SoundAlertConfig::default(),
+        );
+
+        let mut default_translations = HashMap::new();
+        let mut fa_dict = HashMap::new();
+        fa_dict.insert("Dashboard".into(), "داشبورد".into());
+        fa_dict.insert("Settings".into(), "تنظیمات".into());
+        fa_dict.insert("Logout".into(), "خروج".into());
+        fa_dict.insert("Save".into(), "ذخیره".into());
+        fa_dict.insert("Cancel".into(), "انصراف".into());
+        fa_dict.insert("Notifications".into(), "اعلان‌ها".into());
+        default_translations.insert("fa".into(), fa_dict);
+
         Self {
             users: Arc::new(RwLock::new(default_users)),
             registry: Arc::new(RwLock::new(registry)),
@@ -2907,6 +2941,10 @@ impl Default for DynamicRbacState {
                 erp_cms::audio_book_sync::AudioBookmarkRegistry::with_demo_chapters(),
             ),
             storage: Arc::new(DeduplicatedStorage::new()),
+            menus: Arc::new(RwLock::new(default_menus)),
+            sound_configs: Arc::new(RwLock::new(default_sound_configs)),
+            translations: Arc::new(RwLock::new(default_translations)),
+            theme_config: Arc::new(RwLock::new(desk_components::ThemeConfig::default())),
         }
     }
 }
@@ -10907,5 +10945,315 @@ mod tests {
             serde_json::from_slice(&get_route_bytes).expect("parse get route json");
         assert_eq!(get_route_json["target_route"], "/portal");
         assert_eq!(get_route_json["persona"], "CustomerPortal");
+    }
+
+    #[actix_web::test]
+    async fn test_micro_features_suite_end_to_end() {
+        let rbac_state = web::Data::new(DynamicRbacState::default());
+
+        // 1. Navigation & Menu Builder
+        // List all menus
+        let list_resp = list_all_menus_handler(rbac_state.clone())
+            .await
+            .respond_to(&actix_web::test::TestRequest::get().to_http_request());
+        assert_eq!(list_resp.status(), actix_web::http::StatusCode::OK);
+        let list_bytes = actix_web::body::to_bytes(list_resp.into_body())
+            .await
+            .expect("read list body");
+        let list_json: serde_json::Value =
+            serde_json::from_slice(&list_bytes).expect("parse list json");
+        assert_eq!(list_json["menus"].as_array().expect("menus array").len(), 5);
+
+        // Get single menu tree
+        let get_menu_resp = get_menu_tree_handler(web::Path::from("header_nav".to_string()), rbac_state.clone())
+            .await
+            .respond_to(&actix_web::test::TestRequest::get().to_http_request());
+        assert_eq!(get_menu_resp.status(), actix_web::http::StatusCode::OK);
+
+        // Save updated menu tree
+        let custom_menu = desk_components::MenuTree {
+            location: desk_components::MenuTreeLocation::HeaderNav,
+            title: "Custom Header Nav".into(),
+            items: vec![desk_components::MenuItem {
+                id: "nav_analytics".into(),
+                label: "Analytics".into(),
+                icon: Some("chart-bar".into()),
+                route: "/desk/analytics".into(),
+                badge: Some("New".into()),
+                roles: vec!["System Manager".into()],
+                children: Vec::new(),
+            }],
+        };
+        let save_resp = save_menu_tree_handler(
+            web::Path::from("header_nav".to_string()),
+            web::Json(custom_menu),
+            rbac_state.clone(),
+        )
+        .await
+        .respond_to(&actix_web::test::TestRequest::post().to_http_request());
+        assert_eq!(save_resp.status(), actix_web::http::StatusCode::OK);
+
+        // 2. AwesomeBar / Universal Search
+        let search_query = web::Query(AwesomebarSearchQuery {
+            q: "Sales".into(),
+            limit: Some(10),
+        });
+        let search_resp = awesomebar_search_handler(search_query, rbac_state.clone())
+            .await
+            .respond_to(&actix_web::test::TestRequest::get().to_http_request());
+        assert_eq!(search_resp.status(), actix_web::http::StatusCode::OK);
+        let search_bytes = actix_web::body::to_bytes(search_resp.into_body())
+            .await
+            .expect("read search body");
+        let search_json: serde_json::Value =
+            serde_json::from_slice(&search_bytes).expect("parse search json");
+        assert!(!search_json["results"].as_array().expect("results array").is_empty());
+
+        // 3. In-App Notifications & Sound Alerts
+        // Sound config get & update
+        let sound_get_resp = get_sound_config_handler(rbac_state.clone())
+            .await
+            .respond_to(&actix_web::test::TestRequest::get().to_http_request());
+        assert_eq!(sound_get_resp.status(), actix_web::http::StatusCode::OK);
+
+        let sound_update_payload = web::Json(frappe_framework::notification::SoundAlertConfig {
+            sound: frappe_framework::notification::SoundAlertKind::Ping,
+            volume: 0.85,
+            vibration: true,
+            mute_all: false,
+        });
+        let sound_upd_resp = update_sound_config_handler(sound_update_payload, rbac_state.clone())
+            .await
+            .respond_to(&actix_web::test::TestRequest::put().to_http_request());
+        assert_eq!(sound_upd_resp.status(), actix_web::http::StatusCode::OK);
+
+        // Post a notification to inbox
+        let notif = frappe_framework::notification::NotificationMessage::new(
+            "notif_001",
+            "Batch Job Complete",
+            "Import of 500 rows finished successfully.",
+            frappe_framework::notification::NotificationPriority::Normal,
+        )
+        .with_sound_alert(frappe_framework::notification::SoundAlertKind::SuccessTrill);
+        rbac_state.notifications_inbox.push_for_user("usr_admin", notif);
+
+        let inbox_resp = get_notifications_inbox_handler(rbac_state.clone())
+            .await
+            .respond_to(&actix_web::test::TestRequest::get().to_http_request());
+        assert_eq!(inbox_resp.status(), actix_web::http::StatusCode::OK);
+        let inbox_bytes = actix_web::body::to_bytes(inbox_resp.into_body())
+            .await
+            .expect("read inbox body");
+        let inbox_json: serde_json::Value =
+            serde_json::from_slice(&inbox_bytes).expect("parse inbox json");
+        assert_eq!(inbox_json["total_unread"], 1);
+
+        // Mark read
+        let mark_resp = mark_notification_read_handler(
+            web::Path::from("notif_001".to_string()),
+            rbac_state.clone(),
+        )
+        .await
+        .respond_to(&actix_web::test::TestRequest::post().to_http_request());
+        assert_eq!(mark_resp.status(), actix_web::http::StatusCode::OK);
+
+        // Mark all read
+        let mark_all_resp = mark_all_notifications_read_handler(rbac_state.clone())
+            .await
+            .respond_to(&actix_web::test::TestRequest::post().to_http_request());
+        assert_eq!(mark_all_resp.status(), actix_web::http::StatusCode::OK);
+
+        // Clear notifications
+        let clear_resp = clear_notifications_handler(rbac_state.clone())
+            .await
+            .respond_to(&actix_web::test::TestRequest::delete().to_http_request());
+        assert_eq!(clear_resp.status(), actix_web::http::StatusCode::OK);
+
+        // 4. Media Library & Asset Manager
+        let media_resp = media_assets_list_handler(rbac_state.clone())
+            .await
+            .respond_to(&actix_web::test::TestRequest::get().to_http_request());
+        assert_eq!(media_resp.status(), actix_web::http::StatusCode::OK);
+
+        let crop_payload = web::Json(MediaCropPayload {
+            image_width: 1920,
+            image_height: 1080,
+            target_aspect_ratio: 1.0,
+            focal_point_x: Some(0.5),
+            focal_point_y: Some(0.5),
+        });
+        let crop_resp = media_crop_calculate_handler(crop_payload)
+            .await
+            .respond_to(&actix_web::test::TestRequest::post().to_http_request());
+        assert_eq!(crop_resp.status(), actix_web::http::StatusCode::OK);
+        let crop_bytes = actix_web::body::to_bytes(crop_resp.into_body())
+            .await
+            .expect("read crop body");
+        let crop_json: serde_json::Value =
+            serde_json::from_slice(&crop_bytes).expect("parse crop json");
+        assert_eq!(crop_json["crop"]["width"], 1080);
+        assert_eq!(crop_json["crop"]["height"], 1080);
+
+        let dupes_resp = media_duplicates_handler(rbac_state.clone())
+            .await
+            .respond_to(&actix_web::test::TestRequest::get().to_http_request());
+        assert_eq!(dupes_resp.status(), actix_web::http::StatusCode::OK);
+
+        // 5. Universal Audit Trail & History (1-Click Restore)
+        let audit_entry = AuditEntry::new(
+            "default",
+            "Administrator",
+            "127.0.0.1",
+            "Desk",
+            AuditAction::Update,
+            "Success",
+        )
+        .with_document_diff(
+            "Item",
+            "ITEM-001",
+            Some(serde_json::json!({"item_name": "Original Name", "standard_rate": 100})),
+            Some(serde_json::json!({"item_name": "Updated Name", "standard_rate": 150})),
+        );
+        let entry_id = audit_entry.id.clone();
+        rbac_state.audit_trail.record(audit_entry);
+
+        let restore_resp = audit_log_restore_handler(
+            web::Path::from(entry_id),
+            rbac_state.clone(),
+        )
+        .await
+        .respond_to(&actix_web::test::TestRequest::post().to_http_request());
+        assert_eq!(restore_resp.status(), actix_web::http::StatusCode::OK);
+        let restore_bytes = actix_web::body::to_bytes(restore_resp.into_body())
+            .await
+            .expect("read restore body");
+        let restore_json: serde_json::Value =
+            serde_json::from_slice(&restore_bytes).expect("parse restore json");
+        assert_eq!(restore_json["status"], "RESTORED");
+        assert_eq!(restore_json["restored_state"]["item_name"], "Original Name");
+
+        // 6. Import/Export Studio
+        let auto_map_payload = web::Json(AutoMapPayload {
+            doctype: "Item".into(),
+            csv_headers: vec!["Item Code".into(), "Item Name".into(), "Standard Rate".into()],
+        });
+        let auto_map_resp = import_auto_map_handler(auto_map_payload)
+            .await
+            .respond_to(&actix_web::test::TestRequest::post().to_http_request());
+        assert_eq!(auto_map_resp.status(), actix_web::http::StatusCode::OK);
+        let map_bytes = actix_web::body::to_bytes(auto_map_resp.into_body())
+            .await
+            .expect("read map body");
+        let map_json: serde_json::Value =
+            serde_json::from_slice(&map_bytes).expect("parse map json");
+        assert_eq!(map_json["mappings"].as_array().expect("mappings array").len(), 3);
+
+        let csv_data = "Item Code,Item Name,Standard Rate\nITEM-A,Widget Alpha,25.50\nITEM-B,Widget Beta,42.00\n";
+        let exec_payload = web::Json(ImportExecutePayload {
+            doctype: "Item".into(),
+            csv_content: csv_data.into(),
+            dry_run: Some(true),
+        });
+        let exec_resp = import_execute_handler(exec_payload)
+            .await
+            .respond_to(&actix_web::test::TestRequest::post().to_http_request());
+        assert_eq!(exec_resp.status(), actix_web::http::StatusCode::OK);
+        let exec_bytes = actix_web::body::to_bytes(exec_resp.into_body())
+            .await
+            .expect("read exec body");
+        let exec_json: serde_json::Value =
+            serde_json::from_slice(&exec_bytes).expect("parse exec json");
+        assert_eq!(exec_json["imported_rows"], 2);
+
+        let export_payload = web::Json(ExportDatasetPayload {
+            doctype: "Item".into(),
+            fields: vec!["item_code".into(), "item_name".into()],
+            rows: vec![
+                serde_json::json!({"item_code": "ITEM-A", "item_name": "Widget Alpha"}),
+                serde_json::json!({"item_code": "ITEM-B", "item_name": "Widget Beta"}),
+            ],
+            format: Some("csv".into()),
+        });
+        let export_resp = export_doctype_dataset_handler(export_payload)
+            .await
+            .respond_to(&actix_web::test::TestRequest::post().to_http_request());
+        assert_eq!(export_resp.status(), actix_web::http::StatusCode::OK);
+
+        // 7. Internationalization & Localization (i18n)
+        let rtl_query = web::Query(DetectRtlQuery {
+            lang: "fa".into(),
+        });
+        let rtl_resp = i18n_detect_rtl_handler(rtl_query)
+            .await
+            .respond_to(&actix_web::test::TestRequest::get().to_http_request());
+        assert_eq!(rtl_resp.status(), actix_web::http::StatusCode::OK);
+        let rtl_bytes = actix_web::body::to_bytes(rtl_resp.into_body())
+            .await
+            .expect("read rtl body");
+        let rtl_json: serde_json::Value =
+            serde_json::from_slice(&rtl_bytes).expect("parse rtl json");
+        assert_eq!(rtl_json["is_rtl"], true);
+        assert_eq!(rtl_json["direction"], "rtl");
+
+        let trans_get_resp = i18n_get_translations_handler(
+            web::Path::from("fa".to_string()),
+            rbac_state.clone(),
+        )
+        .await
+        .respond_to(&actix_web::test::TestRequest::get().to_http_request());
+        assert_eq!(trans_get_resp.status(), actix_web::http::StatusCode::OK);
+
+        let save_trans_payload = web::Json(SaveTranslationsPayload {
+            lang: "fa".into(),
+            dictionary: HashMap::from([("Orders".into(), "سفارشات".into())]),
+        });
+        let trans_save_resp = i18n_save_translations_handler(save_trans_payload, rbac_state.clone())
+            .await
+            .respond_to(&actix_web::test::TestRequest::post().to_http_request());
+        assert_eq!(trans_save_resp.status(), actix_web::http::StatusCode::OK);
+
+        let fmt_curr_payload = web::Json(FormatCurrencyPayload {
+            amount: dec!(1250.75),
+            currency: "USD".into(),
+            locale: Some("en".into()),
+        });
+        let fmt_resp = i18n_format_currency_handler(fmt_curr_payload)
+            .await
+            .respond_to(&actix_web::test::TestRequest::post().to_http_request());
+        assert_eq!(fmt_resp.status(), actix_web::http::StatusCode::OK);
+        let fmt_bytes = actix_web::body::to_bytes(fmt_resp.into_body())
+            .await
+            .expect("read fmt body");
+        let fmt_json: serde_json::Value =
+            serde_json::from_slice(&fmt_bytes).expect("parse fmt json");
+        assert_eq!(fmt_json["formatted"], "$1,250.75");
+
+        // 8. Theme Customizer
+        let theme_resp = theme_get_handler(rbac_state.clone())
+            .await
+            .respond_to(&actix_web::test::TestRequest::get().to_http_request());
+        assert_eq!(theme_resp.status(), actix_web::http::StatusCode::OK);
+
+        let update_theme_payload = web::Json(desk_components::ThemeConfig {
+            mode: desk_components::ThemeMode::Cyberpunk,
+            brand_accent: "#00ffff".into(),
+            border_radius_px: 2,
+            font_family: "Consolas".into(),
+            glassmorphism: true,
+        });
+        let theme_upd_resp = theme_update_handler(update_theme_payload, rbac_state.clone())
+            .await
+            .respond_to(&actix_web::test::TestRequest::put().to_http_request());
+        assert_eq!(theme_upd_resp.status(), actix_web::http::StatusCode::OK);
+
+        let css_resp = theme_get_compiled_css_handler(rbac_state.clone())
+            .await
+            .respond_to(&actix_web::test::TestRequest::get().to_http_request());
+        assert_eq!(css_resp.status(), actix_web::http::StatusCode::OK);
+        let css_bytes = actix_web::body::to_bytes(css_resp.into_body())
+            .await
+            .expect("read css body");
+        let css_str = std::str::from_utf8(&css_bytes).expect("parse utf8 css");
+        assert!(css_str.contains("--brand-accent: #00ffff;"));
     }
 }

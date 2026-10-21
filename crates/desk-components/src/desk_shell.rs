@@ -1584,6 +1584,8 @@ pub enum ThemeMode {
     Dark,
     Light,
     System,
+    Cyberpunk,
+    RetroWave,
 }
 
 /// Dioxus 0.7 Reactive AwesomeBar omnibar component.
@@ -1687,6 +1689,8 @@ pub fn DeskShell(
         ThemeMode::Dark => "theme-dark bg-zinc-950 text-zinc-100",
         ThemeMode::Light => "theme-light bg-slate-50 text-slate-900",
         ThemeMode::System => "theme-system bg-zinc-900 text-zinc-100",
+        ThemeMode::Cyberpunk => "theme-cyberpunk bg-zinc-950 text-emerald-400",
+        ThemeMode::RetroWave => "theme-retrowave bg-purple-950 text-pink-400",
     };
 
     let collapsed = *sidebar_collapsed.read();
@@ -1737,7 +1741,9 @@ pub fn DeskShell(
                             let next = match *theme.read() {
                                 ThemeMode::Dark => ThemeMode::Light,
                                 ThemeMode::Light => ThemeMode::System,
-                                ThemeMode::System => ThemeMode::Dark,
+                                ThemeMode::System => ThemeMode::Cyberpunk,
+                                ThemeMode::Cyberpunk => ThemeMode::RetroWave,
+                                ThemeMode::RetroWave => ThemeMode::Dark,
                             };
                             theme.set(next);
                         },
@@ -1810,6 +1816,209 @@ pub fn render_desk_shell_component(
     dioxus::ssr::render(&vdom)
 }
 
+// =========================================================================
+// Phase 9: Micro-Features Data Models (Menus, Theme, i18n)
+// =========================================================================
+
+/// Location targets for visual menu trees.
+#[derive(Clone, Copy, Debug, Serialize, Deserialize, PartialEq, Eq, Hash, Default)]
+pub enum MenuTreeLocation {
+    #[default]
+    HeaderNav,
+    SidebarNav,
+    FooterLinks,
+    MobileDrawer,
+    UserDropdown,
+}
+
+/// Node item in a visual navigation menu tree.
+#[derive(Clone, Debug, Serialize, Deserialize, PartialEq, Eq)]
+pub struct MenuItem {
+    pub id: CompactString,
+    pub label: CompactString,
+    pub icon_svg: CompactString,
+    pub route: CompactString,
+    pub target_blank: bool,
+    pub permission_required: Option<CompactString>,
+    pub badge: Option<CompactString>,
+    pub order: u32,
+    pub children: Vec<MenuItem>,
+}
+
+impl MenuItem {
+    #[must_use]
+    pub fn new(id: impl Into<CompactString>, label: impl Into<CompactString>, route: impl Into<CompactString>) -> Self {
+        Self {
+            id: id.into(),
+            label: label.into(),
+            icon_svg: "".into(),
+            route: route.into(),
+            target_blank: false,
+            permission_required: None,
+            badge: None,
+            order: 0,
+            children: Vec::new(),
+        }
+    }
+
+    #[must_use]
+    pub fn with_child(mut self, child: MenuItem) -> Self {
+        self.children.push(child);
+        self
+    }
+}
+
+/// Visual navigation menu tree definition.
+#[derive(Clone, Debug, Serialize, Deserialize, PartialEq, Eq)]
+pub struct MenuTree {
+    pub location: MenuTreeLocation,
+    pub tenant_id: CompactString,
+    pub items: Vec<MenuItem>,
+}
+
+impl MenuTree {
+    #[must_use]
+    pub fn standard_default(location: MenuTreeLocation) -> Self {
+        match location {
+            MenuTreeLocation::HeaderNav => Self {
+                location,
+                tenant_id: "default".into(),
+                items: vec![
+                    MenuItem::new("nav_home", "Desk Home", "/desk"),
+                    MenuItem::new("nav_accounting", "Accounting", "/desk/list/sales_invoice"),
+                    MenuItem::new("nav_sales", "Sales", "/desk/list/sales_order"),
+                    MenuItem::new("nav_stock", "Stock", "/desk/list/item"),
+                    MenuItem::new("nav_builder", "Visual Builder", "/desk/builder"),
+                ],
+            },
+            MenuTreeLocation::SidebarNav => Self {
+                location,
+                tenant_id: "default".into(),
+                items: vec![
+                    MenuItem::new("side_orders", "Orders & Fulfillment", "/desk/list/sales_order"),
+                    MenuItem::new("side_invoices", "Invoices & Receivables", "/desk/list/sales_invoice"),
+                    MenuItem::new("side_items", "Products & Inventory", "/desk/list/item"),
+                    MenuItem::new("side_users", "Users & Permissions", "/admin/users"),
+                ],
+            },
+            MenuTreeLocation::FooterLinks => Self {
+                location,
+                tenant_id: "default".into(),
+                items: vec![
+                    MenuItem::new("foot_docs", "API Docs", "/api/v2/docs"),
+                    MenuItem::new("foot_status", "System Status", "/healthz/ready"),
+                    MenuItem::new("foot_support", "Help Desk", "/support"),
+                ],
+            },
+            MenuTreeLocation::MobileDrawer => Self {
+                location,
+                tenant_id: "default".into(),
+                items: vec![
+                    MenuItem::new("mob_desk", "Desk", "/desk"),
+                    MenuItem::new("mob_scanner", "Barcode Scanner", "/worker"),
+                    MenuItem::new("mob_approvals", "Approvals", "/approvals"),
+                ],
+            },
+            MenuTreeLocation::UserDropdown => Self {
+                location,
+                tenant_id: "default".into(),
+                items: vec![
+                    MenuItem::new("usr_profile", "My Profile", "/desk/profile"),
+                    MenuItem::new("usr_settings", "Settings", "/desk/settings"),
+                    MenuItem::new("usr_logout", "Sign Out", "/api/v2/auth/logout"),
+                ],
+            },
+        }
+    }
+}
+
+/// Visual theme and design system configuration.
+#[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
+pub struct ThemeConfig {
+    pub mode: ThemeMode,
+    pub brand_color: CompactString,
+    pub border_radius_px: u8,
+    pub font_family: CompactString,
+    pub glassmorphism: bool,
+    pub custom_css: CompactString,
+}
+
+impl Default for ThemeConfig {
+    fn default() -> Self {
+        Self {
+            mode: ThemeMode::Dark,
+            brand_color: "#6366f1".into(),
+            border_radius_px: 12,
+            font_family: "Inter, system-ui, -apple-system, sans-serif".into(),
+            glassmorphism: true,
+            custom_css: CompactString::default(),
+        }
+    }
+}
+
+impl ThemeConfig {
+    /// Compiles theme settings into dynamic CSS variables and styles.
+    #[must_use]
+    pub fn compile_css(&self) -> String {
+        let (bg_primary, bg_secondary, text_primary, border) = match self.mode {
+            ThemeMode::Light => ("#ffffff", "#f8fafc", "#0f172a", "rgba(0,0,0,0.08)"),
+            ThemeMode::Cyberpunk => ("#09090e", "#13131f", "#00ffcc", "rgba(0, 255, 204, 0.25)"),
+            ThemeMode::RetroWave => ("#1a0826", "#290f3c", "#ff71ce", "rgba(255, 113, 206, 0.25)"),
+            ThemeMode::Dark | ThemeMode::System => ("#0f172a", "#1e293b", "#f8fafc", "rgba(255,255,255,0.08)"),
+        };
+
+        let backdrop = if self.glassmorphism {
+            "backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);"
+        } else {
+            ""
+        };
+
+        format!(
+            ":root {{\n  --brand-primary: {};\n  --radius: {}px;\n  --font-family: {};\n  --bg-primary: {};\n  --bg-secondary: {};\n  --text-primary: {};\n  --border: {};\n}}\n.glass {{ {} }}\n{}",
+            self.brand_color, self.border_radius_px, self.font_family, bg_primary, bg_secondary, text_primary, border, backdrop, self.custom_css
+        )
+    }
+}
+
+/// Text directionality for typography and layout grids.
+#[derive(Clone, Copy, Debug, Serialize, Deserialize, PartialEq, Eq, Default)]
+pub enum LanguageDirection {
+    #[default]
+    Ltr,
+    Rtl,
+}
+
+/// Determines whether a language code corresponds to a Right-to-Left (RTL) script.
+#[must_use]
+pub fn is_rtl(lang_code: &str) -> bool {
+    let lower = lang_code.trim().to_ascii_lowercase();
+    matches!(
+        lower.as_str(),
+        "fa" | "fa-ir" | "ar" | "ar-sa" | "ar-eg" | "he" | "he-il" | "ur" | "ur-pk" | "ps" | "yi"
+    )
+}
+
+/// Formats a currency amount into standard locale-formatted text.
+#[must_use]
+pub fn format_currency(amount: f64, currency: &str, locale: &str) -> String {
+    let is_persian = locale.eq_ignore_ascii_case("fa") || locale.eq_ignore_ascii_case("fa-ir");
+    let is_euro = locale.eq_ignore_ascii_case("de") || locale.eq_ignore_ascii_case("fr");
+
+    if is_persian {
+        format!("{:.2} تومان", amount)
+    } else if is_euro {
+        format!("{:.2} €", amount).replace('.', ",")
+    } else {
+        match currency.to_ascii_uppercase().as_str() {
+            "USD" => format!("${:.2}", amount),
+            "EUR" => format!("€{:.2}", amount),
+            "GBP" => format!("£{:.2}", amount),
+            "JPY" => format!("¥{:.0}", amount),
+            other => format!("{other} {:.2}", amount),
+        }
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -1857,4 +2066,48 @@ mod tests {
         assert!(html.contains("child-table-container"));
         assert!(html.contains("btn-print"));
     }
+
+    #[test]
+    fn test_menu_tree_structure_and_defaults() {
+        let header_menu = MenuTree::standard_default(MenuTreeLocation::HeaderNav);
+        assert_eq!(header_menu.items.len(), 5);
+        assert_eq!(header_menu.items[0].label, "Desk Home");
+
+        let mut sidebar = MenuTree::standard_default(MenuTreeLocation::SidebarNav);
+        let custom_item = MenuItem::new("custom_link", "Custom Dashboard", "/custom");
+        sidebar.items.push(custom_item);
+        assert_eq!(sidebar.items.len(), 5);
+    }
+
+    #[test]
+    fn test_theme_config_css_compilation() {
+        let theme = ThemeConfig {
+            mode: ThemeMode::Cyberpunk,
+            brand_color: "#00ffcc".into(),
+            border_radius_px: 8,
+            font_family: "JetBrains Mono".into(),
+            glassmorphism: true,
+            custom_css: ".cyber-btn { border: 1px solid #00ffcc; }".into(),
+        };
+
+        let css = theme.compile_css();
+        assert!(css.contains("--brand-primary: #00ffcc;"));
+        assert!(css.contains("--radius: 8px;"));
+        assert!(css.contains("JetBrains Mono"));
+        assert!(css.contains("backdrop-filter: blur(12px)"));
+        assert!(css.contains(".cyber-btn"));
+    }
+
+    #[test]
+    fn test_i18n_rtl_and_currency_formatting() {
+        assert!(is_rtl("fa"));
+        assert!(is_rtl("ar-SA"));
+        assert!(is_rtl("he"));
+        assert!(!is_rtl("en"));
+        assert!(!is_rtl("de"));
+
+        assert_eq!(format_currency(1250.50, "USD", "en"), "$1250.50");
+        assert_eq!(format_currency(250000.0, "IRR", "fa"), "250000.00 تومان");
+    }
 }
+

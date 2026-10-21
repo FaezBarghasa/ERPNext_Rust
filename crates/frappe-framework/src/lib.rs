@@ -57,7 +57,8 @@ pub use file_manager::{FileError, FileManager, FileRecord};
 pub use naming::{NamingEngine, NamingSeriesStore};
 pub use notification::{
     NotificationChannel, NotificationDispatcher, NotificationError, NotificationInboxRegistry,
-    NotificationMessage, NotificationPriority, UserNotificationPreferences,
+    NotificationMessage, NotificationPriority, SoundAlertConfig, SoundAlertKind,
+    UserNotificationPreferences,
 };
 pub use permission::{DocShare, PermType, PermissionEngine, UserContext};
 pub use print_format::{InvoicePrintContext, PrintEngine, PrintLineItem, ReceiptPrintContext};
