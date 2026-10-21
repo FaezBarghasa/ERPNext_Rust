@@ -152,6 +152,7 @@ pub fn erp_blueprint() -> BlueprintPackage {
             submit: false,
             cancel: false,
             amend: false,
+            ..Default::default()
         }],
     };
 
@@ -286,6 +287,7 @@ pub fn erp_blueprint() -> BlueprintPackage {
             submit: true,
             cancel: true,
             amend: true,
+            ..Default::default()
         }],
     };
 
@@ -358,7 +360,7 @@ pub fn erp_blueprint() -> BlueprintPackage {
         },
         BlueprintNavigationItem {
             label: "ERP Desk".into(),
-            url: "/desk",
+            url: "/desk".into(),
             icon: "briefcase".into(),
             role_required: Some("Stock User".into()),
         },

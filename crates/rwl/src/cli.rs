@@ -170,14 +170,33 @@ pub async fn run() -> anyhow::Result<()> {
             let project_path = PathBuf::from(&name);
             tokio::fs::create_dir_all(&project_path).await?;
             let manifest_path = project_path.join("rwl.json");
+
+            let registry = frappe_framework::BlueprintRegistry::new();
+            let bp_package = registry.get(&blueprint);
+            let bp_name = bp_package.map(|b| b.metadata.name.as_str()).unwrap_or("Custom");
+            let doctype_count = bp_package.map(|b| b.doctypes.len()).unwrap_or(0);
+            let page_count = bp_package.map(|b| b.pages.len()).unwrap_or(0);
+            let wf_count = bp_package.map(|b| b.workflow_automations.len()).unwrap_or(0);
+
             let manifest = serde_json::json!({
                 "name": name,
                 "version": "0.1.0",
                 "blueprint": blueprint,
+                "blueprint_name": bp_name,
+                "doctypes_count": doctype_count,
+                "pages_count": page_count,
+                "workflows_count": wf_count,
                 "created_at": chrono::Utc::now().to_rfc3339(),
                 "ram_limit_mb": 1024
             });
             tokio::fs::write(&manifest_path, serde_json::to_string_pretty(&manifest)?).await?;
+
+            if let Some(pkg) = bp_package {
+                let bp_path = project_path.join("blueprint.json");
+                tokio::fs::write(&bp_path, serde_json::to_string_pretty(pkg)?).await?;
+                println!("   ↳ Installed Blueprint: {} ({} DocTypes, {} Pages, {} Workflows)",
+                    pkg.metadata.name, doctype_count, page_count, wf_count);
+            }
             println!("✅ Successfully created '{name}/rwl.json' ready to edit in studio!");
         }
 

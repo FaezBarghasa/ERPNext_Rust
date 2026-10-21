@@ -192,6 +192,7 @@ pub fn lms_blueprint() -> BlueprintPackage {
             submit: false,
             cancel: false,
             amend: false,
+            ..Default::default()
         }],
     };
 
@@ -324,6 +325,7 @@ pub fn lms_blueprint() -> BlueprintPackage {
             submit: false,
             cancel: false,
             amend: false,
+            ..Default::default()
         }],
     };
 
@@ -458,6 +460,7 @@ pub fn lms_blueprint() -> BlueprintPackage {
             submit: false,
             cancel: false,
             amend: false,
+            ..Default::default()
         }],
     };
 

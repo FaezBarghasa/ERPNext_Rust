@@ -154,6 +154,7 @@ pub fn saas_blueprint() -> BlueprintPackage {
             submit: false,
             cancel: false,
             amend: false,
+            ..Default::default()
         }],
     };
 
@@ -309,6 +310,7 @@ pub fn saas_blueprint() -> BlueprintPackage {
             submit: false,
             cancel: false,
             amend: false,
+            ..Default::default()
         }],
     };
 

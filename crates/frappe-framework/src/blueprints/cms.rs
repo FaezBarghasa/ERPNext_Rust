@@ -134,6 +134,7 @@ pub fn cms_blueprint() -> BlueprintPackage {
                 submit: false,
                 cancel: false,
                 amend: false,
+                ..Default::default()
             },
             DocPermSchema {
                 role: "Blogger".into(),
@@ -145,6 +146,7 @@ pub fn cms_blueprint() -> BlueprintPackage {
                 submit: false,
                 cancel: false,
                 amend: false,
+                ..Default::default()
             },
         ],
     };
@@ -219,6 +221,7 @@ pub fn cms_blueprint() -> BlueprintPackage {
             submit: false,
             cancel: false,
             amend: false,
+            ..Default::default()
         }],
     };
 
@@ -413,6 +416,7 @@ pub fn cms_blueprint() -> BlueprintPackage {
                 submit: false,
                 cancel: false,
                 amend: false,
+                ..Default::default()
             },
             DocPermSchema {
                 role: "Blogger".into(),
@@ -424,6 +428,7 @@ pub fn cms_blueprint() -> BlueprintPackage {
                 submit: false,
                 cancel: false,
                 amend: false,
+                ..Default::default()
             },
         ],
     };
