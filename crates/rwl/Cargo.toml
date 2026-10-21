@@ -5,6 +5,7 @@ edition.workspace = true
 authors.workspace = true
 license.workspace = true
 description = "rust-web-land unified CLI and standalone server binary"
+default-run = "rwl"
 
 [dependencies]
 clap = { workspace = true }
