@@ -232,7 +232,7 @@ pub async fn rollback_upgrade_handler(
         if let Some(target_id) = &req.target_snapshot_id {
             snaps
                 .iter()
-                .position(|s| &s.snapshot_id == target_id)
+                .position(|s| s.snapshot_id == *target_id)
                 .map(|idx| snaps.remove(idx))
         } else {
             snaps.pop()
@@ -258,8 +258,11 @@ pub async fn rollback_upgrade_handler(
 
     // Record rollback in history
     if let Ok(mut history) = state.upgrade_history.write() {
-        if let Some(rec) = history.iter_mut().rev().find(|r| r.patch_id == rolled_back_patch_id) {
-            rec.status = "rolled_back".into();
+        for rec in history.iter_mut().rev() {
+            if rec.patch_id == rolled_back_patch_id {
+                rec.status = "rolled_back".into();
+                break;
+            }
         }
     }
 
