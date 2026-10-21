@@ -20,7 +20,18 @@ pub mod scripting;
 pub mod settings;
 pub mod social;
 pub mod typestate;
+#[cfg(feature = "wasi-plugins")]
 pub mod wasmtime_sandbox;
+#[cfg(not(feature = "wasi-plugins"))]
+pub mod wasmtime_sandbox {
+    use anyhow::Result;
+    pub struct RealSandbox;
+    impl RealSandbox {
+        pub fn new(_fuel: u64, _max_mem_bytes: usize) -> Result<Self> {
+            Ok(Self)
+        }
+    }
+}
 pub mod webhook;
 pub mod workflow_approval;
 

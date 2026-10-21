@@ -1,0 +1,22 @@
+[package]
+name = "rwl"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+license.workspace = true
+description = "rust-web-land unified CLI and standalone server binary"
+
+[dependencies]
+clap = { workspace = true }
+tokio = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
+anyhow = { workspace = true }
+chrono = { workspace = true }
+frappe-net = { workspace = true }
+frappe-framework = { workspace = true }
+frappe-storage = { workspace = true }
+frappe-meta = { workspace = true }
+desk-app = { workspace = true }
+desk-components = { workspace = true }
+actix-web = { workspace = true }

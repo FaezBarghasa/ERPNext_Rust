@@ -5,6 +5,10 @@ edition.workspace = true
 authors.workspace = true
 license.workspace = true
 
+[features]
+default = ["wasi-plugins"]
+wasi-plugins = ["dep:wasmtime"]
+
 [dependencies]
 anyhow = { workspace = true }
 frappe-meta = { workspace = true }
@@ -17,7 +21,7 @@ chrono = { workspace = true }
 compact_str = { workspace = true }
 rhai = { workspace = true }
 tracing = { workspace = true }
-wasmtime = { workspace = true }
+wasmtime = { workspace = true, optional = true }
 sha2 = { workspace = true }
 hmac = { workspace = true }
 hex = { workspace = true }

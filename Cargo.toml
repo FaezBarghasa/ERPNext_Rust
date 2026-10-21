@@ -28,6 +28,7 @@ members = [
     "crates/erp-importer",
     "crates/erp-quality",
     "crates/rbench",
+    "crates/rwl",
     "tools/doctype-diff",
     "tools/doctype-codegen",
 ]
@@ -69,6 +70,7 @@ frappe-framework = { path = "crates/frappe-framework" }
 frappe-meta = { path = "crates/frappe-meta" }
 frappe-net = { path = "crates/frappe-net" }
 frappe-storage = { path = "crates/frappe-storage" }
+rwl = { path = "crates/rwl" }
 
 # External shared dependencies
 actix-web = { version = "4.15.0", features = ["macros"] }
