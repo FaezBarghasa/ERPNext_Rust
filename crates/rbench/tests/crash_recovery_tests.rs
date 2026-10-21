@@ -13,6 +13,8 @@ use rust_decimal::Decimal;
 use rust_decimal_macros::dec;
 use serde_json::Value;
 
+use erp_accounting::coa::{Account, RootType};
+
 #[tokio::test]
 async fn test_surrealkv_wal_crash_recovery_and_zero_ledger_drift() {
     let test_dir = std::env::temp_dir().join(format!(
@@ -27,6 +29,59 @@ async fn test_surrealkv_wal_crash_recovery_and_zero_ledger_drift() {
 
     let tenant_ns = "test_tenant";
     let tenant_db = "production_db";
+
+    // Setup chart of accounts for ledger validation
+    let accounts = vec![
+        Account {
+            name: "1110 - Bank Account".into(),
+            account_number: Some("1110".into()),
+            parent_account: None,
+            is_group: false,
+            root_type: RootType::Asset,
+            account_currency: "USD".into(),
+        },
+        Account {
+            name: "1310 - Accounts Receivable".into(),
+            account_number: Some("1310".into()),
+            parent_account: None,
+            is_group: false,
+            root_type: RootType::Asset,
+            account_currency: "USD".into(),
+        },
+        Account {
+            name: "1410 - Finished Goods Inventory".into(),
+            account_number: Some("1410".into()),
+            parent_account: None,
+            is_group: false,
+            root_type: RootType::Asset,
+            account_currency: "USD".into(),
+        },
+        Account {
+            name: "2110 - Accounts Payable".into(),
+            account_number: Some("2110".into()),
+            parent_account: None,
+            is_group: false,
+            root_type: RootType::Liability,
+            account_currency: "USD".into(),
+        },
+        Account {
+            name: "4100 - Sales Revenue".into(),
+            account_number: Some("4100".into()),
+            parent_account: None,
+            is_group: false,
+            root_type: RootType::Income,
+            account_currency: "USD".into(),
+        },
+        Account {
+            name: "5100 - Cost of Goods Sold".into(),
+            account_number: Some("5100".into()),
+            parent_account: None,
+            is_group: false,
+            root_type: RootType::Expense,
+            account_currency: "USD".into(),
+        },
+    ];
+    let posting_engine = LedgerPostingEngine::new(accounts, Vec::new());
 
     // --- PHASE 1: Write initial balanced GL transactions ---
     {
@@ -97,14 +152,9 @@ async fn test_surrealkv_wal_crash_recovery_and_zero_ledger_drift() {
                 remarks: format!("Crash test journal {jv_num}"),
             };
 
-            let gl_entries = LedgerPostingEngine::post_journal_entry(
-                jv,
-                "Journal Entry",
-                jv_num,
-                "USR-AUDITOR",
-                None,
-            )
-            .expect("Post journal entry");
+            let gl_entries = posting_engine
+                .post_journal_entry(&jv, jv_num)
+                .expect("Post journal entry");
 
             // Persist GL entries inside an atomic SurrealKV transaction
             let mut stmts = Vec::new();
@@ -141,6 +191,11 @@ async fn test_surrealkv_wal_crash_recovery_and_zero_ledger_drift() {
 
         // Simulate abrupt process crash / power loss by dropping DB handle immediately without closing
         drop(db);
+        tokio::time::sleep(std::time::Duration::from_millis(200)).await;
+        let lock_file = test_dir.join("LOCK");
+        if lock_file.exists() {
+            let _ = std::fs::remove_file(&lock_file);
+        }
     }
 
     // --- PHASE 2: Reopen persistent store from disk (WAL replay & recovery) ---
@@ -171,17 +226,17 @@ async fn test_surrealkv_wal_crash_recovery_and_zero_ledger_drift() {
                 .map(|s| s == "ORPHAN_GL")
                 .unwrap_or(false)
         });
-        assert!(!has_orphan, "Aborted transaction must be rolled back on recovery");
+        assert!(
+            !has_orphan,
+            "Aborted transaction must be rolled back on recovery"
+        );
 
         // 3. Verify the General Ledger Fundamental Equation: Total Debits == Total Credits (Zero Drift)
         let mut total_debits = Decimal::ZERO;
         let mut total_credits = Decimal::ZERO;
 
         for r in &recovered_gl {
-            let dr_str = r.get("debit").and_then(|v| v.as_str()).unwrap_or_else(|| {
-                // If stored as number
-                ""
-            });
+            let dr_str = r.get("debit").and_then(|v| v.as_str()).unwrap_or("");
             let cr_str = r.get("credit").and_then(|v| v.as_str()).unwrap_or("");
 
             let dr = if let Ok(d) = dr_str.parse::<Decimal>() {

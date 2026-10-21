@@ -153,11 +153,12 @@ impl ClusterSyncBus {
                 ..
             } => {
                 // If the event came from a remote node, evict the matching page from local cache
-                if origin_node != &self.local_node_id {
+                if origin_node != self.local_node_id.as_str() {
                     if let Ok(mut pages) = builder_pages.write() {
                         pages.remove(page_path.as_str());
                         return Ok(true);
                     }
+                    return Ok(false);
                 }
                 Ok(false)
             }
@@ -220,10 +221,10 @@ mod tests {
         let pages = Arc::new(RwLock::new(HashMap::new()));
 
         // Insert a cached page
-        pages.write().unwrap().insert(
-            "/home/pricing".to_string(),
-            CanvasBlockTree::new(),
-        );
+        pages
+            .write()
+            .unwrap()
+            .insert("/home/pricing".to_string(), CanvasBlockTree::new());
 
         assert!(pages.read().unwrap().contains_key("/home/pricing"));
 

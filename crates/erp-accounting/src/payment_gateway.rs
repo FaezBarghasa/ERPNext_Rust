@@ -96,7 +96,10 @@ pub struct StripeGatewayProcessor {
 
 impl StripeGatewayProcessor {
     #[must_use]
-    pub fn new(api_key: impl Into<CompactString>, webhook_secret: impl Into<CompactString>) -> Self {
+    pub fn new(
+        api_key: impl Into<CompactString>,
+        webhook_secret: impl Into<CompactString>,
+    ) -> Self {
         Self {
             api_key: api_key.into(),
             webhook_secret: webhook_secret.into(),
@@ -105,7 +108,11 @@ impl StripeGatewayProcessor {
 
     /// Computes the expected Stripe `v1` HMAC-SHA256 signature for a payload and timestamp.
     /// Stripe signing string is: `{timestamp}.{payload}`.
-    pub fn compute_signature(&self, timestamp: i64, payload: &[u8]) -> Result<String, PaymentError> {
+    pub fn compute_signature(
+        &self,
+        timestamp: i64,
+        payload: &[u8],
+    ) -> Result<String, PaymentError> {
         use hmac::{Hmac, KeyInit, Mac};
         use sha2::Sha256;
 
@@ -164,7 +171,9 @@ impl StripeGatewayProcessor {
         }
 
         let expected_hex = self.compute_signature(ts, payload)?;
-        let matched = signatures.iter().any(|sig| sig.eq_ignore_ascii_case(&expected_hex));
+        let matched = signatures
+            .iter()
+            .any(|sig| sig.eq_ignore_ascii_case(&expected_hex));
 
         if matched {
             Ok(true)
@@ -184,7 +193,9 @@ impl PaymentGatewayProcessor for StripeGatewayProcessor {
     ) -> Result<CompactString, PaymentError> {
         if token_or_auth.is_empty() || token_or_auth.starts_with("tok_declined") {
             intent.status = PaymentStatus::Failed;
-            return Err(PaymentError::AuthorizationFailed("Stripe card declined".into()));
+            return Err(PaymentError::AuthorizationFailed(
+                "Stripe card declined".into(),
+            ));
         }
         if intent.amount <= Decimal::ZERO {
             return Err(PaymentError::InvalidAmount(intent.amount));
@@ -269,7 +280,9 @@ impl PayPalGatewayProcessor {
         let mut mac = Hmac::<Sha256>::new_from_slice(self.client_secret.as_bytes())
             .map_err(|e| PaymentError::GatewayApiError(e.to_string().into()))?;
 
-        mac.update(format!("{transmission_id}|{transmission_time}|{}|", self.webhook_id).as_bytes());
+        mac.update(
+            format!("{transmission_id}|{transmission_time}|{}|", self.webhook_id).as_bytes(),
+        );
         mac.update(payload);
         let result = mac.finalize().into_bytes();
         Ok(hex::encode(result))
@@ -283,7 +296,8 @@ impl PayPalGatewayProcessor {
         payload: &[u8],
         transmission_sig: &str,
     ) -> Result<bool, PaymentError> {
-        let expected = self.compute_transmission_hash(transmission_id, transmission_time, payload)?;
+        let expected =
+            self.compute_transmission_hash(transmission_id, transmission_time, payload)?;
         if expected.eq_ignore_ascii_case(transmission_sig) {
             Ok(true)
         } else {
@@ -302,7 +316,9 @@ impl PaymentGatewayProcessor for PayPalGatewayProcessor {
     ) -> Result<CompactString, PaymentError> {
         if token_or_auth.is_empty() || token_or_auth == "ORDER_CANCELLED" {
             intent.status = PaymentStatus::Failed;
-            return Err(PaymentError::AuthorizationFailed("PayPal order rejected".into()));
+            return Err(PaymentError::AuthorizationFailed(
+                "PayPal order rejected".into(),
+            ));
         }
         if intent.amount <= Decimal::ZERO {
             return Err(PaymentError::InvalidAmount(intent.amount));
@@ -527,7 +543,8 @@ mod tests {
 
     #[test]
     fn test_stripe_processor_lifecycle_and_webhook_verification() {
-        let stripe = StripeGatewayProcessor::new("sk_test_51MockSecretKey", "whsec_SecretWebhookKey99");
+        let stripe =
+            StripeGatewayProcessor::new("sk_test_51MockSecretKey", "whsec_SecretWebhookKey99");
 
         let mut intent = PaymentIntent {
             intent_id: "PI-STRIPE-42".into(),
@@ -547,7 +564,10 @@ mod tests {
         let auth_res = stripe.authorize(&mut intent, "tok_visa_valid");
         assert!(auth_res.is_ok());
         assert_eq!(intent.status, PaymentStatus::Authorized);
-        assert_eq!(intent.gateway_reference.as_deref(), Some("pi_live_PI-STRIPE-42"));
+        assert_eq!(
+            intent.gateway_reference.as_deref(),
+            Some("pi_live_PI-STRIPE-42")
+        );
 
         // Capture
         let cap_res = stripe.capture(&mut intent);
@@ -571,13 +591,15 @@ mod tests {
 
         // Tampered payload verification must fail
         let tampered_payload = br#"{"id":"evt_123456","type":"payment_intent.failed"}"#;
-        let tampered_res = stripe.verify_webhook_signature(tampered_payload, &sig_header, Some(300));
+        let tampered_res =
+            stripe.verify_webhook_signature(tampered_payload, &sig_header, Some(300));
         assert!(tampered_res.is_err());
     }
 
     #[test]
     fn test_paypal_processor_lifecycle_and_webhook_verification() {
-        let paypal = PayPalGatewayProcessor::new("client_id_live_123", "client_secret_xyz789", "WH-998877");
+        let paypal =
+            PayPalGatewayProcessor::new("client_id_live_123", "client_secret_xyz789", "WH-998877");
 
         let mut intent = PaymentIntent {
             intent_id: "PI-PAYPAL-101".into(),
@@ -607,13 +629,17 @@ mod tests {
         let payload = br#"{"event_type":"PAYMENT.CAPTURE.COMPLETED","resource":{"id":"CAP-123"}}"#;
         let trans_id = "TRANS-UUID-9999";
         let trans_time = "2026-10-21T10:00:00Z";
-        let expected_hash = paypal.compute_transmission_hash(trans_id, trans_time, payload).unwrap();
+        let expected_hash = paypal
+            .compute_transmission_hash(trans_id, trans_time, payload)
+            .unwrap();
 
-        let verify_res = paypal.verify_webhook_transmission(trans_id, trans_time, payload, &expected_hash);
+        let verify_res =
+            paypal.verify_webhook_transmission(trans_id, trans_time, payload, &expected_hash);
         assert!(verify_res.is_ok());
         assert!(verify_res.unwrap());
 
-        let invalid_res = paypal.verify_webhook_transmission(trans_id, trans_time, payload, "invalid_sig");
+        let invalid_res =
+            paypal.verify_webhook_transmission(trans_id, trans_time, payload, "invalid_sig");
         assert!(invalid_res.is_err());
     }
 }

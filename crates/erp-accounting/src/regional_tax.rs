@@ -44,7 +44,9 @@ pub enum RegionalTaxError {
     InvoiceSequenceGap { expected: u64, actual: u64 },
     #[error("Duplicate invoice number detected: {0}")]
     DuplicateInvoiceNumber(CompactString),
-    #[error("Unordered invoice timestamps: invoice {prev_num} at {prev_time} after {curr_num} at {curr_time}")]
+    #[error(
+        "Unordered invoice timestamps: invoice {prev_num} at {prev_time} after {curr_num} at {curr_time}"
+    )]
     UnorderedTimestamp {
         prev_num: CompactString,
         prev_time: DateTime<Utc>,
@@ -118,7 +120,9 @@ impl RegionalTaxEngine {
             net_subtotal += line.net_amount;
         }
 
-        let is_domestic = seller.country_code.eq_ignore_ascii_case(&buyer.country_code);
+        let is_domestic = seller
+            .country_code
+            .eq_ignore_ascii_case(&buyer.country_code);
 
         if is_domestic {
             // Domestic transaction: apply standard rate
@@ -339,9 +343,8 @@ impl InvoiceSequenceAuditor {
 
         let _ = prev_num; // silence unused warning
 
-        let is_compliant = detected_gaps.is_empty()
-            && detected_duplicates.is_empty()
-            && timestamp_anomalies == 0;
+        let is_compliant =
+            detected_gaps.is_empty() && detected_duplicates.is_empty() && timestamp_anomalies == 0;
 
         Ok(AuditReport {
             is_compliant,
@@ -400,24 +403,27 @@ mod tests {
         assert!(de_res.compliance_notice.is_none());
 
         // 2. Intra-EU B2B Germany -> France -> Reverse Charge
-        let fr_res =
-            RegionalTaxEngine::evaluate_eu_vat(&seller, &french_b2b_buyer, &lines, dec!(19.0), true)
-                .unwrap();
+        let fr_res = RegionalTaxEngine::evaluate_eu_vat(
+            &seller,
+            &french_b2b_buyer,
+            &lines,
+            dec!(19.0),
+            true,
+        )
+        .unwrap();
         assert_eq!(fr_res.net_subtotal, dec!(1000.00));
         assert_eq!(fr_res.total_tax_amount, dec!(0.00));
         assert_eq!(fr_res.gross_total, dec!(1000.00));
         assert!(fr_res.tax_lines[0].is_reverse_charge);
-        assert!(fr_res
-            .compliance_notice
-            .unwrap()
-            .contains("Reverse charge"));
+        assert!(fr_res.compliance_notice.unwrap().contains("Reverse charge"));
     }
 
     #[test]
     fn test_canadian_compound_tax() {
         let net = dec!(500.00);
-        let res = RegionalTaxEngine::evaluate_canadian_compound_tax(net, dec!(5.0), dec!(9.975), true)
-            .unwrap();
+        let res =
+            RegionalTaxEngine::evaluate_canadian_compound_tax(net, dec!(5.0), dec!(9.975), true)
+                .unwrap();
 
         assert_eq!(res.net_subtotal, dec!(500.00));
         assert_eq!(res.tax_lines.len(), 2);

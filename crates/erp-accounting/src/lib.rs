@@ -81,8 +81,8 @@ pub use print_format::{
 pub use receivables::{ArApEngine, OpenInvoice, PaymentAllocationResult};
 pub use regional_tax::{
     AuditReport, InvoiceSequenceAuditor, InvoiceSequenceRecord, RegionalTaxAssessment,
-    RegionalTaxEngine, RegionalTaxError, RegionalTaxLine, TaxJurisdiction, TaxParty,
-    TaxTreatment, TaxableLineItem,
+    RegionalTaxEngine, RegionalTaxError, RegionalTaxLine, TaxJurisdiction, TaxParty, TaxTreatment,
+    TaxableLineItem,
 };
 pub use report_engine::{
     FinancialReportEngine, FinancialReportRow, ReportError, ReportRowType, StatementLine,
