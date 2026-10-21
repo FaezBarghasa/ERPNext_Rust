@@ -87,6 +87,19 @@ pub trait PaymentGatewayProcessor: Send + Sync {
     ) -> Result<CompactString, PaymentError>;
 }
 
+/// Compares two byte slices in constant time to prevent side-channel timing attacks.
+#[inline]
+pub fn constant_time_eq_slices(a: &[u8], b: &[u8]) -> bool {
+    if a.len() != b.len() {
+        return false;
+    }
+    let mut diff = 0u8;
+    for (x, y) in a.iter().zip(b.iter()) {
+        diff |= x.to_ascii_lowercase() ^ y.to_ascii_lowercase();
+    }
+    diff == 0
+}
+
 /// Production-ready Stripe Payment Processor with HMAC-SHA256 webhook signature verification.
 #[derive(Debug, Clone)]
 pub struct StripeGatewayProcessor {
@@ -171,9 +184,10 @@ impl StripeGatewayProcessor {
         }
 
         let expected_hex = self.compute_signature(ts, payload)?;
+        let expected_bytes = expected_hex.as_bytes();
         let matched = signatures
             .iter()
-            .any(|sig| sig.eq_ignore_ascii_case(&expected_hex));
+            .any(|sig| constant_time_eq_slices(sig.as_bytes(), expected_bytes));
 
         if matched {
             Ok(true)
@@ -298,7 +312,7 @@ impl PayPalGatewayProcessor {
     ) -> Result<bool, PaymentError> {
         let expected =
             self.compute_transmission_hash(transmission_id, transmission_time, payload)?;
-        if expected.eq_ignore_ascii_case(transmission_sig) {
+        if constant_time_eq_slices(expected.as_bytes(), transmission_sig.as_bytes()) {
             Ok(true)
         } else {
             Err(PaymentError::WebhookVerificationFailed(

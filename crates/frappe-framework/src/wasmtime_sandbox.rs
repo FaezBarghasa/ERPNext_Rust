@@ -31,12 +31,16 @@ pub struct HostStoreState {
     limits: StoreLimits,
 }
 
+use std::collections::HashMap;
+use std::sync::{Arc, RwLock};
+
 /// Fault-isolated WebAssembly sandbox executor powered by Wasmtime.
 pub struct RealSandbox {
     engine: Engine,
     fuel: u64,
     max_bytes: usize,
     default_module: Module,
+    module_cache: Arc<RwLock<HashMap<CompactString, Module>>>,
 }
 
 const DEFAULT_GUEST_WAT: &str = r#"
@@ -65,12 +69,59 @@ impl RealSandbox {
             fuel,
             max_bytes: max_mem_bytes,
             default_module,
+            module_cache: Arc::new(RwLock::new(HashMap::new())),
         })
+    }
+
+    /// Retrieves a precompiled module from the SHA-256 cache or compiles it.
+    pub fn get_or_compile_wat(&self, wat: &str) -> Result<Module> {
+        use sha2::{Digest, Sha256};
+        let mut hasher = Sha256::new();
+        hasher.update(wat.as_bytes());
+        let cache_key: CompactString = hex::encode(hasher.finalize()).into();
+
+        if let Ok(guard) = self.module_cache.read()
+            && let Some(m) = guard.get(&cache_key)
+        {
+            return Ok(m.clone());
+        }
+
+        let compiled = Module::new(&self.engine, wat)?;
+        if let Ok(mut guard) = self.module_cache.write() {
+            guard.insert(cache_key, compiled.clone());
+        }
+        Ok(compiled)
+    }
+
+    /// Retrieves a precompiled module from the SHA-256 cache or compiles binary bytecode.
+    pub fn get_or_compile_wasm(&self, bytes: &[u8]) -> Result<Module> {
+        use sha2::{Digest, Sha256};
+        let mut hasher = Sha256::new();
+        hasher.update(bytes);
+        let cache_key: CompactString = hex::encode(hasher.finalize()).into();
+
+        if let Ok(guard) = self.module_cache.read()
+            && let Some(m) = guard.get(&cache_key)
+        {
+            return Ok(m.clone());
+        }
+
+        let compiled = Module::new(&self.engine, bytes)?;
+        if let Ok(mut guard) = self.module_cache.write() {
+            guard.insert(cache_key, compiled.clone());
+        }
+        Ok(compiled)
+    }
+
+    /// Returns the number of pre-compiled modules currently held in cache.
+    #[must_use]
+    pub fn cached_modules_count(&self) -> usize {
+        self.module_cache.read().map(|g| g.len()).unwrap_or(0)
     }
 
     /// Evaluates bytecode / WAT program with deterministic fuel decrement and memory check.
     pub fn run_wat(&self, wat: &str) -> Result<i32> {
-        let module = Module::new(&self.engine, wat)?;
+        let module = self.get_or_compile_wat(wat)?;
         let state = HostStoreState {
             limits: StoreLimitsBuilder::new()
                 .memory_size(self.max_bytes)
@@ -408,5 +459,27 @@ mod tests {
         let result = sandbox.run_wat(grow_wat).expect("Execution completes");
         // In WebAssembly, memory.grow returns -1 when denied by StoreLimits
         assert_eq!(result, -1);
+    }
+
+    #[test]
+    fn test_wasmtime_module_cache_hit_and_reuse() {
+        let sandbox = RealSandbox::new(1_000_000, 32 * 1024 * 1024).expect("Sandbox init");
+        assert_eq!(sandbox.cached_modules_count(), 0);
+
+        let wat = "(module (func (export \"run\") (result i32) i32.const 99))";
+        let r1 = sandbox.run_wat(wat).expect("First execution");
+        assert_eq!(r1, 99);
+        assert_eq!(sandbox.cached_modules_count(), 1);
+
+        // Second run with identical WAT must hit cache without recompilation
+        let r2 = sandbox.run_wat(wat).expect("Second execution");
+        assert_eq!(r2, 99);
+        assert_eq!(sandbox.cached_modules_count(), 1);
+
+        // Different module should increase cache count
+        let wat2 = "(module (func (export \"run\") (result i32) i32.const 101))";
+        let r3 = sandbox.run_wat(wat2).expect("Third execution");
+        assert_eq!(r3, 101);
+        assert_eq!(sandbox.cached_modules_count(), 2);
     }
 }

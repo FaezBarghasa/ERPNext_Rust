@@ -803,10 +803,24 @@ pub async fn v2_update_document(
         }
     }
 
-    let sanitized_name = sanitize_surrealql_string(&name);
-    let query_sql = format!("UPDATE {table} MERGE $doc WHERE name = '{sanitized_name}';");
+    // Guard: Prevent updating submitted document (docstatus == 1) directly without amendment
+    let check_sql = format!("SELECT docstatus FROM {table} WHERE name = $name;");
+    if let Ok(mut res) = client.query(&check_sql).bind(("name", name.clone())).await {
+        let records: Vec<serde_json::Value> = res.take(0).unwrap_or_default();
+        if let Some(r) = records.into_iter().next()
+            && let Some(docstatus) = r.get("docstatus").and_then(|d| d.as_i64())
+            && docstatus == 1
+        {
+            return HttpResponse::BadRequest().json(serde_json::json!({
+                "error": "Cannot modify a submitted document directly. Create an amendment."
+            }));
+        }
+    }
+
+    let query_sql = format!("UPDATE {table} MERGE $doc WHERE name = $name;");
     match client
         .query(&query_sql)
+        .bind(("name", name.clone()))
         .bind(("doc", serde_json::Value::Object(doc_map.clone())))
         .await
     {
