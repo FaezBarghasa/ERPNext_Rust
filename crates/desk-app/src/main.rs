@@ -327,6 +327,7 @@ async fn run_standalone_desk_server(port: u16) {
             .route("/admin", web::get().to(handle_admin_cockpit))
             .route("/worker", web::get().to(handle_worker_kiosk))
             .route("/api/health", web::get().to(handle_health_check))
+            .route("/api/export", web::post().to(handle_export_bundle))
     })
     .bind(addr);
 
@@ -398,3 +399,16 @@ async fn handle_health_check() -> impl actix_web::Responder {
         .content_type("application/json")
         .body(r#"{"status":"healthy","runtime":"Dioxus 0.7 + Actix-Web SSR","version":"0.3.0"}"#)
 }
+
+async fn handle_export_bundle() -> impl actix_web::Responder {
+    let config = desk_app::DeployConfig::default();
+    let bundle = desk_app::DeployBundle::new(config);
+    let output_dir = std::path::PathBuf::from("./deploy");
+    match bundle.export_to_directory(&output_dir) {
+        Ok(report) => actix_web::HttpResponse::Ok().json(report),
+        Err(e) => actix_web::HttpResponse::InternalServerError().json(serde_json::json!({
+            "error": format!("Failed to export deployment bundle: {e}")
+        })),
+    }
+}
+

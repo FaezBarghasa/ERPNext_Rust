@@ -201,63 +201,38 @@ pub async fn run() -> anyhow::Result<()> {
         }
 
         Commands::Export { target, output } => {
-            println!("📦 Packaging 1GB-Budgeted Deployment Files for target: '{target}'");
-            println!("📁 Output Directory: '{output}'");
-            tokio::fs::create_dir_all(&output).await?;
+            let deploy_target = desk_app::DeployTarget::parse_target(&target);
+            let config = desk_app::DeployConfig {
+                app_name: "rust-web-land".into(),
+                version: "0.3.0".into(),
+                target: deploy_target,
+                port: 8080,
+                domain: None,
+                enable_tls: false,
+                memory_limit_mb: 1024,
+                memory_high_mb: 850,
+                cpu_quota_percent: 100,
+                surrealkv_page_cache_mb: 64,
+                surrealkv_write_buffer_mb: 32,
+                log_max_size_mb: 10,
+                log_max_files: 3,
+                run_user: "rwl".into(),
+                install_dir: "/opt/rust-web-land".into(),
+            };
 
-            let systemd_content = r#"[Unit]
-Description=rust-web-land Standalone App Server
-After=network.target
+            let bundle = desk_app::DeployBundle::new(config);
+            let output_path = PathBuf::from(&output);
+            let report = bundle.export_to_directory(&output_path)?;
 
-[Service]
-Type=simple
-User=rwl
-WorkingDirectory=/opt/rust-web-land
-ExecStart=/opt/rust-web-land/rwl serve --port 8080 --data-dir /opt/rust-web-land/data
-Restart=always
-RestartSec=5s
-
-# Hard 1GB VPS RAM ceiling
-MemoryMax=1024M
-MemoryHigh=850M
-CPUQuota=100%
-
-[Install]
-WantedBy=multi-user.target
-"#;
-            tokio::fs::write(
-                PathBuf::from(&output).join("rust-web-land.service"),
-                systemd_content,
-            )
-            .await?;
-
-            let docker_content = r#"version: '3.8'
-services:
-  rust-web-land:
-    image: rwl-server:latest
-    container_name: rust-web-land
-    restart: always
-    ports:
-      - "80:8080"
-    volumes:
-      - ./data:/opt/rust-web-land/data
-    deploy:
-      resources:
-        limits:
-          memory: 1024M
-          cpus: '1.0'
-        reservations:
-          memory: 64M
-"#;
-            tokio::fs::write(
-                PathBuf::from(&output).join("docker-compose.yml"),
-                docker_content,
-            )
-            .await?;
-
-            println!("✅ Deployment package generated successfully in '{output}'!");
-            println!("   → rust-web-land.service (systemd MemoryMax=1024M)");
-            println!("   → docker-compose.yml   (docker memory limit 1024M)");
+            println!("📦 Packaged 1GB-Budgeted Deployment Files for target: '{target}'");
+            println!("📁 Output Directory: '{}'", report.output_dir);
+            println!("   ↳ Total Files Written: {}", report.files_written.len());
+            println!("   ↳ Total Bytes:         {} bytes", report.total_bytes);
+            println!("   ↳ Hard Memory Ceiling: {} MB RAM", report.memory_budget_mb);
+            for f in &report.files_written {
+                println!("   - {f}");
+            }
+            println!("✅ Deployment package generated successfully in '{output}' ready for 1-click deployment!");
         }
 
         Commands::Status => {

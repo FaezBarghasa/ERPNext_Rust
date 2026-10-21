@@ -6,11 +6,15 @@
 //! - Local-First Edge Synchronization (`edge_sync`): Vector clocks, local mutation buffers, and deterministic join semilattice.
 //! - Dual Mobile Delivery Engine (`mobile_pwa`): PWA Web Manifest, offline Service Worker, and Android NDK descriptors.
 
+pub mod deploy_exporter;
 pub mod edge_sync;
 pub mod hal;
 pub mod mobile_pwa;
 pub mod persona_shell;
 
+pub use deploy_exporter::{
+    DeployArtifact, DeployBundle, DeployConfig, DeployTarget, ExportReport,
+};
 pub use edge_sync::{
     CloudSyncArbiter, EdgeMutationEnvelope, EdgeMutationKind, LocalMutationBuffer, VectorClock,
 };
@@ -23,3 +27,4 @@ pub use persona_shell::{
     PersonaRole, PersonaSessionState, PersonaShellConfig, render_admin_cockpit_html,
     render_worker_kiosk_html,
 };
+
