@@ -6,12 +6,17 @@
 //! - Local-First Edge Synchronization (`edge_sync`): Vector clocks, local mutation buffers, and deterministic join semilattice.
 //! - Dual Mobile Delivery Engine (`mobile_pwa`): PWA Web Manifest, offline Service Worker, and Android NDK descriptors.
 
+pub mod ci_cd_sync;
 pub mod deploy_exporter;
 pub mod edge_sync;
 pub mod hal;
 pub mod mobile_pwa;
 pub mod persona_shell;
 
+pub use ci_cd_sync::{
+    IncrementalSyncClient, ServerProfile, SyncAuthMethod, SyncError, SyncReport,
+    generate_github_actions_workflow,
+};
 pub use deploy_exporter::{
     DeployArtifact, DeployBundle, DeployConfig, DeployTarget, ExportReport,
 };

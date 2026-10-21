@@ -1575,6 +1575,7 @@ dependencies = [
  "compact_str",
  "desk-components",
  "dioxus",
+ "doctype-diff",
  "frappe-meta",
  "frappe-storage",
  "rust_decimal",
@@ -1938,10 +1939,14 @@ dependencies = [
 
 [[package]]
 name = "doctype-diff"
-version = "0.1.0"
+version = "0.3.0"
 dependencies = [
+ "chrono",
+ "compact_str",
+ "hex",
  "serde",
  "serde_json",
+ "sha2 0.11.1",
  "walkdir",
 ]
 
@@ -2622,6 +2627,7 @@ dependencies = [
  "compact_str",
  "desk-app",
  "desk-components",
+ "doctype-diff",
  "erp-accounting",
  "erp-asset",
  "erp-cms",

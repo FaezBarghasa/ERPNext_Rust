@@ -29,3 +29,4 @@ tokio = { workspace = true }
 dioxus = { workspace = true }
 actix-web = { workspace = true }
 zstd = { workspace = true }
+doctype-diff = { workspace = true }

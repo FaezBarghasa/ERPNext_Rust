@@ -1,0 +1,91 @@
+# Zero-Downtime Incremental CI/CD Pipeline for ERPNext Rust
+# Adheres to the strict 1GB VPS memory envelope and Rust 2024 Edition standards.
+name: Production Zero-Downtime Deploy
+
+on:
+  push:
+    branches: [ "main" ]
+  workflow_dispatch:
+
+concurrency:
+  group: production-deploy
+  cancel-in-progress: false
+
+jobs:
+  validate-build-deploy:
+    name: Test, Package & Zero-Downtime Deploy
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+
+    steps:
+      - name: Checkout Codebase
+        uses: actions/checkout@v4
+
+      - name: Setup Rust Stable (2024 Edition)
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          toolchain: stable
+          components: clippy, rustfmt
+
+      - name: Rust Cache Setup
+        uses: Swatinem/rust-cache@v2
+
+      - name: Strict Quality Gate (Clippy -D warnings)
+        run: cargo clippy --workspace --all-targets -- -D warnings
+
+      - name: Run Full Workspace Test Suite
+        run: cargo test --workspace
+
+      - name: Build Stripped Production Binary
+        run: |
+          cargo build --release --bin frappe-net
+          strip target/release/frappe-net
+          ls -lh target/release/frappe-net
+
+      - name: Generate Non-Destructive Schema Patch
+        run: |
+          cargo run --release --bin doctype-diff -- \
+            --local-dir doctypes/ \
+            --remote-url "${{ secrets.ERP_SERVER_URL }}/api/v2/admin/upgrade/status" \
+            --output upgrade_patch.json
+
+      - name: Push Cryptographic Patch to Live Server
+        id: deploy_patch
+        run: |
+          echo "Deploying incremental patch bundle to live VPS..."
+          RESPONSE=$(curl -s -w "\n%{http_code}" -X POST "${{ secrets.ERP_SERVER_URL }}/api/v2/admin/upgrade" \
+            -H "Authorization: Bearer ${{ secrets.ERP_DEPLOY_TOKEN }}" \
+            -H "Content-Type: application/json" \
+            -d @upgrade_patch.json)
+
+          HTTP_CODE=$(echo "$RESPONSE" | tail -n1)
+          BODY=$(echo "$RESPONSE" | sed '$d')
+
+          echo "Response HTTP Status: $HTTP_CODE"
+          echo "Payload: $BODY"
+
+          if [ "$HTTP_CODE" -ne 200 ] && [ "$HTTP_CODE" -ne 201 ]; then
+            echo "Upgrade patch deployment rejected by server!"
+            exit 1
+          fi
+
+      - name: Verify Live Server Health Post-Deployment
+        run: |
+          echo "Waiting 3 seconds for in-memory hot reload to settle..."
+          sleep 3
+          HEALTH_CODE=$(curl -s -o /dev/null -w "%{http_code}" "${{ secrets.ERP_SERVER_URL }}/api/v2/admin/upgrade/status")
+          if [ "$HEALTH_CODE" -ne 200 ]; then
+            echo "Health verification failed! Expected HTTP 200, received $HEALTH_CODE"
+            exit 1
+          fi
+          echo "Server health check passed with HTTP 200. Zero downtime maintained!"
+
+      - name: Automated Rollback on Verification Failure
+        if: failure() && steps.deploy_patch.outcome == 'success'
+        run: |
+          echo "Health check failed after patch was pushed! Triggering automated rollback..."
+          curl -s -X POST "${{ secrets.ERP_SERVER_URL }}/api/v2/admin/upgrade/rollback" \
+            -H "Authorization: Bearer ${{ secrets.ERP_DEPLOY_TOKEN }}" \
+            -H "Content-Type: application/json" \
+            -d '{"reason": "GitHub Actions health verification failed post-deployment"}'
+          echo "Rollback trigger dispatched to target server."

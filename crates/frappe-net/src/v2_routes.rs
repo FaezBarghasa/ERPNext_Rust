@@ -17,11 +17,17 @@ pub mod inventory;
 pub mod media;
 pub mod micro_features;
 pub mod trade;
+pub mod upgrade_sync;
 
 pub use accounting::configure as configure_accounting_routes;
 pub use admin::configure as configure_admin_routes;
 pub use audio::configure as configure_audio_routes;
 pub use auth::configure as configure_auth_routes;
+pub use upgrade_sync::{
+    RollbackRequest, RollbackResult, UpgradeApplyResult, UpgradeHistoryRecord, UpgradeSnapshot,
+    UpgradeStatusResponse, apply_upgrade_handler, configure as configure_upgrade_sync_routes,
+    get_upgrade_history_handler, get_upgrade_status_handler, rollback_upgrade_handler,
+};
 pub use document::{
     configure as configure_document_routes, v2_add_custom_field, v2_create_custom_doctype,
     v2_delete_custom_doctype, v2_export_meta_snapshot, v2_get_meta_doctype,
@@ -2737,6 +2743,9 @@ pub struct DynamicRbacState {
     pub sound_configs: Arc<RwLock<HashMap<String, frappe_framework::notification::SoundAlertConfig>>>,
     pub translations: Arc<RwLock<HashMap<String, HashMap<String, String>>>>,
     pub theme_config: Arc<RwLock<desk_components::ThemeConfig>>,
+    pub upgrade_snapshots: Arc<RwLock<Vec<UpgradeSnapshot>>>,
+    pub upgrade_history: Arc<RwLock<Vec<UpgradeHistoryRecord>>>,
+    pub server_start_time: std::time::Instant,
 }
 
 impl std::fmt::Debug for DynamicRbacState {
@@ -2945,6 +2954,9 @@ impl Default for DynamicRbacState {
             sound_configs: Arc::new(RwLock::new(default_sound_configs)),
             translations: Arc::new(RwLock::new(default_translations)),
             theme_config: Arc::new(RwLock::new(desk_components::ThemeConfig::default())),
+            upgrade_snapshots: Arc::new(RwLock::new(Vec::new())),
+            upgrade_history: Arc::new(RwLock::new(Vec::new())),
+            server_start_time: std::time::Instant::now(),
         }
     }
 }
@@ -11284,5 +11296,126 @@ mod tests {
             .expect("read css body");
         let css_str = std::str::from_utf8(&css_bytes).expect("parse utf8 css");
         assert!(css_str.contains("--brand-primary: #00ffff;"));
+    }
+
+    #[actix_web::test]
+    async fn test_phase10_upgrade_sync_and_rollback_end_to_end() {
+        let rbac_state = web::Data::new(DynamicRbacState::default());
+
+        // 1. Initial upgrade status check
+        let status_resp = get_upgrade_status_handler(rbac_state.clone())
+            .await
+            .respond_to(&actix_web::test::TestRequest::get().to_http_request());
+        assert_eq!(status_resp.status(), actix_web::http::StatusCode::OK);
+        let status_bytes = actix_web::body::to_bytes(status_resp.into_body())
+            .await
+            .ok()
+            .expect("read body");
+        let status_json: serde_json::Value =
+            serde_json::from_slice(&status_bytes).expect("parse json");
+        assert_eq!(status_json["version"], "v2.0-rust-native");
+        assert_eq!(status_json["memory_healthy_1gb"], true);
+        assert_eq!(status_json["total_upgrades_applied"], 0);
+
+        // 2. Reject patch with corrupted checksum
+        let mut corrupted_patch = doctype_diff::DocTypeDiffEngine::build_upgrade_patch(
+            "v2.0",
+            "v2.1",
+            &[],
+            &[],
+            &[(compact_str::CompactString::from("dashboard"), compact_str::CompactString::from("Executive Dashboard"), 4)],
+            &[],
+        );
+        corrupted_patch.checksum_sha256 = "corrupted_checksum_abc123".into();
+
+        let reject_resp = apply_upgrade_handler(rbac_state.clone(), web::Json(corrupted_patch))
+            .await
+            .respond_to(&actix_web::test::TestRequest::post().to_http_request());
+        assert_eq!(reject_resp.status(), actix_web::http::StatusCode::BAD_REQUEST);
+
+        // 3. Apply valid incremental upgrade patch
+        let valid_patch = doctype_diff::DocTypeDiffEngine::build_upgrade_patch(
+            "v2.0",
+            "v2.1",
+            &[doctype_diff::DocTypeSnapshot::new("CustomerExtension", "Selling")],
+            &[],
+            &[(compact_str::CompactString::from("sales_hub"), compact_str::CompactString::from("Sales Analytics Hub"), 8)],
+            &[],
+        );
+        let patch_id = valid_patch.patch_id.clone();
+
+        let apply_resp = apply_upgrade_handler(rbac_state.clone(), web::Json(valid_patch))
+            .await
+            .respond_to(&actix_web::test::TestRequest::post().to_http_request());
+        assert_eq!(apply_resp.status(), actix_web::http::StatusCode::OK);
+        let apply_bytes = actix_web::body::to_bytes(apply_resp.into_body())
+            .await
+            .ok()
+            .expect("read body");
+        let apply_json: serde_json::Value =
+            serde_json::from_slice(&apply_bytes).expect("parse json");
+        assert_eq!(apply_json["success"], true);
+        assert_eq!(apply_json["applied_doctypes"], 1);
+        assert_eq!(apply_json["applied_pages"], 1);
+
+        // 4. Verify in-memory atomic hot swap applied the page
+        {
+            let pages = rbac_state.builder_pages.read().expect("read pages");
+            assert!(pages.contains_key("sales_hub"));
+            assert_eq!(
+                pages.get("sales_hub").unwrap().updated_by.as_deref(),
+                Some("Sales Analytics Hub")
+            );
+        }
+
+        // 5. Verify updated upgrade status and audit history
+        let status2_resp = get_upgrade_status_handler(rbac_state.clone())
+            .await
+            .respond_to(&actix_web::test::TestRequest::get().to_http_request());
+        let status2_bytes = actix_web::body::to_bytes(status2_resp.into_body())
+            .await
+            .ok()
+            .expect("read body");
+        let status2_json: serde_json::Value =
+            serde_json::from_slice(&status2_bytes).expect("parse json");
+        assert_eq!(status2_json["last_patch_id"], patch_id.as_str());
+        assert_eq!(status2_json["total_upgrades_applied"], 1);
+
+        let history_resp = get_upgrade_history_handler(rbac_state.clone())
+            .await
+            .respond_to(&actix_web::test::TestRequest::get().to_http_request());
+        let history_bytes = actix_web::body::to_bytes(history_resp.into_body())
+            .await
+            .ok()
+            .expect("read body");
+        let history_json: serde_json::Value =
+            serde_json::from_slice(&history_bytes).expect("parse json");
+        assert_eq!(history_json.as_array().unwrap().len(), 1);
+        assert_eq!(history_json[0]["status"], "applied");
+
+        // 6. Rollback upgrade and verify snapshot restored
+        let rollback_payload = web::Json(RollbackRequest::default());
+        let rollback_resp = rollback_upgrade_handler(rbac_state.clone(), rollback_payload)
+            .await
+            .respond_to(&actix_web::test::TestRequest::post().to_http_request());
+        assert_eq!(rollback_resp.status(), actix_web::http::StatusCode::OK);
+
+        // Verify in-memory pages reverted
+        {
+            let pages = rbac_state.builder_pages.read().expect("read pages");
+            assert!(!pages.contains_key("sales_hub"));
+        }
+
+        // Verify history records rollback
+        let history2_resp = get_upgrade_history_handler(rbac_state.clone())
+            .await
+            .respond_to(&actix_web::test::TestRequest::get().to_http_request());
+        let history2_bytes = actix_web::body::to_bytes(history2_resp.into_body())
+            .await
+            .ok()
+            .expect("read body");
+        let history2_json: serde_json::Value =
+            serde_json::from_slice(&history2_bytes).expect("parse json");
+        assert_eq!(history2_json[0]["status"], "rolled_back");
     }
 }

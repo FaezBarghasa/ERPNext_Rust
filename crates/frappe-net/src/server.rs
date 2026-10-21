@@ -40,7 +40,8 @@ use crate::v2_routes::{
     builder_list_pages_handler, builder_save_page_handler, buying_purchase_invoice_handler,
     buying_purchase_order_handler, buying_purchase_receipt_handler, cms_create_taxonomy_handler,
     cms_generate_seo_handler, cms_list_media_handler, cms_list_taxonomies_handler,
-    cms_upload_media_handler, configure_micro_features_routes, crm_convert_quotation_handler, download_file_handler,
+    cms_upload_media_handler, configure_micro_features_routes,
+    configure_upgrade_sync_routes, crm_convert_quotation_handler, download_file_handler,
     download_image_handler, email_list_queue_handler, email_send_handler,
     emdash_get_document_handler, emdash_list_documents_handler, emdash_media_crop_handler,
     emdash_revisions_list_handler, emdash_save_document_handler, emdash_transition_handler,
@@ -3569,6 +3570,9 @@ pub fn configure_app(
 
     // Phase 9: Comprehensive Micro-Features Suite
     configure_micro_features_routes(cfg);
+
+    // Phase 10: Zero-Downtime Incremental Upgrade & Rollback Engine
+    configure_upgrade_sync_routes(cfg);
 
     if let Some(gateway) = acme_gateway {
         cfg.app_data(web::Data::new(gateway)).route(

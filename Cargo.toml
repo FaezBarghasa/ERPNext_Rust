@@ -45,6 +45,7 @@ repository = "https://github.com/FaezBarghasa/ERPNext_Rust"
 # Internal workspace crates
 desk-app = { path = "crates/desk-app" }
 desk-components = { path = "crates/desk-components" }
+doctype-diff = { path = "tools/doctype-diff" }
 erp-accounting = { path = "crates/erp-accounting" }
 erp-asset = { path = "crates/erp-asset" }
 erp-cms = { path = "crates/erp-cms" }
