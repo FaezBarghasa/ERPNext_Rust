@@ -76,9 +76,11 @@ use frappe_meta::auth::{
 };
 use frappe_meta::mfa::{MfaRecord, TotpConfig, generate_otpauth_uri};
 use frappe_meta::rbac::{
-    DynamicRolePermissionRegistry, Permission, ROLE_ACCOUNTANT_USER, ROLE_ADMINISTRATOR,
-    ROLE_CONTENT_CREATOR, ROLE_MARKETING_ADMIN, ROLE_SYSTEM_MANAGER, ROLE_WAREHOUSE_MANAGER,
-    ROLE_WEBSITE_UPDATER, ROLE_WORKER_USER, STANDARD_ROLES, UserRecord, check_permission,
+    DynamicRolePermissionRegistry, MatrixPermissionCell, Permission, PersonaAutoRouter,
+    RlsFilterRule, RlsRegistry, TargetPersona, UserRecord, VisualPermissionMatrix,
+    check_permission, ROLE_ACCOUNTANT_USER, ROLE_ADMINISTRATOR, ROLE_CONTENT_CREATOR,
+    ROLE_MARKETING_ADMIN, ROLE_SYSTEM_MANAGER, ROLE_WAREHOUSE_MANAGER, ROLE_WEBSITE_UPDATER,
+    ROLE_WORKER_USER, STANDARD_ROLES,
 };
 use frappe_meta::security_rules::{
     DetectedFileType, generate_password_reset_token, sanitize_svg, validate_file_upload,
@@ -2693,6 +2695,7 @@ pub async fn h3_stream_telemetry_handler(payload: web::Json<serde_json::Value>) 
 pub struct DynamicRbacState {
     pub users: Arc<RwLock<Vec<UserRecord>>>,
     pub registry: Arc<RwLock<DynamicRolePermissionRegistry>>,
+    pub rls_registry: Arc<RwLock<RlsRegistry>>,
     pub mfa_records: Arc<RwLock<HashMap<String, MfaRecord>>>,
     pub audit_trail: Arc<AuditTrailRegistry>,
     pub login_guard: Arc<LoginGuard>,
@@ -2856,6 +2859,7 @@ impl Default for DynamicRbacState {
         Self {
             users: Arc::new(RwLock::new(default_users)),
             registry: Arc::new(RwLock::new(registry)),
+            rls_registry: Arc::new(RwLock::new(RlsRegistry::with_standard_defaults())),
             mfa_records: Arc::new(RwLock::new(HashMap::new())),
             audit_trail: Arc::new(AuditTrailRegistry::default()),
             login_guard: Arc::new(LoginGuard::default()),
@@ -3662,6 +3666,346 @@ pub async fn admin_unlock_target_handler(
         "target": target,
         "message": format!("Target '{target}' unlocked successfully"),
     }))
+}
+
+// =========================================================================
+// Universal Visual RBAC, Multi-Persona RLS & Persona Auto-Routing Endpoints
+// =========================================================================
+
+#[derive(Debug, Deserialize)]
+pub struct GetRbacMatrixQuery {
+    pub doctypes: Option<String>,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct UpdateRbacCellItem {
+    pub doctype: String,
+    pub role: String,
+    pub cell: MatrixPermissionCell,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct UpdateRbacMatrixPayload {
+    pub matrix: Option<VisualPermissionMatrix>,
+    pub cells: Option<Vec<UpdateRbacCellItem>>,
+}
+
+/// Handler to get Visual RBAC matrix: `GET /api/v2/admin/rbac/matrix`
+pub async fn admin_get_rbac_matrix_handler(
+    query: web::Query<GetRbacMatrixQuery>,
+    rbac_state: web::Data<DynamicRbacState>,
+) -> impl Responder {
+    let target_doctypes: Vec<String> = query.doctypes.as_deref().map_or_else(
+        || {
+            vec![
+                "Sales Order".into(),
+                "Sales Invoice".into(),
+                "Job Card".into(),
+                "GL Entry".into(),
+                "Customer".into(),
+                "Item".into(),
+                "Purchase Order".into(),
+                "Timesheet".into(),
+            ]
+        },
+        |s| {
+            s.split(',')
+                .map(|d| d.trim().to_string())
+                .filter(|d| !d.is_empty())
+                .collect()
+        },
+    );
+
+    let reg = match rbac_state.registry.read() {
+        Ok(g) => g,
+        Err(_) => {
+            return HttpResponse::InternalServerError()
+                .json(serde_json::json!({"status": "ERROR", "message": "Lock failure"}));
+        }
+    };
+
+    let matrix = VisualPermissionMatrix::from_registry(&reg, &target_doctypes);
+
+    HttpResponse::Ok().json(serde_json::json!({
+        "status": "OK",
+        "matrix": matrix,
+    }))
+}
+
+/// Handler to batch update Visual RBAC matrix: `POST /api/v2/admin/rbac/matrix`
+pub async fn admin_update_rbac_matrix_handler(
+    payload: web::Json<UpdateRbacMatrixPayload>,
+    rbac_state: web::Data<DynamicRbacState>,
+) -> impl Responder {
+    let p = payload.into_inner();
+    let mut reg = match rbac_state.registry.write() {
+        Ok(g) => g,
+        Err(_) => {
+            return HttpResponse::InternalServerError()
+                .json(serde_json::json!({"status": "ERROR", "message": "Lock failure"}));
+        }
+    };
+
+    if let Some(matrix) = p.matrix {
+        matrix.apply_to_registry(&mut reg);
+    }
+
+    if let Some(cells) = p.cells {
+        for item in cells {
+            reg.grant(
+                &item.role,
+                &item.doctype,
+                item.cell.p_read,
+                item.cell.p_write,
+                item.cell.p_create,
+                item.cell.p_delete,
+                item.cell.p_submit,
+                item.cell.p_cancel,
+                item.cell.p_amend,
+                item.cell.permlevel,
+            );
+        }
+    }
+
+    rbac_state.audit_trail.record(
+        AuditEntry::new(
+            "default",
+            "Administrator",
+            "127.0.0.1",
+            "AdminDesk",
+            AuditAction::PermissionUpdated,
+            "Success",
+        )
+        .with_document_diff(
+            "VisualRbacMatrix",
+            "global",
+            None,
+            Some(serde_json::json!({"updated": true})),
+        ),
+    );
+
+    HttpResponse::Ok().json(serde_json::json!({
+        "status": "SUCCESS",
+        "message": "Visual RBAC matrix applied successfully",
+    }))
+}
+
+/// Handler to list RLS filter rules: `GET /api/v2/admin/rbac/rls`
+pub async fn admin_list_rls_rules_handler(
+    rbac_state: web::Data<DynamicRbacState>,
+) -> impl Responder {
+    let rls = match rbac_state.rls_registry.read() {
+        Ok(g) => g,
+        Err(_) => {
+            return HttpResponse::InternalServerError()
+                .json(serde_json::json!({"status": "ERROR", "message": "Lock failure"}));
+        }
+    };
+
+    HttpResponse::Ok().json(serde_json::json!({
+        "status": "OK",
+        "count": rls.rules.len(),
+        "rules": rls.rules,
+    }))
+}
+
+/// Handler to upsert an RLS filter rule: `POST /api/v2/admin/rbac/rls`
+pub async fn admin_upsert_rls_rule_handler(
+    payload: web::Json<RlsFilterRule>,
+    rbac_state: web::Data<DynamicRbacState>,
+) -> impl Responder {
+    let rule = payload.into_inner();
+    let mut rls = match rbac_state.rls_registry.write() {
+        Ok(g) => g,
+        Err(_) => {
+            return HttpResponse::InternalServerError()
+                .json(serde_json::json!({"status": "ERROR", "message": "Lock failure"}));
+        }
+    };
+
+    rls.add_rule(rule.clone());
+
+    rbac_state.audit_trail.record(
+        AuditEntry::new(
+            "default",
+            "Administrator",
+            "127.0.0.1",
+            "AdminDesk",
+            AuditAction::PermissionUpdated,
+            "Success",
+        )
+        .with_document_diff(
+            "RlsFilterRule",
+            &rule.id,
+            None,
+            Some(serde_json::json!(&rule)),
+        ),
+    );
+
+    HttpResponse::Created().json(serde_json::json!({
+        "status": "CREATED",
+        "rule": rule,
+    }))
+}
+
+/// Handler to delete an RLS filter rule: `DELETE /api/v2/admin/rbac/rls/{rule_id}`
+pub async fn admin_delete_rls_rule_handler(
+    rule_id: web::Path<String>,
+    rbac_state: web::Data<DynamicRbacState>,
+) -> impl Responder {
+    let id = rule_id.into_inner();
+    let mut rls = match rbac_state.rls_registry.write() {
+        Ok(g) => g,
+        Err(_) => {
+            return HttpResponse::InternalServerError()
+                .json(serde_json::json!({"status": "ERROR", "message": "Lock failure"}));
+        }
+    };
+
+    if rls.delete_rule(&id) {
+        HttpResponse::Ok().json(serde_json::json!({
+            "status": "DELETED",
+            "rule_id": id,
+        }))
+    } else {
+        HttpResponse::NotFound().json(serde_json::json!({
+            "status": "NOT_FOUND",
+            "message": format!("RLS rule '{id}' not found"),
+        }))
+    }
+}
+
+/// DTO for compiling RLS filter where clauses.
+#[derive(Debug, Deserialize)]
+pub struct CompileRlsPayload {
+    pub doctype: String,
+    pub user: String,
+    pub roles: Vec<String>,
+    pub allowed_companies: Option<Vec<String>>,
+}
+
+/// Handler to preview compiled RLS predicate: `POST /api/v2/admin/rbac/rls/compile`
+pub async fn admin_compile_rls_filter_handler(
+    payload: web::Json<CompileRlsPayload>,
+    rbac_state: web::Data<DynamicRbacState>,
+) -> impl Responder {
+    let p = payload.into_inner();
+    let rls = match rbac_state.rls_registry.read() {
+        Ok(g) => g,
+        Err(_) => {
+            return HttpResponse::InternalServerError()
+                .json(serde_json::json!({"status": "ERROR", "message": "Lock failure"}));
+        }
+    };
+
+    let allowed_companies = p.allowed_companies.unwrap_or_default();
+    let where_clause = rls.compile_where_clause(
+        &p.doctype,
+        &p.user,
+        &p.roles,
+        &allowed_companies,
+    );
+
+    HttpResponse::Ok().json(serde_json::json!({
+        "status": "OK",
+        "doctype": p.doctype,
+        "user": p.user,
+        "where_clause": where_clause,
+    }))
+}
+
+/// DTO for resolving target persona shell and landing route.
+#[derive(Debug, Deserialize)]
+pub struct ResolvePersonaRoutePayload {
+    pub roles: Option<Vec<String>>,
+    pub user_id: Option<String>,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct ResolvePersonaRouteQuery {
+    pub roles: Option<String>,
+    pub user_id: Option<String>,
+}
+
+/// Handler to resolve persona route via GET: `GET /api/v2/admin/persona/route`
+pub async fn admin_resolve_persona_route_get_handler(
+    query: web::Query<ResolvePersonaRouteQuery>,
+    rbac_state: web::Data<DynamicRbacState>,
+) -> impl Responder {
+    let roles = if let Some(r_str) = &query.roles {
+        r_str
+            .split(',')
+            .map(|r| r.trim().to_string())
+            .filter(|r| !r.is_empty())
+            .collect()
+    } else if let Some(uid) = &query.user_id {
+        let users = match rbac_state.users.read() {
+            Ok(g) => g,
+            Err(_) => {
+                return HttpResponse::InternalServerError()
+                    .json(serde_json::json!({"status": "ERROR", "message": "Lock failure"}));
+            }
+        };
+        users
+            .iter()
+            .find(|u| &u.id == uid)
+            .map(|u| u.roles.clone())
+            .unwrap_or_default()
+    } else {
+        Vec::new()
+    };
+
+    let (target_route, persona) = PersonaAutoRouter::resolve_route(&roles);
+
+    HttpResponse::Ok().json(ResolvePersonaRouteResponse {
+        status: "OK",
+        roles,
+        target_route,
+        persona,
+    })
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct ResolvePersonaRouteResponse {
+    pub status: &'static str,
+    pub roles: Vec<String>,
+    pub target_route: &'static str,
+    pub persona: TargetPersona,
+}
+
+/// Handler to resolve persona route via POST: `POST /api/v2/admin/persona/route`
+pub async fn admin_resolve_persona_route_handler(
+    payload: web::Json<ResolvePersonaRoutePayload>,
+    rbac_state: web::Data<DynamicRbacState>,
+) -> impl Responder {
+    let p = payload.into_inner();
+    let roles = if let Some(r) = p.roles {
+        r
+    } else if let Some(uid) = &p.user_id {
+        let users = match rbac_state.users.read() {
+            Ok(g) => g,
+            Err(_) => {
+                return HttpResponse::InternalServerError()
+                    .json(serde_json::json!({"status": "ERROR", "message": "Lock failure"}));
+            }
+        };
+        users
+            .iter()
+            .find(|u| &u.id == uid)
+            .map(|u| u.roles.clone())
+            .unwrap_or_default()
+    } else {
+        Vec::new()
+    };
+
+    let (target_route, persona) = PersonaAutoRouter::resolve_route(&roles);
+
+    HttpResponse::Ok().json(ResolvePersonaRouteResponse {
+        status: "OK",
+        roles,
+        target_route,
+        persona,
+    })
 }
 
 // =========================================================================
@@ -10404,5 +10748,164 @@ mod tests {
             .await
             .respond_to(&req);
         assert_eq!(delete_resp.status(), actix_web::http::StatusCode::OK);
+    }
+
+    #[tokio::test]
+    async fn test_visual_rbac_rls_persona_routing_lifecycle() {
+        use frappe_meta::rbac::{RlsConditionType, ROLE_SALES_USER};
+        let rbac_state = web::Data::new(DynamicRbacState::default());
+
+        // 1. GET Visual RBAC Matrix
+        let get_matrix_query = web::Query(GetRbacMatrixQuery {
+            doctypes: Some("Sales Order,Job Card".into()),
+        });
+        let matrix_resp = admin_get_rbac_matrix_handler(get_matrix_query, rbac_state.clone())
+            .await
+            .respond_to(&actix_web::test::TestRequest::get().to_http_request());
+        assert_eq!(matrix_resp.status(), actix_web::http::StatusCode::OK);
+
+        let matrix_bytes = actix_web::body::to_bytes(matrix_resp.into_body())
+            .await
+            .ok()
+            .expect("read matrix body");
+        let matrix_json: serde_json::Value =
+            serde_json::from_slice(&matrix_bytes).expect("parse json");
+        assert_eq!(matrix_json["status"], "OK");
+        assert!(matrix_json["matrix"]["doctypes"].as_array().unwrap().len() >= 2);
+
+        // 2. POST Update Visual RBAC Matrix (grant worker read on Sales Order)
+        let update_matrix_payload = web::Json(UpdateRbacMatrixPayload {
+            matrix: None,
+            cells: Some(vec![UpdateRbacCellItem {
+                doctype: "Sales Order".into(),
+                role: ROLE_WORKER_USER.into(),
+                cell: MatrixPermissionCell {
+                    p_read: true,
+                    p_write: true,
+                    p_create: false,
+                    p_delete: false,
+                    p_submit: false,
+                    p_cancel: false,
+                    p_amend: false,
+                    p_export: true,
+                    permlevel: 0,
+                },
+            }]),
+        });
+        let update_resp = admin_update_rbac_matrix_handler(update_matrix_payload, rbac_state.clone())
+            .await
+            .respond_to(&actix_web::test::TestRequest::post().to_http_request());
+        assert_eq!(update_resp.status(), actix_web::http::StatusCode::OK);
+
+        // Verify registry mutation
+        {
+            let reg = rbac_state.registry.read().unwrap();
+            let perms = reg.effective_permissions(&[ROLE_WORKER_USER.into()], "Sales Order");
+            assert!(perms.can_read);
+            assert!(perms.can_write);
+            assert!(!perms.can_delete);
+        }
+
+        // 3. RLS Rules: List standard defaults
+        let rls_list_resp = admin_list_rls_rules_handler(rbac_state.clone())
+            .await
+            .respond_to(&actix_web::test::TestRequest::get().to_http_request());
+        assert_eq!(rls_list_resp.status(), actix_web::http::StatusCode::OK);
+
+        // 4. Upsert custom RLS rule
+        let new_rls = RlsFilterRule {
+            id: "rls_vip_customers".into(),
+            doctype: "Customer".into(),
+            role: ROLE_SALES_USER.into(),
+            rule_name: "VIP customer filter".into(),
+            condition_type: RlsConditionType::CustomSurrealqlPredicate("tier = 'VIP'".into()),
+            is_active: true,
+        };
+        let upsert_resp = admin_upsert_rls_rule_handler(web::Json(new_rls), rbac_state.clone())
+            .await
+            .respond_to(&actix_web::test::TestRequest::post().to_http_request());
+        assert_eq!(upsert_resp.status(), actix_web::http::StatusCode::CREATED);
+
+        // 5. Compile RLS filter
+        let compile_payload = web::Json(CompileRlsPayload {
+            doctype: "Customer".into(),
+            user: "sales@corp.com".into(),
+            roles: vec![ROLE_SALES_USER.into()],
+            allowed_companies: None,
+        });
+        let compile_resp = admin_compile_rls_filter_handler(compile_payload, rbac_state.clone())
+            .await
+            .respond_to(&actix_web::test::TestRequest::post().to_http_request());
+        assert_eq!(compile_resp.status(), actix_web::http::StatusCode::OK);
+        let compile_bytes = actix_web::body::to_bytes(compile_resp.into_body())
+            .await
+            .ok()
+            .expect("read compile body");
+        let compile_json: serde_json::Value =
+            serde_json::from_slice(&compile_bytes).expect("parse compile json");
+        assert_eq!(compile_json["where_clause"], "(tier = 'VIP')");
+
+        // 6. Delete RLS rule
+        let del_resp = admin_delete_rls_rule_handler(
+            web::Path::from("rls_vip_customers".to_string()),
+            rbac_state.clone(),
+        )
+        .await
+        .respond_to(&actix_web::test::TestRequest::delete().to_http_request());
+        assert_eq!(del_resp.status(), actix_web::http::StatusCode::OK);
+
+        // 7. Persona Auto-Routing via POST (Role-based)
+        let route_payload = web::Json(ResolvePersonaRoutePayload {
+            roles: Some(vec![ROLE_SYSTEM_MANAGER.into()]),
+            user_id: None,
+        });
+        let route_resp = admin_resolve_persona_route_handler(route_payload, rbac_state.clone())
+            .await
+            .respond_to(&actix_web::test::TestRequest::post().to_http_request());
+        assert_eq!(route_resp.status(), actix_web::http::StatusCode::OK);
+        let route_bytes = actix_web::body::to_bytes(route_resp.into_body())
+            .await
+            .ok()
+            .expect("read route body");
+        let route_json: serde_json::Value =
+            serde_json::from_slice(&route_bytes).expect("parse route json");
+        assert_eq!(route_json["target_route"], "/admin");
+        assert_eq!(route_json["persona"], "AdminDesk");
+
+        // 8. Persona Auto-Routing via User ID lookup ("usr_worker")
+        let user_route_payload = web::Json(ResolvePersonaRoutePayload {
+            roles: None,
+            user_id: Some("usr_worker".into()),
+        });
+        let user_route_resp = admin_resolve_persona_route_handler(user_route_payload, rbac_state.clone())
+            .await
+            .respond_to(&actix_web::test::TestRequest::post().to_http_request());
+        assert_eq!(user_route_resp.status(), actix_web::http::StatusCode::OK);
+        let user_route_bytes = actix_web::body::to_bytes(user_route_resp.into_body())
+            .await
+            .ok()
+            .expect("read user route body");
+        let user_route_json: serde_json::Value =
+            serde_json::from_slice(&user_route_bytes).expect("parse user route json");
+        assert_eq!(user_route_json["target_route"], "/worker");
+        assert_eq!(user_route_json["persona"], "WarehouseWorker");
+
+        // 9. Persona Auto-Routing via GET Query (Customer)
+        let get_route_query = web::Query(ResolvePersonaRouteQuery {
+            roles: Some("Customer".into()),
+            user_id: None,
+        });
+        let get_route_resp = admin_resolve_persona_route_get_handler(get_route_query, rbac_state.clone())
+            .await
+            .respond_to(&actix_web::test::TestRequest::get().to_http_request());
+        assert_eq!(get_route_resp.status(), actix_web::http::StatusCode::OK);
+        let get_route_bytes = actix_web::body::to_bytes(get_route_resp.into_body())
+            .await
+            .ok()
+            .expect("read get route body");
+        let get_route_json: serde_json::Value =
+            serde_json::from_slice(&get_route_bytes).expect("parse get route json");
+        assert_eq!(get_route_json["target_route"], "/portal");
+        assert_eq!(get_route_json["persona"], "CustomerPortal");
     }
 }

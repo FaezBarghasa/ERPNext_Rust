@@ -70,5 +70,37 @@ pub fn configure(cfg: &mut web::ServiceConfig) {
         .route(
             "/api/v2/admin/lockouts/{target}/unlock",
             web::post().to(admin_unlock_target_handler),
+        )
+        .route(
+            "/api/v2/admin/rbac/matrix",
+            web::get().to(admin_get_rbac_matrix_handler),
+        )
+        .route(
+            "/api/v2/admin/rbac/matrix",
+            web::post().to(admin_update_rbac_matrix_handler),
+        )
+        .route(
+            "/api/v2/admin/rbac/rls",
+            web::get().to(admin_list_rls_rules_handler),
+        )
+        .route(
+            "/api/v2/admin/rbac/rls",
+            web::post().to(admin_upsert_rls_rule_handler),
+        )
+        .route(
+            "/api/v2/admin/rbac/rls/{rule_id}",
+            web::delete().to(admin_delete_rls_rule_handler),
+        )
+        .route(
+            "/api/v2/admin/rbac/rls/compile",
+            web::post().to(admin_compile_rls_filter_handler),
+        )
+        .route(
+            "/api/v2/admin/persona/route",
+            web::get().to(admin_resolve_persona_route_get_handler),
+        )
+        .route(
+            "/api/v2/admin/persona/route",
+            web::post().to(admin_resolve_persona_route_handler),
         );
 }

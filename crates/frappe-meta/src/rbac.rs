@@ -870,6 +870,315 @@ pub fn compile_rls_policy(
     )
 }
 
+// ============================================================================
+// PHASE 8: UNIVERSAL VISUAL RBAC & ROW-LEVEL SECURITY (RLS)
+// ============================================================================
+
+use std::collections::HashMap;
+
+/// An individual cell within the visual permissions matrix.
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, Default)]
+pub struct MatrixPermissionCell {
+    pub p_read: bool,
+    pub p_write: bool,
+    pub p_create: bool,
+    pub p_delete: bool,
+    pub p_submit: bool,
+    pub p_cancel: bool,
+    pub p_amend: bool,
+    pub p_export: bool,
+    pub permlevel: u8,
+}
+
+/// Visual Permissions Matrix: DocTypes (rows) x Roles (columns) with granular permission toggles.
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, Default)]
+pub struct VisualPermissionMatrix {
+    pub roles: Vec<String>,
+    pub doctypes: Vec<String>,
+    /// Nested map: doctype -> (role -> permissions cell)
+    pub cells: HashMap<String, HashMap<String, MatrixPermissionCell>>,
+}
+
+impl VisualPermissionMatrix {
+    /// Constructs a visual matrix view from an active registry and a list of target DocTypes.
+    #[must_use]
+    pub fn from_registry(reg: &DynamicRolePermissionRegistry, target_doctypes: &[String]) -> Self {
+        let roles: Vec<String> = reg.roles.iter().map(|r| r.name.clone()).collect();
+        let doctypes = target_doctypes.to_vec();
+        let mut cells: HashMap<String, HashMap<String, MatrixPermissionCell>> = HashMap::new();
+
+        for dt in &doctypes {
+            let mut role_map = HashMap::new();
+            for r in &roles {
+                // Find matching edge or default
+                let cell = reg
+                    .permission_edges
+                    .iter()
+                    .find(|e| e.doctype.eq_ignore_ascii_case(dt) && e.role.eq_ignore_ascii_case(r))
+                    .map_or_else(MatrixPermissionCell::default, |e| MatrixPermissionCell {
+                        p_read: e.p_read,
+                        p_write: e.p_write,
+                        p_create: e.p_create,
+                        p_delete: e.p_delete,
+                        p_submit: e.p_submit,
+                        p_cancel: e.p_cancel,
+                        p_amend: e.p_amend,
+                        p_export: e.p_read,
+                        permlevel: e.permlevel,
+                    });
+                role_map.insert(r.clone(), cell);
+            }
+            cells.insert(dt.clone(), role_map);
+        }
+
+        Self {
+            roles,
+            doctypes,
+            cells,
+        }
+    }
+
+    /// Update a specific cell in the matrix.
+    pub fn update_cell(&mut self, doctype: &str, role: &str, cell: MatrixPermissionCell) {
+        if !self.roles.contains(&role.to_string()) {
+            self.roles.push(role.to_string());
+        }
+        if !self.doctypes.contains(&doctype.to_string()) {
+            self.doctypes.push(doctype.to_string());
+        }
+        self.cells
+            .entry(doctype.to_string())
+            .or_default()
+            .insert(role.to_string(), cell);
+    }
+
+    /// Apply the visual matrix state directly back into the dynamic permission registry.
+    pub fn apply_to_registry(&self, reg: &mut DynamicRolePermissionRegistry) {
+        for (dt, role_map) in &self.cells {
+            for (r, cell) in role_map {
+                reg.grant(
+                    r,
+                    dt,
+                    cell.p_read,
+                    cell.p_write,
+                    cell.p_create,
+                    cell.p_delete,
+                    cell.p_submit,
+                    cell.p_cancel,
+                    cell.p_amend,
+                    cell.permlevel,
+                );
+            }
+        }
+    }
+}
+
+/// Conditional logic type for Row-Level Security rules.
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+pub enum RlsConditionType {
+    /// Document owner must match authenticated user (`doc.owner == session.user`)
+    DocOwnerEqualsSessionUser,
+    /// Document company must be within user's allowed companies (`doc.company IN session.allowed_companies`)
+    DocCompanyInSessionCompanies,
+    /// Specific document field must match session user attribute
+    DocFieldMatchesUserAttribute {
+        doc_field: String,
+        user_attr: String,
+    },
+    /// Custom SurrealQL filter predicate
+    CustomSurrealqlPredicate(String),
+}
+
+/// A Row-Level Security (RLS) filter rule.
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+pub struct RlsFilterRule {
+    pub id: String,
+    pub doctype: String,
+    pub role: String,
+    pub rule_name: String,
+    pub condition_type: RlsConditionType,
+    pub is_active: bool,
+}
+
+/// Multi-Persona Row-Level Security (RLS) Registry.
+#[derive(Debug, Clone, Serialize, Deserialize, Default)]
+pub struct RlsRegistry {
+    pub rules: Vec<RlsFilterRule>,
+}
+
+impl RlsRegistry {
+    #[must_use]
+    pub fn new() -> Self {
+        Self::default()
+    }
+
+    /// Pre-seeds standard RLS policies for common enterprise scenarios.
+    #[must_use]
+    pub fn with_standard_defaults() -> Self {
+        let mut reg = Self::new();
+        reg.add_rule(RlsFilterRule {
+            id: "rls_owner_sales_order".into(),
+            doctype: "Sales Order".into(),
+            role: ROLE_SALES_USER.into(),
+            rule_name: "Sales User can only view their own Sales Orders".into(),
+            condition_type: RlsConditionType::DocOwnerEqualsSessionUser,
+            is_active: true,
+        });
+        reg.add_rule(RlsFilterRule {
+            id: "rls_company_sales_invoice".into(),
+            doctype: "Sales Invoice".into(),
+            role: ROLE_ACCOUNTANT_USER.into(),
+            rule_name: "Accountant restricted to assigned companies".into(),
+            condition_type: RlsConditionType::DocCompanyInSessionCompanies,
+            is_active: true,
+        });
+        reg
+    }
+
+    pub fn add_rule(&mut self, rule: RlsFilterRule) {
+        if let Some(existing) = self.rules.iter_mut().find(|r| r.id == rule.id) {
+            *existing = rule;
+        } else {
+            self.rules.push(rule);
+        }
+    }
+
+    pub fn delete_rule(&mut self, id: &str) -> bool {
+        let len_before = self.rules.len();
+        self.rules.retain(|r| r.id != id);
+        self.rules.len() < len_before
+    }
+
+    /// Compiles effective SurrealQL WHERE clause for a session user querying target DocType.
+    #[must_use]
+    pub fn compile_where_clause(
+        &self,
+        doctype: &str,
+        session_user: &str,
+        session_roles: &[String],
+        allowed_companies: &[String],
+    ) -> String {
+        // System Managers and Administrators bypass RLS restrictions
+        if session_roles
+            .iter()
+            .any(|r| r == ROLE_SYSTEM_MANAGER || r == ROLE_ADMINISTRATOR)
+            || session_user == "Administrator"
+        {
+            return String::new();
+        }
+
+        let mut predicates = Vec::new();
+
+        for rule in &self.rules {
+            if !rule.is_active {
+                continue;
+            }
+            if rule.doctype.eq_ignore_ascii_case(doctype)
+                && session_roles.iter().any(|r| r.eq_ignore_ascii_case(&rule.role))
+            {
+                match &rule.condition_type {
+                    RlsConditionType::DocOwnerEqualsSessionUser => {
+                        predicates.push(format!("(owner = \"{session_user}\")"));
+                    }
+                    RlsConditionType::DocCompanyInSessionCompanies => {
+                        if !allowed_companies.is_empty() {
+                            let comps = allowed_companies
+                                .iter()
+                                .map(|c| format!("\"{c}\""))
+                                .collect::<Vec<_>>()
+                                .join(", ");
+                            predicates.push(format!("(company IN [{comps}] OR company IS NULL)"));
+                        }
+                    }
+                    RlsConditionType::DocFieldMatchesUserAttribute { doc_field, user_attr } => {
+                        predicates.push(format!("({doc_field} = \"{user_attr}\")"));
+                    }
+                    RlsConditionType::CustomSurrealqlPredicate(pred) => {
+                        predicates.push(format!("({pred})"));
+                    }
+                }
+            }
+        }
+
+        if predicates.is_empty() {
+            String::new()
+        } else {
+            predicates.join(" AND ")
+        }
+    }
+}
+
+/// Specialized persona shell targets for auto-routing upon authentication.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
+pub enum TargetPersona {
+    AdminDesk,
+    CustomerPortal,
+    StudentClassroom,
+    WarehouseWorker,
+    ShopfloorMes,
+    ApprovalsDeck,
+}
+
+/// Auto-routes users based on their assigned roles to their specialized primary surface.
+pub struct PersonaAutoRouter;
+
+impl PersonaAutoRouter {
+    /// Determines primary redirect path and target persona based on user's active roles.
+    #[must_use]
+    pub fn resolve_route(user_roles: &[String]) -> (&'static str, TargetPersona) {
+        // Priority 1: System Manager / Administrator -> High-density Admin Cockpit
+        if user_roles
+            .iter()
+            .any(|r| r == ROLE_SYSTEM_MANAGER || r == ROLE_ADMINISTRATOR)
+        {
+            return ("/admin", TargetPersona::AdminDesk);
+        }
+
+        // Priority 2: Warehouse worker / Logistics -> High-contrast mobile scanner
+        if user_roles
+            .iter()
+            .any(|r| r == ROLE_WORKER_USER || r == ROLE_WAREHOUSE_MANAGER)
+        {
+            return ("/worker", TargetPersona::WarehouseWorker);
+        }
+
+        // Priority 3: Shopfloor MES Operator -> Factory digital traveler
+        if user_roles
+            .iter()
+            .any(|r| r == ROLE_MANUFACTURING_USER || r == "Shopfloor MES")
+        {
+            return ("/factory", TargetPersona::ShopfloorMes);
+        }
+
+        // Priority 4: Executive / Lead Approver -> Triage approvals deck
+        if user_roles
+            .iter()
+            .any(|r| r == "Approver" || r == "Department Head")
+        {
+            return ("/approvals", TargetPersona::ApprovalsDeck);
+        }
+
+        // Priority 5: Student / Learner -> Course Classroom & Syllabus
+        if user_roles
+            .iter()
+            .any(|r| r == "Student" || r == "Learner")
+        {
+            return ("/classroom", TargetPersona::StudentClassroom);
+        }
+
+        // Priority 6: Customer / Client -> Portal storefront
+        if user_roles
+            .iter()
+            .any(|r| r == "Customer" || r == "Client")
+        {
+            return ("/portal", TargetPersona::CustomerPortal);
+        }
+
+        // Default: Unified Enterprise Desk
+        ("/desk", TargetPersona::AdminDesk)
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -1044,4 +1353,135 @@ mod tests {
             0
         ));
     }
+
+    #[test]
+    fn test_visual_permission_matrix_generation_and_mutation() {
+        let mut reg = DynamicRolePermissionRegistry::with_defaults();
+        let doctypes = vec!["Sales Order".to_string(), "Job Card".to_string()];
+
+        let mut matrix = VisualPermissionMatrix::from_registry(&reg, &doctypes);
+        assert!(matrix.doctypes.contains(&"Sales Order".to_string()));
+        assert!(matrix.doctypes.contains(&"Job Card".to_string()));
+        assert!(matrix.roles.contains(&ROLE_WORKER_USER.to_string()));
+
+        // Worker originally cannot delete Job Card
+        let cell = matrix.cells.get("Job Card").unwrap().get(ROLE_WORKER_USER).unwrap();
+        assert!(!cell.p_delete);
+
+        // Update cell via matrix
+        let mut updated_cell = cell.clone();
+        updated_cell.p_delete = true;
+        matrix.update_cell("Job Card", ROLE_WORKER_USER, updated_cell);
+
+        // Apply back to registry
+        matrix.apply_to_registry(&mut reg);
+
+        // Verify that Worker can now delete Job Card in registry
+        let worker_roles = vec![ROLE_WORKER_USER.to_string()];
+        let worker_job_card = reg.effective_permissions(&worker_roles, "Job Card");
+        assert!(worker_job_card.can_delete);
+    }
+
+    #[test]
+    fn test_rls_filter_rule_compilation() {
+        let mut reg = RlsRegistry::with_standard_defaults();
+
+        // 1. Sales User on Sales Order
+        let sales_roles = vec![ROLE_SALES_USER.to_string()];
+        let filter = reg.compile_where_clause(
+            "Sales Order",
+            "agent_007@corp.com",
+            &sales_roles,
+            &["GlobalCorp".to_string()],
+        );
+        assert_eq!(filter, "(owner = \"agent_007@corp.com\")");
+
+        // 2. Accountant on Sales Invoice with company scope
+        let acct_roles = vec![ROLE_ACCOUNTANT_USER.to_string()];
+        let comp_filter = reg.compile_where_clause(
+            "Sales Invoice",
+            "cfo@corp.com",
+            &acct_roles,
+            &["US-West".to_string(), "EU-Central".to_string()],
+        );
+        assert_eq!(
+            comp_filter,
+            "(company IN [\"US-West\", \"EU-Central\"] OR company IS NULL)"
+        );
+
+        // 3. Admin bypass
+        let admin_roles = vec![ROLE_SYSTEM_MANAGER.to_string()];
+        assert_eq!(
+            reg.compile_where_clause("Sales Order", "admin@corp.com", &admin_roles, &[]),
+            ""
+        );
+        assert_eq!(
+            reg.compile_where_clause("Sales Order", "Administrator", &sales_roles, &[]),
+            ""
+        );
+
+        // 4. Custom SurrealQL predicate
+        reg.add_rule(RlsFilterRule {
+            id: "rls_custom_tier".into(),
+            doctype: "Customer".into(),
+            role: ROLE_SALES_USER.into(),
+            rule_name: "Only VIP customers".into(),
+            condition_type: RlsConditionType::CustomSurrealqlPredicate("tier = 'VIP'".into()),
+            is_active: true,
+        });
+
+        let cust_filter = reg.compile_where_clause(
+            "Customer",
+            "sales@corp.com",
+            &sales_roles,
+            &[],
+        );
+        assert_eq!(cust_filter, "(tier = 'VIP')");
+
+        // 5. Delete rule
+        assert!(reg.delete_rule("rls_custom_tier"));
+        assert!(!reg.delete_rule("non_existent"));
+    }
+
+    #[test]
+    fn test_persona_auto_router_resolution() {
+        // 1. System Manager -> /admin
+        let (route, persona) = PersonaAutoRouter::resolve_route(&[
+            "Employee".to_string(),
+            ROLE_SYSTEM_MANAGER.to_string(),
+        ]);
+        assert_eq!(route, "/admin");
+        assert_eq!(persona, TargetPersona::AdminDesk);
+
+        // 2. Worker User -> /worker
+        let (route, persona) = PersonaAutoRouter::resolve_route(&[ROLE_WORKER_USER.to_string()]);
+        assert_eq!(route, "/worker");
+        assert_eq!(persona, TargetPersona::WarehouseWorker);
+
+        // 3. Manufacturing User -> /factory
+        let (route, persona) = PersonaAutoRouter::resolve_route(&[ROLE_MANUFACTURING_USER.to_string()]);
+        assert_eq!(route, "/factory");
+        assert_eq!(persona, TargetPersona::ShopfloorMes);
+
+        // 4. Approver -> /approvals
+        let (route, persona) = PersonaAutoRouter::resolve_route(&["Approver".to_string()]);
+        assert_eq!(route, "/approvals");
+        assert_eq!(persona, TargetPersona::ApprovalsDeck);
+
+        // 5. Student -> /classroom
+        let (route, persona) = PersonaAutoRouter::resolve_route(&["Student".to_string()]);
+        assert_eq!(route, "/classroom");
+        assert_eq!(persona, TargetPersona::StudentClassroom);
+
+        // 6. Customer -> /portal
+        let (route, persona) = PersonaAutoRouter::resolve_route(&["Customer".to_string()]);
+        assert_eq!(route, "/portal");
+        assert_eq!(persona, TargetPersona::CustomerPortal);
+
+        // 7. General user fallback -> /desk
+        let (route, persona) = PersonaAutoRouter::resolve_route(&["General Auditor".to_string()]);
+        assert_eq!(route, "/desk");
+        assert_eq!(persona, TargetPersona::AdminDesk);
+    }
 }
+
