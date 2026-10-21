@@ -1,4 +1,4 @@
-# Multi-Stage musl/scratch Static Binary Container for RustNext Enterprise
+# Multi-Stage musl/scratch Static Binary Container for rust-web-land (rwl) Enterprise
 FROM rust:1.85-bullseye AS builder
 
 WORKDIR /app

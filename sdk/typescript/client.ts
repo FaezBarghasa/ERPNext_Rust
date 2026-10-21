@@ -1,7 +1,7 @@
-// RustNext Type-Safe API Client
+// rust-web-land (rwl) Type-Safe API Client
 import type { LoginResponse, DocumentResponse, WebhookSubscription } from './api';
 
-export class RustNextClient {
+export class RustWebLandClient {
   constructor(private baseUrl: string, private token?: string) {}
 
   setToken(token: string) {
@@ -52,3 +52,7 @@ export class RustNextClient {
     });
   }
 }
+
+// Backward compatibility & shorthand aliases
+export { RustWebLandClient as RustNextClient, RustWebLandClient as RWLClient };
+

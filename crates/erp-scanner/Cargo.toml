@@ -4,7 +4,7 @@ version.workspace = true
 edition.workspace = true
 authors.workspace = true
 license.workspace = true
-description = "Native high-velocity QR, Barcode, and Laser Scanner intelligence engine for RustNext ERP"
+description = "Native high-velocity QR, Barcode, and Laser Scanner intelligence engine for rust-web-land (rwl)"
 
 [dependencies]
 serde = { workspace = true }

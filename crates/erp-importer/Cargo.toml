@@ -4,7 +4,7 @@ version.workspace = true
 edition.workspace = true
 authors.workspace = true
 license.workspace = true
-description = "High-velocity universal data ingestion and spreadsheet mapping engine for RustNext ERP"
+description = "High-velocity universal data ingestion and spreadsheet mapping engine for rust-web-land (rwl)"
 
 [dependencies]
 serde = { workspace = true }

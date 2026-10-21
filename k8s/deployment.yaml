@@ -1,23 +1,23 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: rustnext-deployment
-  namespace: rustnext
+  name: rwl-deployment
+  namespace: rust-web-land
   labels:
-    app: rustnext
+    app: rwl
 spec:
   replicas: 3
   selector:
     matchLabels:
-      app: rustnext
+      app: rwl
   template:
     metadata:
       labels:
-        app: rustnext
+        app: rwl
     spec:
       containers:
-        - name: rustnext
-          image: rustnext:latest
+        - name: rwl
+          image: rust-web-land:latest
           imagePullPolicy: IfNotPresent
           ports:
             - containerPort: 8080
@@ -27,9 +27,9 @@ spec:
               name: http3
           envFrom:
             - configMapRef:
-                name: rustnext-config
+                name: rwl-config
             - secretRef:
-                name: rustnext-secrets
+                name: rwl-secrets
           livenessProbe:
             httpGet:
               path: /healthz/live
@@ -59,4 +59,4 @@ spec:
       volumes:
         - name: data-volume
           persistentVolumeClaim:
-            claimName: rustnext-data-pvc
+            claimName: rwl-data-pvc

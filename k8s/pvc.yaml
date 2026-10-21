@@ -1,8 +1,8 @@
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
-  name: rustnext-data-pvc
-  namespace: rustnext
+  name: rwl-data-pvc
+  namespace: rust-web-land
 spec:
   accessModes:
     - ReadWriteOnce

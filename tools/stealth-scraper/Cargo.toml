@@ -4,7 +4,7 @@ version.workspace = true
 edition.workspace = true
 authors.workspace = true
 license.workspace = true
-description = "Stealth anti-detection market intelligence and price scraper for RustNext ERP"
+description = "Stealth anti-detection market intelligence and price scraper for rust-web-land"
 
 [dependencies]
 serde = { workspace = true }

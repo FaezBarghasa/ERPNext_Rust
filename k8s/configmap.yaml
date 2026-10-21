@@ -1,10 +1,10 @@
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: rustnext-config
-  namespace: rustnext
+  name: rwl-config
+  namespace: rust-web-land
 data:
   RUST_LOG: "info"
   MICRO_MODE: "false"
-  ACME_EMAIL: "admin@enterprise.local"
-  DATABASE_PATH: "surrealkv:///data/rustnext.db"
+  ACME_EMAIL: "admin@rust-web-land.local"
+  DATABASE_PATH: "surrealkv:///data/rwl.db"

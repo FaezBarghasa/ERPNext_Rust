@@ -1,10 +1,10 @@
 apiVersion: v1
 kind: Service
 metadata:
-  name: rustnext-service
-  namespace: rustnext
+  name: rwl-service
+  namespace: rust-web-land
   labels:
-    app: rustnext
+    app: rwl
 spec:
   type: ClusterIP
   ports:
@@ -17,4 +17,4 @@ spec:
       protocol: UDP
       name: http3
   selector:
-    app: rustnext
+    app: rwl
