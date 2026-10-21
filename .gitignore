@@ -5,3 +5,4 @@ crates/**/data
 *.wal
 *.db
 LOCK
+.oxide/anatomy_index.json

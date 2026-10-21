@@ -2,3 +2,4 @@ project.db/
 cache/
 logs/
 runtime/
+anatomy_index.json
