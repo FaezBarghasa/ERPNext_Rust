@@ -40,6 +40,8 @@ edition = "2024"
 authors = ["Faez Barghasa <faez.barghasa.org@gmail.com>"]
 license = "MIT OR Apache-2.0"
 repository = "https://github.com/FaezBarghasa/ERPNext_Rust"
+description = "rust-web-land — Universal No-Code WebApp Builder Platform & Enterprise Operating Substrate"
+
 
 [workspace.dependencies]
 # Internal workspace crates

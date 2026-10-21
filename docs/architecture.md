@@ -1,141 +1,142 @@
-# System Architecture & Engineering Specification
+# `rust-web-land` (`rwl`) — System Architecture & Engineering Specification
 
 ## 1. Executive Architectural Charter
 
-`rustnext` (`ERPNext_workspace`) is a planetary-scale, multi-tenant enterprise operating system implemented entirely in pure Rust. It eliminates foreign runtime daemons, interpreted dynamic scripting bottlenecks, and disjoint database middleware.
+`rust-web-land` (`rwl`) is a universal, no-code web application builder platform and planetary-scale enterprise operating substrate implemented entirely in pure Rust. It unifies visual drag-and-drop design on the desktop with high-efficiency deployment to low-cost Linux VPS hosts strictly capped at **$\le 1\,\text{GB}$ RAM**, eliminating foreign runtime daemons (no Node.js, Python, MariaDB, or Redis), interpreted scripting bottlenecks, and container bloat.
 
 The platform is constructed on three foundational pillars:
-1. **Asynchronous Network Substrate ([Actix-web](https://actix.rs)):** Multi-tenant HTTP/1.1, HTTP/2, HTTP/3, and WebSocket actor dispatchers with in-process automated ACME TLS certificate lifecycle management and connection pooling.
-2. **Embedded Multi-Model Persistence ([SurrealDB](https://surrealdb.com)):** Embedded relational tables, graph relationships, bitemporal ledgers, and vector embeddings in a zero-IPC embedded storage core.
-3. **Reactive Universal Client ([Dioxus](https://dioxuslabs.com)):** Signal-based cross-platform client shell rendering schema-driven forms, interactive Gantt charts, SPC control views, and 3D warehouse layouts.
+1. **Desktop Visual Studio & UI Component Fabric ([Dioxus 0.7](https://dioxuslabs.com)):** Cross-platform visual studio (`crates/desk-app`, `crates/desk-components`) delivering WYSIWYG page building, dynamic DocType schema modeling, visual workflow nodes, and role-adaptive persona projections (`/portal`, `/worker`, `/factory`, `/approvals`, `/admin`).
+2. **Asynchronous Network Substrate & Persistence ([Actix-web](https://actix.rs) & [SurrealDB](https://surrealdb.com)):** Multi-tenant HTTP/1.1, HTTP/2, HTTP/3, and WebSocket actor dispatchers with in-process automated ACME TLS certificate lifecycle management, paired with embedded SurrealKV storage running under $45\,\text{MB}$ idle RSS.
+3. **Automated CI/CD & Incremental Upgrade Engine (`crates/rwl`, `tools/doctype-diff`):** 1-click deployment bundle exporter, non-destructive bitemporal schema diffing, hot asset replacement, and automated rollback mechanisms ensuring zero production downtime.
 
 ---
 
-## 2. High-Level Substrate Topology
+## 2. High-Level Substrate Topology & Delivery Pipeline
 
 ```mermaid
 graph TD
-    Client[Web, Desktop & Edge POS Clients] -->|HTTP/2, HTTP/3, WS| Net[frappe-net Engine]
-    
-    subgraph Core Framework Layer
-        Net --> ACME[In-Process ACME Gateway]
-        Net --> Session[Scoped Session Pool & TenantContext]
-        Net --> Meta[frappe-meta: DynamicDoc & DDL Compiler]
-        Net --> Frame[frappe-framework: Lifecycle & WASI Sandbox]
-        Frame --> Storage[frappe-storage: SurrealDB & CRDT Mesh]
+    subgraph DesktopStudio["Desktop Visual Studio (Dioxus 0.7 Native)"]
+        D1["Visual Drag-and-Drop Page Builder"]
+        D2["DocType Schema & Relations Modeler"]
+        D3["Visual Logic & Workflow Node Editor"]
+        D4["Multi-Persona Panel Designer"]
+        D5["1-Click Turnkey Blueprints (CMS, LMS, SaaS, ERP)"]
     end
-    
-    subgraph Business Intelligence & Execution Layer
-        Frame --> Accounting[erp-accounting: Multi-Book GL, Print Engine & Payments]
-        Frame --> Inventory[erp-inventory: FIFO Queue & Batch Tracking]
-        Frame --> Mfg[erp-manufacturing: BOM, MILP Scheduler & SPC Charts]
-        Frame --> PPM[erp-ppm: EVMS, CPM/CCPM & Monte Carlo]
-        Frame --> WMS[erp-wms: 3D Slotting, TSP & VDA 5050 AMR]
-        Frame --> Asset[erp-asset: LRS, Weibull RUL & Safety LOTO]
-        Frame --> Software[erp-software: ASC 606 & SaaS Subscription]
-        Frame --> Trade[erp-trade: Metered Billing, 3-Way Match & Woo Ingest]
-        Frame --> CMS[erp-cms: Block Canvas & <10ms SSR Compiler]
-        Frame --> HR[erp-hr: Biometrics & Multi-Component Payroll]
-        Frame --> CRM[erp-crm: Lead Pipelines & Conversion Scoring]
-        Frame --> Support[erp-support: SLA Escalation Engine]
-        Frame --> Lending[erp-lending: Amortization & Loan Accruals]
-        Frame --> Learning[erp-learning: Syllabus Progression & Quizzes]
+
+    subgraph RWLTooling["rwl CLI & Pipeline Engine"]
+        CLI1["rwl init: Blueprint Scaffolder"]
+        CLI2["rwl studio: Local Visual Workbench"]
+        CLI3["rwl export: 1GB Capped Package Generator"]
+        CLI4["rwl deploy: Zero-Downtime Hot Deployer"]
+        CLI5["doctype-diff: Non-Destructive Schema Migration"]
     end
-    
-    subgraph Presentation & UI Components
-        DeskApp[desk-app Shell] --> DeskComp[desk-components]
-        DeskComp -.->|LiveSync WebSocket & REST| Net
+
+    subgraph CorePlatform["Core Rust Substrate (32 Workspace Crates)"]
+        Net["frappe-net: Actix-Web, QUIC/HTTP3, WebSockets, ACME"]
+        Meta["frappe-meta: DocType Engine, DDL Compiler, RBAC"]
+        Frame["frappe-framework: Lifecycle State Machines, WASI 0.2"]
+        Storage["frappe-storage: Embedded SurrealKV, CRDT Mesh, CAS Drive"]
+        Biz["Business Domains: Accounting, Inventory, Manufacturing, CRM, etc."]
     end
+
+    subgraph TargetHost["Production Host ($3-$5/mo Linux VPS / ARM SBC)"]
+        VPS1["Stripped Server Binary (<25MB)"]
+        VPS2["Embedded SurrealKV Storage (Zero External DBs)"]
+        VPS3["Systemd / Docker Envelope: MemoryMax=1024M"]
+    end
+
+    DesktopStudio --> RWLTooling
+    RWLTooling --> CorePlatform
+    CorePlatform --> TargetHost
 ```
 
 ---
 
-## 3. Infrastructure & Framework Architecture
+## 3. Workspace Crates Topology (32 Crates)
 
-### 3.1 `frappe-meta`
-- **Dynamic Polymorphic Document Bus (`DynamicDocument`)**: Implements inline `SmallVec<[DocField; 16]>` storage on the CPU stack with `DocValue` enum, avoiding heap allocations for typical enterprise records.
-- **Dynamic SurrealQL Compiler (`compile_to_surrealql`)**: Statically compiles declarative `DocTypeSchema` structs into `SCHEMAFULL` SurrealQL table definitions, field assertions, unique constraints, and foreign relations.
-- **Lock-Free Autoname Engine (`NamingSeriesParser`)**: Formats sequential naming patterns (e.g. `DRN-.YYYY.-.#####`) in sub-microsecond time bounds.
-- **AI Schema Synthesizer (`AiSchemaSynthesizer`)**: Transforms natural language industry descriptions into normalized DocType hierarchies, fields, and default Chart of Accounts configurations.
-- **Vertical Profile Registry (`ProfileRegistry`)**: Provides pre-configured, instantly deployable schemata for Restaurants, Clinics, E-Commerce brands, and Service Agencies.
+The `rust-web-land` workspace organizes its capabilities across 6 decoupled functional tiers:
 
-### 3.2 `frappe-framework`
-- **Document Lifecycle State Machine**: Enforces strict transitions: `Draft` $\to$ `Submitted` $\to$ `Cancelled` with recursive validation hooks.
-- **Fault-Isolated WASI 0.2 Sandbox (`RealSandbox`)**: Wasmtime-based execution engine with deterministic instruction fuel metering ($1,000,000$ operations limit) and a strict 32MB linear memory ceiling.
-- **RBAC-Gated AI Tool Dispatcher (`ErpToolDispatcher`)**: Strongly typed LLM function-calling bridge validating user roles before executing domain actions (e.g. `CreateQuotation`, `SubmitOrder`).
+### 3.1 CLI & Application Pipeline
+- **`rwl`**: Unified developer and operator CLI. Implements commands:
+  - `rwl init`: Instant project bootstrapping from CMS, LMS, SaaS, and ERP blueprints.
+  - `rwl studio`: Launches the visual drag-and-drop builder interface at `http://127.0.0.1:8080/builder`.
+  - `rwl export`: Emits an optimized release bundle pre-tuned with systemd unit limits (`MemoryMax=1024M`).
+  - `rwl deploy`: Pushes incremental updates to live VPS servers over authenticated HTTP/SSH.
+  - `rwl serve`: Direct standalone production server execution with embedded SurrealKV.
+  - `rwl status`: Real-time telemetry, memory usage, and health checks.
 
-### 3.3 `frappe-storage`
-- **Embedded Multi-Model SurrealDB Driver**: Manages isolated multi-tenant namespaces (`tenant_{id}`) and databases with zero-leak connection pools.
-- **Local-First CRDT Mesh**: State-based PN-Counters (`PnCounter`), Vector Clocks (`VectorClock`), and Last-Write-Wins Document states (`LwwDocumentState`) supporting conflict-free asynchronous node convergence.
-- **Durable Offline Outbox (`OfflineOutboxManager`)**: Queues mutations locally on edge devices and POS terminals during network partitions for automatic synchronization.
-- **Cryptographic Audit Lineage (`MerkleHasher`)**: Constructs SHA-256 Merkle hash trees across audit logs for immutable regulatory compliance.
-- **Field-Level Envelope Encryption (`EnvelopeEncryption`)**: AES-256-GCM / ChaCha20-Poly1305 AEAD envelope encryption pairing Master Key Encryption Keys (KEK) with dynamic per-tenant Data Encryption Keys (DEK).
+### 3.2 Framework & Core Substrate
+- **`frappe-meta`**: Statically compiles declarative `DocTypeSchema` structs into `SCHEMAFULL` SurrealQL table definitions, field assertions, unique constraints, and foreign relations. Provides lock-free autoname series parsing (`NamingSeriesParser`) and AI schema synthesis (`AiSchemaSynthesizer`).
+- **`frappe-framework`**: Rigid document lifecycle state machine (`validate` $\to$ `before_save` $\to$ `on_update` $\to$ `before_submit` $\to$ `on_submit` $\to$ `on_cancel`). Provides embedded Rhai dynamic scripting and WASI 0.2 Wasmtime sandbox with deterministic instruction fuel metering ($1,000,000$ operations limit) and linear memory bounds.
+- **`frappe-storage`**: Multi-model SurrealDB 3.3 embedded driver with zero-leak connection pooling, SHA-256 content-addressable deduplicated drive (`DeduplicatedStorage`), CRDT vector clocks (`VectorClock`), durable offline outbox, and field-level AEAD envelope encryption (AES-256-GCM / ChaCha20-Poly1305).
+- **`frappe-net`**: Primary transport gateway implementing Actix-Web HTTP/1.1 and HTTP/2, QUIC & HTTP/3 (`quic_h3_stream.rs`), LiveSync WebSockets (`live.rs`), automated in-process Let's Encrypt TLS (`AcmeGateway`), dynamic RBAC evaluation, Subsonic / OpenSubsonic API v1.16+ views, and OTT video streaming.
 
-### 3.4 `frappe-net`
-- **Sub-64MB Micro-Topology (`MicroTopologyConfig`)**: Optimized runtime profile configured for low-memory appliances (8MB write buffer, 16MB read cache, bounded 1024-item task queues, 2MB payload cap).
-- **DocType Metadata Introspection API (`/api/v2/meta`, `/api/v2/meta/{doctype}`)**: Exposes all 44 standard ERPNext schemas directly from `frappe_meta::registry::DocTypeRegistry` to client interfaces and hypermedia shells.
-- **Automated Double-Entry Invoice Settlement Reconciliation**: Payment entries and gateway payment charges (`/api/v2/payments/charge`, `/api/v2/method/accounting/payment-entry`) automatically query and reconcile the target `Sales Invoice` or `Purchase Invoice` in SurrealDB, decrementing `outstanding_amount` and transitioning document status from `Unpaid` to `Paid` or `Partly Paid`.
-- **In-Process Automated ACME Gateway (`AcmeGateway`)**: Manages Let's Encrypt automated certificate negotiation, caching, and host-to-tenant SNI routing.
-- **Tenant Context Scoping (`TenantContext`, `resolve_scoped_session`)**: Strictly isolates tenant database handles extracted from headers (`X-Tenant-Id`) or subdomain routing.
-- **Dynamic RBAC & Security Gateway**: Role permission registry with permlevels (0..9), MFA TOTP verification, LoginGuard brute-force protection, CIDR IP filtering, and bitemporal audit trail ledger.
-- **High-Performance Video & Audio Streaming APIs**: Actix-Web endpoints serving HLS v6 video manifests, SSAI stitched segments, FAST channel EPGs, Stremio addon protocol, Subsonic / OpenSubsonic v1.16+ views (`/rest/*.view`), Owncast-style live radio LL-HLS audio and chat, and Audioserve-grade chapters and LWW cross-device bookmarks.
+### 3.3 Visual Client & Desktop Studio
+- **`desk-app`**: Cross-platform runtime shell built with native Dioxus 0.7. Employs polymorphic hardware abstraction (`MobileHardwareAbstractionLayer`) between Android JNI and W3C Web APIs, role-adaptive persona router (`/portal`, `/worker`, `/factory`, `/approvals`, `/admin`), and offline PWA service worker compiler.
+- **`desk-components`**: Reactive UI component library providing dynamic form synthesis (`DocTypeForm`), virtualized data tables rendering up to 1,000,000 rows at sustained 60 FPS, interactive CPM Gantt charts, Nelson-rule SPC control viewers, 3D WMS warehouse slotting visualizers, and visual query builders.
 
-### 3.5 `erp-cms-core`
-- **Zero-Allocation `#![no_std]` Edge Telemetry**: Bounded wire structs (`AudioPlaybackPacket`) reporting mode, track ID, position, volume, and EQ preset in 63 bytes with CRC16-CCITT checksum for ARM Cortex-M and RISC-V targets.
-- **Static Edge Canvas Layout (`EdgeCanvasLayout<CAP>`)**: Zero-heap layout structure using `heapless` collections for e-ink warehouse shelf tags, kiosks, and embedded displays.
+### 3.4 Enterprise Business Domain Crates
+- **`erp-accounting`**: Multi-book double-entry general ledger enforcing $\sum \text{Debit} - \sum \text{Credit} = 0$, Benford's Law fraud guard (`BenfordGuard`), enterprise printable document engine (`print_format.rs`), and payment gateway processor with automated double-entry GL settlement.
+- **`erp-inventory`**: Real-time Stock Ledger Entries (SLE), SIMD-aligned FIFO cost valuation queues, hierarchical warehouse trees, and lot/serial number tracking.
+- **`erp-manufacturing`**: Recursive multi-level BOM explosion, Mixed-Integer Linear Programming (MILP) job shop scheduler, and Statistical Process Control (`SpcEngine`).
+- **`erp-ppm`**: Critical Path Method (CPM/CCPM), ANSI/EIA-748 Earned Value Management System (EVMS), and 100k-iteration Monte Carlo stochastic risk simulator.
+- **`erp-wms`**: 3D volumetric slotting, TSP pick path optimization, GS1 SSCC-18 handling units, and VDA 5050 AMR fleet coordination.
+- **`erp-asset`**: Linear Referencing Systems (LRS), Weibull Remaining Useful Life (RUL) predictive degradation, and cryptographic Permit-to-Work (PTW) / Lockout-Tagout (LOTO) interlocks.
+- **`erp-software`**: ASC 606 5-step standalone selling price revenue recognition, graduated SaaS subscription tiers, and SLA penalty credit ledgers.
+- **`erp-trade`**: Commercial cascading pricing rules, metered billing, landed cost allocation, automated 3-way invoice matching, and streaming WooCommerce catalog migration.
+- **`erp-hr`**: Employee directory, biometric attendance logging, flexible salary rule matrix, and automated payroll slip generation.
+- **`erp-crm`**: Multi-stage lead acquisition funnels, deal conversion state machines, and weighted opportunity scoring.
+- **`erp-quality`**: Inspection templates, Non-Conformance Reports (NCR), and CAPA remediation workflows.
+- **`erp-support`**: SLA response/resolution timers, escalation matrices, and support gameplans.
+- **`erp-lending`**: Reducing-balance and compound interest accrual with exact-decimal amortization schedules.
+- **`erp-learning`**: Course syllabi, lesson progression state machines, student enrollment, and quiz assessment engines.
+- **`erp-cms-core`**: Bare-metal `![no_std]` wire telemetry packet (`AudioPlaybackPacket`) with CRC16-CCITT checksum for Cortex-M microcontrollers.
+- **`erp-cms`**: Declarative `PageBlock` canvas AST, pre-allocated zero-allocation SSR HTML compiler ($<10\,\text{ms}$ TTFB), 10 prebuilt enterprise template suites with 10 aesthetic themes (100 permutations total), full OTT video streaming, and Master Audio Streaming CMS.
 
-### 3.6 `rbench`
-- **Site Orchestration CLI**: Automates tenant namespace provisioning (`new-site`), fast template deployment (`site deploy`), schema migration (`migrate`), and app archive verification (`install-app`).
-- **Synthetic Load Generator (`benchmark`)**: Multi-threaded async benchmark engine tracking latency percentiles (p50, p90, p95, p99) and QPS throughput across in-memory and cluster deployments.
+### 3.5 Scanning, Import & Extension SDK
+- **`erp-scanner` & `erp-scanner-core`**: High-throughput barcode, QR code, and hardware scanner event pipeline.
+- **`erp-importer`**: High-volume transactional data importer supporting CSV/JSON with type coercion and rollback.
+- **`erpnext-plugin-sdk`**: Extension SDK with WASM/WASI plugin interfaces and DocType bindings.
 
-### 3.7 `desk-app` & `desk-components`
-- **Universal Hardware Abstraction Layer (`MobileHardwareAbstractionLayer`)**: Async Rust 2024 trait routing biometric verification, barcode scanning, thermal ESC/POS printing, and geolocation between Android JNI (`AndroidJniHalAdapter`) and W3C Web APIs (`WebApisHalAdapter`).
-- **Role-Adaptive Multi-Persona Shell (`PersonaShellConfig`, `render_desk_shell_html`)**: Projects 5 specialized interfaces (`ClientCustomer`, `WarehouseWorker`, `ShopfloorMes`, `ManagerApprover`, `SystemAdmin`) and unified enterprise desktop from a single binary.
-- **Schema-Driven Dynamic Form & List View Engines (`render_list_view_html`, `render_form_view_html`)**: Dynamically queries `/api/v2/meta/{doctype}` and generates typed form inputs (`Currency`, `Float`, `Int`, `Date`, `Datetime`, `Check`, `Select`, `Textarea`), required field indicators, raw JSON developer inspector toggle, SurrealDB persistence, and document lifecycle controls (`Draft` $\to$ `Submitted` $\to$ `Cancelled`).
-- **Anti-Slop Craft Standards**: Crisp inline SVG vectors, Emil Kowalski physics curves (`cubic-bezier(0.16, 1, 0.3, 1)`), active tactile scale feedback (`transform: scale(0.98)`), and restyled scrollbars.
-- **Local-First Edge Synchronization (`LocalMutationBuffer`, `CloudSyncArbiter`)**: Enforces offline resilience via causal vector clocks (`VectorClock`), commutative PN-Counters for stock movements, and LWW element sets with cryptographic tombstones.
-- **Dual Mobile Delivery Engine (`PwaWebManifest`, `ServiceWorkerGenerator`)**: Compiles theme-aware W3C web app manifests, caching service workers (`sw.js`), and Android NDK packaging descriptors (`cargo-apk`).
-
----
-
-## 4. Enterprise Business Domain Crates
-
-| Crate | Architectural Domain | Key Engineering Mechanisms |
-| :--- | :--- | :--- |
-| **`erp-accounting`** | General Ledger, Print & Payments | Multi-book ledger enforcing $\sum \text{Debit} - \sum \text{Credit} = 0$, Benford's Law statistical fraud guard (`BenfordGuard`), enterprise printable document engine (`print_format.rs`), and pluggable payment gateway with automated double-entry GL reconciliation (`payment_gateway.rs`). |
-| **`erp-inventory`** | Physical Stock & Warehouse Valuation | Real-time Stock Ledger Entries (SLE), SIMD-aligned FIFO cost valuation queues (`consume_fifo`), and batch/serial expiration validation. |
-| **`erp-manufacturing`** | Production Engineering & Quality | Recursive multi-level BOM explosion, Mixed-Integer Linear Programming (MILP) job shop scheduler (`MilpJobShopScheduler`), and Statistical Process Control (`SpcEngine`) with Nelson rules. |
-| **`erp-ppm`** | Project Portfolio & Scheduling | Critical Path Method (CPM/CCPM), ANSI/EIA-748 EVMS metrics (CPI, SPI, EAC, TCPI), and 100k-iteration Monte Carlo stochastic risk simulator (`MonteCarloSimulator`). |
-| **`erp-wms`** | Warehouse Execution & Robotics | 3D volumetric slotting, TSP pick path optimization, GS1 SSCC-18 handling units, and VDA 5050 AMR automated fleet coordination (`Vda5050FleetCoordinator`). |
-| **`erp-asset`** | Asset Life Cycle & Operational Safety | Linear Referencing Systems (LRS), Weibull $(\beta, \eta)$ Remaining Useful Life (RUL) predictive degradation, and tamper-evident Permit-to-Work (PTW) / Lockout-Tagout (LOTO) interlocks. |
-| **`erp-software`** | Subscription Billing & Revenue Recognition | ASC 606 5-step standalone selling price (SSP) allocation, graduated SaaS subscription tiers, and SLA penalty credit ledgers. |
-| **`erp-trade`** | Commercial Operations & Logistics | Cascading pricing rules, metered billing models, landed cost allocation, automated 3-way invoice matching (`InvoiceMatchingEngine`), and streaming WooCommerce migration (`WooMigrationEngine`). |
-| **`erp-cms-core`** | `#![no_std]` Edge CMS & Wire Telemetry | 63-byte binary wire telemetry packet (`AudioPlaybackPacket`) with CRC16-CCITT checksum for Cortex-M bare-metal microcontrollers, and bounded static canvas layouts (`EdgeCanvasLayout`). |
-| **`erp-cms`** | Block Canvas, Video OTT & Audio Streaming CMS | Declarative `PageBlock` canvas AST, pre-allocated Server-Side HTML Rendering (`SsrEngine` with $<10\text{ms}$ TTFB), atomic e-commerce checkout (`AtomicCheckoutEngine`), 10 prebuilt enterprise template suites with 10 aesthetic themes (100 permutations total), full OTT video streaming (HLS v6, SCTE-35 SSAI, FAST linear EPG channels, Stremio v1, Video X-Ray), and Master Audio Streaming CMS (lossless FLAC compression, 10-band ISO EQ, karaoke LRC, Camelot harmonic & transcript TF-IDF recommendation engine, EBU R128 normalizer, SoundCloud waveforms, procedural sleep soundscapes, Owncast live radio, Audioserve chapters/bookmarks, and Subsonic API v1.16+). |
-| **`erp-hr`** | Human Resources & Workforce Management | Departmental structures, biometric attendance logging, flexible salary rule matrix, and automated payroll slip generation. |
-| **`erp-crm`** | Sales Pipeline & Customer Engagement | Multi-stage lead acquisition funnels, deal conversion state machines, and weighted opportunity scoring algorithms. |
-| **`erp-support`** | Service Desk & Customer Support | Ticket lifecycle management, multi-tier SLA response/resolution countdown timers, and automated priority escalation matrices. |
-| **`erp-lending`** | Loan Management & Credit Portfolios | Reducing-balance and compound interest accrual engines with exact-decimal amortization table generation. |
-| **`erp-learning`** | Learning Management System (LMS) | Course syllabi, lesson progression state machines, student enrollment, and automated quiz evaluation engines. |
+### 3.6 Tooling & Quality Gate
+- **`rbench`**: Multi-tenant site provisioning, packaging, and high-concurrency load testing harness.
+- **`doctype-diff`**: AST-level schema comparison tool detecting added, modified, or removed DocType fields for non-destructive zero-downtime upgrades.
+- **`doctype-codegen`**: Generates strongly typed Rust structures and TypeScript definitions directly from DocType definitions.
+- **`stealth-scraper`**: Distributed market catalog synchronizer.
 
 ---
 
-## 5. Security & Cryptographic Invariants
+## 4. Production Hardening & Security Guarantees
 
-1. **Accounting Invariant**: Every posted journal entry strictly satisfies $\sum \text{Debit} - \sum \text{Credit} = 0$ with exact decimal arithmetic (`rust_decimal`), eliminating floating-point rounding errors.
-2. **Tenant Isolation**: Zero shared mutable memory across tenant scopes. Database sessions are partitioned by SurrealDB namespaces (`tenant_{id}`) and decrypted with distinct DEKs.
-3. **Execution Sandbox**: Custom plugin scripts are trapped in WASI 0.2 Wasmtime sandboxes bounded by deterministic fuel metering and linear memory ceilings.
-4. **Zero-Knowledge Financial Proofs**: Solvency and ledger balance equations can be mathematically attested to auditors via non-interactive zero-knowledge arithmetic proofs without revealing confidential transaction amounts.
-5. **Tamper-Evident Logs**: Audit mutations form a cryptographically linked Merkle tree, preventing retroactive alterations or deletion of ledger entries.
-6. **Edge Convergence Invariant**: Disconnected edge operations reconcile automatically upon cloud reconnection via join semilattices with zero manual conflict resolution.
+1. **Strict 1GB VPS Memory Envelope**:
+   - Standalone binary footprint: $< 25\,\text{MB}$.
+   - Idle RSS: $< 45\,\text{MB}$.
+   - Active full-stack multi-tenant workload: $< 250\,\text{MB}$.
+   - Hardware target: $3–$5/mo VPS instances or low-power ARM single-board computers (Raspberry Pi 4/5, Orange Pi).
+2. **P0 Document Immutability & Parameterized Bindings**:
+   - Direct PUT modifications on submitted documents (`docstatus == 1`) are rejected with HTTP 400 Bad Request.
+   - All dynamic SurrealDB mutations and lookups use parameterized bindings (`.bind(("name", name))`, `$doc`).
+3. **Side-Channel Timing Attack Immunity**:
+   - Webhook signature checks (Stripe, PayPal, HMAC) use constant-time slice comparison (`constant_time_eq_slices`).
+4. **Wasmtime JIT In-Memory Module Cache**:
+   - WebAssembly guest scripts are cached by SHA-256 bytecode hash, eliminating repetitive JIT compilation overhead.
+5. **Hot Ledger Secondary Composite Indexes**:
+   - `gl_entries`: indexed on `(account, posting_date)` and `(voucher_type, voucher_no)`.
+   - `stock_ledger_entries`: indexed on `(item_code, warehouse)` and `(posting_date)`.
+6. **Zero Memory Leaks & Bounded State**:
+   - All in-memory maps (refresh tokens, RMA records, audio timelines, coupons, wishlists) are strictly bounded with oldest-key FIFO eviction.
+7. **Exact Decimal Accounting**:
+   - Complete absence of floating-point rounding errors through `rust_decimal` across general ledgers, stock transactions, and loan amortization.
 
 ---
 
-## 6. Related Documentation & User Guides
+## 5. Related Documentation & Guides
 
-* [Master Architectural Evolution Charter (`docs/master_charter.md`)](file:///home/jrad/RustroverProjects/ERPNext_workspace/docs/master_charter.md)
-* [Universal Templates & Theme Engine Guide (`docs/templates_guide.md`)](file:///home/jrad/RustroverProjects/ERPNext_workspace/docs/templates_guide.md)
-* [Developer & System Administrator Setup Guide (`docs/setup_guide.md`)](file:///home/jrad/RustroverProjects/ERPNext_workspace/docs/setup_guide.md)
-* [Universal Operator & User Guide (`docs/user_guide.md`)](file:///home/jrad/RustroverProjects/ERPNext_workspace/docs/user_guide.md)
-* [Product Requirements Document (`docs/prd.md`)](file:///home/jrad/RustroverProjects/ERPNext_workspace/docs/prd.md)
-
+- 🚀 [**3-Minute Quickstart Guide (`docs/quickstart_3min_guide.md`)**](file:///home/jrad/RustroverProjects/ERPNext_workspace/docs/quickstart_3min_guide.md)
+- 📜 [**Master Architectural Evolution Charter (`docs/master_charter.md`)**](file:///home/jrad/RustroverProjects/ERPNext_workspace/docs/master_charter.md)
+- 📋 [**Product Requirements Document (`docs/prd.md`)**](file:///home/jrad/RustroverProjects/ERPNext_workspace/docs/prd.md)
+- 🛠 [**Developer & Administrator Setup Guide (`docs/setup_guide.md`)**](file:///home/jrad/RustroverProjects/ERPNext_workspace/docs/setup_guide.md)
+- 👤 [**Universal Operator & User Guide (`docs/user_guide.md`)**](file:///home/jrad/RustroverProjects/ERPNext_workspace/docs/user_guide.md)
+- 🎨 [**Universal Templates & Theme Engine Guide (`docs/templates_guide.md`)**](file:///home/jrad/RustroverProjects/ERPNext_workspace/docs/templates_guide.md)
+- 🧪 [**Test-Driven Development (TDD) Specification (`docs/tdd.md`)**](file:///home/jrad/RustroverProjects/ERPNext_workspace/docs/tdd.md)
+- 🧪 [**End-to-End Testing & Verification Plan (`docs/e2e_testing_plan.md`)**](file:///home/jrad/RustroverProjects/ERPNext_workspace/docs/e2e_testing_plan.md)
