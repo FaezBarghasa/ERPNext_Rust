@@ -270,36 +270,42 @@ const DESK_BASE_HTML: &str = r#"<!DOCTYPE html>
             display: flex; align-items: center; gap: 0.6rem; overflow-x: auto; padding-bottom: 1rem; margin-bottom: 1.5rem;
         }
         .shortcut-chip {
-            display: inline-flex; align-items: center; gap: 0.5rem; background: var(--bg-card);
-            border: 1px solid var(--border); padding: 0.4rem 0.85rem; border-radius: 9999px;
+            display: inline-flex; align-items: center; gap: 0.5rem; background: rgba(18, 20, 26, 0.75);
+            backdrop-filter: blur(12px); border: 1px solid rgba(255, 255, 255, 0.08);
+            box-shadow: inset 0 1px 0 0 rgba(255, 255, 255, 0.05); padding: 0.4rem 0.85rem; border-radius: 9999px;
             font-size: 0.8rem; font-weight: 600; color: var(--text-primary); text-decoration: none;
-            cursor: pointer; transition: all 0.2s; white-space: nowrap;
+            cursor: pointer; transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1); white-space: nowrap;
         }
-        .shortcut-chip:hover { border-color: var(--accent); transform: translateY(-1px); }
+        .shortcut-chip:hover { border-color: var(--accent); transform: translateY(-2px); box-shadow: 0 4px 14px -2px var(--accent-glow); }
+        .shortcut-chip:active { transform: scale(0.98); }
         .shortcut-badge { font-size: 0.7rem; padding: 0.1rem 0.4rem; border-radius: 9999px; background: rgba(99, 102, 241, 0.2); color: #818cf8; }
         
-        .welcome-hero { margin-bottom: 2rem; }
+        .welcome-hero { margin-bottom: 2rem; position: relative; }
         .welcome-hero h1 { font-size: 2rem; font-weight: 800; letter-spacing: -0.03em; margin-bottom: 0.35rem; background: linear-gradient(135deg, var(--text-primary), var(--text-secondary)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
-        .welcome-hero p { color: var(--text-secondary); font-size: 0.95rem; }
+        .welcome-hero p { color: var(--text-secondary); font-size: 0.95rem; line-height: 1.5; }
         
         .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 1.25rem; }
         .card {
-            background: var(--bg-card); border: 1px solid var(--border); border-radius: 14px;
-            padding: 1.25rem; cursor: pointer; transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+            background: rgba(18, 20, 26, 0.75); backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            box-shadow: inset 0 1px 0 0 rgba(255, 255, 255, 0.06), 0 8px 24px -6px rgba(0, 0, 0, 0.4);
+            border-radius: 14px; padding: 1.25rem; cursor: pointer; transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
             display: flex; flex-direction: column; position: relative; overflow: hidden;
         }
         .card:hover {
             transform: translateY(-4px); border-color: rgba(99, 102, 241, 0.4);
-            box-shadow: 0 12px 24px -10px var(--accent-glow);
+            box-shadow: inset 0 1px 0 0 rgba(255, 255, 255, 0.12), 0 16px 32px -10px var(--accent-glow);
         }
+        .card:active { transform: scale(0.985); }
         .card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem; }
         .card-icon { width: 40px; height: 40px; border-radius: 10px; background: rgba(99, 102, 241, 0.12); color: #818cf8; display: flex; align-items: center; justify-content: center; }
         .badge { font-size: 0.7rem; font-weight: 600; padding: 0.2rem 0.5rem; border-radius: 9999px; background: rgba(255, 255, 255, 0.06); color: #c7d2fe; border: 1px solid rgba(255, 255, 255, 0.08); }
         .card-title { font-size: 1.1rem; font-weight: 700; margin-bottom: 0.4rem; letter-spacing: -0.01em; }
         .card-desc { font-size: 0.85rem; color: var(--text-secondary); line-height: 1.45; margin-bottom: 1rem; flex: 1; }
         .pills-container { display: flex; flex-wrap: wrap; gap: 0.35rem; }
-        .pill { font-size: 0.75rem; padding: 0.2rem 0.5rem; border-radius: 6px; background: rgba(255, 255, 255, 0.04); color: #cbd5e1; border: 1px solid rgba(255, 255, 255, 0.04); text-decoration: none; transition: all 0.15s; }
-        .pill:hover { background: rgba(99, 102, 241, 0.25); color: #fff; }
+        .pill { font-size: 0.75rem; padding: 0.2rem 0.5rem; border-radius: 6px; background: rgba(255, 255, 255, 0.04); color: #cbd5e1; border: 1px solid rgba(255, 255, 255, 0.04); text-decoration: none; transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1); }
+        .pill:hover { background: rgba(99, 102, 241, 0.25); color: #fff; transform: translateY(-1px); }
+        .pill:active { transform: scale(0.96); }
         
         footer {
             background: var(--bg-secondary); border-top: 1px solid var(--border);
@@ -347,12 +353,12 @@ const DESK_BASE_HTML: &str = r#"<!DOCTYPE html>
                 <div style="padding:0.4rem 0.6rem; font-weight:700; font-size:0.85rem; color:var(--text-primary);">__USERNAME__</div>
                 <div style="padding:0 0.6rem 0.4rem; font-size:0.75rem; color:var(--text-secondary);">System Administrator</div>
                 <div class="user-menu-divider"></div>
-                <div class="user-menu-item" onclick="toggleTheme()"><span id="theme-text">☀️ Switch to Light Mode</span></div>
-                <div class="user-menu-item" onclick="showToast('Session Defaults active for default site', 'info')">⚙️ Session Defaults</div>
-                <div class="user-menu-item" onclick="alert('Shortcuts:\nCtrl+K: AwesomeBar Global Search\nCtrl+S: Save Document\nCtrl+B: Toggle Sidebar\nCtrl+P: Print')">⌨️ Keyboard Shortcuts</div>
+                <div class="user-menu-item" onclick="toggleTheme()"><span id="theme-text"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:middle;margin-right:6px;"><circle cx="12" cy="12" r="5"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>Switch to Light Mode</span></div>
+                <div class="user-menu-item" onclick="showToast('Session Defaults active for default site', 'info')"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:middle;margin-right:6px;"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>Session Defaults</div>
+                <div class="user-menu-item" onclick="alert('Shortcuts:\nCtrl+K: AwesomeBar Global Search\nCtrl+S: Save Document\nCtrl+B: Toggle Sidebar\nCtrl+P: Print')"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:middle;margin-right:6px;"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M6 8h.01M10 8h.01M14 8h.01M18 8h.01M6 12h.01M10 12h.01M14 12h.01M18 12h.01M8 16h8"/></svg>Keyboard Shortcuts</div>
                 <div class="user-menu-divider"></div>
-                <a href="/desk" class="user-menu-item">🔄 Reload Cache</a>
-                <a href="/healthz/ready" class="user-menu-item">🩺 Health & DB Status</a>
+                <a href="/desk" class="user-menu-item"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:middle;margin-right:6px;"><path d="M23 4v6h-6M1 20v-6h6M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>Reload Cache</a>
+                <a href="/healthz/ready" class="user-menu-item"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:middle;margin-right:6px;"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>Health & DB Status</a>
             </div>
         </div>
     </header>
@@ -373,8 +379,9 @@ const DESK_BASE_HTML: &str = r#"<!DOCTYPE html>
                 <a href="/desk/list/purchase_order" class="shortcut-chip">Purchase Orders <span class="shortcut-badge">Procurement</span></a>
                 <a href="/desk/list/item" class="shortcut-chip">Stock Ledger <span class="shortcut-badge">Inventory</span></a>
                 <a href="/desk/list/journal_entry" class="shortcut-chip">General Ledger <span class="shortcut-badge">Chart of Accounts</span></a>
-                <a href="/builder" class="shortcut-chip" style="border-color: #6366f1; color: #a5b4fc;">⚡ Builder Studio <span class="shortcut-badge" style="background: rgba(99,102,241,0.2); color: #c7d2fe;">Visual Canvas</span></a>
-                <a href="/emdash" class="shortcut-chip" style="border-color: #10b981; color: #6ee7b7;">✍️ Emdash CMS <span class="shortcut-badge" style="background: rgba(16,185,129,0.2); color: #a7f3d0;">Editorial</span></a>
+                <a href="/templates" class="shortcut-chip" style="border-color: #f59e0b; color: #fbbf24;"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/></svg> 60+ Template Matrix <span class="shortcut-badge" style="background: rgba(245,158,11,0.2); color: #fde68a;">Awwwards Suite</span></a>
+                <a href="/builder" class="shortcut-chip" style="border-color: #6366f1; color: #a5b4fc;"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg> Builder Studio <span class="shortcut-badge" style="background: rgba(99,102,241,0.2); color: #c7d2fe;">Visual Canvas</span></a>
+                <a href="/emdash" class="shortcut-chip" style="border-color: #10b981; color: #6ee7b7;"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg> Emdash CMS <span class="shortcut-badge" style="background: rgba(16,185,129,0.2); color: #a7f3d0;">Editorial</span></a>
                 <a href="/desk/form/sales_invoice/new" class="shortcut-chip" style="border-color:var(--accent); color:var(--accent);">+ New Invoice</a>
             </div>
 

@@ -392,7 +392,11 @@ pub fn list_template_suites() -> Vec<TemplateSuite> {
                 noise_opacity: 0.03,
             },
         },
-    ]
+    ];
+
+    // Append the 50 extended enterprise template suites (#11 to #60)
+    suites.extend(crate::extended_templates::get_extended_template_suites());
+    suites
 }
 
 /// Retrieves a specific template suite by slug.
@@ -426,7 +430,7 @@ pub fn render_template_html_with_variant(slug: &str, variant_opt: Option<&str>) 
         "gastronomy-hospitality" => {
             render_gastronomy_hospitality_html(&suite, &css_tokens, variant_str)
         }
-        _ => return None,
+        _ => render_dynamic_template_suite_html(&suite, &css_tokens, variant_str),
     };
 
     Some(html)

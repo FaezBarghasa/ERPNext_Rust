@@ -12,6 +12,7 @@ pub mod audio_waveform;
 pub mod block_canvas;
 pub mod builder_core;
 pub mod emdash_studio;
+pub mod extended_templates;
 pub mod fast_channels;
 pub mod hls_engine;
 pub mod luxury_storefront;
@@ -80,6 +81,7 @@ pub use emdash_studio::{
     generate_responsive_webp_variants,
 };
 pub use erp_cms_core as core;
+pub use extended_templates::get_extended_template_suites;
 pub use fast_channels::{
     ActiveProgramContext, EpgChannelGuide, EpgScheduleEntry, FastChannelError, FastChannelRegistry,
     FastChannelSchedule, LinearManifestEngine, LinearProgram,
