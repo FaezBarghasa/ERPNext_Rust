@@ -152,7 +152,7 @@ impl SeoMetadata {
             "provider": {
                 "@type": "Organization",
                 "name": "rustnext Engineering Academy",
-                "url": "https://rustnext.enterprise.io"
+                "url": "https://rust-web-land.io"
             },
             "educationalCredentialAwarded": {
                 "@type": "EducationalOccupationalCredential",
@@ -160,7 +160,7 @@ impl SeoMetadata {
                 "credentialCategory": "Professional Degree",
                 "recognizedBy": {
                     "@type": "Organization",
-                    "name": "Frappe-Rust Foundation"
+                    "name": "rust-web-land Foundation"
                 }
             },
             "hasCourseInstance": {

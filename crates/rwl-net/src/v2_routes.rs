@@ -134,7 +134,9 @@ const ALLOWED_OPERATORS: &[&str] = &[
 #[must_use]
 pub fn resolve_tenant_id(req: &HttpRequest) -> TenantId {
     req.headers()
-        .get("X-Frappe-Site-Name")
+        .get("X-RWL-Site-Name")
+        .or_else(|| req.headers().get("X-Site-Name"))
+        .or_else(|| req.headers().get("X-Frappe-Site-Name"))
         .and_then(|v| v.to_str().ok())
         .filter(|s| !s.is_empty())
         .map(|s| TenantId(s.to_string()))
@@ -5088,7 +5090,7 @@ pub async fn cms_generate_seo_handler(payload: web::Json<GenerateSeoPayload>) ->
 }
 
 // =========================================================================
-// Frappe Builder & Emdash Editorial Studio Endpoints
+// rust-web-land Builder & Emdash Editorial Studio Endpoints
 // =========================================================================
 
 /// DTO for saving/updating a Builder Canvas Page AST.

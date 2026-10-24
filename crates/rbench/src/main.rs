@@ -626,7 +626,7 @@ export class RustNextClient {
                     "Generating template POT file from all DocType descriptors and strings... OK"
                 ),
                 "migrate-csv-to-po" => println!(
-                    "Migrating legacy Frappe CSV translations to standard GNU gettext PO... OK"
+                    "Migrating legacy CSV translations to standard GNU gettext PO... OK"
                 ),
                 "update-po-files" => {
                     println!("Updating language PO catalogs from latest POT template... OK")
@@ -801,7 +801,7 @@ pub fn on_validate(ctx: &PluginContext, doc: &mut DocRecord) -> DocMutationResul
             let pkg_name = args
                 .get(2)
                 .map(|s| s.as_str())
-                .unwrap_or("erpnext_core.frappe-pkg");
+                .unwrap_or("erpnext_core.rwl-pkg");
             println!("Ingesting signed application package `{pkg_name}`...");
             println!("  - Verifying Ed25519 cryptographic signature: VALID");
             println!("  - Ingesting WASI 0.2 component model bytecode");
@@ -1150,7 +1150,7 @@ pub fn on_validate(ctx: &PluginContext, doc: &mut DocRecord) -> DocMutationResul
             println!("  build [--release]              Build unified static platform binaries");
             println!("  dev                            Launch development server with live reload");
             println!(
-                "  install-app <package>          Ingest and verify a signed `.frappe-pkg` archive"
+                "  install-app <package>          Ingest and verify a signed `.rwl-pkg` archive"
             );
             println!(
                 "  serve [port]                   Start the high-throughput Actix-Web HTTP/WebSocket server"

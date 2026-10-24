@@ -306,7 +306,7 @@ async fn storefront_handler() -> impl Responder {
         .body(erp_cms::render_luxury_storefront_html())
 }
 
-/// Frappe Builder Studio Visual Interface: `GET /builder` and `GET /builder/{page_id}`
+/// rust-web-land Builder Studio Visual Interface: `GET /builder` and `GET /builder/{page_id}`
 async fn builder_studio_handler(page_id: Option<web::Path<String>>) -> impl Responder {
     TOTAL_REQUESTS.fetch_add(1, Ordering::Relaxed);
     let target_page = page_id
@@ -324,7 +324,7 @@ async fn builder_studio_handler(page_id: Option<web::Path<String>>) -> impl Resp
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>RustNext Frappe Builder Studio — {target_page}</title>
+    <title>rust-web-land (rwl) Builder Studio — {target_page}</title>
     <style>
         :root {{
             --bg-canvas: #0b0d14;
@@ -572,7 +572,7 @@ async fn builder_studio_handler(page_id: Option<web::Path<String>>) -> impl Resp
 <body>
     <aside class="builder-sidebar">
         <div style="font-weight: 700; font-size: 1.1rem; display: flex; align-items: center; gap: 0.5rem;">
-            <span>⚡</span> Frappe Builder Studio
+            <span>⚡</span> rust-web-land Builder Studio
         </div>
         <div style="font-size: 0.85rem; color: var(--text-muted); display: flex; justify-content: space-between;">
             <span>Editing Page:</span>
@@ -1060,7 +1060,7 @@ async fn builder_studio_handler(page_id: Option<web::Path<String>>) -> impl Resp
             if (kind === 'Heading') {{
                 block = {{ block_type: 'Heading', level: 2, text: 'New Heading', data_binding: null }};
             }} else if (kind === 'TextBlock') {{
-                block = {{ block_type: 'TextBlock', content: 'Crafted with Frappe Builder in pure Rust.', data_binding: null }};
+                block = {{ block_type: 'TextBlock', content: 'Crafted with rust-web-land Builder in pure Rust.', data_binding: null }};
             }} else if (kind === 'Section') {{
                 block = {{ block_type: 'Section', id: id, children: [], css_classes: 'py-8' }};
             }} else if (kind === 'CardBlock') {{
@@ -3153,7 +3153,7 @@ pub fn configure_app(
             "/api/v2/cms/seo/generate",
             web::post().to(cms_generate_seo_handler),
         )
-        // V2 Frappe Builder Visual Canvas APIs
+        // V2 rust-web-land Builder Visual Canvas APIs
         .route(
             "/api/v2/builder/pages",
             web::get().to(builder_list_pages_handler),
