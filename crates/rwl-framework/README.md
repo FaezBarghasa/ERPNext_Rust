@@ -1,32 +1,36 @@
-# frappe-framework
+# ⚙️ rwl-framework
 
-Document model abstractions, strict lifecycle state machines, and sandboxed script execution runtimes.
+> **Document Lifecycle State Machines, Submittable Document Workflows, WASI Sandboxes & Rhai Scripting for `rust-web-land` (`rwl`)**
+
+`rwl-framework` implements the core document lifecycle transitions, multi-stage approval workflows, and dual-engine sandboxing environment for `rust-web-land` (`rwl`).
 
 ---
 
-## 📦 Overview
+## ⚡ Core Capabilities
 
-`frappe-framework` implements the core document lifecycle transitions and dual-engine sandboxing environment for `rust-web-land` (`rwl`).
-
-### Key Capabilities
-
-- **Document Model (`document/`, `lib.rs`)**: Strongly typed document wrappers with dirty-field tracking and mutation history.
-- **Lifecycle Engine (`lifecycle.rs`)**: Rigid state machine transitions (`validate` → `before_save` → `on_update` → `before_submit` → `on_submit` → `on_cancel`).
-- **Rhai Dynamic Scripting (`scripting.rs`)**: High-performance embedded scripting for dynamic server-side logic and validation hooks.
-- **Wasmtime WASI Sandbox (`wasmtime_sandbox.rs`)**: Secure sandboxed WebAssembly plugin execution.
+- **Document Controller & Lifecycle Engine (`controller.rs`, `lifecycle.rs`)**:
+  - Enforces deterministic document lifecycle hooks (`validate` → `before_save` → `on_update` → `before_submit` → `on_submit` → `before_cancel` → `on_cancel`).
+  - Native Submittable (`docstatus: 0, 1, 2`) and amendment cycle handling.
+- **Wasmtime WASI 0.2 Sandbox (`wasmtime_sandbox.rs`)**:
+  - Fault-isolated WebAssembly component execution for enterprise extension plugins.
+- **Embedded Rhai Scripting Engine**:
+  - High-velocity embedded scripting for client validation logic, computed formula fields, and custom triggers.
+- **Automated Workflow Approval Engine (`workflow_approval.rs`, `workflow_nodes.rs`)**:
+  - Multi-tier visual approval graph execution with role gate checks and conditional branch routing.
+- **1-Click Blueprints (`blueprints/`)**:
+  - Modular scaffolding for ERP, CRM, CMS, LMS, and SaaS multi-tenant portals.
 
 ---
 
 ## 🛠 Usage Example
 
 ```rust
-use frappe_framework::{Document, LifecycleEngine, DocumentState};
+use rwl_framework::{ControllerRegistry, DocumentRecord};
 
-let mut doc = Document::new("Sales Invoice");
-doc.set("grand_total", 1500.0);
-
-let mut engine = LifecycleEngine::new();
-engine.validate(&mut doc)?;
-engine.submit(&mut doc)?;
-assert_eq!(doc.state(), DocumentState::Submitted);
+let registry = ControllerRegistry::with_standard_submittables();
+assert!(registry.is_submittable("Sales Invoice"));
 ```
+
+---
+
+Part of the **[rust-web-land](file:///home/jrad/RustroverProjects/ERPNext_workspace/README.md)** platform.

@@ -1,12 +1,14 @@
-# `frappe-net` — Multi-Tenant Transport, Real-Time Streaming & Gateway Router
+# 🌐 `rwl-net` — Multi-Tenant Transport, Real-Time Streaming & Gateway Router
 
-Production Actix-Web, QUIC/HTTP3, and WebSocket gateway providing multi-tenant routing, dynamic security, video & audio streaming, and Subsonic API endpoints.
+> **Production Actix-Web, QUIC/HTTP3, and WebSocket Gateway for `rust-web-land` (`rwl`)**
+
+`rwl-net` provides multi-tenant routing, dynamic security, video & audio streaming, and Subsonic API endpoints for `rust-web-land` (`rwl`).
 
 ---
 
 ## 📦 Overview
 
-`frappe-net` implements the primary transport layer for the `rust-web-land` (`rwl`) platform. It features multi-tenant resolution across subdomains, strict bitemporal audit trails, dynamic Role-Based Access Control (RBAC), multi-factor authentication (MFA), real-time LiveSync event broadcasting, and high-performance streaming APIs.
+`rwl-net` implements the primary network transport layer for the `rust-web-land` (`rwl`) platform. It features multi-tenant resolution across subdomains, strict bitemporal audit trails, dynamic Role-Based Access Control (RBAC), multi-factor authentication (MFA), real-time LiveSync event broadcasting, and high-performance streaming APIs.
 
 ---
 
@@ -61,11 +63,15 @@ Production Actix-Web, QUIC/HTTP3, and WebSocket gateway providing multi-tenant r
 
 ```bash
 # Run all unit tests and integration suites
-cargo test -p frappe-net
+cargo test -p rwl-net
 
 # Run dedicated API v2 integration tests
-cargo test -p frappe-net --test v2_api_integration_tests
+cargo test -p rwl-net --test v2_api_integration_tests
 
 # Strict clippy check with zero warnings
-cargo clippy -p frappe-net -- -D warnings
+cargo clippy -p rwl-net -- -D warnings
 ```
+
+---
+
+Part of the **[rust-web-land](file:///home/jrad/RustroverProjects/ERPNext_workspace/README.md)** platform.
