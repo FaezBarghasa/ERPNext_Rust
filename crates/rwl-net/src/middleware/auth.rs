@@ -28,7 +28,6 @@ pub fn get_master_token_secret() -> Vec<u8> {
         .or_else(|_| std::env::var("RWL_SECRET_KEY"))
         .or_else(|_| std::env::var("RUSTNEXT_MASTER_TOKEN_SECRET"))
         .or_else(|_| std::env::var("RUSTNEXT_SECRET_KEY"))
-        .or_else(|_| std::env::var("FRAPPE_SECRET_KEY"))
     {
         let trimmed = key.trim();
         if !trimmed.is_empty() {

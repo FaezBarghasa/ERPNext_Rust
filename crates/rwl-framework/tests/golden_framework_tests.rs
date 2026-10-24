@@ -1,4 +1,4 @@
-//! Upstream Frappe Framework Core Golden Tests (`frappe-framework`).
+//! rwl-framework Core Golden Tests (`rwl-framework`).
 //!
 //! Validates:
 //! 1. Complete Document Lifecycle (insert -> validate -> submit -> cancel -> amend -> trash -> discard).
