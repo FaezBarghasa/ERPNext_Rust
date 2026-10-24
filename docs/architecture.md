@@ -32,10 +32,10 @@ graph TD
     end
 
     subgraph CorePlatform["Core Rust Substrate (32 Workspace Crates)"]
-        Net["frappe-net: Actix-Web, QUIC/HTTP3, WebSockets, ACME"]
-        Meta["frappe-meta: DocType Engine, DDL Compiler, RBAC"]
-        Frame["frappe-framework: Lifecycle State Machines, WASI 0.2"]
-        Storage["frappe-storage: Embedded SurrealKV, CRDT Mesh, CAS Drive"]
+        Net["rwl-net: Actix-Web, QUIC/HTTP3, WebSockets, ACME"]
+        Meta["rwl-meta: DocType Engine, DDL Compiler, RBAC"]
+        Frame["rwl-framework: Lifecycle State Machines, WASI 0.2"]
+        Storage["rwl-storage: Embedded SurrealKV, CRDT Mesh, CAS Drive"]
         Biz["Business Domains: Accounting, Inventory, Manufacturing, CRM, etc."]
     end
 
@@ -66,10 +66,10 @@ The `rust-web-land` workspace organizes its capabilities across 6 decoupled func
   - `rwl status`: Real-time telemetry, memory usage, and health checks.
 
 ### 3.2 Framework & Core Substrate
-- **`frappe-meta`**: Statically compiles declarative `DocTypeSchema` structs into `SCHEMAFULL` SurrealQL table definitions, field assertions, unique constraints, and foreign relations. Provides lock-free autoname series parsing (`NamingSeriesParser`) and AI schema synthesis (`AiSchemaSynthesizer`).
-- **`frappe-framework`**: Rigid document lifecycle state machine (`validate` $\to$ `before_save` $\to$ `on_update` $\to$ `before_submit` $\to$ `on_submit` $\to$ `on_cancel`). Provides embedded Rhai dynamic scripting and WASI 0.2 Wasmtime sandbox with deterministic instruction fuel metering ($1,000,000$ operations limit) and linear memory bounds.
-- **`frappe-storage`**: Multi-model SurrealDB 3.3 embedded driver with zero-leak connection pooling, SHA-256 content-addressable deduplicated drive (`DeduplicatedStorage`), CRDT vector clocks (`VectorClock`), durable offline outbox, and field-level AEAD envelope encryption (AES-256-GCM / ChaCha20-Poly1305).
-- **`frappe-net`**: Primary transport gateway implementing Actix-Web HTTP/1.1 and HTTP/2, QUIC & HTTP/3 (`quic_h3_stream.rs`), LiveSync WebSockets (`live.rs`), automated in-process Let's Encrypt TLS (`AcmeGateway`), dynamic RBAC evaluation, Subsonic / OpenSubsonic API v1.16+ views, and OTT video streaming.
+- **`rwl-meta`**: Statically compiles declarative `DocTypeSchema` structs into `SCHEMAFULL` SurrealQL table definitions, field assertions, unique constraints, and foreign relations. Provides lock-free autoname series parsing (`NamingSeriesParser`) and AI schema synthesis (`AiSchemaSynthesizer`).
+- **`rwl-framework`**: Rigid document lifecycle state machine (`validate` $\to$ `before_save` $\to$ `on_update` $\to$ `before_submit` $\to$ `on_submit` $\to$ `on_cancel`). Provides embedded Rhai dynamic scripting and WASI 0.2 Wasmtime sandbox with deterministic instruction fuel metering ($1,000,000$ operations limit) and linear memory bounds.
+- **`rwl-storage`**: Multi-model SurrealDB 3.3 embedded driver with zero-leak connection pooling, SHA-256 content-addressable deduplicated drive (`DeduplicatedStorage`), CRDT vector clocks (`VectorClock`), durable offline outbox, and field-level AEAD envelope encryption (AES-256-GCM / ChaCha20-Poly1305).
+- **`rwl-net`**: Primary transport gateway implementing Actix-Web HTTP/1.1 and HTTP/2, QUIC & HTTP/3 (`quic_h3_stream.rs`), LiveSync WebSockets (`live.rs`), automated in-process Let's Encrypt TLS (`AcmeGateway`), dynamic RBAC evaluation, Subsonic / OpenSubsonic API v1.16+ views, and OTT video streaming.
 
 ### 3.3 Visual Client & Desktop Studio
 - **`desk-app`**: Cross-platform runtime shell built with native Dioxus 0.7. Employs polymorphic hardware abstraction (`MobileHardwareAbstractionLayer`) between Android JNI and W3C Web APIs, role-adaptive persona router (`/portal`, `/worker`, `/factory`, `/approvals`, `/admin`), and offline PWA service worker compiler.

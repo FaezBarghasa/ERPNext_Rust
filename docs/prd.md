@@ -41,26 +41,26 @@
 - **FR-DESK-05**: Must support disconnected edge transactions with causal vector clocks (`VectorClock`), local mutation buffers (`LocalMutationBuffer`), and deterministic join semilattices (`CloudSyncArbiter`).
 - **FR-DESK-06**: Must provide polymorphic `MobileHardwareAbstractionLayer` routing biometrics, barcode scanning, thermal printing, and GPS across Android JNI and W3C Web APIs.
 
-### 3.3 Metadata & Dynamic Schema Compilation (`frappe-meta`)
+### 3.3 Metadata & Dynamic Schema Compilation (`rwl-meta`)
 - **FR-META-01**: Must dynamically compile declarative `DocTypeSchema` structs into `SCHEMAFULL` SurrealQL DDL statements with index and relationship definitions.
 - **FR-META-02**: Must provide zero-allocation `DynamicDocument` containers backed by `SmallVec<[_; 16]>` on the CPU stack.
 - **FR-META-03**: Must support lock-free sequential naming series generators (e.g. `DRN-.YYYY.-.#####`).
 - **FR-META-04**: Must provide an autonomous `AiSchemaSynthesizer` generating normalized DocTypes and Chart of Accounts from natural language prompts.
 - **FR-META-05**: Must supply pre-built vertical profiles for Clinics, Restaurants, E-Commerce brands, and Service Agencies.
 
-### 3.4 Framework & Sandboxed Runtime (`frappe-framework`)
+### 3.4 Framework & Sandboxed Runtime (`rwl-framework`)
 - **FR-FRAME-01**: Must enforce document state machine transitions (`Draft` $\to$ `Submitted` $\to$ `Cancelled`).
 - **FR-FRAME-02**: Must isolate user-defined plugins in a WASI 0.2 Wasmtime sandbox with deterministic fuel metering ($1,000,000$ operations limit) and in-memory SHA-256 JIT bytecode caching.
 - **FR-FRAME-03**: Must provide an RBAC-gated `ErpToolDispatcher` enabling AI agents to execute strongly typed platform functions securely.
 
-### 3.5 Persistence, CRDTs & Cryptography (`frappe-storage`)
+### 3.5 Persistence, CRDTs & Cryptography (`rwl-storage`)
 - **FR-STOR-01**: Must embed SurrealDB in-memory or on disk with zero-leak connection pooling and isolated namespaces (`tenant_{id}`).
 - **FR-STOR-02**: Must provide state-based PN-Counters, Vector Clocks, and Last-Write-Wins Document join-semilattices.
 - **FR-STOR-03**: Must maintain a durable `OfflineOutboxManager` queuing edge mutations during network partitions.
 - **FR-STOR-04**: Must build tamper-evident SHA-256 Merkle trees across transaction audit logs.
 - **FR-STOR-05**: Must enforce field-level AEAD envelope encryption pairing Master KEKs with per-tenant DEKs.
 
-### 3.6 Networking, Multi-Tenancy & ACME (`frappe-net`)
+### 3.6 Networking, Multi-Tenancy & ACME (`rwl-net`)
 - **FR-NET-01**: Must resolve tenant identity from headers (`X-Tenant-Id`) or subdomain routing into a strongly typed `TenantContext`.
 - **FR-NET-02**: Must provide an in-process automated ACME gateway negotiating and caching Let's Encrypt TLS certificates.
 - **FR-NET-03**: Must stream real-time document mutation events over WebSocket connections.

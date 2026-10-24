@@ -53,7 +53,7 @@ rwl export --target vps --output ./deploy
 ### What's Inside the Bundle?
 | Artifact | Purpose | Resource Limit |
 |---|---|---|
-| `frappe-net` | Stripped Rust release binary | Zero external runtime dependencies |
+| `rwl-net` | Stripped Rust release binary | Zero external runtime dependencies |
 | `rust-web-land.service` | Production systemd service unit | `MemoryMax=1024M`, `MemoryHigh=850M` |
 | `start.sh` | Automated pre-flight initialization script | Embedded SurrealKV auto-tuning |
 | `docker-compose.yml` | Optional OCI container specification | Hard cgroup limits: `memory: 1024m` |

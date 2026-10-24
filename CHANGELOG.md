@@ -46,11 +46,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Production Printable Commercial Document Engine (`print_format.rs`)**:
   - Implemented enterprise-grade printable commercial invoice, receipt, and sales order rendering engine in `erp-accounting`.
   - Full `@media print` CSS stylesheet with page margin constraints, vector SVG branding, line items table, multi-rate VAT breakdown, bank payment instructions (IBAN, BIC/SWIFT, routing), and authorized signatory blocks.
-  - Mounted HTTP endpoints in `frappe-net`: `GET /api/v2/document/{doctype}/{name}/print` and `POST /api/v2/print/document`.
+  - Mounted HTTP endpoints in `rwl-net`: `GET /api/v2/document/{doctype}/{name}/print` and `POST /api/v2/print/document`.
 - **Pluggable Payment Gateway & Automated GL Reconciliation (`payment_gateway.rs`)**:
   - Built pluggable transaction processing abstraction (`PaymentGateway`, `PaymentIntent`, `PaymentStatus`: Authorized, Captured, Refunded, Failed) in `erp-accounting`.
   - Implemented `PaymentReconciliationEngine` automatically generating double-entry balanced Journal Entries and clearing Accounts Receivable against bank/clearing ledgers on capture.
-  - Mounted HTTP endpoints in `frappe-net`: `POST /api/v2/payments/charge` and `POST /api/v2/payments/webhook`.
+  - Mounted HTTP endpoints in `rwl-net`: `POST /api/v2/payments/charge` and `POST /api/v2/payments/webhook`.
 - **Unified Enterprise Desk Shell, List View & Form View (`desk-components` & `desk-app`)**:
   - Full SSR hypermedia administration desktop with real-time OmniBar filtering (`Ctrl+K`).
   - Dynamic List View (`/desk/list/{doctype}`) with search query filter, record counts, and SurrealDB pagination.
@@ -76,7 +76,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - **Epoch I: Substrate Micro-Topology & Automated ACME Gateway**
-  - Added `--micro` topology profile in `frappe-net` (8MB write buffer, 16MB read cache, bounded 1024-entry queues) for sub-64MB RSS operations.
+  - Added `--micro` topology profile in `rwl-net` (8MB write buffer, 16MB read cache, bounded 1024-entry queues) for sub-64MB RSS operations.
   - In-process automated Let's Encrypt / ACME TLS certificate lifecycle management and multi-tenant domain resolver (`AcmeGateway`).
   - Scoped database session pooling (`resolve_scoped_session`, `TenantContext`) guaranteeing zero cross-tenant contamination.
 
@@ -104,7 +104,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Atomic multi-tier e-commerce checkout transaction (`AtomicCheckoutEngine`) generating balanced GL entries.
   - Universal Multi-Template Work-Type Engine (`ThemeManifest`) and zero-downtime layout slot binding.
   - LuxeGen Haute Horlogerie 3D WebGL procedural configurator (Three.js PBR + GSAP ScrollTrigger kinetics) with dynamic metallurgy swapping and atomic checkout integration.
-  - HTTP endpoints in `frappe-net`: `GET /` & `GET /storefront`, `GET /api/v1/storefront/products`, and `POST /api/v1/storefront/checkout`.
+  - HTTP endpoints in `rwl-net`: `GET /` & `GET /storefront`, `GET /api/v1/storefront/products`, and `POST /api/v1/storefront/checkout`.
 
 - **Epoch VI: WASI 0.2 Sandbox & Resource Isolation**
   - Fault-isolated WASI 0.2 runtime (`RealSandbox`) with deterministic instruction fuel metering ($1,000,000$ ops default limit) and 32MB linear memory isolation.

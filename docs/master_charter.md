@@ -732,7 +732,7 @@ Permissions & Assertions     - CompactString Keys
 * **Implementation Mechanics:**
   1. Define host-guest contracts using WIT:
      ```wit
-     package frappe:extension@0.2.0;
+     package rwl:extension@0.2.0;
 
      interface document-lifecycle {
          record hook-payload {
@@ -828,7 +828,7 @@ Permissions & Assertions     - CompactString Keys
 
 * **Objective:** Generate complete, fully validated DocType schemas, relationships, and business logic directly from natural language prompts.
 * **Implementation Mechanics:**
-  1. LLM agents interact with the typed `frappe-meta` compiler API.
+  1. LLM agents interact with the typed `rwl-meta` compiler API.
   2. The compiler synthesizes JSON DocType schemas, validates identifier sanitization, and compiles the result into SurrealQL tables and permissions.
   3. Pre-seed standard localized Chart of Accounts, tax templates, and customer groups automatically into SurrealDB.
 * **Verification Invariant:**
@@ -962,22 +962,22 @@ Permissions & Assertions     - CompactString Keys
 
 ### Milestone 10.3: Curated Prebuilt Template Sites Suite (Universal Work-Type Archetypes)
 
-* **Objective:** Embed production-grade, end-to-end commercial and operational website templates directly into the `rust-web-land` binary. Every template integrates with the full enterprise suite (`erp-accounting`, `erp-inventory`, `erp-trade`, `erp-software`, `erp-wms`, `erp-manufacturing`, `erp-crm`, `erp-support`, `erp-learning`, `erp-ppm`, `frappe-storage`, and `frappe-framework`), providing specialized UI/UX paradigms while enforcing zero decimal drift and low RAM overhead ($\le 1\,\text{GB}$ VPS).
+* **Objective:** Embed production-grade, end-to-end commercial and operational website templates directly into the `rust-web-land` binary. Every template integrates with the full enterprise suite (`erp-accounting`, `erp-inventory`, `erp-trade`, `erp-software`, `erp-wms`, `erp-manufacturing`, `erp-crm`, `erp-support`, `erp-learning`, `erp-ppm`, `rwl-storage`, and `rwl-framework`), providing specialized UI/UX paradigms while enforcing zero decimal drift and low RAM overhead ($\le 1\,\text{GB}$ VPS).
 
 ```
 +───────────────────────────────────────────────────────────────────────────────────────────────────+
 |                           THE 6 PREBUILT ENTERPRISE TEMPLATE SUITES                               |
 |                                                                                                   |
 |  1. SVoD Video Streaming Platform (Netflix / 30nama Class)                                        |
-|     ├── Modules: `erp-cms`, `erp-software`, `erp-accounting`, `erp-support`, `frappe-storage`     |
+|     ├── Modules: `erp-cms`, `erp-software`, `erp-accounting`, `erp-support`, `rwl-storage`     |
 |     └── Stack: HLS Transcoder, 1536-dim Subtitle Vector Search, Watch Party WebSockets, DRM HMAC |
 |                                                                                                   |
 |  2. Digital Learning & LMS Academy (Coursera / Skillshare Class)                                  |
-|     ├── Modules: `erp-learning`, `erp-software`, `erp-accounting`, `erp-cms`, `frappe-storage`   |
+|     ├── Modules: `erp-learning`, `erp-software`, `erp-accounting`, `erp-cms`, `rwl-storage`   |
 |     └── Stack: Course Graph Trees, ASC 606 Tuition Amortization, Merkle PDF/A Typst Diplomas     |
 |                                                                                                   |
 |  3. Digital Products & Creator Hub (Gumroad / LemonSqueezy Class)                                 |
-|     ├── Modules: `erp-trade`, `erp-software`, `erp-accounting`, `frappe-storage`, `frappe-meta`  |
+|     ├── Modules: `erp-trade`, `erp-software`, `erp-accounting`, `rwl-storage`, `rwl-meta`  |
 |     └── Stack: Encrypted Signed URLs, Node-Locked Licenses, Split Payouts, Global EU VAT MOSS    |
 |                                                                                                   |
 |  4. Industrial B2B & Wholesale Matrix (Grainger / Misumi Class)                                   |
@@ -989,7 +989,7 @@ Permissions & Assertions     - CompactString Keys
 |     └── Stack: 60 FPS Viewport Grid, Real-Time Flash Stock Feed, Slide-Over Drawer, FIFO Reserve  |
 |                                                                                                   |
 |  6. Financial Trading & Brokerage Hub (Robinhood / TradingView Class)                             |
-|     ├── Modules: `erp-trade`, `erp-accounting`, `erp-crm`, `frappe-net`, `frappe-storage`       |
+|     ├── Modules: `erp-trade`, `erp-accounting`, `erp-crm`, `rwl-net`, `rwl-storage`       |
 |     └── Stack: WebGL Canvas Candlesticks, Microsecond Tick Streams, Sanctions KYC, FX Auto-Sweep |
 +───────────────────────────────────────────────────────────────────────────────────────────────────+
 ```
@@ -1003,7 +1003,7 @@ Permissions & Assertions     - CompactString Keys
   2. `erp-software` (`subscription.rs`, `sla_ledger.rs`): Manages recurring billing plans, household concurrent stream ceilings, bandwidth overage tiers, and SLA credit tracking.
   3. `erp-accounting` (`multibook.rs`, `ledger.rs`): Computes studio content royalties based on watch duration minutes; posts double-entry accruals to `tab_gl_entry` debiting `Royalty Expense` and crediting `Studio Accounts Payable`.
   4. `erp-support` (`gameplan.rs`): Manages synchronized watch party rooms via Actix WebSockets (`WSHubManager`), maintaining real-time video playback locks (play, pause, seek offsets) and live chat across participants.
-  5. `frappe-storage` (`encryption.rs`, `drive.rs`): Issues cryptographically signed HMAC streaming tokens (`verify_token()`) with configurable expiration windows, blocking direct asset hotlinking.
+  5. `rwl-storage` (`encryption.rs`, `drive.rs`): Issues cryptographically signed HMAC streaming tokens (`verify_token()`) with configurable expiration windows, blocking direct asset hotlinking.
 * **Specialized DocType Fixtures in SurrealDB:**
   ```surrealql
   DEFINE TABLE tab_video_asset SCHEMAFULL;
@@ -1033,7 +1033,7 @@ Permissions & Assertions     - CompactString Keys
   1. `erp-learning` (`lms.rs`, `learning_progress.rs`): Manages structured curriculums (Course $\to$ Module $\to$ Lesson $\to$ Assessment); tracks granular student completion percentages using relational graph edges (`RELATE student:id->completed->lesson:id`); manages interactive quiz state evaluation.
   2. `erp-software` (`revenue_recognition.rs`): Automates ASC 606 / IFRS 15 five-step revenue recognition: allocates tuition transaction prices ($TP$) across individual learning modules based on Standalone Selling Prices ($SSP$), recognizing revenue progressively as lessons are completed.
   3. `erp-cms` (`print.rs`): Compiles verifiable, print-ready PDF/A graduation diplomas in $< 5\,\text{ms}$ using embedded Typst, eliminating external headless browser dependencies.
-  4. `frappe-storage` (`merkle.rs`): Embeds a SHA-256 Merkle root hash on each graduation diploma pointing to SurrealDB table `tab_certificate`, allowing public validation of credentials without exposing student records.
+  4. `rwl-storage` (`merkle.rs`): Embeds a SHA-256 Merkle root hash on each graduation diploma pointing to SurrealDB table `tab_certificate`, allowing public validation of credentials without exposing student records.
   5. `erp-hr` (`payroll.rs`): Tracks instructor office hours and mentor bookings, auto-generating royalty disbursements into monthly payroll runs.
 * **Specialized DocType Fixtures in SurrealDB:**
   ```surrealql
@@ -1059,7 +1059,7 @@ Permissions & Assertions     - CompactString Keys
   Software licensing, developer SDK sales, downloadable design assets, audio samples, e-books, and developer API credits.
 * **Module Integration Matrix:**
   1. `erp-trade` (`pricing.rs`, `taxes.rs`, `dom.rs`): Implements volume discount rules, promotional coupon codes, and real-time EU VAT MOSS (Mini One Stop Shop) and US state sales tax calculations based on buyer IP geolocation.
-  2. `frappe-storage` (`drive.rs`, `encryption.rs`): Delivers time-limited, encrypted single-use download links via AES-256-GCM without exposing raw storage bucket endpoints; streams file payloads using memory-capped Actix chunks.
+  2. `rwl-storage` (`drive.rs`, `encryption.rs`): Delivers time-limited, encrypted single-use download links via AES-256-GCM without exposing raw storage bucket endpoints; streams file payloads using memory-capped Actix chunks.
   3. `erp-software` (`subscription.rs`, `psa.rs`): Manages node-locked and floating software license keys; handles hardware machine ID activations (`uuid`); provides metered API rate-limiting gates.
   4. `erp-accounting` (`receivables.rs`, `ledger.rs`): Manages instant creator payout splits (e.g., $85\%$ creator, $15\%$ platform fee), posting balanced journal entries automatically upon checkout confirmation.
   5. `erp-crm` (`scoring.rs`, `pipeline.rs`): Tracks affiliate referral links and computes tiered partner commissions.
@@ -1147,8 +1147,8 @@ Permissions & Assertions     - CompactString Keys
 * **Module Integration Matrix:**
   1. `erp-trade` (`metered.rs`, `sanctions.rs`, `pricing.rs`): Validates incoming orders against international PEP and sanctions registries; calculates maker/taker exchange fee tiers; verifies margin leverage requirements.
   2. `erp-accounting` (`multibook.rs`, `treasury.rs`, `decimal_ledger.rs`): Manages multi-currency customer wallet ledgers using 128-bit `rust_decimal` precision; enforces the double-entry invariant with zero fraction drift; calculates real-time realized and unrealized FX gains and losses.
-  3. `frappe-storage` (`bitemporal.rs`, `merkle.rs`): Records all order fills and cancellations with orthogonal Valid Time ($T_{\text{valid}}$) and System Time ($T_{\text{system}}$); groups settlements into cryptographic Merkle blocks for regulatory auditability.
-  4. `frappe-net` (`h3_server.rs`, `live.rs`): Ingests high-frequency tick data over UDP/WebSockets; broadcasts streaming Level-2 order book depth matrices to connected clients.
+  3. `rwl-storage` (`bitemporal.rs`, `merkle.rs`): Records all order fills and cancellations with orthogonal Valid Time ($T_{\text{valid}}$) and System Time ($T_{\text{system}}$); groups settlements into cryptographic Merkle blocks for regulatory auditability.
+  4. `rwl-net` (`h3_server.rs`, `live.rs`): Ingests high-frequency tick data over UDP/WebSockets; broadcasts streaming Level-2 order book depth matrices to connected clients.
   5. `erp-crm` (`pipeline.rs`): Manages KYC (Know Your Customer) identity verification workflows and accredited investor compliance sign-offs.
 * **Specialized DocType Fixtures in SurrealDB:**
   ```surrealql

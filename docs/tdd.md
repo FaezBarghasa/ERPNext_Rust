@@ -26,9 +26,9 @@ The `rust-web-land` (`rwl`) workspace adheres to a strict Test-Driven Developmen
 
 ### 2.2 Integration Test Suites
 - Reside in `tests/` directories within crates:
-  - [charter_all_epochs_test.rs](file:///home/jrad/RustroverProjects/ERPNext_workspace/crates/frappe-net/tests/charter_all_epochs_test.rs): Comprehensive end-to-end integration test exercising all 10 Epochs.
-  - [tenant_isolation_tests.rs](file:///home/jrad/RustroverProjects/ERPNext_workspace/crates/frappe-net/tests/tenant_isolation_tests.rs): Validates zero cross-tenant contamination in database namespaces.
-  - [schema_compiler_tests.rs](file:///home/jrad/RustroverProjects/ERPNext_workspace/crates/frappe-meta/tests/schema_compiler_tests.rs): Validates dynamic SurrealQL schema compilation and backward-compatible migrations.
+  - [charter_all_epochs_test.rs](file:///home/jrad/RustroverProjects/ERPNext_workspace/crates/rwl-net/tests/charter_all_epochs_test.rs): Comprehensive end-to-end integration test exercising all 10 Epochs.
+  - [tenant_isolation_tests.rs](file:///home/jrad/RustroverProjects/ERPNext_workspace/crates/rwl-net/tests/tenant_isolation_tests.rs): Validates zero cross-tenant contamination in database namespaces.
+  - [schema_compiler_tests.rs](file:///home/jrad/RustroverProjects/ERPNext_workspace/crates/rwl-meta/tests/schema_compiler_tests.rs): Validates dynamic SurrealQL schema compilation and backward-compatible migrations.
 
 ---
 
@@ -36,10 +36,10 @@ The `rust-web-land` (`rwl`) workspace adheres to a strict Test-Driven Developmen
 
 | Crate | Primary Test Targets | Invariants Verified |
 | :--- | :--- | :--- |
-| **`frappe-meta`** | DynamicDoc, Schema Compiler, AI Synthesizer, Profiles | Stack allocation limit (SmallVec), valid SurrealQL DDL, profile existence |
-| **`frappe-framework`** | Lifecycle Engine, WASI Sandbox, AI Tools | Strict state transitions, fuel exhaustion trapping, RBAC tool permissions |
-| **`frappe-storage`** | CRDTs, Outbox Queue, Envelope Encryption, Merkle | Monotonic clock growth, LWW convergence, AEAD roundtrip, Merkle root hash |
-| **`frappe-net`** | ACME Gateway, Scoped Sessions, Micro-Topology | Domain routing, tenant context extraction, connection pool isolation |
+| **`rwl-meta`** | DynamicDoc, Schema Compiler, AI Synthesizer, Profiles | Stack allocation limit (SmallVec), valid SurrealQL DDL, profile existence |
+| **`rwl-framework`** | Lifecycle Engine, WASI Sandbox, AI Tools | Strict state transitions, fuel exhaustion trapping, RBAC tool permissions |
+| **`rwl-storage`** | CRDTs, Outbox Queue, Envelope Encryption, Merkle | Monotonic clock growth, LWW convergence, AEAD roundtrip, Merkle root hash |
+| **`rwl-net`** | ACME Gateway, Scoped Sessions, Micro-Topology | Domain routing, tenant context extraction, connection pool isolation |
 | **`erp-accounting`** | General Ledger, Benford Guard, ZK Proofs | $\sum \text{Debit} - \sum \text{Credit} = 0$, Chi-Square p-value, ZK proof $<15\,\text{ms}$ |
 | **`erp-inventory`** | FIFO Cost Valuation, Batches & Serials | Positive quantities, FIFO depletion order, expiration date guards |
 | **`erp-manufacturing`** | BOM Explosion, MILP Scheduler, SPC Engine | Acyclic BOMs, finite capacity constraint satisfaction, Nelson rule triggers |
@@ -64,7 +64,7 @@ The `rust-web-land` (`rwl`) workspace adheres to a strict Test-Driven Developmen
 cargo test --workspace
 
 # Run the 10-Epoch master verification integration suite
-cargo test --package frappe-net --test charter_all_epochs_test
+cargo test --package rwl-net --test charter_all_epochs_test
 
 # Run tests with full backtrace for deep diagnostics
 RUST_BACKTRACE=1 cargo test --workspace

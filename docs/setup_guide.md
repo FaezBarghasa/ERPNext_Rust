@@ -64,7 +64,7 @@ rwl export --target vps --output ./deploy
 ```
 
 The exported package includes:
-- Stripped static server binary (`rwl-server` / `frappe-net`).
+- Stripped static server binary (`rwl-server` / `rwl-net`).
 - Tuned `start.sh` launcher configuring embedded SurrealKV storage.
 - Production `rust-web-land.service` systemd unit enforcing `MemoryMax=1024M` and `MemoryHigh=850M`.
 - Optional `docker-compose.yml` with strict cgroup memory caps.
@@ -100,7 +100,7 @@ rwl deploy --host vps.yourdomain.com --port 8080 --token <SECRET_TOKEN>
 `rust-web-land` features an in-process Let's Encrypt automated certificate resolver (`rustls-acme`), eliminating external reverse proxies like Nginx or Traefik:
 
 ```bash
-cargo run -p frappe-net -- \
+cargo run -p rwl-net -- \
   --host 0.0.0.0 \
   --port 443 \
   --acme-domain enterprise.yourdomain.com \

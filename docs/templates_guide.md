@@ -6,7 +6,7 @@ This guide details the 10 prebuilt enterprise template suites embedded natively 
 
 ## 1. Overview & Architectural Topology
 
-Every template is compiled directly into the pure-Rust binary with sub-10ms Server-Side Rendering (SSR) Time-to-First-Byte (TTFB), zero external dynamic runtime dependencies, and deep integration into the enterprise core (`erp-accounting`, `erp-inventory`, `erp-trade`, `erp-software`, `erp-wms`, `erp-manufacturing`, `frappe-storage`, and `frappe-framework`).
+Every template is compiled directly into the pure-Rust binary with sub-10ms Server-Side Rendering (SSR) Time-to-First-Byte (TTFB), zero external dynamic runtime dependencies, and deep integration into the enterprise core (`erp-accounting`, `erp-inventory`, `erp-trade`, `erp-software`, `erp-wms`, `erp-manufacturing`, `rwl-storage`, and `rwl-framework`).
 
 ```
 +─────────────────────────────────────────────────────────────────────────────────────────────────────────────+

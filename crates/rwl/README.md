@@ -34,7 +34,7 @@ When running `rwl export --target vps`, the CLI generates a production-ready del
 
 | Artifact | Purpose | Resource Limit / Feature |
 | :--- | :--- | :--- |
-| `frappe-net` / `rwl-server` | Stripped standalone server binary | $< 25\,\text{MB}$ size, zero external daemons |
+| `rwl-net` / `rwl-server` | Stripped standalone server binary | $< 25\,\text{MB}$ size, zero external daemons |
 | `rust-web-land.service` | Production systemd service unit | `MemoryMax=1024M`, `MemoryHigh=850M` |
 | `start.sh` | Tuned launcher script | Configures embedded SurrealKV storage cache |
 | `docker-compose.yml` | Optional OCI container configuration | Enforces strict cgroup memory caps |

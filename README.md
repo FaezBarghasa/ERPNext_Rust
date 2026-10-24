@@ -51,7 +51,7 @@ graph TD
 
 1. **Visual Drag-and-Drop Desktop Studio (`crates/desk-app`, `crates/desk-components`)**: 
    A high-productivity visual studio built with native Dioxus 0.7. Design pages, forms, workflows, and role permissions visually without writing SQL or server boilerplate.
-2. **Lean Operating Substrate & Persistence (`crates/frappe-net`, `crates/frappe-storage`)**: 
+2. **Lean Operating Substrate & Persistence (`crates/rwl-net`, `crates/rwl-storage`)**: 
    Actix-Web async runtime paired with embedded SurrealDB 3.3 (SurrealKV storage engine). Boots in $<35\,\text{ms}$, runs at $<45\,\text{MB}$ idle RAM, and maintains strict multi-tenant isolation with zero external database daemons (no MariaDB, Redis, or PostgreSQL required).
 3. **Automated CI/CD & Incremental Upgrade Engine (`crates/rwl`, `tools/doctype-diff`)**: 
    Package standalone production bundles with hard memory limits (`MemoryMax=1024M`). Push updates to live production servers with zero downtime using non-destructive bitemporal schema diffing, hot asset replacement, and automatic rollback on failure.
@@ -67,10 +67,10 @@ rust-web-land/
 ├── crates/
 │   ├── rwl/                 # Unified CLI (init, studio, export, deploy, serve) & standalone runner
 │   │
-│   ├── frappe-meta/         # Dynamic DocType schema engine, SurrealQL DDL compiler, RBAC & naming series
-│   ├── frappe-framework/    # Document lifecycle state machines, Rhai scripts, WASI 0.2 sandbox & AI dispatcher
-│   ├── frappe-storage/      # Embedded SurrealDB 3.3 driver, CRDT vector clocks, CAS drive & envelope encryption
-│   ├── frappe-net/          # Actix-web server, QUIC/HTTP3 gateway, WebSocket live broadcast & Subsonic streaming
+│   ├── rwl-meta/         # Dynamic DocType schema engine, SurrealQL DDL compiler, RBAC & naming series
+│   ├── rwl-framework/    # Document lifecycle state machines, Rhai scripts, WASI 0.2 sandbox & AI dispatcher
+│   ├── rwl-storage/      # Embedded SurrealDB 3.3 driver, CRDT vector clocks, CAS drive & envelope encryption
+│   ├── rwl-net/          # Actix-web server, QUIC/HTTP3 gateway, WebSocket live broadcast & Subsonic streaming
 │   │
 │   ├── desk-app/            # Native desktop studio, multi-persona runtime shell (/portal, /worker, /factory, /admin)
 │   ├── desk-components/     # Reactive Dioxus UI components, dynamic form engine, virtualized grid, Gantt & SPC charts
@@ -151,7 +151,7 @@ rwl export --target vps --output ./deploy
 ```
 
 The exported package contains:
-- Stripped static server binary (`rwl-server` / `frappe-net`).
+- Stripped static server binary (`rwl-server` / `rwl-net`).
 - Tuned `start.sh` launcher configuring embedded SurrealKV storage.
 - Production `rust-web-land.service` systemd unit enforcing `MemoryMax=1024M` and `MemoryHigh=850M`.
 - Optional `docker-compose.yml` with strict cgroup memory caps.
@@ -213,11 +213,11 @@ Switch aesthetics at runtime with zero recompilation via URL parameter (`?varian
 | Invariant | Implementation | Guarantee |
 | :--- | :--- | :--- |
 | **VPS Resource Envelope** | `rwl export` & embedded SurrealKV | **Strictly $\le 1\,\text{GB}$ RAM**: $<45\,\text{MB}$ idle, $<250\,\text{MB}$ under full load |
-| **Document Immutability** | `crates/frappe-net/src/v2_routes.rs` | **P0 Ledger Safety**: Direct modification of submitted docs (`docstatus == 1`) rejected |
+| **Document Immutability** | `crates/rwl-net/src/v2_routes.rs` | **P0 Ledger Safety**: Direct modification of submitted docs (`docstatus == 1`) rejected |
 | **Side-Channel Defense** | `crates/erp-accounting/src/payment_gateway.rs` | **Constant-Time Verification**: Webhook signatures verified in constant time |
-| **JIT Optimization** | `crates/frappe-framework/src/wasmtime_sandbox.rs` | **SHA-256 JIT Module Cache**: Guest hooks reused across concurrent invocations |
-| **Hot Ledger Indexing** | `crates/frappe-meta`, `crates/frappe-storage` | **Composite Index DDL**: Zero full-table scans on `gl_entries` and stock ledgers |
-| **Zero Memory Leaks** | `crates/frappe-net/src/v2_routes.rs` | **Bounded FIFO Caches**: In-memory state bounded with oldest-key eviction |
+| **JIT Optimization** | `crates/rwl-framework/src/wasmtime_sandbox.rs` | **SHA-256 JIT Module Cache**: Guest hooks reused across concurrent invocations |
+| **Hot Ledger Indexing** | `crates/rwl-meta`, `crates/rwl-storage` | **Composite Index DDL**: Zero full-table scans on `gl_entries` and stock ledgers |
+| **Zero Memory Leaks** | `crates/rwl-net/src/v2_routes.rs` | **Bounded FIFO Caches**: In-memory state bounded with oldest-key eviction |
 | **Zero Decimal Drift** | `rust_decimal` across accounting & stock | **Exact Balance**: $\sum \text{Debit} - \sum \text{Credit} \equiv 0$ |
 
 ---
