@@ -1548,7 +1548,11 @@ pub fn render_visual_builder_html(state: &VisualStudioState) -> String {
         } else {
             "text-gray-300 hover:bg-gray-800/40 border-transparent"
         };
-        let lock_icon = if layer.locked { "🔒" } else { "🔓" };
+        let lock_icon = if layer.locked {
+            r#"<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>"#
+        } else {
+            r#"<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 9.9-1"/></svg>"#
+        };
         let collapse_indicator = if layer.collapsed { "▶" } else { "▼" };
         layers_html.push_str(&format!(
             r#"<div class="flex items-center justify-between px-2.5 py-1.5 rounded-md border text-xs font-mono {selected_cls} cursor-pointer group">
@@ -1666,7 +1670,7 @@ pub fn render_visual_builder_html(state: &VisualStudioState) -> String {
 
     let client_banner = if state.sss_rank.active_mode == ApplicationMode::Client {
         r#"<div class="bg-amber-500/10 border-b border-amber-500/30 px-4 py-1.5 text-xs text-amber-300 flex items-center justify-between shrink-0">
-            <span class="flex items-center gap-2"><span>🛡️</span> <strong>Client Safe Mode:</strong> Layout, design tokens, and logic nodes are locked. Content-only inline editing permitted.</span>
+            <span class="flex items-center gap-2"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="shrink-0"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg> <strong>Client Safe Mode:</strong> Layout, design tokens, and logic nodes are locked. Content-only inline editing permitted.</span>
             <span class="text-[10px] text-amber-400/80 uppercase font-mono px-2 py-0.5 rounded bg-amber-500/20 border border-amber-500/40">White-Label Approval Gate</span>
         </div>"#
     } else {

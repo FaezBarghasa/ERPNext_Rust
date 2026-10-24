@@ -325,31 +325,49 @@ async fn builder_studio_handler(page_id: Option<web::Path<String>>) -> impl Resp
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>rust-web-land (rwl) Builder Studio — {target_page}</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
         :root {{
-            --bg-canvas: #0b0d14;
-            --bg-sidebar: #131622;
-            --bg-card: rgba(255, 255, 255, 0.04);
-            --border: rgba(255, 255, 255, 0.1);
-            --accent: #6366f1;
-            --accent-hover: #4f46e5;
-            --success: #10b981;
+            --bg-canvas: #07090e;
+            --bg-sidebar: #0d1117;
+            --bg-card: rgba(16, 20, 28, 0.75);
+            --border: rgba(255, 255, 255, 0.07);
+            --border-focus: rgba(99, 102, 241, 0.4);
+            --accent: #4f46e5;
+            --accent-glow: rgba(79, 70, 229, 0.25);
+            --accent-hover: #4338ca;
+            --success: #059669;
             --text-main: #f8fafc;
             --text-muted: #94a3b8;
+            --text-dim: #64748b;
+            --ease-spring: cubic-bezier(0.16, 1, 0.3, 1);
         }}
-        * {{ box-sizing: border-box; }}
+        * {{ box-sizing: border-box; font-family: 'Plus Jakarta Sans', -apple-system, sans-serif; letter-spacing: -0.011em; }}
+        code, pre, .mono, input[type="number"], .tag-pill {{ font-family: 'JetBrains Mono', monospace; letter-spacing: -0.02em; }}
+        ::-webkit-scrollbar {{ width: 6px; height: 6px; }}
+        ::-webkit-scrollbar-track {{ background: transparent; }}
+        ::-webkit-scrollbar-thumb {{ background: rgba(255, 255, 255, 0.12); border-radius: 9999px; }}
+        ::-webkit-scrollbar-thumb:hover {{ background: rgba(255, 255, 255, 0.22); }}
+
+        .grain-overlay {{
+            position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+            pointer-events: none; z-index: 99999; opacity: 0.025;
+            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+        }}
+
         body {{
             margin: 0;
             padding: 0;
             background: var(--bg-canvas);
             color: var(--text-main);
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
             display: flex;
             height: 100vh;
             overflow: hidden;
         }}
         .builder-sidebar {{
-            width: 300px;
+            width: 310px;
             background: var(--bg-sidebar);
             border-right: 1px solid var(--border);
             display: flex;
@@ -359,7 +377,7 @@ async fn builder_studio_handler(page_id: Option<web::Path<String>>) -> impl Resp
             overflow-y: auto;
         }}
         .builder-inspector-sidebar {{
-            width: 320px;
+            width: 330px;
             background: var(--bg-sidebar);
             border-left: 1px solid var(--border);
             display: flex;
@@ -376,7 +394,8 @@ async fn builder_studio_handler(page_id: Option<web::Path<String>>) -> impl Resp
         }}
         .builder-toolbar {{
             height: 56px;
-            background: var(--bg-sidebar);
+            background: rgba(13, 17, 23, 0.9);
+            backdrop-filter: blur(20px) saturate(180%);
             border-bottom: 1px solid var(--border);
             display: flex;
             align-items: center;
@@ -390,19 +409,19 @@ async fn builder_studio_handler(page_id: Option<web::Path<String>>) -> impl Resp
             justify-content: center;
             align-items: flex-start;
             overflow: auto;
-            background: radial-gradient(circle, rgba(99,102,241,0.08) 1px, transparent 1px);
+            background: radial-gradient(circle, rgba(99,102,241,0.06) 1px, transparent 1px);
             background-size: 24px 24px;
         }}
         .device-frame {{
             {frame_style}
-            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.7);
+            box-shadow: 0 30px 60px -15px rgba(0, 0, 0, 0.8), 0 0 0 1px rgba(255, 255, 255, 0.08);
             color: #0f172a;
             position: relative;
             background: #ffffff;
             min-height: 600px;
-            border-radius: 8px;
+            border-radius: 10px;
             overflow: hidden;
-            transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            transition: width 0.35s var(--ease-spring);
         }}
         .palette-btn {{
             background: var(--bg-card);
@@ -410,34 +429,42 @@ async fn builder_studio_handler(page_id: Option<web::Path<String>>) -> impl Resp
             padding: 0.75rem 1rem;
             border-radius: 8px;
             cursor: pointer;
-            font-size: 0.875rem;
+            font-size: 0.85rem;
+            font-weight: 500;
             color: var(--text-main);
             display: flex;
             align-items: center;
             justify-content: space-between;
-            transition: all 0.15s ease;
+            transition: all 0.2s var(--ease-spring);
             text-align: left;
             width: 100%;
+            box-shadow: inset 0 1px 0 0 rgba(255,255,255,0.04);
         }}
         .palette-btn:hover {{
-            background: rgba(99, 102, 241, 0.15);
-            border-color: var(--accent);
+            background: rgba(99, 102, 241, 0.12);
+            border-color: rgba(99, 102, 241, 0.4);
+            transform: translateX(2px);
+        }}
+        .palette-btn:active {{
+            transform: scale(0.98);
         }}
         .btn {{
             background: var(--accent);
             color: #fff;
             border: none;
             padding: 0.5rem 1rem;
-            border-radius: 6px;
+            border-radius: 7px;
             cursor: pointer;
             font-weight: 600;
-            font-size: 0.85rem;
+            font-size: 0.825rem;
             display: inline-flex;
             align-items: center;
             gap: 0.5rem;
-            transition: background 0.15s ease;
+            box-shadow: 0 0 14px var(--accent-glow), inset 0 1px 0 0 rgba(255,255,255,0.2);
+            transition: all 0.2s var(--ease-spring);
         }}
-        .btn:hover {{ background: var(--accent-hover); }}
+        .btn:hover {{ background: var(--accent-hover); transform: translateY(-1px); }}
+        .btn:active {{ transform: scale(0.98); }}
         .btn-outline {{
             background: rgba(255,255,255,0.08);
             border: 1px solid var(--border);
@@ -570,6 +597,7 @@ async fn builder_studio_handler(page_id: Option<web::Path<String>>) -> impl Resp
     </style>
 </head>
 <body>
+    <div class="grain-overlay"></div>
     <aside class="builder-sidebar">
         <div style="font-weight: 700; font-size: 1.1rem; display: flex; align-items: center; gap: 0.5rem; color: #f8fafc;">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#6366f1" stroke-width="2.5"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>

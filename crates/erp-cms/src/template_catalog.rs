@@ -691,69 +691,86 @@ pub fn render_template_index_html() -> String {
     <title>rustnext — 60 Universal Enterprise Template Suites</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=Space+Mono:wght@400;700&family=Syne:wght@600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Syne:wght@600;700;800&display=swap" rel="stylesheet">
     <style>
         :root {{
-            --bg: #070709;
-            --surface: rgba(18, 19, 25, 0.75);
-            --surface-border: rgba(255,255,255,0.08);
-            --gold: #e6c887;
-            --text-main: #f0f2f7;
-            --text-muted: #8e95a5;
+            --bg: #07090e;
+            --surface: rgba(16, 20, 28, 0.75);
+            --surface-border: rgba(255, 255, 255, 0.07);
+            --surface-hover: rgba(22, 28, 40, 0.85);
+            --accent: #6366f1;
+            --accent-glow: rgba(99, 102, 241, 0.25);
+            --accent-warm: #f59e0b;
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --text-dim: #64748b;
+            --ease-spring: cubic-bezier(0.16, 1, 0.3, 1);
         }}
-        * {{ box-sizing: border-box; margin: 0; padding: 0; }}
+        * {{ box-sizing: border-box; margin: 0; padding: 0; font-family: 'Plus Jakarta Sans', -apple-system, sans-serif; letter-spacing: -0.011em; }}
+        code, pre, .mono, .cli-cmd, .class-badge, .worktype-badge {{ font-family: 'JetBrains Mono', monospace; letter-spacing: -0.02em; }}
+        ::-webkit-scrollbar {{ width: 6px; height: 6px; }}
+        ::-webkit-scrollbar-track {{ background: transparent; }}
+        ::-webkit-scrollbar-thumb {{ background: rgba(255, 255, 255, 0.12); border-radius: 9999px; }}
+        ::-webkit-scrollbar-thumb:hover {{ background: rgba(255, 255, 255, 0.22); }}
+
+        .grain-overlay {{
+            position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+            pointer-events: none; z-index: 99999; opacity: 0.025;
+            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+        }}
+
         body {{
             background: var(--bg);
+            background-image: radial-gradient(circle at 50% -10%, rgba(99, 102, 241, 0.12) 0%, transparent 60%);
             color: var(--text-main);
-            font-family: 'Outfit', sans-serif;
             line-height: 1.6;
-            padding: 3rem 1.5rem;
+            padding: 3.5rem 1.75rem;
             min-height: 100vh;
         }}
         .container {{ max-width: 1440px; margin: 0 auto; }}
-        header {{ text-align: center; margin-bottom: 3rem; }}
+        header {{ text-align: center; margin-bottom: 3.5rem; }}
         .hero-badge {{
             display: inline-flex;
             align-items: center;
-            gap: 0.5rem;
-            background: rgba(230,200,135,0.12);
-            border: 1px solid rgba(230,200,135,0.3);
-            color: var(--gold);
-            font-family: 'Space Mono', monospace;
-            font-size: 0.85rem;
-            padding: 0.35rem 1rem;
+            gap: 0.55rem;
+            background: rgba(99, 102, 241, 0.1);
+            border: 1px solid rgba(99, 102, 241, 0.25);
+            color: #a5b4fc;
+            font-size: 0.775rem;
+            font-weight: 600;
+            padding: 0.35rem 0.95rem;
             border-radius: 9999px;
-            margin-bottom: 1.25rem;
+            margin-bottom: 1.5rem;
+            letter-spacing: 0.04em;
             text-transform: uppercase;
-            letter-spacing: 0.05em;
         }}
         h1 {{
             font-family: 'Syne', sans-serif;
-            font-size: clamp(2.4rem, 5vw, 4.2rem);
+            font-size: clamp(2.4rem, 5vw, 4rem);
             font-weight: 800;
-            letter-spacing: -0.02em;
-            margin-bottom: 1rem;
-            background: linear-gradient(135deg, #ffffff 30%, #c4cbd8 70%, #e6c887 100%);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
+            letter-spacing: -0.03em;
+            margin-bottom: 1.15rem;
+            color: #ffffff;
+            line-height: 1.1;
         }}
         header p {{
-            font-size: 1.15rem;
+            font-size: 1.1rem;
             color: var(--text-muted);
-            max-width: 840px;
-            margin: 0 auto 2rem;
+            max-width: 820px;
+            margin: 0 auto 2.5rem;
+            line-height: 1.65;
         }}
         .search-filter-dock {{
             display: flex;
             flex-direction: column;
             gap: 1.25rem;
-            background: rgba(15, 17, 23, 0.85);
-            backdrop-filter: blur(20px);
-            border: 1px solid rgba(255,255,255,0.1);
-            border-radius: 1.25rem;
-            padding: 1.25rem 1.75rem;
+            background: rgba(13, 17, 24, 0.85);
+            backdrop-filter: blur(24px) saturate(180%);
+            border: 1px solid var(--surface-border);
+            border-radius: 1rem;
+            padding: 1.25rem 1.5rem;
             margin-bottom: 3rem;
-            box-shadow: 0 12px 32px rgba(0,0,0,0.4);
+            box-shadow: 0 16px 40px rgba(0,0,0,0.4), inset 0 1px 0 0 rgba(255,255,255,0.06);
         }}
         .search-bar-wrap {{
             position: relative;
@@ -763,71 +780,76 @@ pub fn render_template_index_html() -> String {
         .search-icon {{
             position: absolute;
             left: 1.25rem;
-            color: var(--gold);
+            color: var(--text-dim);
             pointer-events: none;
             display: flex;
             align-items: center;
         }}
         #template-search {{
             width: 100%;
-            background: rgba(0,0,0,0.35);
-            border: 1px solid rgba(255,255,255,0.12);
-            color: #fff;
+            background: rgba(7, 9, 14, 0.6);
+            border: 1px solid var(--surface-border);
+            color: #ffffff;
             padding: 0.85rem 1.25rem 0.85rem 3.25rem;
-            border-radius: 0.75rem;
-            font-family: 'Outfit', sans-serif;
-            font-size: 1.05rem;
+            border-radius: 0.65rem;
+            font-size: 0.95rem;
             outline: none;
-            transition: border-color 0.2s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+            transition: all 0.2s var(--ease-spring);
         }}
         #template-search:focus {{
-            border-color: var(--gold);
-            box-shadow: 0 0 0 3px rgba(230,200,135,0.2);
+            border-color: rgba(99, 102, 241, 0.4);
+            box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.12);
         }}
         .filter-pills {{
             display: flex;
             flex-wrap: wrap;
-            gap: 0.5rem;
+            gap: 0.45rem;
             align-items: center;
         }}
         .filter-btn {{
-            background: rgba(255,255,255,0.05);
-            border: 1px solid rgba(255,255,255,0.1);
-            color: #cbd5e1;
-            font-size: 0.82rem;
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.07);
+            color: var(--text-muted);
+            font-size: 0.8rem;
             font-weight: 500;
             padding: 0.4rem 0.85rem;
             border-radius: 9999px;
             cursor: pointer;
-            transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+            transition: all 0.2s var(--ease-spring);
         }}
-        .filter-btn:hover, .filter-btn.active {{
-            background: var(--gold);
-            color: #070709;
-            border-color: var(--gold);
-            font-weight: 700;
-            box-shadow: 0 4px 12px rgba(230,200,135,0.25);
+        .filter-btn:hover {{
+            background: rgba(255, 255, 255, 0.07);
+            color: #ffffff;
+            border-color: rgba(255, 255, 255, 0.15);
+        }}
+        .filter-btn.active {{
+            background: #4f46e5;
+            color: #ffffff;
+            border-color: #6366f1;
+            font-weight: 600;
+            box-shadow: 0 0 14px rgba(99, 102, 241, 0.35);
         }}
         .grid {{
             display: grid;
             grid-template-columns: repeat(auto-fill, minmax(380px, 1fr));
-            gap: 2rem;
+            gap: 1.75rem;
         }}
         .template-card {{
             background: var(--surface);
-            backdrop-filter: blur(16px);
+            backdrop-filter: blur(20px) saturate(180%);
             border: 1px solid var(--surface-border);
-            border-radius: 1.25rem;
-            padding: 2rem;
+            border-radius: 1rem;
+            padding: 1.75rem;
             display: flex;
             flex-direction: column;
-            transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.25s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+            transition: transform 0.25s var(--ease-spring), border-color 0.25s var(--ease-spring), box-shadow 0.25s var(--ease-spring);
             box-shadow: inset 0 1px 0 0 rgba(255,255,255,0.05), 0 8px 24px -4px rgba(0,0,0,0.5);
         }}
         .template-card:hover {{
             transform: translateY(-4px);
-            border-color: rgba(230,200,135,0.45);
-            box-shadow: inset 0 1px 0 0 rgba(255,255,255,0.1), 0 20px 40px rgba(0,0,0,0.6), 0 0 25px rgba(230,200,135,0.15);
+            border-color: rgba(99, 102, 241, 0.35);
+            background: var(--surface-hover);
+            box-shadow: inset 0 1px 0 0 rgba(255,255,255,0.08), 0 20px 40px rgba(0,0,0,0.6), 0 0 24px rgba(99, 102, 241, 0.12);
         }}
         .card-header {{
             display: flex;
@@ -836,43 +858,50 @@ pub fn render_template_index_html() -> String {
             margin-bottom: 1.25rem;
         }}
         .class-badge {{
-            font-family: 'Space Mono', monospace;
-            font-size: 0.8rem;
-            color: var(--gold);
-            font-weight: 700;
+            font-size: 0.75rem;
+            color: #a5b4fc;
+            font-weight: 600;
+            background: rgba(99, 102, 241, 0.1);
+            border: 1px solid rgba(99, 102, 241, 0.2);
+            padding: 0.2rem 0.55rem;
+            border-radius: 4px;
         }}
         .worktype-badge {{
-            font-size: 0.75rem;
-            background: rgba(255,255,255,0.06);
-            padding: 0.2rem 0.6rem;
-            border-radius: 0.4rem;
-            color: var(--text-muted);
+            font-size: 0.725rem;
+            background: rgba(255,255,255,0.04);
+            border: 1px solid rgba(255,255,255,0.07);
+            padding: 0.2rem 0.55rem;
+            border-radius: 4px;
+            color: var(--text-dim);
         }}
         h3 {{
             font-family: 'Syne', sans-serif;
-            font-size: 1.45rem;
-            margin-bottom: 0.5rem;
+            font-size: 1.35rem;
+            font-weight: 700;
+            margin-bottom: 0.45rem;
+            color: #ffffff;
+            letter-spacing: -0.02em;
         }}
         .subtitle {{
             color: var(--text-muted);
-            font-size: 0.92rem;
+            font-size: 0.875rem;
             margin-bottom: 1.25rem;
-            flex-grow: 0;
             line-height: 1.5;
         }}
         .module-group {{
             display: flex;
             flex-wrap: wrap;
             gap: 0.4rem;
-            margin-bottom: 1.5rem;
+            margin-bottom: 1.25rem;
         }}
         .module-badge {{
-            font-size: 0.75rem;
-            background: rgba(255,255,255,0.04);
-            border: 1px solid rgba(255,255,255,0.08);
+            font-size: 0.725rem;
+            font-family: 'JetBrains Mono', monospace;
+            background: rgba(255,255,255,0.03);
+            border: 1px solid rgba(255,255,255,0.07);
             padding: 0.2rem 0.5rem;
-            border-radius: 0.35rem;
-            color: #b3bac9;
+            border-radius: 4px;
+            color: #cbd5e1;
         }}
         .variant-group {{
             margin-bottom: 1.25rem;
@@ -883,11 +912,11 @@ pub fn render_template_index_html() -> String {
         }}
         .variant-label {{
             display: block;
-            font-size: 0.7rem;
-            font-family: 'Space Mono', monospace;
-            color: var(--gold);
+            font-size: 0.68rem;
+            font-family: 'JetBrains Mono', monospace;
+            color: #a5b4fc;
             text-transform: uppercase;
-            letter-spacing: 0.05em;
+            letter-spacing: 0.06em;
             margin-bottom: 0.4rem;
         }}
         .variant-pills {{
@@ -899,67 +928,67 @@ pub fn render_template_index_html() -> String {
             font-size: 0.72rem;
             padding: 0.2rem 0.55rem;
             border-radius: 9999px;
-            background: rgba(255,255,255,0.06);
-            border: 1px solid rgba(255,255,255,0.1);
+            background: rgba(255,255,255,0.05);
+            border: 1px solid rgba(255,255,255,0.08);
             color: #d1d5db;
             text-decoration: none;
-            transition: all 0.15s ease;
+            transition: all 0.15s var(--ease-spring);
         }}
         .variant-pill:hover {{
-            background: var(--gold);
-            color: #070709;
-            border-color: var(--gold);
-            font-weight: 600;
+            background: #4f46e5;
+            color: #ffffff;
+            border-color: #6366f1;
         }}
         .caps-list {{
             list-style: none;
-            margin-bottom: 1.75rem;
+            margin-bottom: 1.5rem;
             flex-grow: 1;
         }}
         .caps-list li {{
-            font-size: 0.88rem;
-            color: #d1d5db;
+            font-size: 0.835rem;
+            color: #cbd5e1;
             margin-bottom: 0.45rem;
             display: flex;
             align-items: baseline;
             gap: 0.5rem;
         }}
-        .check-icon {{ color: var(--gold); font-weight: bold; font-size: 0.95rem; }}
+        .check-icon {{ color: #10b981; font-weight: bold; font-size: 0.85rem; }}
         .card-footer {{
             display: flex;
             flex-direction: column;
-            gap: 0.75rem;
+            gap: 0.65rem;
             margin-top: auto;
         }}
         .btn-primary {{
             display: block;
             text-align: center;
-            background: linear-gradient(135deg, #e6c887, #c3a35e);
-            color: #070709;
-            font-weight: 700;
-            font-size: 0.95rem;
-            padding: 0.75rem 1.25rem;
-            border-radius: 0.75rem;
+            background: #4f46e5;
+            color: #ffffff;
+            font-weight: 600;
+            font-size: 0.875rem;
+            padding: 0.7rem 1.25rem;
+            border-radius: 0.65rem;
             text-decoration: none;
-            transition: opacity 0.2s cubic-bezier(0.16, 1, 0.3, 1), transform 0.15s cubic-bezier(0.16, 1, 0.3, 1);
+            box-shadow: 0 0 16px rgba(79, 70, 229, 0.3), inset 0 1px 0 0 rgba(255,255,255,0.2);
+            transition: all 0.2s var(--ease-spring);
         }}
-        .btn-primary:hover {{ opacity: 0.92; transform: translateY(-1px); }}
+        .btn-primary:hover {{ background: #4338ca; transform: translateY(-1px); }}
         .btn-primary:active {{ transform: scale(0.98); }}
         .cli-cmd {{
             display: block;
-            background: rgba(0,0,0,0.4);
+            background: rgba(7, 9, 14, 0.6);
             border: 1px solid rgba(255,255,255,0.06);
-            color: #9ca3af;
-            font-family: 'Space Mono', monospace;
-            font-size: 0.75rem;
-            padding: 0.4rem 0.6rem;
-            border-radius: 0.4rem;
+            color: var(--text-dim);
+            font-size: 0.725rem;
+            padding: 0.35rem 0.6rem;
+            border-radius: 4px;
             text-align: center;
             user-select: all;
         }}
     </style>
 </head>
 <body>
+    <div class="grain-overlay"></div>
     <div class="container">
         <header>
             <div class="hero-badge">
@@ -1108,14 +1137,22 @@ fn render_dynamic_template_suite_html(suite: &TemplateSuite, css_tokens: &str, v
     {seo_head}
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=Space+Mono:wght@400;700&family=Syne:wght@600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Syne:wght@600;700;800&display=swap" rel="stylesheet">
     <style>
         {css_tokens}
-        * {{ box-sizing: border-box; margin: 0; padding: 0; }}
+        * {{ box-sizing: border-box; margin: 0; padding: 0; font-family: 'Plus Jakarta Sans', -apple-system, sans-serif; letter-spacing: -0.011em; }}
+        code, pre, .mono, .meta-label, .cap-meta, .dynamic-module-tag {{ font-family: 'JetBrains Mono', monospace; letter-spacing: -0.02em; }}
+        
+        .grain-overlay {{
+            position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+            pointer-events: none; z-index: 99999; opacity: 0.025;
+            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+        }}
+
         body {{
-            background: var(--color-background, #06080d);
-            color: var(--color-text-main, #f0f4fc);
-            font-family: var(--font-body, 'Outfit', sans-serif);
+            background: var(--color-background, #07090e);
+            background-image: radial-gradient(circle at 50% 0%, rgba(99, 102, 241, 0.1) 0%, transparent 55%);
+            color: var(--color-text-main, #f8fafc);
             line-height: 1.6;
             min-height: 100vh;
             padding-bottom: 7rem;
@@ -1123,7 +1160,7 @@ fn render_dynamic_template_suite_html(suite: &TemplateSuite, css_tokens: &str, v
             overflow-x: hidden;
         }}
         .hero-section {{
-            padding: 5rem 2rem 4rem;
+            padding: 5rem 2rem 3.5rem;
             max-width: 1300px;
             margin: 0 auto;
             position: relative;
@@ -1132,32 +1169,29 @@ fn render_dynamic_template_suite_html(suite: &TemplateSuite, css_tokens: &str, v
             display: flex;
             align-items: center;
             gap: 0.6rem;
-            font-family: var(--font-mono, 'Space Mono', monospace);
             font-size: 0.8rem;
-            color: var(--color-accent, #e6c887);
+            color: #a5b4fc;
             margin-bottom: 1.5rem;
             text-transform: uppercase;
-            letter-spacing: 0.08em;
+            letter-spacing: 0.06em;
         }}
-        .hero-breadcrumbs a {{ color: inherit; text-decoration: none; opacity: 0.8; transition: opacity 0.2s; }}
+        .hero-breadcrumbs a {{ color: inherit; text-decoration: none; opacity: 0.85; transition: opacity 0.2s; }}
         .hero-breadcrumbs a:hover {{ opacity: 1; text-decoration: underline; }}
         .hero-title {{
-            font-family: var(--font-heading, 'Syne', sans-serif);
-            font-size: clamp(2.4rem, 6vw, 4.4rem);
+            font-family: 'Syne', sans-serif;
+            font-size: clamp(2.4rem, 6vw, 4.2rem);
             font-weight: 800;
-            line-height: 1.08;
+            line-height: 1.1;
             letter-spacing: -0.03em;
             margin-bottom: 1.25rem;
-            background: linear-gradient(135deg, #ffffff 40%, var(--color-primary, #e6c887) 100%);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
+            color: #ffffff;
         }}
         .hero-subtitle {{
-            font-size: 1.25rem;
-            color: rgba(240, 244, 252, 0.75);
+            font-size: 1.2rem;
+            color: #94a3b8;
             max-width: 860px;
             margin-bottom: 2.25rem;
-            line-height: 1.5;
+            line-height: 1.6;
         }}
         .meta-strip {{
             display: flex;
@@ -1165,16 +1199,16 @@ fn render_dynamic_template_suite_html(suite: &TemplateSuite, css_tokens: &str, v
             align-items: center;
             gap: 1.5rem;
             padding: 1.25rem 1.75rem;
-            background: var(--color-surface, rgba(18, 20, 28, 0.75));
-            backdrop-filter: blur(20px);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            border-radius: var(--border-radius, 1rem);
+            background: rgba(16, 20, 28, 0.75);
+            backdrop-filter: blur(20px) saturate(180%);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 0.75rem;
             margin-bottom: 3.5rem;
             box-shadow: inset 0 1px 0 0 rgba(255, 255, 255, 0.06), 0 12px 32px rgba(0,0,0,0.4);
         }}
         .meta-item {{ display: flex; flex-direction: column; }}
-        .meta-label {{ font-family: var(--font-mono, monospace); font-size: 0.7rem; color: #8e95a5; text-transform: uppercase; }}
-        .meta-value {{ font-weight: 700; color: #ffffff; font-size: 0.95rem; }}
+        .meta-label {{ font-size: 0.68rem; color: #64748b; text-transform: uppercase; letter-spacing: 0.06em; }}
+        .meta-value {{ font-weight: 700; color: #f8fafc; font-size: 0.95rem; margin-top: 0.15rem; }}
         .capabilities-grid {{
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
@@ -1184,71 +1218,76 @@ fn render_dynamic_template_suite_html(suite: &TemplateSuite, css_tokens: &str, v
             padding: 0 2rem;
         }}
         .dynamic-cap-card {{
-            background: var(--color-surface, rgba(18, 20, 28, 0.75));
-            backdrop-filter: blur(16px);
+            background: rgba(16, 20, 28, 0.75);
+            backdrop-filter: blur(20px) saturate(180%);
             border: 1px solid rgba(255, 255, 255, 0.08);
-            border-radius: var(--border-radius, 1rem);
+            border-radius: 0.75rem;
             padding: 1.75rem;
             display: flex;
             flex-direction: column;
             gap: 0.75rem;
-            transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+            transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.25s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.25s cubic-bezier(0.16, 1, 0.3, 1);
             box-shadow: inset 0 1px 0 0 rgba(255, 255, 255, 0.05);
         }}
         .dynamic-cap-card:hover {{
             transform: translateY(-4px);
-            border-color: var(--color-primary, #e6c887);
-            box-shadow: inset 0 1px 0 0 rgba(255, 255, 255, 0.1), 0 16px 36px rgba(0,0,0,0.5);
+            border-color: rgba(99, 102, 241, 0.35);
+            box-shadow: inset 0 1px 0 0 rgba(255, 255, 255, 0.08), 0 16px 36px rgba(0,0,0,0.5);
         }}
         .cap-indicator {{
             width: 36px;
             height: 36px;
             border-radius: 0.5rem;
-            background: rgba(230, 200, 135, 0.12);
-            color: var(--color-primary, #e6c887);
+            background: rgba(99, 102, 241, 0.12);
+            color: #a5b4fc;
             display: flex;
             align-items: center;
             justify-content: center;
         }}
-        .dynamic-cap-card h4 {{ font-family: var(--font-heading, 'Syne', sans-serif); font-size: 1.15rem; color: #ffffff; }}
-        .cap-meta {{ font-size: 0.8rem; color: #8e95a5; font-family: var(--font-mono, monospace); }}
+        .dynamic-cap-card h4 {{ font-family: 'Syne', sans-serif; font-size: 1.15rem; color: #ffffff; letter-spacing: -0.015em; }}
+        .cap-meta {{ font-size: 0.75rem; color: #64748b; }}
         .dynamic-module-tag {{
-            font-size: 0.75rem;
-            background: rgba(255,255,255,0.06);
-            border: 1px solid rgba(255,255,255,0.1);
-            padding: 0.25rem 0.6rem;
-            border-radius: 0.35rem;
-            color: #d1d5db;
+            font-size: 0.725rem;
+            background: rgba(255,255,255,0.04);
+            border: 1px solid rgba(255,255,255,0.08);
+            padding: 0.2rem 0.55rem;
+            border-radius: 4px;
+            color: #cbd5e1;
         }}
         .cta-strip {{
             max-width: 1300px;
             margin: 4rem auto 0;
-            padding: 2.5rem;
-            background: linear-gradient(135deg, rgba(255,255,255,0.04), rgba(255,255,255,0.01));
-            border: 1px solid rgba(255,255,255,0.1);
-            border-radius: 1.25rem;
+            padding: 2.25rem 2.5rem;
+            background: rgba(16, 20, 28, 0.75);
+            backdrop-filter: blur(20px) saturate(180%);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 0.75rem;
             display: flex;
             flex-wrap: wrap;
             justify-content: space-between;
             align-items: center;
             gap: 1.5rem;
+            box-shadow: inset 0 1px 0 0 rgba(255, 255, 255, 0.06), 0 16px 40px rgba(0,0,0,0.4);
         }}
-        .cta-text h3 {{ font-family: var(--font-heading, 'Syne', sans-serif); font-size: 1.6rem; margin-bottom: 0.4rem; }}
-        .cta-text p {{ color: #9ca3af; font-size: 0.95rem; }}
+        .cta-text h3 {{ font-family: 'Syne', sans-serif; font-size: 1.5rem; margin-bottom: 0.35rem; color: #ffffff; letter-spacing: -0.02em; }}
+        .cta-text p {{ color: #94a3b8; font-size: 0.925rem; }}
         .cta-btn {{
-            background: linear-gradient(135deg, var(--color-primary, #e6c887), var(--color-secondary, #c3a35e));
-            color: #070709;
-            font-weight: 700;
-            padding: 0.85rem 1.75rem;
-            border-radius: 0.75rem;
+            background: #4f46e5;
+            color: #ffffff;
+            font-weight: 600;
+            font-size: 0.9rem;
+            padding: 0.75rem 1.6rem;
+            border-radius: 0.65rem;
             text-decoration: none;
+            box-shadow: 0 0 16px rgba(79, 70, 229, 0.3), inset 0 1px 0 0 rgba(255,255,255,0.2);
             transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
         }}
-        .cta-btn:hover {{ opacity: 0.92; transform: translateY(-2px); }}
+        .cta-btn:hover {{ background: #4338ca; transform: translateY(-2px); }}
         .cta-btn:active {{ transform: scale(0.98); }}
     </style>
 </head>
 <body>
+    <div class="grain-overlay"></div>
     <div class="hero-section">
         <div class="hero-breadcrumbs">
             <a href="/templates">← Universal Templates Catalog</a>

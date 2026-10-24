@@ -147,99 +147,129 @@ const DESK_BASE_HTML: &str = r#"<!DOCTYPE html>
 <html lang="en" data-theme="dark">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>RustNext Enterprise Desk — __PERSONA__</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
     <style>
         :root {
-            --bg-primary: #0a0b10;
-            --bg-secondary: #12141c;
-            --bg-card: rgba(22, 25, 37, 0.75);
-            --border: rgba(255, 255, 255, 0.08);
+            --bg-primary: #07080b;
+            --bg-secondary: #0d0f15;
+            --bg-card: rgba(16, 19, 28, 0.75);
+            --bg-card-hover: rgba(22, 26, 38, 0.9);
+            --border: rgba(255, 255, 255, 0.07);
+            --border-hover: rgba(99, 102, 241, 0.35);
             --accent: #6366f1;
-            --accent-glow: rgba(99, 102, 241, 0.25);
+            --accent-glow: rgba(99, 102, 241, 0.2);
             --text-primary: #f8fafc;
             --text-secondary: #94a3b8;
+            --text-tertiary: #64748b;
             --success: #10b981;
             --warning: #f59e0b;
             --danger: #ef4444;
-            --sidebar-width: 250px;
+            --sidebar-width: 256px;
             --sidebar-collapsed-width: 68px;
-            --font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            --font-display: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+            --font-mono: 'JetBrains Mono', monospace;
+            --ease-spring: cubic-bezier(0.16, 1, 0.3, 1);
         }
         [data-theme="light"] {
             --bg-primary: #f8fafc;
             --bg-secondary: #ffffff;
             --bg-card: #ffffff;
+            --bg-card-hover: #f1f5f9;
             --border: rgba(0, 0, 0, 0.08);
+            --border-hover: rgba(79, 70, 229, 0.35);
             --accent: #4f46e5;
             --accent-glow: rgba(79, 70, 229, 0.15);
             --text-primary: #0f172a;
             --text-secondary: #64748b;
+            --text-tertiary: #94a3b8;
         }
-        * { margin: 0; padding: 0; box-sizing: border-box; font-family: var(--font-family); }
-        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: var(--font-display); }
+        ::-webkit-scrollbar { width: 5px; height: 5px; }
         ::-webkit-scrollbar-track { background: transparent; }
-        ::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.15); border-radius: 9999px; }
-        ::-webkit-scrollbar-thumb:hover { background: rgba(255, 255, 255, 0.25); }
-        button:active, .persona-select:active { transform: scale(0.98); }
-        body { background: var(--bg-primary); color: var(--text-primary); min-height: 100vh; display: flex; flex-direction: column; overflow-x: hidden; }
+        ::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.12); border-radius: 9999px; }
+        ::-webkit-scrollbar-thumb:hover { background: rgba(255, 255, 255, 0.22); }
+        
+        .grain-overlay {
+            position: fixed; inset: 0; pointer-events: none; z-index: 9999; opacity: 0.025;
+            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+        }
+
+        body {
+            background-color: var(--bg-primary);
+            color: var(--text-primary);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow-x: hidden;
+            background-image: radial-gradient(circle at 10% 10%, rgba(99, 102, 241, 0.05) 0%, transparent 40%),
+                              radial-gradient(circle at 90% 80%, rgba(16, 185, 129, 0.04) 0%, transparent 45%);
+            background-attachment: fixed;
+        }
         
         header {
             position: sticky; top: 0; z-index: 50;
-            background: rgba(10, 11, 16, 0.88); backdrop-filter: blur(16px);
+            background: rgba(10, 12, 17, 0.82); backdrop-filter: blur(20px) saturate(180%);
             border-bottom: 1px solid var(--border);
-            padding: 0.75rem 1.5rem; display: flex; justify-content: space-between; align-items: center; gap: 1rem;
+            padding: 0.75rem 1.75rem; display: flex; justify-content: space-between; align-items: center; gap: 1rem;
         }
         .header-left { display: flex; align-items: center; gap: 1rem; }
         .sidebar-toggle-btn {
             background: var(--bg-secondary); border: 1px solid var(--border); color: var(--text-secondary);
             width: 32px; height: 32px; border-radius: 8px; display: flex; align-items: center; justify-content: center;
-            cursor: pointer; transition: all 0.2s;
+            cursor: pointer; transition: all 0.2s var(--ease-spring);
         }
-        .sidebar-toggle-btn:hover { color: var(--text-primary); border-color: var(--accent); }
-        .brand { display: flex; align-items: center; gap: 0.75rem; font-weight: 700; font-size: 1.15rem; letter-spacing: -0.02em; text-decoration: none; color: inherit; }
-        .brand-logo { width: 32px; height: 32px; background: linear-gradient(135deg, #6366f1, #a855f7); border-radius: 8px; display: flex; align-items: center; justify-content: center; font-weight: 900; color: white; }
+        .sidebar-toggle-btn:hover { color: var(--text-primary); border-color: var(--accent); transform: scale(1.04); }
+        .sidebar-toggle-btn:active { transform: scale(0.96); }
+        
+        .brand { display: flex; align-items: center; gap: 0.75rem; font-weight: 700; font-size: 1.1rem; letter-spacing: -0.02em; text-decoration: none; color: inherit; }
+        .brand-logo { width: 30px; height: 30px; background: linear-gradient(135deg, #6366f1, #818cf8); border-radius: 7px; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 0.95rem; color: white; box-shadow: 0 2px 10px rgba(99,102,241,0.3); }
         
         .omnibar-wrapper { position: relative; width: 440px; }
         .omnibar {
-            display: flex; align-items: center; gap: 0.5rem;
-            background: var(--bg-secondary); border: 1px solid var(--border); border-radius: 10px;
-            padding: 0.5rem 1rem; width: 100%; transition: all 0.2s;
+            display: flex; align-items: center; gap: 0.6rem;
+            background: rgba(18, 21, 30, 0.65); border: 1px solid var(--border); border-radius: 8px;
+            padding: 0.45rem 0.9rem; width: 100%; transition: all 0.2s var(--ease-spring);
         }
-        .omnibar:focus-within { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-glow); }
-        .omnibar input { background: transparent; border: none; color: var(--text-primary); width: 100%; outline: none; font-size: 0.875rem; }
-        .omnibar kbd { background: rgba(255, 255, 255, 0.1); border-radius: 4px; padding: 0.15rem 0.4rem; font-size: 0.75rem; color: var(--text-secondary); }
+        .omnibar:focus-within { border-color: var(--accent); background: var(--bg-secondary); box-shadow: 0 0 0 3px var(--accent-glow); }
+        .omnibar input { background: transparent; border: none; color: var(--text-primary); width: 100%; outline: none; font-size: 0.85rem; }
+        .omnibar kbd { background: rgba(255, 255, 255, 0.08); border-radius: 4px; padding: 0.15rem 0.4rem; font-size: 0.7rem; font-family: var(--font-mono); color: var(--text-secondary); border: 1px solid rgba(255,255,255,0.06); }
         
         .omni-popover {
             position: absolute; top: calc(100% + 6px); left: 0; right: 0;
-            background: var(--bg-secondary); border: 1px solid var(--border); border-radius: 12px;
-            box-shadow: 0 16px 36px rgba(0, 0, 0, 0.45); backdrop-filter: blur(12px);
-            z-index: 100; max-height: 380px; overflow-y: auto; display: none; padding: 0.5rem;
+            background: var(--bg-secondary); border: 1px solid var(--border); border-radius: 10px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.55); backdrop-filter: blur(16px);
+            z-index: 100; max-height: 380px; overflow-y: auto; display: none; padding: 0.4rem;
         }
-        .omni-group-title { font-size: 0.7rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-secondary); padding: 0.4rem 0.6rem; }
+        .omni-group-title { font-size: 0.68rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; color: var(--text-tertiary); padding: 0.4rem 0.6rem; }
         .omni-item {
-            display: flex; align-items: center; justify-content: space-between; padding: 0.5rem 0.75rem;
-            border-radius: 8px; font-size: 0.85rem; color: var(--text-primary); cursor: pointer; text-decoration: none;
+            display: flex; align-items: center; justify-content: space-between; padding: 0.45rem 0.7rem;
+            border-radius: 6px; font-size: 0.83rem; color: var(--text-primary); cursor: pointer; text-decoration: none;
             transition: background 0.15s;
         }
-        .omni-item:hover, .omni-item.active { background: var(--accent-glow); color: var(--accent); }
-        .omni-item-badge { font-size: 0.7rem; padding: 0.1rem 0.4rem; border-radius: 4px; background: rgba(255,255,255,0.08); color: var(--text-secondary); }
+        .omni-item:hover, .omni-item.active { background: rgba(99, 102, 241, 0.14); color: #c7d2fe; }
+        .omni-item-badge { font-size: 0.68rem; padding: 0.1rem 0.35rem; border-radius: 4px; background: rgba(255,255,255,0.06); color: var(--text-secondary); font-family: var(--font-mono); }
         
         .nav-actions { display: flex; align-items: center; gap: 0.75rem; position: relative; }
         .persona-select {
             background: var(--bg-secondary); border: 1px solid var(--border); color: var(--text-primary);
-            padding: 0.4rem 0.8rem; border-radius: 8px; font-size: 0.85rem; outline: none; cursor: pointer;
+            padding: 0.38rem 0.8rem; border-radius: 7px; font-size: 0.82rem; font-weight: 500; outline: none; cursor: pointer;
+            transition: border-color 0.15s;
         }
-        .user-chip { display: flex; align-items: center; gap: 0.5rem; font-size: 0.875rem; font-weight: 500; color: var(--text-secondary); cursor: pointer; padding: 0.3rem 0.6rem; border-radius: 8px; transition: background 0.2s; }
-        .user-chip:hover { background: rgba(255, 255, 255, 0.05); }
-        .user-avatar { width: 32px; height: 32px; border-radius: 50%; background: #334155; display: flex; align-items: center; justify-content: center; color: white; font-weight: 600; font-size: 0.875rem; }
+        .persona-select:hover { border-color: var(--border-hover); }
+        .persona-select:active { transform: scale(0.98); }
+        
+        .user-chip { display: flex; align-items: center; gap: 0.5rem; font-size: 0.85rem; font-weight: 500; color: var(--text-secondary); cursor: pointer; padding: 0.25rem 0.6rem; border-radius: 7px; transition: all 0.15s; }
+        .user-chip:hover { background: rgba(255, 255, 255, 0.05); color: var(--text-primary); }
+        .user-avatar { width: 28px; height: 28px; border-radius: 50%; background: #1e293b; border: 1px solid var(--border); display: flex; align-items: center; justify-content: center; color: white; font-weight: 600; font-size: 0.8rem; }
         
         .user-menu-popover {
             position: absolute; top: calc(100% + 8px); right: 0; width: 220px;
-            background: var(--bg-secondary); border: 1px solid var(--border); border-radius: 12px;
-            box-shadow: 0 12px 32px rgba(0, 0, 0, 0.45); padding: 0.5rem; display: none; z-index: 100;
+            background: var(--bg-secondary); border: 1px solid var(--border); border-radius: 10px;
+            box-shadow: 0 16px 36px rgba(0, 0, 0, 0.5); padding: 0.4rem; display: none; z-index: 100;
         }
-        .user-menu-item { display: flex; align-items: center; gap: 0.6rem; padding: 0.5rem 0.75rem; font-size: 0.85rem; border-radius: 6px; color: var(--text-primary); cursor: pointer; text-decoration: none; }
+        .user-menu-item { display: flex; align-items: center; gap: 0.6rem; padding: 0.45rem 0.7rem; font-size: 0.82rem; border-radius: 6px; color: var(--text-primary); cursor: pointer; text-decoration: none; transition: all 0.15s; }
         .user-menu-item:hover { background: rgba(255, 255, 255, 0.06); color: var(--accent); }
         .user-menu-divider { height: 1px; background: var(--border); margin: 0.3rem 0; }
         
@@ -247,75 +277,79 @@ const DESK_BASE_HTML: &str = r#"<!DOCTYPE html>
         
         aside.desk-sidebar {
             width: var(--sidebar-width); background: var(--bg-secondary); border-right: 1px solid var(--border);
-            display: flex; flex-direction: column; transition: width 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+            display: flex; flex-direction: column; transition: width 0.22s var(--ease-spring);
             overflow-y: auto; overflow-x: hidden; flex-shrink: 0;
         }
         aside.desk-sidebar.collapsed { width: var(--sidebar-collapsed-width); }
-        .sidebar-nav { padding: 1rem 0.5rem; display: flex; flex-direction: column; gap: 0.25rem; }
+        .sidebar-nav { padding: 0.85rem 0.5rem; display: flex; flex-direction: column; gap: 0.2rem; }
         .nav-item {
-            display: flex; align-items: center; gap: 0.75rem; padding: 0.6rem 0.75rem; border-radius: 8px;
-            color: var(--text-secondary); text-decoration: none; font-size: 0.875rem; font-weight: 500;
-            cursor: pointer; transition: all 0.15s; white-space: nowrap;
+            display: flex; align-items: center; gap: 0.75rem; padding: 0.5rem 0.75rem; border-radius: 6px;
+            color: var(--text-secondary); text-decoration: none; font-size: 0.84rem; font-weight: 500;
+            cursor: pointer; transition: all 0.15s var(--ease-spring); white-space: nowrap;
         }
-        .nav-item:hover, .nav-item.active { background: rgba(99, 102, 241, 0.12); color: var(--accent); }
-        .nav-item svg { width: 18px; height: 18px; flex-shrink: 0; }
+        .nav-item:hover, .nav-item.active { background: rgba(99, 102, 241, 0.1); color: var(--accent); transform: translateX(2px); }
+        .nav-item svg { width: 17px; height: 17px; flex-shrink: 0; stroke-width: 1.8; }
         .nav-text { overflow: hidden; text-overflow: ellipsis; }
         aside.desk-sidebar.collapsed .nav-text { display: none; }
         aside.desk-sidebar.collapsed .sidebar-header-title { display: none; }
-        .sidebar-header-title { font-size: 0.7rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-secondary); padding: 0.5rem 0.75rem 0.25rem; }
+        .sidebar-header-title { font-size: 0.68rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; color: var(--text-tertiary); padding: 0.4rem 0.75rem 0.2rem; }
         
-        main { flex: 1; padding: 2rem; max-width: 1400px; margin: 0 auto; width: 100%; }
+        main { flex: 1; padding: 2rem; max-width: 1440px; margin: 0 auto; width: 100%; }
         
         .shortcuts-bar {
-            display: flex; align-items: center; gap: 0.6rem; overflow-x: auto; padding-bottom: 1rem; margin-bottom: 1.5rem;
+            display: flex; align-items: center; gap: 0.5rem; overflow-x: auto; padding-bottom: 0.75rem; margin-bottom: 1.75rem;
         }
         .shortcut-chip {
-            display: inline-flex; align-items: center; gap: 0.5rem; background: rgba(18, 20, 26, 0.75);
-            backdrop-filter: blur(12px); border: 1px solid rgba(255, 255, 255, 0.08);
-            box-shadow: inset 0 1px 0 0 rgba(255, 255, 255, 0.05); padding: 0.4rem 0.85rem; border-radius: 9999px;
-            font-size: 0.8rem; font-weight: 600; color: var(--text-primary); text-decoration: none;
-            cursor: pointer; transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1); white-space: nowrap;
+            display: inline-flex; align-items: center; gap: 0.45rem; background: rgba(16, 19, 28, 0.75);
+            backdrop-filter: blur(12px); border: 1px solid var(--border);
+            padding: 0.35rem 0.75rem; border-radius: 6px;
+            font-size: 0.78rem; font-weight: 500; color: var(--text-primary); text-decoration: none;
+            cursor: pointer; transition: all 0.2s var(--ease-spring); white-space: nowrap;
         }
-        .shortcut-chip:hover { border-color: var(--accent); transform: translateY(-2px); box-shadow: 0 4px 14px -2px var(--accent-glow); }
+        .shortcut-chip:hover { border-color: var(--border-hover); background: var(--bg-card-hover); transform: translateY(-1px); }
         .shortcut-chip:active { transform: scale(0.98); }
-        .shortcut-badge { font-size: 0.7rem; padding: 0.1rem 0.4rem; border-radius: 9999px; background: rgba(99, 102, 241, 0.2); color: #818cf8; }
+        .shortcut-badge { font-size: 0.68rem; padding: 0.08rem 0.35rem; border-radius: 4px; background: rgba(99, 102, 241, 0.15); color: #a5b4fc; font-family: var(--font-mono); }
         
-        .welcome-hero { margin-bottom: 2rem; position: relative; }
-        .welcome-hero h1 { font-size: 2rem; font-weight: 800; letter-spacing: -0.03em; margin-bottom: 0.35rem; background: linear-gradient(135deg, var(--text-primary), var(--text-secondary)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
-        .welcome-hero p { color: var(--text-secondary); font-size: 0.95rem; line-height: 1.5; }
+        .welcome-hero { margin-bottom: 2rem; }
+        .welcome-hero h1 {
+            font-size: clamp(1.8rem, 3vw, 2.4rem); font-weight: 800; letter-spacing: -0.03em; margin-bottom: 0.35rem;
+            color: var(--text-primary);
+        }
+        .welcome-hero p { color: var(--text-secondary); font-size: 0.92rem; line-height: 1.5; max-width: 720px; }
         
         .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 1.25rem; }
         .card {
-            background: rgba(18, 20, 26, 0.75); backdrop-filter: blur(16px);
-            border: 1px solid rgba(255, 255, 255, 0.08);
-            box-shadow: inset 0 1px 0 0 rgba(255, 255, 255, 0.06), 0 8px 24px -6px rgba(0, 0, 0, 0.4);
-            border-radius: 14px; padding: 1.25rem; cursor: pointer; transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+            background: var(--bg-card); backdrop-filter: blur(16px);
+            border: 1px solid var(--border);
+            border-radius: 10px; padding: 1.25rem; cursor: pointer; transition: all 0.2s var(--ease-spring);
             display: flex; flex-direction: column; position: relative; overflow: hidden;
         }
         .card:hover {
-            transform: translateY(-4px); border-color: rgba(99, 102, 241, 0.4);
-            box-shadow: inset 0 1px 0 0 rgba(255, 255, 255, 0.12), 0 16px 32px -10px var(--accent-glow);
+            transform: translateY(-2px); border-color: var(--border-hover); background: var(--bg-card-hover);
+            box-shadow: 0 12px 24px -8px rgba(0, 0, 0, 0.5), 0 0 16px rgba(99, 102, 241, 0.08);
         }
-        .card:active { transform: scale(0.985); }
+        .card:active { transform: scale(0.99); }
         .card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem; }
-        .card-icon { width: 40px; height: 40px; border-radius: 10px; background: rgba(99, 102, 241, 0.12); color: #818cf8; display: flex; align-items: center; justify-content: center; }
-        .badge { font-size: 0.7rem; font-weight: 600; padding: 0.2rem 0.5rem; border-radius: 9999px; background: rgba(255, 255, 255, 0.06); color: #c7d2fe; border: 1px solid rgba(255, 255, 255, 0.08); }
-        .card-title { font-size: 1.1rem; font-weight: 700; margin-bottom: 0.4rem; letter-spacing: -0.01em; }
-        .card-desc { font-size: 0.85rem; color: var(--text-secondary); line-height: 1.45; margin-bottom: 1rem; flex: 1; }
-        .pills-container { display: flex; flex-wrap: wrap; gap: 0.35rem; }
-        .pill { font-size: 0.75rem; padding: 0.2rem 0.5rem; border-radius: 6px; background: rgba(255, 255, 255, 0.04); color: #cbd5e1; border: 1px solid rgba(255, 255, 255, 0.04); text-decoration: none; transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1); }
-        .pill:hover { background: rgba(99, 102, 241, 0.25); color: #fff; transform: translateY(-1px); }
-        .pill:active { transform: scale(0.96); }
+        .card-icon { width: 36px; height: 36px; border-radius: 8px; background: rgba(99, 102, 241, 0.1); color: #818cf8; display: flex; align-items: center; justify-content: center; }
+        .card-icon svg { stroke-width: 1.8; }
+        .badge { font-size: 0.68rem; font-weight: 600; padding: 0.15rem 0.45rem; border-radius: 4px; background: rgba(255, 255, 255, 0.05); color: #cbd5e1; border: 1px solid rgba(255, 255, 255, 0.06); font-family: var(--font-mono); }
+        .card-title { font-size: 1.05rem; font-weight: 700; margin-bottom: 0.35rem; letter-spacing: -0.015em; color: var(--text-primary); }
+        .card-desc { font-size: 0.82rem; color: var(--text-secondary); line-height: 1.45; margin-bottom: 1rem; flex: 1; }
+        .pills-container { display: flex; flex-wrap: wrap; gap: 0.3rem; }
+        .pill { font-size: 0.72rem; padding: 0.18rem 0.45rem; border-radius: 5px; background: rgba(255, 255, 255, 0.04); color: #cbd5e1; border: 1px solid rgba(255, 255, 255, 0.04); text-decoration: none; transition: all 0.15s; }
+        .pill:hover { background: rgba(99, 102, 241, 0.2); color: #fff; border-color: rgba(99,102,241,0.3); }
+        .pill:active { transform: scale(0.97); }
         
         footer {
             background: var(--bg-secondary); border-top: 1px solid var(--border);
-            padding: 0.6rem 2rem; display: flex; justify-content: space-between; align-items: center; font-size: 0.8rem; color: var(--text-secondary);
+            padding: 0.5rem 1.75rem; display: flex; justify-content: space-between; align-items: center; font-size: 0.78rem; color: var(--text-secondary);
         }
-        .status-badge { display: flex; align-items: center; gap: 0.4rem; }
-        .status-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--success); box-shadow: 0 0 8px var(--success); }
+        .status-badge { display: flex; align-items: center; gap: 0.4rem; font-family: var(--font-mono); font-size: 0.72rem; }
+        .status-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--success); box-shadow: 0 0 6px var(--success); }
     </style>
 </head>
 <body>
+    <div class="grain-overlay"></div>
     <header>
         <div class="header-left">
             <button class="sidebar-toggle-btn" id="sidebar-toggle" title="Toggle Sidebar (Ctrl+B)">
@@ -451,7 +485,7 @@ const DESK_BASE_HTML: &str = r#"<!DOCTYPE html>
             html.setAttribute('data-theme', next);
             localStorage.setItem('desk_theme', next);
             const themeText = document.getElementById('theme-text');
-            if (themeText) themeText.textContent = next === 'dark' ? '☀️ Switch to Light Mode' : '🌙 Switch to Dark Mode';
+            if (themeText) themeText.textContent = next === 'dark' ? 'Switch to Light Mode' : 'Switch to Dark Mode';
         }
         if (localStorage.getItem('desk_theme')) {
             document.documentElement.setAttribute('data-theme', localStorage.getItem('desk_theme'));
@@ -668,54 +702,73 @@ pub fn render_list_view_html(doctype: &str, user_name: &str) -> String {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{display_title} List — RustNext Desk</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
     <style>
         :root {{
-            --bg-primary: #0a0b10; --bg-secondary: #12141c; --bg-card: rgba(22, 25, 37, 0.75);
-            --border: rgba(255, 255, 255, 0.08); --accent: #6366f1; --accent-glow: rgba(99, 102, 241, 0.25);
-            --text-primary: #f8fafc; --text-secondary: #94a3b8; --success: #10b981; --warning: #f59e0b; --danger: #ef4444;
+            --bg-primary: #07080b; --bg-secondary: #0d0f15; --bg-card: rgba(16, 19, 28, 0.75);
+            --border: rgba(255, 255, 255, 0.07); --border-hover: rgba(99, 102, 241, 0.35);
+            --accent: #6366f1; --accent-glow: rgba(99, 102, 241, 0.2);
+            --text-primary: #f8fafc; --text-secondary: #94a3b8; --text-tertiary: #64748b;
+            --success: #10b981; --warning: #f59e0b; --danger: #ef4444;
+            --font-display: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+            --font-mono: 'JetBrains Mono', monospace;
+            --ease-spring: cubic-bezier(0.16, 1, 0.3, 1);
         }}
         [data-theme="light"] {{
             --bg-primary: #f8fafc; --bg-secondary: #ffffff; --bg-card: #ffffff;
-            --border: rgba(0, 0, 0, 0.08); --accent: #4f46e5; --accent-glow: rgba(79, 70, 229, 0.15);
+            --border: rgba(0, 0, 0, 0.08); --border-hover: rgba(79, 70, 229, 0.35);
+            --accent: #4f46e5; --accent-glow: rgba(79, 70, 229, 0.15);
             --text-primary: #0f172a; --text-secondary: #64748b;
         }}
-        * {{ margin: 0; padding: 0; box-sizing: border-box; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }}
-        ::-webkit-scrollbar {{ width: 6px; height: 6px; }}
+        * {{ margin: 0; padding: 0; box-sizing: border-box; font-family: var(--font-display); }}
+        ::-webkit-scrollbar {{ width: 5px; height: 5px; }}
         ::-webkit-scrollbar-track {{ background: transparent; }}
-        ::-webkit-scrollbar-thumb {{ background: rgba(255, 255, 255, 0.15); border-radius: 9999px; }}
-        ::-webkit-scrollbar-thumb:hover {{ background: rgba(255, 255, 255, 0.25); }}
+        ::-webkit-scrollbar-thumb {{ background: rgba(255, 255, 255, 0.12); border-radius: 9999px; }}
         .btn:active, button:active {{ transform: scale(0.98); }}
-        body {{ background-color: var(--bg-primary); color: var(--text-primary); min-height: 100vh; display: flex; flex-direction: column; }}
+        
+        .grain-overlay {{
+            position: fixed; inset: 0; pointer-events: none; z-index: 9999; opacity: 0.025;
+            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+        }}
+
+        body {{
+            background-color: var(--bg-primary); color: var(--text-primary); min-height: 100vh; display: flex; flex-direction: column;
+            background-image: radial-gradient(circle at 10% 10%, rgba(99, 102, 241, 0.05) 0%, transparent 40%),
+                              radial-gradient(circle at 90% 80%, rgba(16, 185, 129, 0.04) 0%, transparent 45%);
+            background-attachment: fixed;
+        }}
         header {{
-            position: sticky; top: 0; z-index: 50; background: rgba(10, 11, 16, 0.88); backdrop-filter: blur(16px);
+            position: sticky; top: 0; z-index: 50; background: rgba(10, 12, 17, 0.82); backdrop-filter: blur(20px) saturate(180%);
             border-bottom: 1px solid var(--border); padding: 0.75rem 2rem; display: flex; justify-content: space-between; align-items: center;
         }}
-        .brand {{ display: flex; align-items: center; gap: 0.75rem; font-weight: 700; font-size: 1.25rem; text-decoration: none; color: inherit; }}
-        .brand-logo {{ width: 32px; height: 32px; background: linear-gradient(135deg, #6366f1, #a855f7); border-radius: 8px; display: flex; align-items: center; justify-content: center; font-weight: 900; color: white; }}
+        .brand {{ display: flex; align-items: center; gap: 0.75rem; font-weight: 700; font-size: 1.15rem; text-decoration: none; color: inherit; letter-spacing: -0.02em; }}
+        .brand-logo {{ width: 30px; height: 30px; background: linear-gradient(135deg, #6366f1, #818cf8); border-radius: 7px; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 0.95rem; color: white; }}
         .nav-actions {{ display: flex; align-items: center; gap: 1rem; }}
-        .user-chip {{ display: flex; align-items: center; gap: 0.5rem; font-size: 0.875rem; color: var(--text-secondary); }}
-        .user-avatar {{ width: 32px; height: 32px; border-radius: 50%; background: #334155; display: flex; align-items: center; justify-content: center; color: white; font-weight: 600; }}
+        .user-chip {{ display: flex; align-items: center; gap: 0.5rem; font-size: 0.85rem; color: var(--text-secondary); }}
+        .user-avatar {{ width: 28px; height: 28px; border-radius: 50%; background: #1e293b; border: 1px solid var(--border); display: flex; align-items: center; justify-content: center; color: white; font-weight: 600; font-size: 0.8rem; }}
         main {{ max-width: 1440px; margin: 0 auto; width: 100%; padding: 2rem; flex: 1; }}
         .action-bar {{ display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.25rem; flex-wrap: wrap; gap: 1rem; }}
-        .breadcrumbs {{ display: flex; align-items: center; gap: 0.5rem; font-size: 0.875rem; color: var(--text-secondary); margin-bottom: 0.5rem; }}
+        .breadcrumbs {{ display: flex; align-items: center; gap: 0.5rem; font-size: 0.82rem; color: var(--text-secondary); margin-bottom: 0.5rem; }}
         .breadcrumbs a {{ color: var(--accent); text-decoration: none; }}
-        .page-title {{ font-size: 1.75rem; font-weight: 800; text-transform: capitalize; display: flex; align-items: center; gap: 0.75rem; }}
-        .btn {{ padding: 0.5rem 1.2rem; border-radius: 8px; font-weight: 600; font-size: 0.875rem; cursor: pointer; border: none; transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1); display: inline-flex; align-items: center; gap: 0.5rem; text-decoration: none; }}
+        .page-title {{ font-size: 1.65rem; font-weight: 800; text-transform: capitalize; letter-spacing: -0.025em; display: flex; align-items: center; gap: 0.75rem; color: var(--text-primary); }}
+        .btn {{ padding: 0.45rem 1rem; border-radius: 7px; font-weight: 600; font-size: 0.82rem; cursor: pointer; border: none; transition: all 0.2s var(--ease-spring); display: inline-flex; align-items: center; gap: 0.5rem; text-decoration: none; }}
         .btn-primary {{ background: var(--accent); color: white; box-shadow: 0 0 12px var(--accent-glow); }}
-        .btn-primary:hover {{ opacity: 0.9; transform: translateY(-1px); }}
+        .btn-primary:hover {{ opacity: 0.92; transform: translateY(-1px); }}
         .btn-secondary {{ background: var(--bg-secondary); color: var(--text-primary); border: 1px solid var(--border); }}
-        .btn-secondary:hover {{ border-color: var(--accent); }}
-        .btn-danger {{ background: rgba(239, 68, 68, 0.2); color: #f87171; border: 1px solid rgba(239, 68, 68, 0.3); }}
-        .btn-danger:hover {{ background: rgba(239, 68, 68, 0.35); }}
-        .table-container {{ background: var(--bg-card); border: 1px solid var(--border); border-radius: 12px; overflow: hidden; position: relative; }}
+        .btn-secondary:hover {{ border-color: var(--border-hover); background: rgba(255,255,255,0.04); }}
+        .btn-danger {{ background: rgba(239, 68, 68, 0.15); color: #f87171; border: 1px solid rgba(239, 68, 68, 0.25); }}
+        .btn-danger:hover {{ background: rgba(239, 68, 68, 0.25); }}
+        .table-container {{ background: var(--bg-card); border: 1px solid var(--border); border-radius: 10px; overflow: hidden; position: relative; backdrop-filter: blur(16px); }}
         
-        .filter-section {{ padding: 1rem 1.5rem; border-bottom: 1px solid var(--border); display: flex; gap: 1rem; align-items: center; flex-wrap: wrap; justify-content: space-between; }}
-        .search-input {{ background: var(--bg-secondary); border: 1px solid var(--border); color: var(--text-primary); padding: 0.5rem 1rem; border-radius: 8px; width: 280px; outline: none; font-size: 0.875rem; }}
+        .filter-section {{ padding: 0.85rem 1.25rem; border-bottom: 1px solid var(--border); display: flex; gap: 1rem; align-items: center; flex-wrap: wrap; justify-content: space-between; }}
+        .search-input {{ background: var(--bg-secondary); border: 1px solid var(--border); color: var(--text-primary); padding: 0.45rem 0.85rem; border-radius: 7px; width: 280px; outline: none; font-size: 0.83rem; transition: border-color 0.15s; }}
         .search-input:focus {{ border-color: var(--accent); }}
         
-        .status-pills-bar {{ display: flex; gap: 0.4rem; align-items: center; }}
-        .status-pill {{ padding: 0.3rem 0.75rem; border-radius: 9999px; font-size: 0.75rem; font-weight: 600; cursor: pointer; border: 1px solid var(--border); background: var(--bg-secondary); color: var(--text-secondary); transition: all 0.15s; }}
-        .status-pill.active {{ border-color: var(--accent); background: var(--accent-glow); color: var(--accent); }}
+        .status-pills-bar {{ display: flex; gap: 0.35rem; align-items: center; }}
+        .status-pill {{ padding: 0.25rem 0.65rem; border-radius: 5px; font-size: 0.72rem; font-weight: 500; cursor: pointer; border: 1px solid var(--border); background: var(--bg-secondary); color: var(--text-secondary); transition: all 0.15s; }}
+        .status-pill.active {{ border-color: var(--accent); background: rgba(99, 102, 241, 0.14); color: #a5b4fc; font-weight: 600; }}
         
         .bulk-action-bar {{
             background: rgba(99, 102, 241, 0.15); border-bottom: 1px solid var(--accent);
@@ -1054,81 +1107,113 @@ pub fn render_form_view_html(doctype: &str, docname: &str, user_name: &str) -> S
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{display_title} — {docname} — RustNext Desk</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
         :root {{
-            --bg-primary: #0a0b10; --bg-secondary: #12141c; --bg-card: rgba(22, 25, 37, 0.75);
-            --border: rgba(255, 255, 255, 0.08); --accent: #6366f1; --accent-glow: rgba(99, 102, 241, 0.25);
-            --text-primary: #f8fafc; --text-secondary: #94a3b8; --success: #10b981; --warning: #f59e0b; --danger: #ef4444;
+            --bg-primary: #07090e; --bg-secondary: #0d1117; --bg-card: rgba(16, 20, 28, 0.75);
+            --border: rgba(255, 255, 255, 0.07); --border-focus: rgba(99, 102, 241, 0.4);
+            --accent: #6366f1; --accent-glow: rgba(99, 102, 241, 0.25);
+            --text-primary: #f8fafc; --text-secondary: #94a3b8; --text-muted: #64748b;
+            --success: #10b981; --warning: #f59e0b; --danger: #ef4444;
+            --ease-spring: cubic-bezier(0.16, 1, 0.3, 1);
         }}
         [data-theme="light"] {{
             --bg-primary: #f8fafc; --bg-secondary: #ffffff; --bg-card: #ffffff;
-            --border: rgba(0, 0, 0, 0.08); --accent: #4f46e5; --accent-glow: rgba(79, 70, 229, 0.15);
-            --text-primary: #0f172a; --text-secondary: #64748b;
+            --border: rgba(0, 0, 0, 0.08); --border-focus: rgba(79, 70, 229, 0.35);
+            --accent: #4f46e5; --accent-glow: rgba(79, 70, 229, 0.15);
+            --text-primary: #0f172a; --text-secondary: #64748b; --text-muted: #94a3b8;
         }}
-        * {{ margin: 0; padding: 0; box-sizing: border-box; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }}
+        * {{ margin: 0; padding: 0; box-sizing: border-box; font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; letter-spacing: -0.011em; }}
+        code, pre, .mono, input[type="number"], #field-name {{ font-family: 'JetBrains Mono', monospace; letter-spacing: -0.02em; }}
         ::-webkit-scrollbar {{ width: 6px; height: 6px; }}
         ::-webkit-scrollbar-track {{ background: transparent; }}
-        ::-webkit-scrollbar-thumb {{ background: rgba(255, 255, 255, 0.15); border-radius: 9999px; }}
-        ::-webkit-scrollbar-thumb:hover {{ background: rgba(255, 255, 255, 0.25); }}
+        ::-webkit-scrollbar-thumb {{ background: rgba(255, 255, 255, 0.12); border-radius: 9999px; }}
+        ::-webkit-scrollbar-thumb:hover {{ background: rgba(255, 255, 255, 0.22); }}
+        
+        .grain-overlay {{
+            position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+            pointer-events: none; z-index: 99999; opacity: 0.025;
+            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+        }}
+
         .btn:active, button:active {{ transform: scale(0.98); }}
         body {{ background-color: var(--bg-primary); color: var(--text-primary); min-height: 100vh; display: flex; flex-direction: column; }}
         header {{
-            position: sticky; top: 0; z-index: 50; background: rgba(10, 11, 16, 0.88); backdrop-filter: blur(16px);
+            position: sticky; top: 0; z-index: 50; background: rgba(7, 9, 14, 0.85); backdrop-filter: blur(20px) saturate(180%);
             border-bottom: 1px solid var(--border); padding: 0.75rem 2rem; display: flex; justify-content: space-between; align-items: center;
         }}
-        .brand {{ display: flex; align-items: center; gap: 0.75rem; font-weight: 700; font-size: 1.25rem; text-decoration: none; color: inherit; }}
-        .brand-logo {{ width: 32px; height: 32px; background: linear-gradient(135deg, #6366f1, #a855f7); border-radius: 8px; display: flex; align-items: center; justify-content: center; font-weight: 900; color: white; }}
+        .brand {{ display: flex; align-items: center; gap: 0.75rem; font-weight: 700; font-size: 1.15rem; text-decoration: none; color: inherit; letter-spacing: -0.02em; }}
+        .brand-logo {{ width: 32px; height: 32px; background: linear-gradient(135deg, #4f46e5, #7c3aed); border-radius: 8px; display: flex; align-items: center; justify-content: center; font-weight: 800; color: white; box-shadow: 0 0 16px rgba(99, 102, 241, 0.35); }}
         .nav-actions {{ display: flex; align-items: center; gap: 1rem; }}
-        .user-chip {{ display: flex; align-items: center; gap: 0.5rem; font-size: 0.875rem; color: var(--text-secondary); }}
-        .user-avatar {{ width: 32px; height: 32px; border-radius: 50%; background: #334155; display: flex; align-items: center; justify-content: center; color: white; font-weight: 600; }}
-        main {{ max-width: 1100px; margin: 0 auto; width: 100%; padding: 2rem; flex: 1; }}
-        .breadcrumbs {{ display: flex; align-items: center; gap: 0.5rem; font-size: 0.875rem; color: var(--text-secondary); margin-bottom: 0.5rem; }}
-        .breadcrumbs a {{ color: var(--accent); text-decoration: none; }}
-        .action-bar {{ display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.25rem; flex-wrap: wrap; gap: 1rem; }}
-        .page-title {{ font-size: 1.75rem; font-weight: 800; display: flex; align-items: center; gap: 0.75rem; }}
-        .btn {{ padding: 0.5rem 1.2rem; border-radius: 8px; font-weight: 600; font-size: 0.875rem; cursor: pointer; border: none; transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1); display: inline-flex; align-items: center; gap: 0.5rem; text-decoration: none; }}
-        .btn-primary {{ background: var(--accent); color: white; box-shadow: 0 0 12px var(--accent-glow); }}
-        .btn-primary:hover {{ opacity: 0.9; transform: translateY(-1px); }}
-        .btn-success {{ background: var(--success); color: white; }}
-        .btn-danger {{ background: var(--danger); color: white; }}
-        .btn-secondary {{ background: var(--bg-secondary); color: var(--text-primary); border: 1px solid var(--border); }}
-        .btn-secondary:hover {{ border-color: var(--accent); }}
+        .user-chip {{ display: flex; align-items: center; gap: 0.6rem; font-size: 0.825rem; color: var(--text-secondary); }}
+        .user-avatar {{ width: 30px; height: 30px; border-radius: 50%; background: #1e293b; border: 1px solid var(--border); display: flex; align-items: center; justify-content: center; color: #cbd5e1; font-weight: 600; font-size: 0.8rem; }}
+        main {{ max-width: 1160px; margin: 0 auto; width: 100%; padding: 2rem; flex: 1; }}
+        .breadcrumbs {{ display: flex; align-items: center; gap: 0.5rem; font-size: 0.825rem; color: var(--text-muted); margin-bottom: 0.6rem; }}
+        .breadcrumbs a {{ color: var(--text-secondary); text-decoration: none; transition: color 0.15s; }}
+        .breadcrumbs a:hover {{ color: var(--accent); }}
+        .action-bar {{ display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 1rem; }}
+        .page-title {{ font-size: 1.6rem; font-weight: 800; display: flex; align-items: center; gap: 0.85rem; letter-spacing: -0.03em; }}
+        .btn {{ padding: 0.5rem 1.1rem; border-radius: 8px; font-weight: 600; font-size: 0.825rem; cursor: pointer; border: none; transition: all 0.2s var(--ease-spring); display: inline-flex; align-items: center; gap: 0.45rem; text-decoration: none; }}
+        .btn-primary {{ background: #4f46e5; color: white; box-shadow: 0 0 16px rgba(79, 70, 229, 0.35), inset 0 1px 0 0 rgba(255,255,255,0.2); }}
+        .btn-primary:hover {{ background: #4338ca; transform: translateY(-1px); }}
+        .btn-success {{ background: #059669; color: white; box-shadow: 0 0 14px rgba(5, 150, 105, 0.3); }}
+        .btn-success:hover {{ background: #047857; transform: translateY(-1px); }}
+        .btn-danger {{ background: #dc2626; color: white; box-shadow: 0 0 14px rgba(220, 38, 38, 0.3); }}
+        .btn-danger:hover {{ background: #b91c1c; transform: translateY(-1px); }}
+        .btn-secondary {{ background: var(--bg-card); color: var(--text-primary); border: 1px solid var(--border); box-shadow: inset 0 1px 0 0 rgba(255,255,255,0.04); }}
+        .btn-secondary:hover {{ border-color: rgba(255,255,255,0.18); background: rgba(255, 255, 255, 0.04); }}
         
         .connections-dashboard {{
-            background: var(--bg-card); border: 1px solid var(--border); border-radius: 12px;
-            padding: 1rem 1.5rem; margin-bottom: 1.25rem; display: flex; gap: 1rem; align-items: center; flex-wrap: wrap;
+            background: var(--bg-card); border: 1px solid var(--border); border-radius: 10px;
+            box-shadow: inset 0 1px 0 0 rgba(255,255,255,0.04);
+            padding: 0.85rem 1.25rem; margin-bottom: 1.5rem; display: flex; gap: 0.75rem; align-items: center; flex-wrap: wrap;
         }}
         .conn-item {{
             display: inline-flex; align-items: center; gap: 0.5rem; background: var(--bg-secondary);
-            border: 1px solid var(--border); padding: 0.35rem 0.75rem; border-radius: 8px; font-size: 0.8rem;
-            color: var(--text-primary); text-decoration: none; cursor: pointer; transition: all 0.15s;
+            border: 1px solid var(--border); padding: 0.35rem 0.75rem; border-radius: 6px; font-size: 0.8rem;
+            color: var(--text-primary); text-decoration: none; cursor: pointer; transition: all 0.15s var(--ease-spring);
         }}
-        .conn-item:hover {{ border-color: var(--accent); }}
-        .conn-count {{ font-weight: 700; color: var(--accent); background: var(--accent-glow); padding: 0.1rem 0.4rem; border-radius: 4px; font-size: 0.75rem; }}
+        .conn-item:hover {{ border-color: var(--accent); background: rgba(99, 102, 241, 0.08); }}
+        .conn-count {{ font-weight: 700; color: #a5b4fc; background: rgba(99, 102, 241, 0.16); padding: 0.1rem 0.45rem; border-radius: 4px; font-size: 0.75rem; font-family: 'JetBrains Mono', monospace; }}
         
-        .form-card {{ background: var(--bg-card); border: 1px solid var(--border); border-radius: 14px; padding: 2rem; margin-bottom: 1.5rem; }}
+        .form-card {{
+            background: var(--bg-card); border: 1px solid var(--border); border-radius: 12px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.36), inset 0 1px 0 0 rgba(255, 255, 255, 0.05);
+            padding: 1.75rem; margin-bottom: 1.5rem;
+        }}
         .form-grid {{ display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1.25rem; margin-bottom: 1.25rem; }}
-        .form-group {{ display: flex; flex-direction: column; gap: 0.35rem; position: relative; }}
-        .form-group label {{ font-size: 0.75rem; font-weight: 700; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.05em; }}
-        .form-control {{ background: var(--bg-secondary); border: 1px solid var(--border); color: var(--text-primary); padding: 0.55rem 0.8rem; border-radius: 8px; font-size: 0.875rem; outline: none; transition: border-color 0.2s; width: 100%; }}
-        .form-control:focus {{ border-color: var(--accent); }}
+        .form-group {{ display: flex; flex-direction: column; gap: 0.4rem; position: relative; }}
+        .form-group label {{ font-size: 0.725rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.06em; }}
+        .form-control {{
+            background: var(--bg-secondary); border: 1px solid var(--border); color: var(--text-primary);
+            padding: 0.6rem 0.85rem; border-radius: 7px; font-size: 0.875rem; outline: none;
+            transition: all 0.2s var(--ease-spring); width: 100%; box-shadow: inset 0 1px 2px rgba(0,0,0,0.3);
+        }}
+        .form-control:focus {{ border-color: var(--border-focus); box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.15); }}
         textarea.form-control {{ min-height: 90px; resize: vertical; }}
         
-        .child-table-section {{ margin-top: 1.5rem; border-top: 1px solid var(--border); padding-top: 1.5rem; }}
-        .child-table {{ width: 100%; border-collapse: collapse; margin-top: 0.75rem; font-size: 0.85rem; }}
-        .child-table th {{ background: rgba(255, 255, 255, 0.02); padding: 0.6rem 0.8rem; text-align: left; color: var(--text-secondary); font-weight: 600; border-bottom: 1px solid var(--border); }}
-        .child-table td {{ padding: 0.5rem 0.8rem; border-bottom: 1px solid var(--border); }}
-        .child-table input {{ background: var(--bg-secondary); border: 1px solid var(--border); color: var(--text-primary); padding: 0.4rem 0.6rem; border-radius: 6px; font-size: 0.85rem; width: 100%; }}
-        .child-table input:focus {{ border-color: var(--accent); outline: none; }}
+        .child-table-section {{ margin-top: 1.75rem; border-top: 1px solid var(--border); padding-top: 1.5rem; }}
+        .child-table {{ width: 100%; border-collapse: collapse; margin-top: 0.85rem; font-size: 0.85rem; border: 1px solid var(--border); border-radius: 8px; overflow: hidden; }}
+        .child-table th {{ background: rgba(255, 255, 255, 0.02); padding: 0.65rem 0.85rem; text-align: left; color: var(--text-muted); font-size: 0.725rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; border-bottom: 1px solid var(--border); }}
+        .child-table td {{ padding: 0.5rem 0.85rem; border-bottom: 1px solid var(--border); }}
+        .child-table input {{
+            background: var(--bg-secondary); border: 1px solid var(--border); color: var(--text-primary);
+            padding: 0.45rem 0.65rem; border-radius: 6px; font-size: 0.85rem; width: 100%; outline: none;
+            transition: border-color 0.15s;
+        }}
+        .child-table input:focus {{ border-color: var(--border-focus); }}
         
-        .badge {{ font-size: 0.75rem; font-weight: 600; padding: 0.2rem 0.6rem; border-radius: 9999px; }}
-        .badge-draft {{ background: rgba(245, 158, 11, 0.15); color: #fbbf24; border: 1px solid rgba(245, 158, 11, 0.3); }}
-        .badge-submitted {{ background: rgba(16, 185, 129, 0.15); color: #34d399; border: 1px solid rgba(16, 185, 129, 0.3); }}
-        .badge-cancelled {{ background: rgba(239, 68, 68, 0.15); color: #f87171; border: 1px solid rgba(239, 68, 68, 0.3); }}
-        #toast {{ position: fixed; bottom: 24px; right: 24px; background: rgba(18,24,38,0.95); border: 1px solid var(--border); padding: 12px 18px; border-radius: 8px; font-size: 13px; z-index: 9999; display: none; }}
+        .badge {{ font-size: 0.75rem; font-weight: 600; padding: 0.25rem 0.65rem; border-radius: 9999px; font-family: 'JetBrains Mono', monospace; }}
+        .badge-draft {{ background: rgba(245, 158, 11, 0.12); color: #fbbf24; border: 1px solid rgba(245, 158, 11, 0.28); }}
+        .badge-submitted {{ background: rgba(16, 185, 129, 0.12); color: #34d399; border: 1px solid rgba(16, 185, 129, 0.28); }}
+        .badge-cancelled {{ background: rgba(239, 68, 68, 0.12); color: #f87171; border: 1px solid rgba(239, 68, 68, 0.28); }}
+        #toast {{ position: fixed; bottom: 24px; right: 24px; background: rgba(16,20,28,0.96); backdrop-filter: blur(16px); border: 1px solid var(--border); padding: 12px 18px; border-radius: 8px; font-size: 13px; z-index: 9999; display: none; box-shadow: 0 12px 32px rgba(0,0,0,0.5); }}
     </style>
 </head>
 <body>
+    <div class="grain-overlay"></div>
     <header>
         <a href="/desk" class="brand">
             <div class="brand-logo">R</div>
@@ -1637,7 +1722,10 @@ pub fn AwesomeBar(items: Vec<AwesomeBarItem>, on_select: Option<EventHandler<Str
     rsx! {
         div { class: "awesome-bar-container relative w-full",
             div { class: "awesome-bar-input-wrap flex items-center bg-zinc-900 border border-zinc-700 rounded-md px-3 py-1.5 focus-within:border-blue-500",
-                span { class: "text-zinc-500 mr-2 text-sm", "🔍" }
+                svg { class: "w-4 h-4 text-zinc-500 mr-2 shrink-0", fill: "none", stroke: "currentColor", stroke_width: "2", view_box: "0 0 24 24",
+                    circle { cx: "11", cy: "11", r: "8" }
+                    line { x1: "21", y1: "21", x2: "16.65", y2: "16.65" }
+                }
                 input {
                     r#type: "text",
                     class: "awesome-bar-input bg-transparent text-sm text-zinc-100 placeholder-zinc-500 outline-none w-full",
