@@ -6,10 +6,10 @@
 //! - `Payment Entry`: Multi-invoice allocation, TDS deduction, forex variance calculation
 //! - `Journal Entry`: Arbitrary balanced multi-line debits/credits with cost center rules.
 
+use rust_decimal::Decimal;
 use rwl_framework::controller::DocController;
 use rwl_framework::lifecycle::{Document, DocumentError};
 use rwl_meta::DocTypeSchema;
-use rust_decimal::Decimal;
 use std::str::FromStr;
 
 /// Controller for `Sales Invoice`.

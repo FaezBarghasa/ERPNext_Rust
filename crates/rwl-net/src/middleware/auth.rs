@@ -11,9 +11,9 @@ use actix_web::{
     dev::{Payload, Service, ServiceRequest, ServiceResponse, Transform},
     http::{StatusCode, header},
 };
+use futures_util::future::{LocalBoxFuture, Ready, ok};
 use rwl_meta::auth::{AuthError, SessionClaims, verify_token};
 use rwl_meta::rbac::{HasPermissionEdge, Permission, check_permission};
-use futures_util::future::{LocalBoxFuture, Ready, ok};
 use serde::{Deserialize, Serialize};
 use std::sync::Arc;
 

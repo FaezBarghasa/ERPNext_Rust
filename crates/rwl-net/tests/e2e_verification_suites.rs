@@ -18,9 +18,9 @@ use erp_inventory::reservation::{
     ReservationStatus, ReservationType, StockReservationEngine, StockReservationEntry,
 };
 use erp_wms::traceability::{GenealogyLink, LineageNode, TraceabilityEngine};
-use rwl_storage::crdt::{OfflineOutboxManager, VectorClock};
 use rust_decimal::Decimal;
 use rust_decimal_macros::dec;
+use rwl_storage::crdt::{OfflineOutboxManager, VectorClock};
 use std::collections::HashMap;
 
 #[test]

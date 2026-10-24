@@ -4,9 +4,9 @@ use crate::middleware::auth::SecurityContext;
 use crate::tenant::{ConnectionPoolManager, TenantId};
 use crate::v2_routes::DynamicRbacState;
 use actix_web::{HttpMessage, HttpRequest, HttpResponse, Responder, web};
+use regex::Regex;
 use rwl_framework::{Document, DocumentController};
 use rwl_meta::{DocTypeSchema, Permission, check_permission};
-use regex::Regex;
 use serde::Deserialize;
 use std::sync::LazyLock;
 

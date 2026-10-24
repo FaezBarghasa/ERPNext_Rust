@@ -14,13 +14,13 @@ pub mod migration_pipeline;
 pub mod packaging;
 pub mod perf_engine;
 
+use migration_pipeline::{MigrationPhase, ZeroDowntimeMigrationEngine};
+use packaging::UniversalDistributionBuilder;
 use rwl_meta::{
     DocFieldSchema, DocTypeRegistry, DocTypeSchema, FieldType, ProfileRegistry,
     compile_all_graph_edges, compile_to_surrealql, standard_erpnext_graph_edges,
 };
 use rwl_storage::open_tenant;
-use migration_pipeline::{MigrationPhase, ZeroDowntimeMigrationEngine};
-use packaging::UniversalDistributionBuilder;
 use sha2::{Digest, Sha256};
 use std::fs;
 use std::io::Write;
@@ -625,9 +625,9 @@ export class RustNextClient {
                 "generate-pot-file" => println!(
                     "Generating template POT file from all DocType descriptors and strings... OK"
                 ),
-                "migrate-csv-to-po" => println!(
-                    "Migrating legacy CSV translations to standard GNU gettext PO... OK"
-                ),
+                "migrate-csv-to-po" => {
+                    println!("Migrating legacy CSV translations to standard GNU gettext PO... OK")
+                }
                 "update-po-files" => {
                     println!("Updating language PO catalogs from latest POT template... OK")
                 }

@@ -12,8 +12,8 @@ use desk_components::{
     MobileNavItem, MobileShellModel, NumberCardModel, ReportFilter, ReportPagination,
     ScriptReportColumn, TimePickerModel, TreeNode, TreeViewModel,
 };
-use rwl_meta::{DocFieldSchema, DocTypeSchema, FieldType};
 use rust_decimal_macros::dec;
+use rwl_meta::{DocFieldSchema, DocTypeSchema, FieldType};
 use serde_json::json;
 use std::collections::HashMap;
 

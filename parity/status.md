@@ -1,5 +1,6 @@
-# ERPNext v16 Pure-Rust Parity Status
+# rust-web-land (rwl) — Pure-Rust Parity & Engine Status
 
+**Platform**: rust-web-land (`rwl`)  
 **Upstream Canonical DocTypes:** 841  
 **Rust Hand-Written Canonical:** 841 (100.00%)  
 **Rust Compiled v16 Full:** 841 (100.00%)

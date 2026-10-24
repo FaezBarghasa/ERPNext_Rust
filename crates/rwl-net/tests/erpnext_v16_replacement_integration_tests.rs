@@ -14,6 +14,7 @@ use actix_web::body::to_bytes;
 use actix_web::http::StatusCode;
 use actix_web::test::{TestRequest, call_service, init_service};
 use chrono::NaiveDate;
+use rust_decimal_macros::dec;
 use rwl_net::server::configure_app;
 use rwl_net::tenant::{ConnectionPoolManager, MicroTopologyConfig};
 use rwl_net::v2_routes::{
@@ -23,7 +24,6 @@ use rwl_net::v2_routes::{
     SalesInvoiceItem, SalesInvoicePayload, SendEmailPayload, SetupWizardPayload, StockEntryPayload,
     VariantMatrixPayload, WorkOrderPayload,
 };
-use rust_decimal_macros::dec;
 use std::collections::HashMap;
 use std::time::Duration;
 

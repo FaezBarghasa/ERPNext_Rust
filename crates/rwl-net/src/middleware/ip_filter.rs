@@ -8,8 +8,8 @@ use actix_web::dev::{Service, ServiceRequest, ServiceResponse, Transform};
 use actix_web::http::StatusCode;
 use actix_web::{Error as ActixError, HttpResponse};
 use chrono::Utc;
-use rwl_meta::security_rules::matches_ip_rule;
 use futures_util::future::{LocalBoxFuture, Ready, ok, ready};
+use rwl_meta::security_rules::matches_ip_rule;
 use serde::{Deserialize, Serialize};
 use std::sync::{Arc, RwLock};
 

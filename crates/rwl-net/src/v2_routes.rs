@@ -63,6 +63,9 @@ use erp_trade::order_lifecycle::{
 use erp_trade::reviews::{ProductReview, ReviewManager, ReviewStatus};
 use erp_trade::shipping::{ShippingCalculator, ShippingMethod, ShippingZone};
 use erp_trade::wishlist::{Wishlist, WishlistItem};
+use regex::Regex;
+use rust_decimal::Decimal;
+use rust_decimal_macros::dec;
 use rwl_framework::controller::ControllerRegistry;
 use rwl_framework::export_engine::{DocumentExporter, ExportColumn, ExportFormat};
 use rwl_framework::lifecycle::Document;
@@ -98,9 +101,6 @@ use rwl_meta::security_rules::{
 use rwl_meta::{DocTypeSchema, lookup_schema};
 use rwl_storage::drive::DeduplicatedStorage;
 use rwl_storage::execute_transaction;
-use regex::Regex;
-use rust_decimal::Decimal;
-use rust_decimal_macros::dec;
 use serde::{Deserialize, Serialize};
 use sha2::{Digest, Sha256};
 use std::collections::HashMap;
@@ -2777,8 +2777,7 @@ pub struct DynamicRbacState {
     pub bookmark_registry: Arc<erp_cms::audio_book_sync::AudioBookmarkRegistry>,
     pub storage: Arc<DeduplicatedStorage>,
     pub menus: Arc<RwLock<HashMap<desk_components::MenuTreeLocation, desk_components::MenuTree>>>,
-    pub sound_configs:
-        Arc<RwLock<HashMap<String, rwl_framework::notification::SoundAlertConfig>>>,
+    pub sound_configs: Arc<RwLock<HashMap<String, rwl_framework::notification::SoundAlertConfig>>>,
     pub translations: Arc<RwLock<HashMap<String, HashMap<String, String>>>>,
     pub theme_config: Arc<RwLock<desk_components::ThemeConfig>>,
     pub upgrade_snapshots: Arc<RwLock<Vec<UpgradeSnapshot>>>,

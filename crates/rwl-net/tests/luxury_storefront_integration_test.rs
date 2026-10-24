@@ -1,8 +1,8 @@
 use actix_web::{App, test};
 use erp_cms::{CheckoutItem, CustomerCheckoutRequest};
+use rust_decimal_macros::dec;
 use rwl_net::server::configure_app;
 use rwl_net::tenant::{ConnectionPoolManager, MicroTopologyConfig};
-use rust_decimal_macros::dec;
 use std::time::Duration;
 
 #[actix_web::test]

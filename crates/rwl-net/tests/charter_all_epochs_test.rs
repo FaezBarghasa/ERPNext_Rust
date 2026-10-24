@@ -30,6 +30,8 @@ use erp_trade::{
     woocommerce_ingest::{WooMigrationEngine, WooProduct},
 };
 use erp_wms::amr::{AmrState, AmrTelemetry, HandlingUnit, Vda5050FleetCoordinator, Vda5050Order};
+use rust_decimal::Decimal;
+use rust_decimal_macros::dec;
 use rwl_framework::{
     ai_tools::{ErpToolCall, ErpToolDispatcher, QuotationItemDto},
     wasmtime_sandbox::RealSandbox,
@@ -48,8 +50,6 @@ use rwl_storage::{
     encryption::EnvelopeEncryption,
     merkle::MerkleHasher,
 };
-use rust_decimal::Decimal;
-use rust_decimal_macros::dec;
 use std::time::Duration;
 
 #[tokio::test]
