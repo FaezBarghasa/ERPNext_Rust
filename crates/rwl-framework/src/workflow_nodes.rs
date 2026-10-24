@@ -1,4 +1,4 @@
-//! Visual Logic & Workflow Automation Nodes Engine (`frappe-framework::workflow_nodes`).
+//! Visual Logic & Workflow Automation Nodes Engine (`rwl-framework::workflow_nodes`).
 //!
 //! Provides the complete no-code automation pipeline allowing non-technical creators
 //! to visually build automated business logic, calculations, conditional branching,

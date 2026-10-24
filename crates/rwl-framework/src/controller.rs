@@ -1,4 +1,4 @@
-//! Document Controller Trait & Typed Lifecycle Pipeline (`frappe-framework::controller`).
+//! Document Controller Trait & Typed Lifecycle Pipeline (`rwl-framework::controller`).
 //!
 //! Provides the strongly typed Rust controller interface mirroring Frappe's
 //! `frappe.model.document.Document` controller classes. Enables native, zero-cost,

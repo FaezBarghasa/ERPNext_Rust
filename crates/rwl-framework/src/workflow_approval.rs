@@ -1,4 +1,4 @@
-//! Multi-Tier Approval Workflow Engine & Document Versioning (`frappe-framework::workflow_approval`).
+//! Multi-Tier Approval Workflow Engine & Document Versioning (`rwl-framework::workflow_approval`).
 //!
 //! Provides enterprise approval workflows and audit version tracking matching ERPNext & Odoo:
 //! - Multi-level role-based approval pipelines (e.g. Draft -> Manager Approval -> CFO Approval -> Approved)

@@ -1,4 +1,4 @@
-//! Class Inheritance & Override Engine (`frappe-meta::class_inheritance`).
+//! Class Inheritance & Override Engine (`rwl-meta::class_inheritance`).
 //!
 //! Validates DocType class overrides and extensions, rejecting orphan overrides
 //! and cyclic inheritance chains at initialization time.

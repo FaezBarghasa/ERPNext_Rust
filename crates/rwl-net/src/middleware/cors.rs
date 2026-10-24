@@ -1,4 +1,4 @@
-//! Cross-Origin Resource Sharing (CORS) Middleware (`frappe-net::middleware::cors`).
+//! Cross-Origin Resource Sharing (CORS) Middleware (`rwl-net::middleware::cors`).
 //!
 //! Provides enterprise CORS preflight (`OPTIONS`) handling and response headers
 //! for single-page applications, mobile apps, and multi-tenant storefront domains.

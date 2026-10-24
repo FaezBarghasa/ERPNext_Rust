@@ -1,4 +1,4 @@
-//! Role Permissions, Masking & Replication Tooling (`frappe-meta::role_tools`).
+//! Role Permissions, Masking & Replication Tooling (`rwl-meta::role_tools`).
 //!
 //! Provides role replication, export/import, accounting period role exemption,
 //! and granular role-based field masking evaluation.

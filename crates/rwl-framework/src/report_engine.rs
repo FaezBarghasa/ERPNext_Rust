@@ -1,4 +1,4 @@
-//! Advanced Reporting, Analytics & Dynamic Pivot KPI Engine (`frappe-framework::report_engine`).
+//! Advanced Reporting, Analytics & Dynamic Pivot KPI Engine (`rwl-framework::report_engine`).
 //!
 //! Provides report building capabilities matching ERPNext Script Reports and Odoo Pivot Views:
 //! - Multi-column tabular reports with typed schemas (Currency, Int, Float, Percent, Date, String)

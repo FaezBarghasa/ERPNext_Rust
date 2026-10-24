@@ -1,4 +1,4 @@
-//! Universal 1-Click Business Blueprints (`frappe-framework::blueprints`).
+//! Universal 1-Click Business Blueprints (`rwl-framework::blueprints`).
 //!
 //! Provides turnkey, pre-configured application templates enabling non-technical users
 //! to launch working websites and portals with 1 click:

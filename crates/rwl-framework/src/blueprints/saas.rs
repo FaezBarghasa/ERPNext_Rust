@@ -1,4 +1,4 @@
-//! SaaS Blueprint: Multi-Tenant Subscription SaaS Portal (`frappe-framework::blueprints::saas`).
+//! SaaS Blueprint: Multi-Tenant Subscription SaaS Portal (`rwl-framework::blueprints::saas`).
 //!
 //! Provides the complete subscription business platform:
 //! - DocTypes: `SubscriptionPlan`, `CustomerAccount`, `ApiKey`, `UsageRecord`.

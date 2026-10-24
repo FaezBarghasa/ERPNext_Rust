@@ -1,4 +1,4 @@
-//! Asynchronous Enterprise Mail & Notification Queue (`frappe-net::mail_queue`).
+//! Asynchronous Enterprise Mail & Notification Queue (`rwl-net::mail_queue`).
 //!
 //! Provides a persistent, resilient, transactional outbound email dispatch queue
 //! backed by SurrealDB and async Tokio task scheduling with exponential backoff retry.

@@ -1,4 +1,4 @@
-//! Multi-Node Distributed State Synchronization Bus (`frappe-net::cluster_sync`).
+//! Multi-Node Distributed State Synchronization Bus (`rwl-net::cluster_sync`).
 //!
 //! Provides real-time event broadcasting and cache invalidation across distributed cluster nodes.
 //! When schemas, visual builder pages, RBAC matrices, or hot-swap patches mutate on any node,

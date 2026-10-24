@@ -11,14 +11,12 @@
     "rust-web-land",
     "rwl",
     "rustnext",
-    "frappe",
-    "erpnext",
     "sdk",
     "typescript"
   ],
   "author": "Faez Barghasa",
   "license": "MIT",
   "devDependencies": {
-    "typescript": "7.0.2"
+    "typescript": "^7.0.2"
   }
 }

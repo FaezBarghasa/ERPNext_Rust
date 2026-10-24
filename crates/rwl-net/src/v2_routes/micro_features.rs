@@ -1,4 +1,4 @@
-//! Phase 9: Comprehensive Micro-Features Suite (`frappe-net::v2_routes::micro_features`).
+//! Phase 9: Comprehensive Micro-Features Suite (`rwl-net::v2_routes::micro_features`).
 //!
 //! Provides the complete commercial-grade micro-features APIs:
 //! 1. Navigation & Menu Builder (Header, Sidebar, Footer, Drawer, User Dropdown)

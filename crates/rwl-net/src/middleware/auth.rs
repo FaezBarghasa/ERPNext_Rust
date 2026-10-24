@@ -1,4 +1,4 @@
-//! Authentication & RBAC Guard Middleware (`frappe-net::middleware::auth`).
+//! Authentication & RBAC Guard Middleware (`rwl-net::middleware::auth`).
 //!
 //! Provides:
 //! - Extracting and cryptographically verifying Bearer PASETO session tokens from requests.

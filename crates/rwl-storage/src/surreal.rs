@@ -1,4 +1,4 @@
-//! Embedded SurrealDB Multi-Model Tenant Backend (`frappe-storage::surreal`).
+//! Embedded SurrealDB Multi-Model Tenant Backend (`rwl-storage::surreal`).
 //!
 //! Exposes the full multi-model capabilities of SurrealDB 3:
 //! - Embedded in-memory (`Mem`) and persistent disk (`SurrealKV`) engines.

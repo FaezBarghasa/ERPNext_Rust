@@ -1,4 +1,4 @@
-//! Canonical DocType Schema Registry & Scaffold Engine (`frappe-meta::registry`).
+//! Canonical DocType Schema Registry & Scaffold Engine (`rwl-meta::registry`).
 //!
 //! Provides the central registry for standard ERPNext and custom DocTypes,
 //! automatic validation, and batch SurrealQL DDL compilation.

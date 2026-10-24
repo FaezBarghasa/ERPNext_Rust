@@ -1,4 +1,4 @@
-//! Hook and Extension Meta Definitions (`frappe-meta::hooks_meta`).
+//! Hook and Extension Meta Definitions (`rwl-meta::hooks_meta`).
 //!
 //! Provides metadata representations for Frappe's `hooks.py` equivalents:
 //! - `MethodHooks`: Document event interception (`before_insert`, `after_save`, `on_submit`, etc.).

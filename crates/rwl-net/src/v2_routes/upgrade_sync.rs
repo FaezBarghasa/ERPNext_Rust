@@ -1,4 +1,4 @@
-//! Zero-Downtime Incremental Upgrade & Hot Reload Endpoints (`frappe-net::v2_routes::upgrade_sync`).
+//! Zero-Downtime Incremental Upgrade & Hot Reload Endpoints (`rwl-net::v2_routes::upgrade_sync`).
 //!
 //! Provides Phase 10:
 //! - `GET /api/v2/admin/upgrade/status`: Live schema checksum, version, uptime, and active components.

@@ -1,4 +1,4 @@
-//! Field-Level Envelope Encryption (AEAD) (`frappe-storage::encryption`).
+//! Field-Level Envelope Encryption (AEAD) (`rwl-storage::encryption`).
 //!
 //! Implements authenticated envelope encryption using standard ChaCha20-Poly1305 (RFC 8439),
 //! HKDF-HMAC-SHA256 tenant key derivation from a 256-bit Master Key Encryption Key (KEK),

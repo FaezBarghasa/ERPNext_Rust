@@ -1,4 +1,4 @@
-//! Multi-Channel Real-Time Notification & In-App Messaging Engine (`frappe-framework::notification`).
+//! Multi-Channel Real-Time Notification & In-App Messaging Engine (`rwl-framework::notification`).
 //!
 //! Provides omni-channel messaging matching Odoo Bus and WordPress Event Hooks:
 //! - InApp, Email, SMS, Webhook, and Push notification routing

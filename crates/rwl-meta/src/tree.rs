@@ -1,4 +1,4 @@
-//! Nested Set Model Tree Engine (`frappe-meta::tree`).
+//! Nested Set Model Tree Engine (`rwl-meta::tree`).
 //!
 //! Provides deterministic $O(1)$ ancestor/descendant queries and dynamic `lft`/`rgt`
 //! reindexing for hierarchical DocTypes (e.g. Account, Cost Center, Warehouse, Department).

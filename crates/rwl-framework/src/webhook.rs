@@ -1,4 +1,4 @@
-//! Sovereign Outbound Webhook Delivery Engine (`frappe-framework::webhook`).
+//! Sovereign Outbound Webhook Delivery Engine (`rwl-framework::webhook`).
 //!
 //! Implements GitHub-grade webhook signing, payload delivery headers,
 //! HMAC-SHA256 signature calculation, subscription management,

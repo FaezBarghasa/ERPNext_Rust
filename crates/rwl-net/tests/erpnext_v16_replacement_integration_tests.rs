@@ -1,4 +1,4 @@
-//! ERPNext v16 Complete Feature Parity Integration Test Suite (`frappe-net::tests::erpnext_v16_replacement_integration_tests`).
+//! ERPNext v16 Complete Feature Parity Integration Test Suite (`rwl-net::tests::erpnext_v16_replacement_integration_tests`).
 //!
 //! Validates:
 //! 1. Procure-to-Pay (P2P): PO -> Purchase Receipt (GRN + FIFO) -> Purchase Invoice (Auto GL Posting)

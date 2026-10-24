@@ -1,4 +1,4 @@
-//! Curated "Business-in-a-Box" Vertical Profiles (`frappe-meta::profiles`).
+//! Curated "Business-in-a-Box" Vertical Profiles (`rwl-meta::profiles`).
 //!
 //! Provides pre-configured, production-ready enterprise templates deployed in <180 seconds:
 //! - The Rust Restaurant (Floor plans, KDS, Recipe BOMs, Tip payroll, POS)

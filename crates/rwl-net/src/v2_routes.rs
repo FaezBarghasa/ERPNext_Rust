@@ -1,4 +1,4 @@
-//! API V2 Hypermedia RESTful Architecture & System Endpoints (`frappe-net::v2_routes`).
+//! API V2 Hypermedia RESTful Architecture & System Endpoints (`rwl-net::v2_routes`).
 //!
 //! Provides:
 //! - `/api/v2/document/:doctype` (GET list with filters/sort/page, POST create document)

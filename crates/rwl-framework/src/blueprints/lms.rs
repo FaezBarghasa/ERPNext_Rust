@@ -1,4 +1,4 @@
-//! LMS Blueprint: Learning Management System & Interactive Academy (`frappe-framework::blueprints::lms`).
+//! LMS Blueprint: Learning Management System & Interactive Academy (`rwl-framework::blueprints::lms`).
 //!
 //! Provides the complete educational academy platform:
 //! - DocTypes: `Course`, `CourseModule`, `CourseLesson`, `Quiz`, `StudentEnrollment`, `Certificate`.

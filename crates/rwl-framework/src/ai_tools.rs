@@ -1,4 +1,4 @@
-//! Strongly Typed Autonomous ERP Tool Calling Engine (`frappe-framework::ai_tools`).
+//! Strongly Typed Autonomous ERP Tool Calling Engine (`rwl-framework::ai_tools`).
 //!
 //! Exposes typed DocType controllers as structured JSON schema tool interfaces:
 //! - `create_quotation(customer_id, items, valid_until)`

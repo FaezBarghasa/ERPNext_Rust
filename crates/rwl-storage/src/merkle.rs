@@ -1,4 +1,4 @@
-//! Cryptographic Merkle and SHA-256 tamper-evident log tools for statutory audit trails (`frappe-storage::merkle`).
+//! Cryptographic Merkle and SHA-256 tamper-evident log tools for statutory audit trails (`rwl-storage::merkle`).
 //!
 //! Provides $O(\log N)$ Merkle proof generation and verification ensuring historical
 //! transactions have not been tampered with.

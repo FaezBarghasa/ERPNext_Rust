@@ -1,4 +1,4 @@
-//! Dynamic Polymorphic Document Container & Zero-Allocation Document Bus (`frappe-meta::dynamic_doc`).
+//! Dynamic Polymorphic Document Container & Zero-Allocation Document Bus (`rwl-meta::dynamic_doc`).
 //!
 //! Replaces interpreted Python dictionaries with a statically typed, stack-optimized
 //! dynamic container using `CompactString` for field names and `SmallVec<[_; 16]>` for inline fields.

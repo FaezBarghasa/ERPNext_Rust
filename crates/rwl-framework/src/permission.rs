@@ -1,4 +1,4 @@
-//! Permission Engine (`frappe-framework::permission`).
+//! Permission Engine (`rwl-framework::permission`).
 //!
 //! Evaluates Frappe v16 role-based access control (RBAC), field-level permlevels,
 //! user permissions (e.g. company restrictions), document ownership (`if_owner`),

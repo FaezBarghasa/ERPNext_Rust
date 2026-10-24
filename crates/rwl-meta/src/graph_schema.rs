@@ -1,4 +1,4 @@
-//! SurrealDB Graph Relations & Schema Definitions (`frappe-meta::graph_schema`).
+//! SurrealDB Graph Relations & Schema Definitions (`rwl-meta::graph_schema`).
 //!
 //! Provides the native graph edge definitions, relationship validations,
 //! and recursive traversal query generators for trees, BOM explosions,

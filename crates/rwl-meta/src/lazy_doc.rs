@@ -1,4 +1,4 @@
-//! Lazy Document Materialization & Virtual Child Table Proxy (`frappe-meta::lazy_doc`).
+//! Lazy Document Materialization & Virtual Child Table Proxy (`rwl-meta::lazy_doc`).
 //!
 //! Defer child table deserialization and foreign entity link joins until fields
 //! are explicitly accessed in business logic (`frappe.get_lazy_doc()`).

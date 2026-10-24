@@ -1,4 +1,4 @@
-//! Generic REST Resource Handlers with RBAC Guarding (`frappe-net::routes`).
+//! Generic REST Resource Handlers with RBAC Guarding (`rwl-net::routes`).
 
 use crate::middleware::auth::SecurityContext;
 use crate::tenant::{ConnectionPoolManager, TenantId};

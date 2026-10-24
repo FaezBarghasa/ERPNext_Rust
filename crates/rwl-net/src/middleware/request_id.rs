@@ -1,4 +1,4 @@
-//! Request Correlation ID Middleware (`frappe-net::middleware::request_id`).
+//! Request Correlation ID Middleware (`rwl-net::middleware::request_id`).
 //!
 //! Generates or propagates a unique `X-Request-Id` UUID header for every incoming HTTP request,
 //! making it available in Actix Request extensions and appending it to all HTTP responses

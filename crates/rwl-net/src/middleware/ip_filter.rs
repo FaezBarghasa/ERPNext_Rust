@@ -1,4 +1,4 @@
-//! IP Allowlist & Blocklist Access Control Middleware (`frappe-net::middleware::ip_filter`).
+//! IP Allowlist & Blocklist Access Control Middleware (`rwl-net::middleware::ip_filter`).
 //!
 //! Enforces per-tenant and global IP filtering rules (CIDR, subnet wildcards, exact IPs)
 //! at the HTTP edge, immediately rejecting prohibited clients with 403 Forbidden.

@@ -1,4 +1,4 @@
-//! Social, Timeline & Version Engine (`frappe-framework::social`).
+//! Social, Timeline & Version Engine (`rwl-framework::social`).
 //!
 //! Implements ToDo/Assignment tracking, document comments, activity timeline events,
 //! document tagging, likes, and field-level Version diff history.

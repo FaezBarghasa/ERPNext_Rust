@@ -1,4 +1,4 @@
-//! Cryptographic Authentication & Authenticated Token Engine (`frappe-meta::auth`).
+//! Cryptographic Authentication & Authenticated Token Engine (`rwl-meta::auth`).
 //!
 //! Provides:
 //! - Argon2id zero-compromise password hashing and verification.

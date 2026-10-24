@@ -1,4 +1,4 @@
-//! Naming Series Engine (`frappe-framework::naming`).
+//! Naming Series Engine (`rwl-framework::naming`).
 //!
 //! Provides thread-safe, concurrency-locked sequential document identifier generation,
 //! series template formatting (.YYYY., .MM., .#####), field-interpolated autoname,

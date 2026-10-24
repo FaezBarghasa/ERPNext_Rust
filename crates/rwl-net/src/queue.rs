@@ -1,4 +1,4 @@
-//! Asynchronous Priority Task Queue, Scheduler & Deduplication Engine (`frappe-net::queue`).
+//! Asynchronous Priority Task Queue, Scheduler & Deduplication Engine (`rwl-net::queue`).
 //!
 //! Replaces Redis/Celery with Tokio-native prioritized asynchronous worker pools,
 //! bounded zero-allocation channels, exponential backoff retries, staggered maintenance schedules,

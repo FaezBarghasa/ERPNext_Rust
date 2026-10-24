@@ -1,4 +1,4 @@
-//! Security Headers Middleware (`frappe-net::middleware::security_headers`).
+//! Security Headers Middleware (`rwl-net::middleware::security_headers`).
 //!
 //! Injects industry-standard OWASP security response headers across all HTTP endpoints:
 //! - `Content-Security-Policy` (CSP)

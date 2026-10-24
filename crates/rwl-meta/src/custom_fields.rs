@@ -1,4 +1,4 @@
-//! Custom Fields and Dynamic Runtime Extensibility (`frappe-meta::custom_fields`).
+//! Custom Fields and Dynamic Runtime Extensibility (`rwl-meta::custom_fields`).
 //!
 //! Provides Frappe-equivalent dynamic custom fields, custom DocTypes, and schema augmentation:
 //! - `CustomField`: Definition for extending standard DocTypes without modifying core schemas.

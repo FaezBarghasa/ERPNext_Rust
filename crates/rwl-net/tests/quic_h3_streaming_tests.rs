@@ -1,4 +1,4 @@
-//! Integration Tests for QUIC Transport & HTTP/3 Streaming Engine (`frappe-net::quic_h3_stream`).
+//! Integration Tests for QUIC Transport & HTTP/3 Streaming Engine (`rwl-net::quic_h3_stream`).
 
 use actix_web::{App, test, web};
 use rwl_net::quic_h3_stream::{

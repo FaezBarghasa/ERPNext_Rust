@@ -1,4 +1,4 @@
-//! Universal Document Export & Data Serialization Engine (`frappe-framework::export_engine`).
+//! Universal Document Export & Data Serialization Engine (`rwl-framework::export_engine`).
 //!
 //! Provides enterprise export capabilities matching ERPNext, Odoo, and emdash:
 //! - RFC 4180 compliant CSV export with proper quotation and escaping

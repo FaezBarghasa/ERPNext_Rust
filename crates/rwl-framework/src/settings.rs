@@ -1,4 +1,4 @@
-//! Configuration Singles & Global System Settings Suite (`frappe-framework::settings`).
+//! Configuration Singles & Global System Settings Suite (`rwl-framework::settings`).
 //!
 //! Provides typed access and persistence mapping for all 64 upstream Frappe/ERPNext Singles:
 //! - `System Settings` (Language, Date/Number formats, Fiscal Year, Timezone, Session expiry)

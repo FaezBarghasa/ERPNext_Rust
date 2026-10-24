@@ -1,4 +1,4 @@
-//! Pure Dynamic No-Code Meta-Model Engine & Registry (`frappe-meta::dynamic_registry`).
+//! Pure Dynamic No-Code Meta-Model Engine & Registry (`rwl-meta::dynamic_registry`).
 //!
 //! Enables non-technical users to create, modify, rename, and delete custom DocTypes and fields
 //! directly at runtime without touching Rust code or restarting the server.

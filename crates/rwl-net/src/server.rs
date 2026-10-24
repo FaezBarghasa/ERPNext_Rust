@@ -1,4 +1,4 @@
-//! Production Hypermedia Application Server (`frappe-net::server`).
+//! Production Hypermedia Application Server (`rwl-net::server`).
 //!
 //! Provides:
 //! - Multi-Persona Desktop & Portal SSR Shells (`/desk`, `/portal`, `/worker`, `/factory`, `/approvals`, `/admin`)

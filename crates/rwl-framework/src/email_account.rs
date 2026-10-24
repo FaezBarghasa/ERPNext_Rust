@@ -1,4 +1,4 @@
-//! Email Account & Inbound IMAP Polling Engine (`frappe-framework::email_account`).
+//! Email Account & Inbound IMAP Polling Engine (`rwl-framework::email_account`).
 //!
 //! Provides upstream ERPNext / Frappe Email Account parity:
 //! - Multi-account IMAP/POP3 configuration

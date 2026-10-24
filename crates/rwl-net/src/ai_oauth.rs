@@ -1,4 +1,4 @@
-//! Universal AI Agent OAuth 2.0 Hub & Token Server (`frappe-net::ai_oauth`).
+//! Universal AI Agent OAuth 2.0 Hub & Token Server (`rwl-net::ai_oauth`).
 //!
 //! Implements RFC 6749 (OAuth 2.0 Client Credentials Grant) and RFC 7591 dynamic
 //! client validation for frontier AI agents (ChatGPT-4o/o3, Claude 3.5/3.7, Gemini 2.0, DeepSeek R1, Ollama).

@@ -1,4 +1,4 @@
-//! High-Throughput In-Memory Caching Subsystem (`frappe-net::cache`).
+//! High-Throughput In-Memory Caching Subsystem (`rwl-net::cache`).
 //!
 //! Provides lock-free in-memory caches across all tenant workers for:
 //! - Accounts Settings & Stock Settings

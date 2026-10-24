@@ -1,4 +1,4 @@
-//! Token Bucket Rate Limiting Subsystem (`frappe-net::rate_limit`).
+//! Token Bucket Rate Limiting Subsystem (`rwl-net::rate_limit`).
 //!
 //! Provides brute-force IP rate-limiting and API throttling backed by atomic in-memory registers
 //! and Actix Web middleware integration.

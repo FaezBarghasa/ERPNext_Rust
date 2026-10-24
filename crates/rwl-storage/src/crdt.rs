@@ -1,4 +1,4 @@
-//! Conflict-Free Replicated Data Types (CRDTs) & Offline Edge Replication (`frappe-storage::crdt`).
+//! Conflict-Free Replicated Data Types (CRDTs) & Offline Edge Replication (`rwl-storage::crdt`).
 //!
 //! Implements state-based CRDTs (PN-Counters, LWW-Element-Sets, Vector Clocks)
 //! and offline outbox buffers for edge devices (POS tablets, kiosks) synchronizing

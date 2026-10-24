@@ -1,4 +1,4 @@
-//! Performance Engineering Subsystem (`frappe-storage::perf`).
+//! Performance Engineering Subsystem (`rwl-storage::perf`).
 //!
 //! Provides the core architectural optimizations mandated by Phase 9:
 //! - `CompiledSchemaCache`: Zero-copy, Arc-shared DocType schemas with O(1) field index mapping.

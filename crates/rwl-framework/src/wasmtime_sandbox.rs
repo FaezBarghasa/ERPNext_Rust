@@ -1,4 +1,4 @@
-//! Fault-Isolated WASI 0.2 Sandbox & Component Model Engine (`frappe-framework::wasmtime_sandbox`).
+//! Fault-Isolated WASI 0.2 Sandbox & Component Model Engine (`rwl-framework::wasmtime_sandbox`).
 //!
 //! Enforces:
 //! - Strict linear memory boundary ($32\,\text{MB}$ ceiling).

@@ -1,4 +1,4 @@
-//! High-Performance QUIC Transport & HTTP/3 Streaming Engine (`frappe-net::quic_h3_stream`).
+//! High-Performance QUIC Transport & HTTP/3 Streaming Engine (`rwl-net::quic_h3_stream`).
 //!
 //! Implements:
 //! - RFC 9000: QUIC: A UDP-Based Multiplexed and Secure Transport

@@ -1,4 +1,4 @@
-//! ERP & Commerce Blueprint: Operations, Inventory & Storefront (`frappe-framework::blueprints::erp`).
+//! ERP & Commerce Blueprint: Operations, Inventory & Storefront (`rwl-framework::blueprints::erp`).
 //!
 //! Provides the complete commerce and business operations platform:
 //! - DocTypes: `StoreProduct`, `CustomerCart`, `EcommerceOrder`, `StoreReview`.

@@ -1,4 +1,4 @@
-//! Autonomous AI Metamodel Synthesizer (`frappe-meta::ai_schema`).
+//! Autonomous AI Metamodel Synthesizer (`rwl-meta::ai_schema`).
 //!
 //! Transforms natural language business domain descriptions into strongly typed
 //! `DocTypeSchema` definitions, `SCHEMAFULL` SurrealQL tables, and localized Chart of Accounts.

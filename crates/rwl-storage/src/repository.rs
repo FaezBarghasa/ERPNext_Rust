@@ -1,4 +1,4 @@
-//! Generic Asynchronous SurrealDB Repository Subsystem (`frappe-storage::repository`).
+//! Generic Asynchronous SurrealDB Repository Subsystem (`rwl-storage::repository`).
 //!
 //! Provides transactional, type-safe entity persistence, query builders,
 //! and schema-agnostic CRUD operations for all enterprise domain models.

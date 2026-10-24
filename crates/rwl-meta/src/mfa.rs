@@ -1,4 +1,4 @@
-//! Multi-Factor Authentication (MFA / TOTP) Engine (`frappe-meta::mfa`).
+//! Multi-Factor Authentication (MFA / TOTP) Engine (`rwl-meta::mfa`).
 //!
 //! Provides RFC 6238 / RFC 4226 Time-Based One-Time Password (TOTP) generation,
 //! verification with time-drift skew tolerance, Base32 RFC 4648 encoding/decoding,

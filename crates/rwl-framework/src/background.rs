@@ -1,4 +1,4 @@
-//! Background Job Queue & Task Scheduler (`frappe-framework::background`).
+//! Background Job Queue & Task Scheduler (`rwl-framework::background`).
 //!
 //! Provides priority job dispatching (Critical, Default, Long), retry semantics,
 //! failure diagnostics, and periodic recurring scheduler triggers (Every5Min, Hourly, Daily, Weekly, Monthly).

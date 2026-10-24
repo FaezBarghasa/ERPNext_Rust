@@ -1,4 +1,4 @@
-//! Automated Document Recurring Engine (`frappe-framework::auto_repeat`).
+//! Automated Document Recurring Engine (`rwl-framework::auto_repeat`).
 //!
 //! Provides upstream ERPNext / Frappe Auto Repeat parity:
 //! - Periodic recurring schedules: Daily, Weekly, Monthly, Quarterly, HalfYearly, Yearly

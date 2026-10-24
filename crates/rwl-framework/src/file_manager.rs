@@ -1,4 +1,4 @@
-//! File Manager & Attachment Engine (`frappe-framework::file_manager`).
+//! File Manager & Attachment Engine (`rwl-framework::file_manager`).
 //!
 //! Provides document file attachments, SHA-256 integrity hashing, private vs public
 //! storage isolation, file size validation, and duplicate content deduplication.

@@ -1,4 +1,4 @@
-//! Transactional Database Migration Runner (`frappe-storage::migration_runner`).
+//! Transactional Database Migration Runner (`rwl-storage::migration_runner`).
 //!
 //! Provides schema migration tracking, sequential `.surql` execution,
 //! and schema verification for full ERPNext v16 parity.

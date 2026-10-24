@@ -1,4 +1,4 @@
-//! Enterprise Audit & Compliance Logging Fabric (`frappe-meta::audit`).
+//! Enterprise Audit & Compliance Logging Fabric (`rwl-meta::audit`).
 //!
 //! Provides immutable, tamper-evident audit logging for all document lifecycle events,
 //! security authentications, RBAC role mutations, and administrative operations.

@@ -1,4 +1,4 @@
-//! Security Hardening Rules, Password Validation & File Magic Bytes Engine (`frappe-meta::security_rules`).
+//! Security Hardening Rules, Password Validation & File Magic Bytes Engine (`rwl-meta::security_rules`).
 //!
 //! Provides:
 //! - Password complexity & dictionary strength policy validation

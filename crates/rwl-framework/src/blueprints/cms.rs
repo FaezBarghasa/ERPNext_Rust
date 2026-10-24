@@ -1,4 +1,4 @@
-//! CMS Blueprint: Content Management & Blogging Platform (`frappe-framework::blueprints::cms`).
+//! CMS Blueprint: Content Management & Blogging Platform (`rwl-framework::blueprints::cms`).
 //!
 //! Provides the complete, pre-configured content platform:
 //! - DocTypes: `BlogPost`, `Author`, `Category`, `Tag`, `SitePage`.
