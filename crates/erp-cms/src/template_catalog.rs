@@ -396,6 +396,8 @@ pub fn list_template_suites() -> Vec<TemplateSuite> {
 
     // Append the 50 extended enterprise template suites (#11 to #60)
     suites.extend(crate::extended_templates::get_extended_template_suites());
+    // Append the 50 reference look-alike enterprise template suites (#61 to #110)
+    suites.extend(crate::reference_templates::get_reference_lookalike_template_suites());
     suites
 }
 
@@ -688,7 +690,7 @@ pub fn render_template_index_html() -> String {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>rustnext — 60 Universal Enterprise Template Suites</title>
+    <title>rustnext — 110 Universal Enterprise Template Suites</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Syne:wght@600;700;800&display=swap" rel="stylesheet">
@@ -993,10 +995,10 @@ pub fn render_template_index_html() -> String {
         <header>
             <div class="hero-badge">
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
-                60 Universal Template Suites • Pure-Rust Enterprise OS
+                110 Universal Template Suites • Pure-Rust Enterprise OS
             </div>
             <h1>Universal Enterprise Templates</h1>
-            <p>Sixty production-grade commercial and operational website template suites across 12 business verticals, compiled natively in Rust with zero foreign runtimes, zero decimal drift, and sub-10ms SSR delivery.</p>
+            <p>One hundred and ten production-grade commercial and operational website template suites across 15 business verticals, compiled natively in Rust with zero foreign runtimes, zero decimal drift, and sub-10ms SSR delivery.</p>
         </header>
 
         <section class="search-filter-dock" aria-label="Template filters and search">
@@ -1004,22 +1006,21 @@ pub fn render_template_index_html() -> String {
                 <span class="search-icon">
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
                 </span>
-                <input type="text" id="template-search" placeholder="Search 60 templates by industry, protocol, ERP module, or capability..." autocomplete="off">
+                <input type="text" id="template-search" placeholder="Search 110 templates by industry, brand archetype, protocol, ERP module, or capability..." autocomplete="off">
             </div>
             <div class="filter-pills" id="category-filters">
-                <button class="filter-btn active" data-filter="all">All (60)</button>
-                <button class="filter-btn" data-filter="commerce">Commerce & Retail</button>
-                <button class="filter-btn" data-filter="industrial">Industrial & Aero</button>
+                <button class="filter-btn active" data-filter="all">All (110)</button>
+                <button class="filter-btn" data-filter="streaming">Video & Smart TV</button>
+                <button class="filter-btn" data-filter="digital-goods">Digital Goods & Subscriptions</button>
+                <button class="filter-btn" data-filter="music">Music & Audio</button>
+                <button class="filter-btn" data-filter="cms">Modern CMS & Portfolios</button>
+                <button class="filter-btn" data-filter="spatial">3D & Spatial Viewers</button>
+                <button class="filter-btn" data-filter="commerce">Commerce & DTC</button>
+                <button class="filter-btn" data-filter="industrial">Industrial & Robotics</button>
                 <button class="filter-btn" data-filter="saas">SaaS & AI</button>
                 <button class="filter-btn" data-filter="fintech">FinTech & Wealth</button>
                 <button class="filter-btn" data-filter="healthcare">Healthcare & Bio</button>
-                <button class="filter-btn" data-filter="media">Media & Audio</button>
-                <button class="filter-btn" data-filter="hospitality">Hospitality & Food</button>
-                <button class="filter-btn" data-filter="logistics">Logistics & Fleet</button>
-                <button class="filter-btn" data-filter="realestate">Real Estate & BIM</button>
-                <button class="filter-btn" data-filter="education">Education & LIMS</button>
-                <button class="filter-btn" data-filter="professional">Professional & Legal</button>
-                <button class="filter-btn" data-filter="infrastructure">Infrastructure & Edge</button>
+                <button class="filter-btn" data-filter="logistics">Logistics & Infrastructure</button>
             </div>
         </section>
 
@@ -1045,30 +1046,28 @@ pub fn render_template_index_html() -> String {
                 const matchesQuery = !query || text.includes(query);
 
                 let matchesCat = true;
-                if (activeFilter === 'commerce') {{
-                    matchesCat = slug.includes('b2c') || slug.includes('digital') || slug.includes('luxegen') || slug.includes('streetwear') || slug.includes('fashion') || text.includes('retail') || text.includes('creator');
+                if (activeFilter === 'streaming') {{
+                    matchesCat = slug.startsWith('stream-') || slug.startsWith('tv-') || slug.includes('svod') || text.includes('streaming') || text.includes('smart tv') || text.includes('cinema');
+                }} else if (activeFilter === 'digital-goods') {{
+                    matchesCat = slug.startsWith('shop-') || slug.startsWith('sub-') || slug.includes('digital') || text.includes('game') || text.includes('subscription') || text.includes('pass') || text.includes('goods');
+                }} else if (activeFilter === 'music') {{
+                    matchesCat = slug.startsWith('music-') || slug.includes('audio') || slug.includes('podcast') || text.includes('music') || text.includes('flac') || text.includes('sound');
+                }} else if (activeFilter === 'cms') {{
+                    matchesCat = slug.startsWith('cms-') || slug.startsWith('portfolio-') || slug.includes('studio') || text.includes('cms') || text.includes('portfolio') || text.includes('editorial');
+                }} else if (activeFilter === 'spatial') {{
+                    matchesCat = slug.startsWith('viewer-') || slug.includes('spatial') || slug.includes('lidar') || text.includes('3d') || text.includes('model') || text.includes('mesh');
+                }} else if (activeFilter === 'commerce') {{
+                    matchesCat = slug.includes('b2c') || slug.includes('digital') || slug.includes('luxegen') || slug.includes('streetwear') || slug.includes('fashion') || slug.includes('shop-') || text.includes('retail') || text.includes('creator') || text.includes('storefront');
                 }} else if (activeFilter === 'industrial') {{
-                    matchesCat = slug.includes('b2b') || slug.includes('aerospace') || slug.includes('gigafactory') || slug.includes('semiconductor') || slug.includes('scada') || text.includes('industrial');
+                    matchesCat = slug.startsWith('ind-') || slug.includes('b2b') || slug.includes('aerospace') || slug.includes('gigafactory') || slug.includes('semiconductor') || slug.includes('scada') || text.includes('industrial') || text.includes('robotics') || text.includes('manufacturing');
                 }} else if (activeFilter === 'saas') {{
                     matchesCat = slug.includes('saas') || slug.includes('infra') || slug.includes('ai-') || slug.includes('cybersecurity') || slug.includes('devtools') || text.includes('cloud');
                 }} else if (activeFilter === 'fintech') {{
                     matchesCat = slug.includes('trading') || slug.includes('neobank') || slug.includes('wealth') || slug.includes('defi') || slug.includes('underwriting') || text.includes('brokerage');
                 }} else if (activeFilter === 'healthcare') {{
                     matchesCat = slug.includes('health') || slug.includes('biotech') || slug.includes('telehealth') || slug.includes('pharma') || slug.includes('dental') || text.includes('clinical');
-                }} else if (activeFilter === 'media') {{
-                    matchesCat = slug.includes('svod') || slug.includes('music') || slug.includes('esports') || slug.includes('podcast') || text.includes('streaming');
-                }} else if (activeFilter === 'hospitality') {{
-                    matchesCat = slug.includes('gastronomy') || slug.includes('resort') || slug.includes('brewery') || slug.includes('kitchen') || slug.includes('stadium') || text.includes('hotel');
                 }} else if (activeFilter === 'logistics') {{
-                    matchesCat = slug.includes('wms') || slug.includes('freight') || slug.includes('courier') || slug.includes('fleet') || slug.includes('drone') || text.includes('warehouse');
-                }} else if (activeFilter === 'realestate') {{
-                    matchesCat = slug.includes('real-estate') || slug.includes('lease') || slug.includes('construction') || slug.includes('coworking') || slug.includes('lidar');
-                }} else if (activeFilter === 'education') {{
-                    matchesCat = slug.includes('lms') || slug.includes('gradebook') || slug.includes('lims') || slug.includes('bootcamp') || slug.includes('journal');
-                }} else if (activeFilter === 'professional') {{
-                    matchesCat = slug.includes('consulting') || slug.includes('litigation') || slug.includes('audit') || slug.includes('studio') || slug.includes('search');
-                }} else if (activeFilter === 'infrastructure') {{
-                    matchesCat = slug.includes('city') || slug.includes('ag-') || slug.includes('ngo') || slug.includes('water') || slug.includes('satellite') || slug.includes('quantum');
+                    matchesCat = slug.includes('wms') || slug.includes('freight') || slug.includes('courier') || slug.includes('fleet') || slug.includes('drone') || slug.includes('city') || slug.includes('water') || text.includes('warehouse') || text.includes('infrastructure');
                 }}
 
                 if (matchesQuery && matchesCat) {{
