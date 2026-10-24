@@ -141,6 +141,12 @@ pub enum CanvasBlock {
     RawHtml {
         html: CompactString,
     },
+    #[serde(untagged)]
+    Custom {
+        block_type: CompactString,
+        #[serde(flatten)]
+        fields: HashMap<CompactString, serde_json::Value>,
+    },
 }
 
 /// Hierarchical Scoped Data Resolver (`BlockValueResolver`).
@@ -1146,6 +1152,15 @@ impl CanvasBlockTree {
                     for cid in &node.child_ids {
                         self.render_node(cid.as_str(), resolver, out);
                     }
+                }
+                out.push_str("</div>\n");
+            }
+            CanvasBlock::Custom { block_type, .. } => {
+                out.push_str(&format!(
+                    "<div id=\"{id}\" class=\"custom-block\" data-block-type=\"{block_type}\"{slot_attr}{style_attr}>\n"
+                ));
+                for cid in &node.child_ids {
+                    self.render_node(cid.as_str(), resolver, out);
                 }
                 out.push_str("</div>\n");
             }

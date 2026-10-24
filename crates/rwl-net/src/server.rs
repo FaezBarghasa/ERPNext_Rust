@@ -571,47 +571,132 @@ async fn builder_studio_handler(page_id: Option<web::Path<String>>) -> impl Resp
 </head>
 <body>
     <aside class="builder-sidebar">
-        <div style="font-weight: 700; font-size: 1.1rem; display: flex; align-items: center; gap: 0.5rem;">
-            <span>⚡</span> rust-web-land Builder Studio
+        <div style="font-weight: 700; font-size: 1.1rem; display: flex; align-items: center; gap: 0.5rem; color: #f8fafc;">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#6366f1" stroke-width="2.5"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+            <span>rust-web-land Builder Studio</span>
         </div>
-        <div style="font-size: 0.85rem; color: var(--text-muted); display: flex; justify-content: space-between;">
+        <div style="font-size: 0.85rem; color: var(--text-muted); display: flex; justify-content: space-between; align-items: center; padding-bottom: 0.5rem; border-bottom: 1px solid var(--border);">
             <span>Editing Page:</span>
-            <strong style="color: var(--accent);">{target_page}</strong>
+            <strong style="color: var(--accent); font-family: monospace;">{target_page}</strong>
         </div>
         
-        <div style="font-weight: 600; font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-muted); margin-top: 0.5rem;">Palette</div>
-        <button class="palette-btn" onclick="addBlock('Heading')">🏷️ Heading <span>+</span></button>
-        <button class="palette-btn" onclick="addBlock('TextBlock')">📝 Text Paragraph <span>+</span></button>
-        <button class="palette-btn" onclick="addBlock('Section')">📦 Section Container <span>+</span></button>
-        <button class="palette-btn" onclick="addBlock('CardBlock')">💳 Product Card <span>+</span></button>
-        <button class="palette-btn" onclick="addBlock('NumberCardBlock')">🔢 KPI Metric Card <span>+</span></button>
-        <button class="palette-btn" onclick="addBlock('Navbar')">🧭 Navigation Bar <span>+</span></button>
-        <button class="palette-btn" onclick="addBlock('Footer')">⚓ Page Footer <span>+</span></button>
+        <div style="font-weight: 700; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--text-muted); margin-top: 0.5rem;">Typography & Media</div>
+        <button class="palette-btn" onclick="addBlock('Heading')">
+            <span style="display:flex;align-items:center;gap:0.5rem;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 12h16M4 6h16M4 18h16"/></svg> Heading</span> <span>+</span>
+        </button>
+        <button class="palette-btn" onclick="addBlock('TextBlock')">
+            <span style="display:flex;align-items:center;gap:0.5rem;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg> Text Paragraph</span> <span>+</span>
+        </button>
+        <button class="palette-btn" onclick="addBlock('BlockQuote')">
+            <span style="display:flex;align-items:center;gap:0.5rem;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 21c3 0 7-1 7-8V5c0-1.25-.756-2.017-2-2H4c-1.25 0-2 .75-2 1.972V11c0 1.25.75 2 2 2 1 0 1 0 1 1v1c0 1-1 2-2 2s-1 .008-1 1.031V20c0 1 0 1 1 1z"/></svg> Block Quote</span> <span>+</span>
+        </button>
+        <button class="palette-btn" onclick="addBlock('ImageBlock')">
+            <span style="display:flex;align-items:center;gap:0.5rem;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg> Hero / Media Image</span> <span>+</span>
+        </button>
 
-        <div style="margin-top: auto; border-top: 1px solid var(--border); padding-top: 1rem;">
+        <div style="font-weight: 700; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--text-muted); margin-top: 0.75rem;">Layout & Navigation</div>
+        <button class="palette-btn" onclick="addBlock('Section')">
+            <span style="display:flex;align-items:center;gap:0.5rem;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="9" y1="21" x2="9" y2="9"/></svg> Section Container</span> <span>+</span>
+        </button>
+        <button class="palette-btn" onclick="addBlock('GridContainer')">
+            <span style="display:flex;align-items:center;gap:0.5rem;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg> Responsive Grid</span> <span>+</span>
+        </button>
+        <button class="palette-btn" onclick="addBlock('CardBlock')">
+            <span style="display:flex;align-items:center;gap:0.5rem;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg> Product Showcase Card</span> <span>+</span>
+        </button>
+        <button class="palette-btn" onclick="addBlock('Navbar')">
+            <span style="display:flex;align-items:center;gap:0.5rem;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 2 7 12 12 22 7 12 2"/><polyline points="2 17 12 22 22 17"/><polyline points="2 12 12 17 22 12"/></svg> Navigation Header</span> <span>+</span>
+        </button>
+        <button class="palette-btn" onclick="addBlock('Footer')">
+            <span style="display:flex;align-items:center;gap:0.5rem;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/><line x1="4" y1="22" x2="4" y2="15"/></svg> Global Page Footer</span> <span>+</span>
+        </button>
+
+        <div style="font-weight: 700; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--text-muted); margin-top: 0.75rem;">Forms & User Controls</div>
+        <button class="palette-btn" onclick="addBlock('TextInput')">
+            <span style="display:flex;align-items:center;gap:0.5rem;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="5" width="18" height="14" rx="2"/><polyline points="7 15 10 9 13 15"/><line x1="8" y1="13" x2="12" y2="13"/></svg> Text Input Field</span> <span>+</span>
+        </button>
+        <button class="palette-btn" onclick="addBlock('NumberInput')">
+            <span style="display:flex;align-items:center;gap:0.5rem;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="4" y1="9" x2="20" y2="9"/><line x1="4" y1="15" x2="20" y2="15"/><line x1="10" y1="3" x2="8" y2="21"/><line x1="16" y1="3" x2="14" y2="21"/></svg> Numeric / Currency Field</span> <span>+</span>
+        </button>
+        <button class="palette-btn" onclick="addBlock('SelectDropdown')">
+            <span style="display:flex;align-items:center;gap:0.5rem;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg> Select Dropdown</span> <span>+</span>
+        </button>
+        <button class="palette-btn" onclick="addBlock('DatePicker')">
+            <span style="display:flex;align-items:center;gap:0.5rem;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg> Date Picker</span> <span>+</span>
+        </button>
+        <button class="palette-btn" onclick="addBlock('CheckboxField')">
+            <span style="display:flex;align-items:center;gap:0.5rem;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/></svg> Checkbox Toggle</span> <span>+</span>
+        </button>
+        <button class="palette-btn" onclick="addBlock('SubmitButton')">
+            <span style="display:flex;align-items:center;gap:0.5rem;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg> Action / Submit Button</span> <span>+</span>
+        </button>
+
+        <div style="font-weight: 700; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--text-muted); margin-top: 0.75rem;">Data & Analytics</div>
+        <button class="palette-btn" onclick="addBlock('NumberCardBlock')">
+            <span style="display:flex;align-items:center;gap:0.5rem;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg> KPI Metric Card</span> <span>+</span>
+        </button>
+        <button class="palette-btn" onclick="addBlock('DataTable')">
+            <span style="display:flex;align-items:center;gap:0.5rem;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 3H5a2 2 0 00-2 2v4m6-6h10a2 2 0 012 2v4M9 3v18m0 0h10a2 2 0 002-2V9M9 21H5a2 2 0 01-2-2V9m0 0h18"/></svg> Live Data Table</span> <span>+</span>
+        </button>
+        <button class="palette-btn" onclick="addBlock('DataRepeater')">
+            <span style="display:flex;align-items:center;gap:0.5rem;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0020.49 15"/></svg> Dynamic DocType Repeater</span> <span>+</span>
+        </button>
+        <button class="palette-btn" onclick="addBlock('KanbanBoard')">
+            <span style="display:flex;align-items:center;gap:0.5rem;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="5" height="18" rx="1"/><rect x="10" y="3" width="5" height="12" rx="1"/><rect x="17" y="3" width="5" height="15" rx="1"/></svg> Kanban Pipeline Board</span> <span>+</span>
+        </button>
+        <button class="palette-btn" onclick="addBlock('ModalDialog')">
+            <span style="display:flex;align-items:center;gap:0.5rem;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg> Modal Overlay Dialog</span> <span>+</span>
+        </button>
+
+        <div style="margin-top: 1.5rem; border-top: 1px solid var(--border); padding-top: 1rem;">
             <div style="font-weight: 600; font-size: 0.85rem; color: var(--text-muted); margin-bottom: 0.5rem; display: flex; align-items: center; gap: 0.4rem;">
-                <span>✨</span> Autonomous Bob AI
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#6366f1" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+                <span>Autonomous Bob AI</span>
             </div>
             <input type="text" id="ai-prompt" placeholder="e.g. Generate pricing grid..." style="width: 100%; background: rgba(0,0,0,0.4); border: 1px solid var(--border); color: #fff; padding: 0.6rem; border-radius: 6px; margin-bottom: 0.5rem; font-size: 0.85rem;">
-            <button class="btn" style="width: 100%; justify-content: center;" onclick="callBobAi()">✨ Synthesize AST</button>
+            <button class="btn" style="width: 100%; justify-content: center;" onclick="callBobAi()">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+                <span>Synthesize AST</span>
+            </button>
         </div>
     </aside>
 
     <main class="builder-workspace">
         <header class="builder-toolbar">
             <div style="display: flex; gap: 0.5rem; align-items: center;">
-                <button class="btn btn-outline" id="btn-device-desktop" onclick="setDevice('desktop')">🖥️ Desktop</button>
-                <button class="btn btn-outline" id="btn-device-tablet" onclick="setDevice('tablet')">📱 Tablet</button>
-                <button class="btn btn-outline" id="btn-device-mobile" onclick="setDevice('mobile')">📲 Mobile</button>
+                <button class="btn btn-outline" id="btn-device-desktop" onclick="setDevice('desktop')">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
+                    <span>Desktop</span>
+                </button>
+                <button class="btn btn-outline" id="btn-device-tablet" onclick="setDevice('tablet')">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="4" y="2" width="16" height="20" rx="2" ry="2"/><line x1="12" y1="18" x2="12.01" y2="18"/></svg>
+                    <span>Tablet</span>
+                </button>
+                <button class="btn btn-outline" id="btn-device-mobile" onclick="setDevice('mobile')">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="5" y="2" width="14" height="20" rx="2" ry="2"/><line x1="12" y1="18" x2="12.01" y2="18"/></svg>
+                    <span>Mobile</span>
+                </button>
                 <div style="width: 1px; height: 20px; background: var(--border); margin: 0 4px;"></div>
-                <button class="btn btn-outline" onclick="undo()" title="Undo (Ctrl+Z)">↶ Undo</button>
-                <button class="btn btn-outline" onclick="redo()" title="Redo (Ctrl+Y)">↷ Redo</button>
+                <button class="btn btn-outline" onclick="undo()" title="Undo (Ctrl+Z)">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 7v6h6"/><path d="M21 17a9 9 0 00-9-9 9 9 0 00-6 2.3L3 13"/></svg>
+                    <span>Undo</span>
+                </button>
+                <button class="btn btn-outline" onclick="redo()" title="Redo (Ctrl+Y)">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 7v6h-6"/><path d="M3 17a9 9 0 019-9 9 9 0 016 2.3L21 13"/></svg>
+                    <span>Redo</span>
+                </button>
             </div>
             <div style="display: flex; align-items: center; gap: 0.75rem;">
                 <span id="ast-counter" style="font-size: 0.8rem; color: var(--text-muted);">0 blocks</span>
                 <span id="version-badge" style="font-size: 0.75rem; background: rgba(255,255,255,0.1); padding: 2px 8px; border-radius: 12px; color: #a5b4fc;">v0</span>
-                <a href="/preview/{target_page}" target="_blank" class="btn btn-outline" style="text-decoration: none;">👁️ Preview</a>
-                <button class="btn btn-success" onclick="savePage()">💾 Save to SurrealDB</button>
+                <a href="/preview/{target_page}" target="_blank" class="btn btn-outline" style="text-decoration: none; display: inline-flex; align-items: center; gap: 0.4rem;">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                    <span>Preview</span>
+                </a>
+                <button class="btn btn-success" onclick="savePage()">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+                    <span>Save to SurrealDB</span>
+                </button>
             </div>
         </header>
 
@@ -626,8 +711,11 @@ async fn builder_studio_handler(page_id: Option<web::Path<String>>) -> impl Resp
 
     <aside class="builder-inspector-sidebar" id="inspector-sidebar">
         <div style="font-weight: 700; font-size: 1.05rem; display: flex; align-items: center; justify-content: space-between;">
-            <span>⚙️ Inspector</span>
-            <span id="inspector-node-type" style="font-size: 0.75rem; background: var(--accent); padding: 2px 6px; border-radius: 4px; color: #fff;">None</span>
+            <span style="display: flex; align-items: center; gap: 0.5rem;">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#6366f1" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-2 2 2 2 0 01-2-2v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83 0 2 2 0 010-2.83l.06-.06a1.65 1.65 0 00.33-1.82 1.65 1.65 0 00-1.51-1H3a2 2 0 01-2-2 2 2 0 012-2h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 010-2.83 2 2 0 012.83 0l.06.06a1.65 1.65 0 001.82.33H9a1.65 1.65 0 001-1.51V3a2 2 0 012-2 2 2 0 012 2v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 0 2 2 0 010 2.83l-.06.06a1.65 1.65 0 00-.33 1.82V9a1.65 1.65 0 001.51 1H21a2 2 0 012 2 2 2 0 01-2 2h-.09a1.65 1.65 0 00-1.51 1z"/></svg>
+                <span>Inspector</span>
+            </span>
+            <span id="inspector-node-type" style="font-size: 0.75rem; background: var(--accent); padding: 2px 8px; border-radius: 4px; color: #fff;">None</span>
         </div>
 
         <div class="tab-btn-group">
@@ -792,7 +880,7 @@ async fn builder_studio_handler(page_id: Option<web::Path<String>>) -> impl Resp
             let html = `
                 <div class="inspector-field">
                     <label>Node ID</label>
-                    <input class="inspector-input" value="${{node.id}}" readonly style="opacity: 0.6;">
+                    <input class="inspector-input" id="inp-node-id" value="${{node.id}}" readonly style="opacity: 0.6;">
                 </div>
                 <div class="inspector-field">
                     <label>Component Slot</label>
@@ -803,6 +891,29 @@ async fn builder_studio_handler(page_id: Option<web::Path<String>>) -> impl Resp
                         <option value="sidebar" ${{node.slot === 'sidebar' ? 'selected' : ''}}>sidebar</option>
                         <option value="footer" ${{node.slot === 'footer' ? 'selected' : ''}}>footer</option>
                     </select>
+                </div>
+
+                <!-- Phase 3: DocType Live Data Binding -->
+                <div style="background: rgba(99, 102, 241, 0.08); border: 1px solid rgba(99, 102, 241, 0.3); border-radius: 6px; padding: 0.75rem; margin: 0.75rem 0;">
+                    <div style="font-size: 0.75rem; font-weight: 700; color: #a5b4fc; text-transform: uppercase; margin-bottom: 0.5rem; display: flex; align-items: center; gap: 0.4rem;">
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0020.49 15"/></svg>
+                        <span>Live DocType Binding</span>
+                    </div>
+                    <div class="inspector-field" style="margin-bottom: 0.5rem;">
+                        <label style="color: #c7d2fe;">Target DocType</label>
+                        <select class="inspector-input" id="inp-doctype-bind" onchange="updateDocTypeBinding(this.value)">
+                            <option value="" ${{!b.doctype_binding ? 'selected' : ''}}>-- Static / None --</option>
+                            <option value="Item" ${{b.doctype_binding === 'Item' ? 'selected' : ''}}>Item (Stock & Catalog)</option>
+                            <option value="Sales Invoice" ${{b.doctype_binding === 'Sales Invoice' ? 'selected' : ''}}>Sales Invoice (AR / Invoicing)</option>
+                            <option value="Customer" ${{b.doctype_binding === 'Customer' ? 'selected' : ''}}>Customer (CRM)</option>
+                            <option value="Stock Ledger" ${{b.doctype_binding === 'Stock Ledger' ? 'selected' : ''}}>Stock Ledger (Inventory)</option>
+                            <option value="User" ${{b.doctype_binding === 'User' ? 'selected' : ''}}>User Profile</option>
+                        </select>
+                    </div>
+                    <div class="inspector-field">
+                        <label style="color: #c7d2fe;">Field / Expression Path</label>
+                        <input class="inspector-input" id="inp-field-path" value="${{b.data_binding || b.value_data_path || ''}}" placeholder="e.g. {{ doc.item_name }} or total" oninput="updateDataBindingPath(this.value)">
+                    </div>
                 </div>
             `;
 
@@ -817,6 +928,12 @@ async fn builder_studio_handler(page_id: Option<web::Path<String>>) -> impl Resp
                     <div class="inspector-field">
                         <label>Title</label>
                         <input class="inspector-input" value="${{b.title}}" oninput="updateBlockTitle(this.value)">
+                    </div>`;
+            }} else if (b.label !== undefined) {{
+                html += `
+                    <div class="inspector-field">
+                        <label>Label</label>
+                        <input class="inspector-input" value="${{b.label}}" oninput="updateBlockLabel(this.value)">
                     </div>`;
             }}
 
@@ -862,6 +979,33 @@ async fn builder_studio_handler(page_id: Option<web::Path<String>>) -> impl Resp
         function updateBlockTitle(titleVal) {{
             if (!window.selectedNodeId) return;
             window.activeTree.nodes[window.selectedNodeId].block.title = titleVal;
+            renderCanvas();
+        }}
+
+        function updateBlockLabel(labelVal) {{
+            if (!window.selectedNodeId) return;
+            window.activeTree.nodes[window.selectedNodeId].block.label = labelVal;
+            renderCanvas();
+        }}
+
+        function updateDocTypeBinding(doctype) {{
+            if (!window.selectedNodeId) return;
+            pushHistory();
+            const b = window.activeTree.nodes[window.selectedNodeId].block;
+            b.doctype_binding = doctype || null;
+            if (doctype && !b.data_binding && !b.value_data_path) {{
+                b.data_binding = `{{ doc.${{doctype.toLowerCase().replace(' ', '_')}}_name }}`;
+            }}
+            renderCanvas();
+            renderInspector();
+            showToast(doctype ? `Bound to DocType: ${{doctype}}` : 'Unbound from DocType');
+        }}
+
+        function updateDataBindingPath(path) {{
+            if (!window.selectedNodeId) return;
+            const b = window.activeTree.nodes[window.selectedNodeId].block;
+            b.data_binding = path || null;
+            b.value_data_path = path || null;
             renderCanvas();
         }}
 
@@ -983,46 +1127,78 @@ async fn builder_studio_handler(page_id: Option<web::Path<String>>) -> impl Resp
             wrap.appendChild(actions);
 
             const b = node.block;
+            const bindingBadge = b.doctype_binding ? `<span style="display:inline-block;background:rgba(99,102,241,0.15);border:1px solid rgba(99,102,241,0.4);color:#a5b4fc;padding:1px 6px;border-radius:4px;font-size:0.65rem;font-family:monospace;margin-left:6px;">⚡ ${{b.doctype_binding}} (${{b.data_binding || 'doc'}})</span>` : '';
+
             if (b.block_type === 'Heading') {{
                 const el = document.createElement('h' + (b.level || 2));
                 el.id = 'inner_' + nodeId;
-                el.textContent = b.text;
+                el.innerHTML = (b.text || 'Heading') + bindingBadge;
                 el.contentEditable = 'true';
                 el.onblur = (e) => {{ b.text = e.target.textContent; renderInspector(); }};
                 wrap.appendChild(el);
             }} else if (b.block_type === 'TextBlock') {{
                 const el = document.createElement('p');
                 el.id = 'inner_' + nodeId;
-                el.textContent = b.content || b.text || '';
+                el.innerHTML = (b.content || b.text || '') + bindingBadge;
                 el.contentEditable = 'true';
                 el.onblur = (e) => {{ b.content = e.target.textContent; b.text = e.target.textContent; renderInspector(); }};
                 wrap.appendChild(el);
+            }} else if (b.block_type === 'BlockQuote') {{
+                const el = document.createElement('blockquote');
+                el.style.borderLeft = '4px solid #6366f1';
+                el.style.paddingLeft = '1rem';
+                el.style.margin = '1rem 0';
+                el.style.color = '#cbd5e1';
+                el.style.fontStyle = 'italic';
+                el.innerHTML = `"${{b.quote || 'Crafting mission-critical platforms with pure Rust.'}}" ${{bindingBadge}}<div style="font-size:0.8rem;color:#94a3b8;font-style:normal;margin-top:0.35rem;">— ${{b.author || 'CTO, Enterprise Corp'}}</div>`;
+                wrap.appendChild(el);
+            }} else if (b.block_type === 'ImageBlock') {{
+                const box = document.createElement('div');
+                box.style.background = '#0f172a';
+                box.style.border = '1px solid #334155';
+                box.style.borderRadius = '8px';
+                box.style.padding = '2rem';
+                box.style.textAlign = 'center';
+                box.innerHTML = `<svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#6366f1" stroke-width="2" style="margin:0 auto 0.5rem;"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg><div style="font-weight:600;color:#f8fafc;">${{b.alt || 'Hero Media Banner'}}</div><div style="font-size:0.75rem;color:#94a3b8;font-family:monospace;">${{b.src || '/assets/media/hero.webp'}}</div>`;
+                wrap.appendChild(box);
             }} else if (b.block_type === 'Section' || b.block_type === 'Container') {{
                 const sec = document.createElement('section');
                 sec.style.padding = '1.5rem';
-                sec.style.background = '#f8fafc';
+                sec.style.background = '#090d16';
                 sec.style.borderRadius = '8px';
-                sec.style.border = '1px solid #e2e8f0';
+                sec.style.border = '1px solid #1e293b';
+                sec.innerHTML = `<div style="font-size:0.75rem;font-weight:700;color:#64748b;margin-bottom:0.75rem;text-transform:uppercase;display:flex;align-items:center;gap:0.4rem;"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/></svg> Section Container ${{bindingBadge}}</div>`;
                 for (const cid of (node.child_ids || [])) {{
                     sec.appendChild(renderNode(cid));
                 }}
                 wrap.appendChild(sec);
+            }} else if (b.block_type === 'GridContainer') {{
+                const grid = document.createElement('div');
+                grid.style.display = 'grid';
+                grid.style.gridTemplateColumns = 'repeat(auto-fit, minmax(280px, 1fr))';
+                grid.style.gap = '1.25rem';
+                grid.style.padding = '1rem';
+                grid.style.border = '1px dashed #334155';
+                grid.style.borderRadius = '8px';
+                grid.innerHTML = `<div style="grid-column: 1 / -1; font-size:0.75rem; font-weight:700; color:#6366f1;">⊞ 3-Column Responsive Grid ${{bindingBadge}}</div>`;
+                wrap.appendChild(grid);
             }} else if (b.block_type === 'CardBlock') {{
                 const card = document.createElement('div');
                 card.style.padding = '1.5rem';
-                card.style.background = '#ffffff';
-                card.style.border = '1px solid #e2e8f0';
+                card.style.background = '#111522';
+                card.style.border = '1px solid #1e293b';
                 card.style.borderRadius = '8px';
-                card.style.boxShadow = '0 4px 6px -1px rgba(0,0,0,0.1)';
-                card.innerHTML = `<h3 style="margin-top:0;">${{b.title}}</h3><p style="color:#64748b;">${{b.body}}</p>`;
+                card.style.boxShadow = '0 4px 12px rgba(0,0,0,0.3)';
+                card.innerHTML = `<div style="display:flex;justify-content:space-between;align-items:center;"><h3 style="margin:0;color:#fff;">${{b.title}}</h3>${{bindingBadge}}</div><p style="color:#94a3b8;margin-top:0.5rem;">${{b.body}}</p>`;
                 wrap.appendChild(card);
             }} else if (b.block_type === 'NumberCardBlock') {{
                 const num = document.createElement('div');
                 num.style.padding = '1.25rem';
-                num.style.background = '#eef2ff';
+                num.style.background = '#0f1422';
+                num.style.border = '1px solid #1e293b';
                 num.style.borderRadius = '8px';
                 num.style.textAlign = 'center';
-                num.innerHTML = `<div style="font-size:0.8rem;font-weight:700;color:#6366f1;">${{b.label}}</div><div style="font-size:2rem;font-weight:800;color:#1e1b4b;">99.98%</div>`;
+                num.innerHTML = `<div style="font-size:0.8rem;font-weight:700;color:#818cf8;">${{b.label}} ${{bindingBadge}}</div><div style="font-size:2rem;font-weight:800;color:#f8fafc;margin-top:0.25rem;">$1,842,500.00</div><div style="font-size:0.75rem;color:#10b981;margin-top:0.25rem;">▲ +18.4% vs last cycle</div>`;
                 wrap.appendChild(num);
             }} else if (b.block_type === 'Navbar') {{
                 const nav = document.createElement('nav');
@@ -1030,19 +1206,108 @@ async fn builder_studio_handler(page_id: Option<web::Path<String>>) -> impl Resp
                 nav.style.justifyContent = 'space-between';
                 nav.style.alignItems = 'center';
                 nav.style.padding = '1rem 1.5rem';
-                nav.style.background = '#1e1b4b';
-                nav.style.color = '#fff';
+                nav.style.background = '#131827';
+                nav.style.border = '1px solid #1e293b';
                 nav.style.borderRadius = '6px';
-                nav.innerHTML = `<div style="font-weight:700;">${{b.brand_title}}</div><div style="display:flex;gap:1rem;">${{(b.links || []).map(l => `<a href="${{l[1]}}" style="color:#c7d2fe;text-decoration:none;">${{l[0]}}</a>`).join('')}}</div>`;
+                nav.innerHTML = `<div style="font-weight:700;color:#f8fafc;display:flex;align-items:center;gap:0.5rem;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#6366f1" stroke-width="2.5"><polygon points="12 2 2 7 12 12 22 7 12 2"/></svg> ${{b.brand_title}}</div><div style="display:flex;gap:1.25rem;">${{(b.links || []).map(l => `<a href="${{l[1]}}" style="color:#cbd5e1;text-decoration:none;font-size:0.85rem;">${{l[0]}}</a>`).join('')}}</div>`;
                 wrap.appendChild(nav);
             }} else if (b.block_type === 'Footer') {{
                 const foot = document.createElement('footer');
                 foot.style.padding = '1.5rem';
                 foot.style.textAlign = 'center';
-                foot.style.color = '#94a3b8';
-                foot.style.borderTop = '1px solid #e2e8f0';
+                foot.style.color = '#64748b';
+                foot.style.borderTop = '1px solid #1e293b';
                 foot.innerHTML = `<p style="margin:0;font-size:0.85rem;">${{b.copyright_text}}</p>`;
                 wrap.appendChild(foot);
+            }} else if (b.block_type === 'TextInput') {{
+                const field = document.createElement('div');
+                field.style.padding = '0.5rem 0';
+                field.innerHTML = `<label style="display:block;font-size:0.8rem;font-weight:600;color:#cbd5e1;margin-bottom:0.35rem;">${{b.label || 'User Email Address'}} ${{bindingBadge}}</label><input type="text" placeholder="${{b.placeholder || 'e.g. operator@enterprise.org'}}" style="width:100%;background:#090d16;border:1px solid #334155;color:#f8fafc;padding:0.6rem 0.85rem;border-radius:6px;font-size:0.9rem;" disabled>`;
+                wrap.appendChild(field);
+            }} else if (b.block_type === 'NumberInput') {{
+                const field = document.createElement('div');
+                field.style.padding = '0.5rem 0';
+                field.innerHTML = `<label style="display:block;font-size:0.8rem;font-weight:600;color:#cbd5e1;margin-bottom:0.35rem;">${{b.label || 'Order Quantity / Unit Value'}} ${{bindingBadge}}</label><input type="number" value="${{b.value || 100}}" style="width:100%;background:#090d16;border:1px solid #334155;color:#f8fafc;padding:0.6rem 0.85rem;border-radius:6px;font-size:0.9rem;" disabled>`;
+                wrap.appendChild(field);
+            }} else if (b.block_type === 'SelectDropdown') {{
+                const field = document.createElement('div');
+                field.style.padding = '0.5rem 0';
+                field.innerHTML = `<label style="display:block;font-size:0.8rem;font-weight:600;color:#cbd5e1;margin-bottom:0.35rem;">${{b.label || 'Select Warehouse / Hub'}} ${{bindingBadge}}</label><select style="width:100%;background:#090d16;border:1px solid #334155;color:#f8fafc;padding:0.6rem 0.85rem;border-radius:6px;font-size:0.9rem;" disabled><option>Warehouse Alpha (Primary)</option><option>Hub Beta (Fulfillment)</option></select>`;
+                wrap.appendChild(field);
+            }} else if (b.block_type === 'DatePicker') {{
+                const field = document.createElement('div');
+                field.style.padding = '0.5rem 0';
+                field.innerHTML = `<label style="display:block;font-size:0.8rem;font-weight:600;color:#cbd5e1;margin-bottom:0.35rem;">${{b.label || 'Target Delivery / Post Date'}} ${{bindingBadge}}</label><input type="date" value="2026-10-24" style="width:100%;background:#090d16;border:1px solid #334155;color:#f8fafc;padding:0.6rem 0.85rem;border-radius:6px;font-size:0.9rem;" disabled>`;
+                wrap.appendChild(field);
+            }} else if (b.block_type === 'CheckboxField') {{
+                const field = document.createElement('div');
+                field.style.display = 'flex';
+                field.style.alignItems = 'center';
+                field.style.gap = '0.6rem';
+                field.style.padding = '0.5rem 0';
+                field.innerHTML = `<input type="checkbox" checked style="accent-color:#6366f1;width:16px;height:16px;" disabled><label style="font-size:0.85rem;color:#f8fafc;">${{b.label || 'Enable Real-Time Kafka Stream Sync'}} ${{bindingBadge}}</label>`;
+                wrap.appendChild(field);
+            }} else if (b.block_type === 'SubmitButton') {{
+                const btn = document.createElement('button');
+                btn.style.background = 'linear-gradient(135deg, #6366f1, #4f46e5)';
+                btn.style.color = '#ffffff';
+                btn.style.border = 'none';
+                btn.style.padding = '0.75rem 1.75rem';
+                btn.style.borderRadius = '6px';
+                btn.style.fontWeight = '700';
+                btn.style.cursor = 'pointer';
+                btn.innerHTML = `${{b.label || 'Execute Transaction Order'}} →`;
+                wrap.appendChild(btn);
+            }} else if (b.block_type === 'DataTable') {{
+                const tableWrap = document.createElement('div');
+                tableWrap.style.overflowX = 'auto';
+                tableWrap.style.borderRadius = '8px';
+                tableWrap.style.border = '1px solid #1e293b';
+                tableWrap.style.margin = '1rem 0';
+                tableWrap.innerHTML = `
+                    <div style="background:#0f1422;padding:0.75rem 1rem;font-weight:700;color:#f8fafc;font-size:0.85rem;display:flex;justify-content:space-between;align-items:center;">
+                        <span>Live DocType Table: ${{b.doctype_binding || 'Sales Invoice'}}</span>
+                        <span style="font-size:0.7rem;color:#10b981;">ACID Bitemporal Sync</span>
+                    </div>
+                    <table style="width:100%;border-collapse:collapse;font-size:0.8rem;text-align:left;color:#cbd5e1;">
+                        <thead style="background:#131827;border-bottom:1px solid #1e293b;">
+                            <tr><th style="padding:8px 12px;">ID</th><th style="padding:8px 12px;">Entity Name</th><th style="padding:8px 12px;">Posting Date</th><th style="padding:8px 12px;">Status</th><th style="padding:8px 12px;text-align:right;">Grand Total</th></tr>
+                        </thead>
+                        <tbody>
+                            <tr style="border-bottom:1px solid rgba(255,255,255,0.04);"><td style="padding:8px 12px;font-family:monospace;color:#a5b4fc;">SINV-2026-001</td><td style="padding:8px 12px;">Global Aerospace Corp</td><td style="padding:8px 12px;">2026-10-24</td><td style="padding:8px 12px;color:#10b981;">Paid</td><td style="padding:8px 12px;text-align:right;font-weight:700;color:#fff;">$48,920.00</td></tr>
+                            <tr style="border-bottom:1px solid rgba(255,255,255,0.04);"><td style="padding:8px 12px;font-family:monospace;color:#a5b4fc;">SINV-2026-002</td><td style="padding:8px 12px;">Nordic Automation Systems</td><td style="padding:8px 12px;">2026-10-24</td><td style="padding:8px 12px;color:#f59e0b;">Unpaid</td><td style="padding:8px 12px;text-align:right;font-weight:700;color:#fff;">$124,500.00</td></tr>
+                        </tbody>
+                    </table>`;
+                wrap.appendChild(tableWrap);
+            }} else if (b.block_type === 'DataRepeater') {{
+                const rep = document.createElement('div');
+                rep.style.border = '2px dashed #6366f1';
+                rep.style.borderRadius = '8px';
+                rep.style.padding = '1.25rem';
+                rep.style.background = 'rgba(99, 102, 241, 0.04)';
+                rep.innerHTML = `<div style="font-size:0.8rem;font-weight:700;color:#a5b4fc;margin-bottom:0.75rem;">⟳ Dynamic Repeater (${{b.data_source_path || 'pageData.items'}} as ${{b.item_alias || 'item'}}) ${{bindingBadge}}</div><div style="background:#111522;padding:1rem;border-radius:6px;border:1px solid #1e293b;"><strong style="color:#fff;">{{ item.title }}</strong><p style="color:#94a3b8;margin:0.25rem 0 0;">{{ item.description }} • <strong>{{ item.price }}</strong></p></div>`;
+                wrap.appendChild(rep);
+            }} else if (b.block_type === 'KanbanBoard') {{
+                const kanban = document.createElement('div');
+                kanban.style.display = 'grid';
+                kanban.style.gridTemplateColumns = 'repeat(3, 1fr)';
+                kanban.style.gap = '1rem';
+                kanban.style.margin = '1rem 0';
+                kanban.innerHTML = `
+                    <div style="background:#090d16;border:1px solid #1e293b;border-radius:6px;padding:0.75rem;"><div style="font-weight:700;font-size:0.8rem;color:#f8fafc;margin-bottom:0.5rem;">To Do (3)</div><div style="background:#111522;padding:0.6rem;border-radius:4px;border:1px solid #1e293b;font-size:0.75rem;color:#cbd5e1;">Review Fab Lot #884</div></div>
+                    <div style="background:#090d16;border:1px solid #1e293b;border-radius:6px;padding:0.75rem;"><div style="font-weight:700;font-size:0.8rem;color:#38bdf8;margin-bottom:0.5rem;">In Progress (2)</div><div style="background:#111522;padding:0.6rem;border-radius:4px;border:1px solid #1e293b;font-size:0.75rem;color:#cbd5e1;">SCADA Telemetry Calibration</div></div>
+                    <div style="background:#090d16;border:1px solid #1e293b;border-radius:6px;padding:0.75rem;"><div style="font-weight:700;font-size:0.8rem;color:#10b981;margin-bottom:0.5rem;">Done (8)</div><div style="background:#111522;padding:0.6rem;border-radius:4px;border:1px solid #1e293b;font-size:0.75rem;color:#cbd5e1;">ISO 9001 Audit Signoff</div></div>
+                `;
+                wrap.appendChild(kanban);
+            }} else if (b.block_type === 'ModalDialog') {{
+                const modal = document.createElement('div');
+                modal.style.background = '#111522';
+                modal.style.border = '1px solid #334155';
+                modal.style.borderRadius = '8px';
+                modal.style.padding = '1.25rem';
+                modal.style.boxShadow = '0 20px 25px -5px rgba(0,0,0,0.5)';
+                modal.innerHTML = `<div style="display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid #1e293b;padding-bottom:0.5rem;"><h4 style="margin:0;color:#fff;">Confirm Transaction Execution</h4><span style="color:#94a3b8;cursor:pointer;">✕</span></div><p style="font-size:0.85rem;color:#cbd5e1;margin-top:0.75rem;">Are you sure you want to commit this batch ledger entry to SurrealDB?</p><div style="display:flex;justify-content:flex-end;gap:0.5rem;margin-top:1rem;"><button style="background:transparent;border:1px solid #334155;color:#f8fafc;padding:0.4rem 0.85rem;border-radius:4px;cursor:pointer;">Cancel</button><button style="background:#6366f1;border:none;color:#fff;padding:0.4rem 0.85rem;border-radius:4px;font-weight:600;cursor:pointer;">Commit</button></div>`;
+                wrap.appendChild(modal);
             }} else {{
                 const raw = document.createElement('div');
                 raw.textContent = `[${{b.block_type}}]`;
@@ -1061,8 +1326,14 @@ async fn builder_studio_handler(page_id: Option<web::Path<String>>) -> impl Resp
                 block = {{ block_type: 'Heading', level: 2, text: 'New Heading', data_binding: null }};
             }} else if (kind === 'TextBlock') {{
                 block = {{ block_type: 'TextBlock', content: 'Crafted with rust-web-land Builder in pure Rust.', data_binding: null }};
+            }} else if (kind === 'BlockQuote') {{
+                block = {{ block_type: 'BlockQuote', quote: 'Crafting mission-critical platforms with pure Rust.', author: 'CTO, Enterprise Corp' }};
+            }} else if (kind === 'ImageBlock') {{
+                block = {{ block_type: 'ImageBlock', src: '/assets/media/hero.webp', alt: 'Hero Media Banner', width_px: 1200, height_px: 400 }};
             }} else if (kind === 'Section') {{
                 block = {{ block_type: 'Section', id: id, children: [], css_classes: 'py-8' }};
+            }} else if (kind === 'GridContainer') {{
+                block = {{ block_type: 'GridContainer', columns: 3, gap: '1.25rem' }};
             }} else if (kind === 'CardBlock') {{
                 block = {{ block_type: 'CardBlock', title: 'Product Showcase', body: 'ACID transaction velocity on the cloud edge.', image_url: null }};
             }} else if (kind === 'NumberCardBlock') {{
@@ -1071,6 +1342,26 @@ async fn builder_studio_handler(page_id: Option<web::Path<String>>) -> impl Resp
                 block = {{ block_type: 'Navbar', brand_title: 'Enterprise Studio', links: [['Home', '/'], ['Catalog', '/site/catalog']] }};
             }} else if (kind === 'Footer') {{
                 block = {{ block_type: 'Footer', copyright_text: '© 2026 RustNext Enterprise. Pure Rust Engine.' }};
+            }} else if (kind === 'TextInput') {{
+                block = {{ block_type: 'TextInput', label: 'Customer Email', placeholder: 'user@enterprise.org', doctype_binding: 'Customer', data_binding: '{{ doc.email }}' }};
+            }} else if (kind === 'NumberInput') {{
+                block = {{ block_type: 'NumberInput', label: 'Batch Quantity', value: 100, doctype_binding: 'Item', data_binding: '{{ doc.stock_qty }}' }};
+            }} else if (kind === 'SelectDropdown') {{
+                block = {{ block_type: 'SelectDropdown', label: 'Warehouse Code', doctype_binding: 'Stock Ledger', data_binding: '{{ doc.warehouse }}' }};
+            }} else if (kind === 'DatePicker') {{
+                block = {{ block_type: 'DatePicker', label: 'Posting Date', doctype_binding: 'Sales Invoice', data_binding: '{{ doc.posting_date }}' }};
+            }} else if (kind === 'CheckboxField') {{
+                block = {{ block_type: 'CheckboxField', label: 'Automated Tax Calculation', checked: true }};
+            }} else if (kind === 'SubmitButton') {{
+                block = {{ block_type: 'SubmitButton', label: 'Confirm & Post Transaction' }};
+            }} else if (kind === 'DataTable') {{
+                block = {{ block_type: 'DataTable', doctype_binding: 'Sales Invoice', data_binding: 'pageData.invoices' }};
+            }} else if (kind === 'DataRepeater') {{
+                block = {{ block_type: 'DataRepeater', data_source_path: 'pageData.items', item_alias: 'item', doctype_binding: 'Item' }};
+            }} else if (kind === 'KanbanBoard') {{
+                block = {{ block_type: 'KanbanBoard', doctype_binding: 'Opportunity' }};
+            }} else if (kind === 'ModalDialog') {{
+                block = {{ block_type: 'ModalDialog', title: 'Confirm Transaction Execution' }};
             }}
 
             if (block) {{
