@@ -516,11 +516,6 @@ const DESK_BASE_HTML: &str = r#"<!DOCTYPE html>
             searchInput.addEventListener('input', (e) => {
                 const q = e.target.value.toLowerCase().trim();
                 renderOmniResults(q);
-                // Also filter cards in current view
-                document.querySelectorAll('.card').forEach(card => {
-                    const text = card.textContent.toLowerCase();
-                    card.style.display = (!q || text.includes(q)) ? '' : 'none';
-                });
             });
 
             searchInput.addEventListener('keydown', (e) => {
@@ -1328,11 +1323,29 @@ pub fn render_form_view_html(doctype: &str, docname: &str, user_name: &str) -> S
             const supportedFields = meta.fields.filter(f => !f.hidden && f.fieldtype !== 'Table');
             for (const f of supportedFields) {{
                 if (f.fieldname === 'name') continue;
+                let ftype = 'Data';
+                if (typeof f.fieldtype === 'string') {{
+                    ftype = f.fieldtype;
+                }} else if (f.fieldtype && typeof f.fieldtype === 'object' && f.fieldtype.type) {{
+                    ftype = f.fieldtype.type;
+                }}
+
+                if (ftype === 'Section Break' || ftype === 'SectionBreak') {{
+                    html += `
+                        <div style="grid-column: 1 / -1; margin-top: 1.25rem; margin-bottom: 0.5rem; border-bottom: 1px solid var(--border); padding-bottom: 0.35rem;">
+                            <h4 style="margin: 0; font-size: 0.85rem; font-weight: 700; color: var(--accent); text-transform: uppercase; letter-spacing: 0.05em;">${{f.label || 'Section'}}</h4>
+                        </div>
+                    `;
+                    continue;
+                }}
+                if (['Column Break', 'ColumnBreak', 'Tab Break', 'TabBreak', 'Fold', 'HTML'].includes(ftype)) {{
+                    continue;
+                }}
+
                 const reqdAttr = f.reqd ? 'required' : '';
                 const reqdStar = f.reqd ? '<span style="color:var(--danger)">*</span>' : '';
                 const readonlyAttr = f.read_only ? 'readonly' : '';
                 let inputHtml = '';
-                const ftype = f.fieldtype || 'Data';
 
                 if (ftype === 'Currency' || ftype === 'Float') {{
                     inputHtml = `<input type="number" step="0.01" class="form-control" data-fieldname="${{f.fieldname}}" id="field-${{f.fieldname}}" placeholder="0.00" ${{reqdAttr}} ${{readonlyAttr}} />`;

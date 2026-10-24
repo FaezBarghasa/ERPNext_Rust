@@ -1666,14 +1666,21 @@ pub fn render_admin_cockpit_html(admin_name: &str) -> String {
             }} catch (_) {{}}
         }})();
 
-        // Random subtle jitter for live telemetry feel
-        setInterval(() => {{
-            const reqEl = document.getElementById('kpi-req-sec');
-            if (reqEl) {{
-                const val = (46 + Math.random() * 4).toFixed(1);
-                reqEl.innerHTML = `${{val}}k <span style="font-size: 1rem; color: var(--text-muted);">req/s</span>`;
-            }}
-        }}, 3000);
+        // Live telemetry updater
+        async function updateLiveTelemetry() {{
+            try {{
+                const res = await fetch('/api/v2/admin/status');
+                if (res.ok) {{
+                    const data = await res.json();
+                    const reqEl = document.getElementById('kpi-req-sec');
+                    if (reqEl && data.tokio_threads) {{
+                        reqEl.innerHTML = `${{data.tokio_threads}} <span style="font-size: 1rem; color: var(--text-muted);">tokio threads</span>`;
+                    }}
+                }}
+            }} catch (_) {{}}
+        }}
+        setInterval(updateLiveTelemetry, 5000);
+        updateLiveTelemetry();
     </script>
 </body>
 </html>"##,

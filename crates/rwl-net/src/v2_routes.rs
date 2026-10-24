@@ -307,9 +307,20 @@ pub async fn v2_list_document(
         None => return HttpResponse::BadRequest().body("Missing tenant context"),
     };
 
-    if let Some(ctx) = req.extensions().get::<SecurityContext>() {
+    let is_public = matches!(
+        doctype.to_lowercase().as_str(),
+        "item" | "website item" | "web page" | "blog post"
+    );
+    let ctx = req.extensions().get::<SecurityContext>().cloned();
+    if !is_public && ctx.is_none() {
+        return HttpResponse::Unauthorized().json(serde_json::json!({
+            "error": format!("Authentication required: Bearer token must be provided to access DocType '{doctype}'")
+        }));
+    }
+
+    if let Some(ref c) = ctx {
         let allowed = evaluate_route_permission(
-            Some(ctx),
+            Some(c),
             rbac_state.as_ref(),
             &doctype,
             Permission::Read,
@@ -446,9 +457,20 @@ pub async fn v2_get_document(
         None => return HttpResponse::BadRequest().body("Missing tenant context"),
     };
 
-    if let Some(ctx) = req.extensions().get::<SecurityContext>() {
+    let is_public = matches!(
+        doctype.to_lowercase().as_str(),
+        "item" | "website item" | "web page" | "blog post"
+    );
+    let ctx = req.extensions().get::<SecurityContext>().cloned();
+    if !is_public && ctx.is_none() {
+        return HttpResponse::Unauthorized().json(serde_json::json!({
+            "error": format!("Authentication required: Bearer token must be provided to access DocType '{doctype}'")
+        }));
+    }
+
+    if let Some(ref c) = ctx {
         let allowed = evaluate_route_permission(
-            Some(ctx),
+            Some(c),
             rbac_state.as_ref(),
             &doctype,
             Permission::Read,
@@ -2585,6 +2607,20 @@ pub async fn admin_query_handler(
     pool_mgr: web::Data<ConnectionPoolManager>,
     payload: web::Json<serde_json::Value>,
 ) -> impl Responder {
+    let Some(ctx) = req.extensions().get::<SecurityContext>().cloned() else {
+        return HttpResponse::Unauthorized().json(serde_json::json!({
+            "status": "UNAUTHORIZED",
+            "error": "Authentication required. Bearer token must be provided."
+        }));
+    };
+
+    if !ctx.is_admin() {
+        return HttpResponse::Forbidden().json(serde_json::json!({
+            "status": "FORBIDDEN",
+            "error": "System Manager or Administrator privilege required."
+        }));
+    }
+
     let tenant_id = req
         .extensions()
         .get::<TenantId>()
@@ -3035,7 +3071,23 @@ pub struct UpdatePermissionPayload {
 }
 
 /// Handler to list all users: `GET /api/v2/admin/users`
-pub async fn admin_list_users_handler(rbac_state: web::Data<DynamicRbacState>) -> impl Responder {
+pub async fn admin_list_users_handler(
+    req: HttpRequest,
+    rbac_state: web::Data<DynamicRbacState>,
+) -> impl Responder {
+    let Some(ctx) = req.extensions().get::<SecurityContext>().cloned() else {
+        return HttpResponse::Unauthorized().json(serde_json::json!({
+            "status": "UNAUTHORIZED",
+            "error": "Authentication required. Bearer token must be provided."
+        }));
+    };
+    if !ctx.is_admin() {
+        return HttpResponse::Forbidden().json(serde_json::json!({
+            "status": "FORBIDDEN",
+            "error": "System Manager or Administrator privilege required."
+        }));
+    }
+
     let users = rbac_state
         .users
         .read()
@@ -3050,9 +3102,23 @@ pub async fn admin_list_users_handler(rbac_state: web::Data<DynamicRbacState>) -
 
 /// Handler to create a user: `POST /api/v2/admin/users`
 pub async fn admin_create_user_handler(
+    req: HttpRequest,
     rbac_state: web::Data<DynamicRbacState>,
     payload: web::Json<CreateUserPayload>,
 ) -> impl Responder {
+    let Some(ctx) = req.extensions().get::<SecurityContext>().cloned() else {
+        return HttpResponse::Unauthorized().json(serde_json::json!({
+            "status": "UNAUTHORIZED",
+            "error": "Authentication required. Bearer token must be provided."
+        }));
+    };
+    if !ctx.is_admin() {
+        return HttpResponse::Forbidden().json(serde_json::json!({
+            "status": "FORBIDDEN",
+            "error": "System Manager or Administrator privilege required."
+        }));
+    }
+
     let payload = payload.into_inner();
     let mut users = match rbac_state.users.write() {
         Ok(guard) => guard,
@@ -3082,7 +3148,7 @@ pub async fn admin_create_user_handler(
     rbac_state.audit_trail.record(
         AuditEntry::new(
             "default",
-            "Administrator",
+            &ctx.claims.sub,
             "127.0.0.1",
             "AdminDesk",
             AuditAction::RoleAssigned,
@@ -3104,10 +3170,24 @@ pub async fn admin_create_user_handler(
 
 /// Handler to update user roles: `PUT /api/v2/admin/users/{user_id}/roles`
 pub async fn admin_update_user_roles_handler(
+    req: HttpRequest,
     rbac_state: web::Data<DynamicRbacState>,
     user_id: web::Path<String>,
     payload: web::Json<UpdateUserRolesPayload>,
 ) -> impl Responder {
+    let Some(ctx) = req.extensions().get::<SecurityContext>().cloned() else {
+        return HttpResponse::Unauthorized().json(serde_json::json!({
+            "status": "UNAUTHORIZED",
+            "error": "Authentication required. Bearer token must be provided."
+        }));
+    };
+    if !ctx.is_admin() {
+        return HttpResponse::Forbidden().json(serde_json::json!({
+            "status": "FORBIDDEN",
+            "error": "System Manager or Administrator privilege required."
+        }));
+    }
+
     let uid = user_id.into_inner();
     let mut users = match rbac_state.users.write() {
         Ok(guard) => guard,
@@ -3124,7 +3204,7 @@ pub async fn admin_update_user_roles_handler(
         rbac_state.audit_trail.record(
             AuditEntry::new(
                 "default",
-                "Administrator",
+                &ctx.claims.sub,
                 "127.0.0.1",
                 "AdminDesk",
                 AuditAction::RoleAssigned,
@@ -3152,9 +3232,23 @@ pub async fn admin_update_user_roles_handler(
 
 /// Handler to delete a user: `DELETE /api/v2/admin/users/{user_id}`
 pub async fn admin_delete_user_handler(
+    req: HttpRequest,
     rbac_state: web::Data<DynamicRbacState>,
     user_id: web::Path<String>,
 ) -> impl Responder {
+    let Some(ctx) = req.extensions().get::<SecurityContext>().cloned() else {
+        return HttpResponse::Unauthorized().json(serde_json::json!({
+            "status": "UNAUTHORIZED",
+            "error": "Authentication required. Bearer token must be provided."
+        }));
+    };
+    if !ctx.is_admin() {
+        return HttpResponse::Forbidden().json(serde_json::json!({
+            "status": "FORBIDDEN",
+            "error": "System Manager or Administrator privilege required."
+        }));
+    }
+
     let uid = user_id.into_inner();
     if uid == "usr_admin" || uid == "Administrator" {
         return HttpResponse::BadRequest().json(serde_json::json!({

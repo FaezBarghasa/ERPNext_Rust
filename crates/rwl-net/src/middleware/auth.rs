@@ -68,6 +68,18 @@ impl SecurityContext {
         }
     }
 
+    /// Checks if the security context has administrative privileges.
+    #[must_use]
+    pub fn is_admin(&self) -> bool {
+        self.claims.is_admin()
+    }
+
+    /// Checks if the security context possesses a specific role or has admin access.
+    #[must_use]
+    pub fn has_role(&self, role: &str) -> bool {
+        self.is_admin() || self.claims.roles.iter().any(|r| r == role)
+    }
+
     /// Evaluates whether the security context has permission for a specific operation on a target DocType.
     pub fn check_perm(
         &self,

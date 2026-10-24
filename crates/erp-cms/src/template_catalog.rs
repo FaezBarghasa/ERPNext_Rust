@@ -1135,7 +1135,7 @@ fn render_svod_streaming_html(suite: &TemplateSuite, css_tokens: &str, variant: 
 
         <section class="carousel-section" aria-labelledby="trending-title">
             <div class="section-header">
-                <h2 id="trending-title">Trending Originals (SurrealDB tab_video_asset)</h2>
+                <h2 id="trending-title">Trending Originals & Cinema Streams</h2>
                 <span style="font-size: 0.85rem; font-family: var(--font-mono); color: var(--color-primary);">4K ULTRA-HD</span>
             </div>
             <div class="video-grid">
