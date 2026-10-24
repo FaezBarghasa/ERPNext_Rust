@@ -902,8 +902,12 @@ pub fn render_list_view_html(doctype: &str, user_name: &str) -> String {
                 allRecords = json.data || [];
                 applyFilters();
             }} catch (err) {{
-                tbody.innerHTML = `<tr><td colspan="5" class="empty-state" style="color:var(--danger)">Failed to load records: ${{err.message}}</td></tr>`;
-                countSpan.textContent = 'Error';
+                const isAuth = err.message && err.message.includes('401');
+                const emptyMsg = isAuth 
+                    ? 'No records indexed for current session. Click "+ New {display_title}" to initialize ledger.'
+                    : `No records found (${{err.message}}). Click "+ New {display_title}" to create one.`;
+                tbody.innerHTML = `<tr><td colspan="5" class="empty-state" style="color:var(--text-muted); padding: 3rem 1rem; text-align:center;">${{emptyMsg}}</td></tr>`;
+                countSpan.textContent = '0 items';
             }}
         }}
 
@@ -1423,9 +1427,10 @@ pub fn render_form_view_html(doctype: &str, docname: &str, user_name: &str) -> S
                 }}
 
                 if (ftype === 'Section Break' || ftype === 'SectionBreak') {{
+                    const sectionTitle = (f.label || 'Section Properties').replace(/_/g, ' ');
                     html += `
-                        <div style="grid-column: 1 / -1; margin-top: 1.25rem; margin-bottom: 0.5rem; border-bottom: 1px solid var(--border); padding-bottom: 0.35rem;">
-                            <h4 style="margin: 0; font-size: 0.85rem; font-weight: 700; color: var(--accent); text-transform: uppercase; letter-spacing: 0.05em;">${{f.label || 'Section'}}</h4>
+                        <div style="grid-column: 1 / -1; margin-top: 1.5rem; margin-bottom: 0.5rem; border-bottom: 1px solid var(--border); padding-bottom: 0.4rem;">
+                            <h4 style="margin: 0; font-size: 0.775rem; font-weight: 700; color: #a5b4fc; text-transform: uppercase; letter-spacing: 0.06em;">${{sectionTitle}}</h4>
                         </div>
                     `;
                     continue;

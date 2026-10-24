@@ -448,52 +448,52 @@ pub fn render_theme_switcher_dock(current_slug: &str, active_variant: &str) -> S
     let variants = [
         (
             "swiss",
-            "🇨🇭 01 Minimalist Swiss",
+            "01 Swiss Minimal",
             "Monochrome stark contrast, grotesque typography, ultra-high whitespace",
         ),
         (
             "bento",
-            "🍱 02 Bento Grid Modern",
+            "02 Bento Grid",
             "Modular rounded cards, glow effects, micro-badges, dark-mode first",
         ),
         (
             "neobrutalist",
-            "⚡ 03 Neo-Brutalist",
+            "03 Neo-Brutalist",
             "Thick black borders, vivid pop colors, hard drop shadows, playful monospace",
         ),
         (
             "editorial",
-            "👑 04 Editorial Luxury",
+            "04 Editorial Luxury",
             "Refined serif headings, prestige organic palettes, asymmetric layouts",
         ),
         (
             "cyberpunk",
-            "🤖 05 Cyberpunk HUD",
+            "05 Cyberpunk HUD",
             "Samurai yellow, frosted glass cards, HUD elements, high-tech telemetry",
         ),
         (
             "split-screen",
-            "🌗 06 Split-Screen Dual",
+            "06 Split Dual",
             "50/50 dual pane layout, pinned narrative alongside scrollable visual feed",
         ),
         (
             "cockpit",
-            "📊 07 Data Cockpit",
+            "07 Data Cockpit",
             "Ultra-compact tables, live sparklines, instant filters, zero decorative padding",
         ),
         (
             "playful",
-            "🎨 08 Playful Pastel",
+            "08 Soft Chroma",
             "Pastel color palettes, rounded pill tags, animated illustrations, spring curves",
         ),
         (
             "scrollytelling",
-            "📖 09 Scrollytelling",
+            "09 Scrollytelling",
             "Fullscreen snap sections, interactive timeline, progressive step revelation",
         ),
         (
             "cinematic-3d",
-            "🎬 10 3D Canvas Showroom",
+            "10 3D Showroom",
             "Full-bleed 3D WebGL viewers, ambient canvas lighting, immersive video backgrounds",
         ),
     ];
@@ -517,7 +517,7 @@ pub fn render_theme_switcher_dock(current_slug: &str, active_variant: &str) -> S
     format!(
         r##"<aside class="theme-switcher-dock" aria-label="Aesthetic Archetype Selector">
     <div class="dock-header">
-        <span class="dock-title">🎨 10 UI/UX ARCHETYPES (100 TOTAL PERMUTATIONS)</span>
+        <span class="dock-title">10 UI/UX ARCHETYPES (100 PERMUTATIONS)</span>
         <span class="dock-domain">{slug}</span>
     </div>
     <div class="dock-btn-row">
