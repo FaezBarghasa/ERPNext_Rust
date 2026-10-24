@@ -19,7 +19,7 @@ async fn test_template_catalog_http_endpoints() {
 
     let body = test::read_body(resp).await;
     let html_str = String::from_utf8(body.to_vec()).expect("Valid UTF-8");
-    assert!(html_str.contains("Universal Work-Type Templates"));
+    assert!(html_str.contains("Universal Enterprise Templates"));
     assert!(html_str.contains("svod-streaming"));
     assert!(html_str.contains("lms-academy"));
     assert!(html_str.contains("digital-goods"));
@@ -78,7 +78,7 @@ async fn test_template_catalog_http_endpoints() {
         actix_web::http::StatusCode::NOT_FOUND
     );
 
-    // 4. Verify GET /api/v1/templates returns catalog JSON array with 10 items
+    // 4. Verify GET /api/v1/templates returns catalog JSON array with 60 items
     let req_api = test::TestRequest::get()
         .uri("/api/v1/templates")
         .to_request();
@@ -88,7 +88,17 @@ async fn test_template_catalog_http_endpoints() {
     let api_body = test::read_body(resp_api).await;
     let templates: Vec<serde_json::Value> =
         serde_json::from_slice(&api_body).expect("Valid JSON array");
-    assert_eq!(templates.len(), 10);
+    assert_eq!(templates.len(), 60);
+
+    // Verify extended templates are accessible and render successfully
+    let req_ext = test::TestRequest::get()
+        .uri("/templates/semiconductor-foundry")
+        .to_request();
+    let resp_ext = test::call_service(&app, req_ext).await;
+    assert!(resp_ext.status().is_success());
+    let ext_body = test::read_body(resp_ext).await;
+    let ext_html = String::from_utf8(ext_body.to_vec()).expect("Valid UTF-8");
+    assert!(ext_html.contains("Wafer Fabrication Cleanroom & Yield Analytics"));
 
     // 5. Verify GET /api/v1/templates/{slug}/manifest returns valid ThemeManifest JSON
     let req_manifest = test::TestRequest::get()

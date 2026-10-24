@@ -58,10 +58,10 @@ impl TemplateSuite {
     }
 }
 
-/// Returns the comprehensive registry of all 6 prebuilt enterprise template suites.
+/// Returns the comprehensive registry of all prebuilt enterprise template suites (60 total).
 #[must_use]
 pub fn list_template_suites() -> Vec<TemplateSuite> {
-    vec![
+    let mut suites = vec![
         TemplateSuite {
             slug: "svod-streaming".into(),
             title: "SVoD Video Streaming & Entertainment".into(),
@@ -688,14 +688,14 @@ pub fn render_template_index_html() -> String {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>rustnext — Universal Enterprise Template Suites</title>
+    <title>rustnext — 60 Universal Enterprise Template Suites</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=Space+Mono:wght@400;700&family=Syne:wght@600;700;800&display=swap" rel="stylesheet">
     <style>
         :root {{
             --bg: #070709;
-            --surface: #121319;
+            --surface: rgba(18, 19, 25, 0.75);
             --surface-border: rgba(255,255,255,0.08);
             --gold: #e6c887;
             --text-main: #f0f2f7;
@@ -708,17 +708,20 @@ pub fn render_template_index_html() -> String {
             font-family: 'Outfit', sans-serif;
             line-height: 1.6;
             padding: 3rem 1.5rem;
+            min-height: 100vh;
         }}
-        .container {{ max-width: 1280px; margin: 0 auto; }}
-        header {{ text-align: center; margin-bottom: 4rem; }}
+        .container {{ max-width: 1440px; margin: 0 auto; }}
+        header {{ text-align: center; margin-bottom: 3rem; }}
         .hero-badge {{
-            display: inline-block;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
             background: rgba(230,200,135,0.12);
             border: 1px solid rgba(230,200,135,0.3);
             color: var(--gold);
             font-family: 'Space Mono', monospace;
             font-size: 0.85rem;
-            padding: 0.35rem 0.9rem;
+            padding: 0.35rem 1rem;
             border-radius: 9999px;
             margin-bottom: 1.25rem;
             text-transform: uppercase;
@@ -726,38 +729,105 @@ pub fn render_template_index_html() -> String {
         }}
         h1 {{
             font-family: 'Syne', sans-serif;
-            font-size: clamp(2.2rem, 5vw, 3.8rem);
+            font-size: clamp(2.4rem, 5vw, 4.2rem);
             font-weight: 800;
             letter-spacing: -0.02em;
             margin-bottom: 1rem;
-            background: linear-gradient(135deg, #ffffff 40%, #c4cbd8 100%);
+            background: linear-gradient(135deg, #ffffff 30%, #c4cbd8 70%, #e6c887 100%);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
         }}
         header p {{
             font-size: 1.15rem;
             color: var(--text-muted);
-            max-width: 720px;
-            margin: 0 auto;
+            max-width: 840px;
+            margin: 0 auto 2rem;
+        }}
+        .search-filter-dock {{
+            display: flex;
+            flex-direction: column;
+            gap: 1.25rem;
+            background: rgba(15, 17, 23, 0.85);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 1.25rem;
+            padding: 1.25rem 1.75rem;
+            margin-bottom: 3rem;
+            box-shadow: 0 12px 32px rgba(0,0,0,0.4);
+        }}
+        .search-bar-wrap {{
+            position: relative;
+            display: flex;
+            align-items: center;
+        }}
+        .search-icon {{
+            position: absolute;
+            left: 1.25rem;
+            color: var(--gold);
+            pointer-events: none;
+            display: flex;
+            align-items: center;
+        }}
+        #template-search {{
+            width: 100%;
+            background: rgba(0,0,0,0.35);
+            border: 1px solid rgba(255,255,255,0.12);
+            color: #fff;
+            padding: 0.85rem 1.25rem 0.85rem 3.25rem;
+            border-radius: 0.75rem;
+            font-family: 'Outfit', sans-serif;
+            font-size: 1.05rem;
+            outline: none;
+            transition: border-color 0.2s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+        }}
+        #template-search:focus {{
+            border-color: var(--gold);
+            box-shadow: 0 0 0 3px rgba(230,200,135,0.2);
+        }}
+        .filter-pills {{
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            align-items: center;
+        }}
+        .filter-btn {{
+            background: rgba(255,255,255,0.05);
+            border: 1px solid rgba(255,255,255,0.1);
+            color: #cbd5e1;
+            font-size: 0.82rem;
+            font-weight: 500;
+            padding: 0.4rem 0.85rem;
+            border-radius: 9999px;
+            cursor: pointer;
+            transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+        }}
+        .filter-btn:hover, .filter-btn.active {{
+            background: var(--gold);
+            color: #070709;
+            border-color: var(--gold);
+            font-weight: 700;
+            box-shadow: 0 4px 12px rgba(230,200,135,0.25);
         }}
         .grid {{
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(360px, 1fr));
+            grid-template-columns: repeat(auto-fill, minmax(380px, 1fr));
             gap: 2rem;
         }}
         .template-card {{
             background: var(--surface);
+            backdrop-filter: blur(16px);
             border: 1px solid var(--surface-border);
             border-radius: 1.25rem;
             padding: 2rem;
             display: flex;
             flex-direction: column;
-            transition: transform 0.25s ease, border-color 0.25s ease, box-shadow 0.25s ease;
+            transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.25s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+            box-shadow: inset 0 1px 0 0 rgba(255,255,255,0.05), 0 8px 24px -4px rgba(0,0,0,0.5);
         }}
         .template-card:hover {{
             transform: translateY(-4px);
-            border-color: rgba(230,200,135,0.4);
-            box-shadow: 0 16px 36px rgba(0,0,0,0.5);
+            border-color: rgba(230,200,135,0.45);
+            box-shadow: inset 0 1px 0 0 rgba(255,255,255,0.1), 0 20px 40px rgba(0,0,0,0.6), 0 0 25px rgba(230,200,135,0.15);
         }}
         .card-header {{
             display: flex;
@@ -788,6 +858,7 @@ pub fn render_template_index_html() -> String {
             font-size: 0.92rem;
             margin-bottom: 1.25rem;
             flex-grow: 0;
+            line-height: 1.5;
         }}
         .module-group {{
             display: flex;
@@ -870,9 +941,10 @@ pub fn render_template_index_html() -> String {
             padding: 0.75rem 1.25rem;
             border-radius: 0.75rem;
             text-decoration: none;
-            transition: opacity 0.2s ease;
+            transition: opacity 0.2s cubic-bezier(0.16, 1, 0.3, 1), transform 0.15s cubic-bezier(0.16, 1, 0.3, 1);
         }}
-        .btn-primary:hover {{ opacity: 0.92; }}
+        .btn-primary:hover {{ opacity: 0.92; transform: translateY(-1px); }}
+        .btn-primary:active {{ transform: scale(0.98); }}
         .cli-cmd {{
             display: block;
             background: rgba(0,0,0,0.4);
@@ -890,16 +962,347 @@ pub fn render_template_index_html() -> String {
 <body>
     <div class="container">
         <header>
-            <div class="hero-badge">Milestone 10.3 • Pure-Rust Enterprise OS</div>
-            <h1>Universal Work-Type Templates</h1>
-            <p>Six production-grade commercial and operational website templates compiled natively in Rust with zero foreign runtimes, zero decimal drift, and sub-10ms SSR delivery.</p>
+            <div class="hero-badge">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+                60 Universal Template Suites • Pure-Rust Enterprise OS
+            </div>
+            <h1>Universal Enterprise Templates</h1>
+            <p>Sixty production-grade commercial and operational website template suites across 12 business verticals, compiled natively in Rust with zero foreign runtimes, zero decimal drift, and sub-10ms SSR delivery.</p>
         </header>
-        <div class="grid">
+
+        <section class="search-filter-dock" aria-label="Template filters and search">
+            <div class="search-bar-wrap">
+                <span class="search-icon">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                </span>
+                <input type="text" id="template-search" placeholder="Search 60 templates by industry, protocol, ERP module, or capability..." autocomplete="off">
+            </div>
+            <div class="filter-pills" id="category-filters">
+                <button class="filter-btn active" data-filter="all">All (60)</button>
+                <button class="filter-btn" data-filter="commerce">Commerce & Retail</button>
+                <button class="filter-btn" data-filter="industrial">Industrial & Aero</button>
+                <button class="filter-btn" data-filter="saas">SaaS & AI</button>
+                <button class="filter-btn" data-filter="fintech">FinTech & Wealth</button>
+                <button class="filter-btn" data-filter="healthcare">Healthcare & Bio</button>
+                <button class="filter-btn" data-filter="media">Media & Audio</button>
+                <button class="filter-btn" data-filter="hospitality">Hospitality & Food</button>
+                <button class="filter-btn" data-filter="logistics">Logistics & Fleet</button>
+                <button class="filter-btn" data-filter="realestate">Real Estate & BIM</button>
+                <button class="filter-btn" data-filter="education">Education & LIMS</button>
+                <button class="filter-btn" data-filter="professional">Professional & Legal</button>
+                <button class="filter-btn" data-filter="infrastructure">Infrastructure & Edge</button>
+            </div>
+        </section>
+
+        <div class="grid" id="template-grid">
             {cards_html}
         </div>
     </div>
+
+    <script>
+        const searchInput = document.getElementById('template-search');
+        const filterBtns = document.querySelectorAll('.filter-btn');
+        const cards = document.querySelectorAll('.template-card');
+
+        let activeFilter = 'all';
+
+        function filterTemplates() {{
+            const query = (searchInput.value || '').toLowerCase().trim();
+            let visibleCount = 0;
+
+            cards.forEach(card => {{
+                const text = card.textContent.toLowerCase();
+                const slug = card.getAttribute('data-slug') || '';
+                const matchesQuery = !query || text.includes(query);
+
+                let matchesCat = true;
+                if (activeFilter === 'commerce') {{
+                    matchesCat = slug.includes('b2c') || slug.includes('digital') || slug.includes('luxegen') || slug.includes('streetwear') || slug.includes('fashion') || text.includes('retail') || text.includes('creator');
+                }} else if (activeFilter === 'industrial') {{
+                    matchesCat = slug.includes('b2b') || slug.includes('aerospace') || slug.includes('gigafactory') || slug.includes('semiconductor') || slug.includes('scada') || text.includes('industrial');
+                }} else if (activeFilter === 'saas') {{
+                    matchesCat = slug.includes('saas') || slug.includes('infra') || slug.includes('ai-') || slug.includes('cybersecurity') || slug.includes('devtools') || text.includes('cloud');
+                }} else if (activeFilter === 'fintech') {{
+                    matchesCat = slug.includes('trading') || slug.includes('neobank') || slug.includes('wealth') || slug.includes('defi') || slug.includes('underwriting') || text.includes('brokerage');
+                }} else if (activeFilter === 'healthcare') {{
+                    matchesCat = slug.includes('health') || slug.includes('biotech') || slug.includes('telehealth') || slug.includes('pharma') || slug.includes('dental') || text.includes('clinical');
+                }} else if (activeFilter === 'media') {{
+                    matchesCat = slug.includes('svod') || slug.includes('music') || slug.includes('esports') || slug.includes('podcast') || text.includes('streaming');
+                }} else if (activeFilter === 'hospitality') {{
+                    matchesCat = slug.includes('gastronomy') || slug.includes('resort') || slug.includes('brewery') || slug.includes('kitchen') || slug.includes('stadium') || text.includes('hotel');
+                }} else if (activeFilter === 'logistics') {{
+                    matchesCat = slug.includes('wms') || slug.includes('freight') || slug.includes('courier') || slug.includes('fleet') || slug.includes('drone') || text.includes('warehouse');
+                }} else if (activeFilter === 'realestate') {{
+                    matchesCat = slug.includes('real-estate') || slug.includes('lease') || slug.includes('construction') || slug.includes('coworking') || slug.includes('lidar');
+                }} else if (activeFilter === 'education') {{
+                    matchesCat = slug.includes('lms') || slug.includes('gradebook') || slug.includes('lims') || slug.includes('bootcamp') || slug.includes('journal');
+                }} else if (activeFilter === 'professional') {{
+                    matchesCat = slug.includes('consulting') || slug.includes('litigation') || slug.includes('audit') || slug.includes('studio') || slug.includes('search');
+                }} else if (activeFilter === 'infrastructure') {{
+                    matchesCat = slug.includes('city') || slug.includes('ag-') || slug.includes('ngo') || slug.includes('water') || slug.includes('satellite') || slug.includes('quantum');
+                }}
+
+                if (matchesQuery && matchesCat) {{
+                    card.style.display = 'flex';
+                    visibleCount++;
+                }} else {{
+                    card.style.display = 'none';
+                }}
+            }});
+        }}
+
+        searchInput.addEventListener('input', filterTemplates);
+
+        filterBtns.forEach(btn => {{
+            btn.addEventListener('click', () => {{
+                filterBtns.forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                activeFilter = btn.getAttribute('data-filter');
+                filterTemplates();
+            }});
+        }});
+    </script>
 </body>
 </html>"##
+    )
+}
+
+/// Dynamic renderer for extended enterprise template suites (#11 to #60)
+/// Provides complete Awwwards-grade typography, HUD telemetry, modular capabilities, and archetype theme dock.
+fn render_dynamic_template_suite_html(suite: &TemplateSuite, css_tokens: &str, variant: &str) -> String {
+    let seo = SeoMetadata::for_svod(&suite.slug, variant);
+    let seo_head = seo.render_head_tags();
+    let dock_html = render_theme_switcher_dock(&suite.slug, variant);
+
+    let caps_html = suite
+        .key_capabilities
+        .iter()
+        .map(|cap| {
+            format!(
+                r#"<div class="dynamic-cap-card">
+                    <div class="cap-indicator">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+                    </div>
+                    <h4>{cap}</h4>
+                    <p class="cap-meta">Zero-Decimal Precision • Pure-Rust WASM/Actor Execution</p>
+                </div>"#
+            )
+        })
+        .collect::<Vec<_>>()
+        .join("\n");
+
+    let modules_html = suite
+        .modules_used
+        .iter()
+        .map(|m| format!(r#"<span class="dynamic-module-tag">{m}</span>"#))
+        .collect::<Vec<_>>()
+        .join(" ");
+
+    format!(
+        r##"<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{title} — rustnext Enterprise Suite</title>
+    {seo_head}
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=Space+Mono:wght@400;700&family=Syne:wght@600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        {css_tokens}
+        * {{ box-sizing: border-box; margin: 0; padding: 0; }}
+        body {{
+            background: var(--color-background, #06080d);
+            color: var(--color-text-main, #f0f4fc);
+            font-family: var(--font-body, 'Outfit', sans-serif);
+            line-height: 1.6;
+            min-height: 100vh;
+            padding-bottom: 7rem;
+            position: relative;
+            overflow-x: hidden;
+        }}
+        .hero-section {{
+            padding: 5rem 2rem 4rem;
+            max-width: 1300px;
+            margin: 0 auto;
+            position: relative;
+        }}
+        .hero-breadcrumbs {{
+            display: flex;
+            align-items: center;
+            gap: 0.6rem;
+            font-family: var(--font-mono, 'Space Mono', monospace);
+            font-size: 0.8rem;
+            color: var(--color-accent, #e6c887);
+            margin-bottom: 1.5rem;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+        }}
+        .hero-breadcrumbs a {{ color: inherit; text-decoration: none; opacity: 0.8; transition: opacity 0.2s; }}
+        .hero-breadcrumbs a:hover {{ opacity: 1; text-decoration: underline; }}
+        .hero-title {{
+            font-family: var(--font-heading, 'Syne', sans-serif);
+            font-size: clamp(2.4rem, 6vw, 4.4rem);
+            font-weight: 800;
+            line-height: 1.08;
+            letter-spacing: -0.03em;
+            margin-bottom: 1.25rem;
+            background: linear-gradient(135deg, #ffffff 40%, var(--color-primary, #e6c887) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }}
+        .hero-subtitle {{
+            font-size: 1.25rem;
+            color: rgba(240, 244, 252, 0.75);
+            max-width: 860px;
+            margin-bottom: 2.25rem;
+            line-height: 1.5;
+        }}
+        .meta-strip {{
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 1.5rem;
+            padding: 1.25rem 1.75rem;
+            background: var(--color-surface, rgba(18, 20, 28, 0.75));
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: var(--border-radius, 1rem);
+            margin-bottom: 3.5rem;
+            box-shadow: inset 0 1px 0 0 rgba(255, 255, 255, 0.06), 0 12px 32px rgba(0,0,0,0.4);
+        }}
+        .meta-item {{ display: flex; flex-direction: column; }}
+        .meta-label {{ font-family: var(--font-mono, monospace); font-size: 0.7rem; color: #8e95a5; text-transform: uppercase; }}
+        .meta-value {{ font-weight: 700; color: #ffffff; font-size: 0.95rem; }}
+        .capabilities-grid {{
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
+            gap: 1.5rem;
+            max-width: 1300px;
+            margin: 0 auto;
+            padding: 0 2rem;
+        }}
+        .dynamic-cap-card {{
+            background: var(--color-surface, rgba(18, 20, 28, 0.75));
+            backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: var(--border-radius, 1rem);
+            padding: 1.75rem;
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+            transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+            box-shadow: inset 0 1px 0 0 rgba(255, 255, 255, 0.05);
+        }}
+        .dynamic-cap-card:hover {{
+            transform: translateY(-4px);
+            border-color: var(--color-primary, #e6c887);
+            box-shadow: inset 0 1px 0 0 rgba(255, 255, 255, 0.1), 0 16px 36px rgba(0,0,0,0.5);
+        }}
+        .cap-indicator {{
+            width: 36px;
+            height: 36px;
+            border-radius: 0.5rem;
+            background: rgba(230, 200, 135, 0.12);
+            color: var(--color-primary, #e6c887);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }}
+        .dynamic-cap-card h4 {{ font-family: var(--font-heading, 'Syne', sans-serif); font-size: 1.15rem; color: #ffffff; }}
+        .cap-meta {{ font-size: 0.8rem; color: #8e95a5; font-family: var(--font-mono, monospace); }}
+        .dynamic-module-tag {{
+            font-size: 0.75rem;
+            background: rgba(255,255,255,0.06);
+            border: 1px solid rgba(255,255,255,0.1);
+            padding: 0.25rem 0.6rem;
+            border-radius: 0.35rem;
+            color: #d1d5db;
+        }}
+        .cta-strip {{
+            max-width: 1300px;
+            margin: 4rem auto 0;
+            padding: 2.5rem;
+            background: linear-gradient(135deg, rgba(255,255,255,0.04), rgba(255,255,255,0.01));
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 1.25rem;
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: space-between;
+            align-items: center;
+            gap: 1.5rem;
+        }}
+        .cta-text h3 {{ font-family: var(--font-heading, 'Syne', sans-serif); font-size: 1.6rem; margin-bottom: 0.4rem; }}
+        .cta-text p {{ color: #9ca3af; font-size: 0.95rem; }}
+        .cta-btn {{
+            background: linear-gradient(135deg, var(--color-primary, #e6c887), var(--color-secondary, #c3a35e));
+            color: #070709;
+            font-weight: 700;
+            padding: 0.85rem 1.75rem;
+            border-radius: 0.75rem;
+            text-decoration: none;
+            transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+        }}
+        .cta-btn:hover {{ opacity: 0.92; transform: translateY(-2px); }}
+        .cta-btn:active {{ transform: scale(0.98); }}
+    </style>
+</head>
+<body>
+    <div class="hero-section">
+        <div class="hero-breadcrumbs">
+            <a href="/templates">← Universal Templates Catalog</a>
+            <span>/</span>
+            <span>{class_ref}</span>
+        </div>
+        <h1 class="hero-title">{title}</h1>
+        <p class="hero-subtitle">{subtitle}</p>
+
+        <div class="meta-strip">
+            <div class="meta-item">
+                <span class="meta-label">Work Type</span>
+                <span class="meta-value">{work_type:?}</span>
+            </div>
+            <div class="meta-item">
+                <span class="meta-label">Reference Class</span>
+                <span class="meta-value">{class_ref}</span>
+            </div>
+            <div class="meta-item">
+                <span class="meta-label">Core Modules</span>
+                <div style="display: flex; gap: 0.35rem; margin-top: 0.2rem;">{modules_html}</div>
+            </div>
+            <div class="meta-item" style="margin-left: auto;">
+                <span class="meta-label">Deploy Slug</span>
+                <span class="meta-value" style="font-family: var(--font-mono, monospace); color: var(--color-accent, #e6c887);">{slug}</span>
+            </div>
+        </div>
+    </div>
+
+    <div class="capabilities-grid">
+        {caps_html}
+    </div>
+
+    <div class="cta-strip">
+        <div class="cta-text">
+            <h3>Provision {title} Cluster</h3>
+            <p>Deploy this suite instantly into multi-tenant SurrealDB & Actix-Web container cluster.</p>
+        </div>
+        <a href="/desk" class="cta-btn">Open in Desk Shell →</a>
+    </div>
+
+    {dock_html}
+</body>
+</html>"##,
+        title = suite.title,
+        subtitle = suite.subtitle,
+        class_ref = suite.class_reference,
+        work_type = suite.work_type,
+        slug = suite.slug,
+        seo_head = seo_head,
+        css_tokens = css_tokens,
+        dock_html = dock_html,
+        caps_html = caps_html,
+        modules_html = modules_html
     )
 }
 
