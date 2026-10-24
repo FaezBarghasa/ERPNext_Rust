@@ -10,7 +10,7 @@ use crate::scripting::LifecycleEvent;
 use crate::workflow_nodes::{
     AutomationAction, ComparisonOp, ConditionRule, VisualWorkflow, VisualWorkflowNode,
 };
-use frappe_meta::{DocFieldSchema, DocPermSchema, DocTypeSchema, FieldType};
+use rwl_meta::{DocFieldSchema, DocPermSchema, DocTypeSchema, FieldType};
 use serde_json::json;
 
 /// Constructs the comprehensive CMS Blueprint Package.

@@ -4,8 +4,8 @@ use crate::middleware::auth::SecurityContext;
 use crate::tenant::{ConnectionPoolManager, TenantId};
 use crate::v2_routes::DynamicRbacState;
 use actix_web::{HttpMessage, HttpRequest, HttpResponse, Responder, web};
-use frappe_framework::{Document, DocumentController};
-use frappe_meta::{DocTypeSchema, Permission, check_permission};
+use rwl_framework::{Document, DocumentController};
+use rwl_meta::{DocTypeSchema, Permission, check_permission};
 use regex::Regex;
 use serde::Deserialize;
 use std::sync::LazyLock;
@@ -165,7 +165,7 @@ pub async fn create_resource(
         Err(e) => return HttpResponse::InternalServerError().body(e.to_string()),
     };
 
-    let schema = frappe_meta::lookup_schema(&doctype).unwrap_or_else(|| DocTypeSchema {
+    let schema = rwl_meta::lookup_schema(&doctype).unwrap_or_else(|| DocTypeSchema {
         name: doctype.clone(),
         module: "Core".to_string(),
         is_single: false,

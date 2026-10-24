@@ -1,7 +1,7 @@
 //! Integration Tests for QUIC Streaming, Resilient Low-Speed / Lossy Profiles, and User Caching.
 
 use actix_web::{App, test, web};
-use frappe_net::v2_routes::{
+use rwl_net::v2_routes::{
     DynamicRbacState, streaming_cache_configure_handler, streaming_cache_prefetch_handler,
     streaming_cache_stats_handler, streaming_h3_segment_handler, streaming_master_playlist_handler,
     streaming_resilient_master_playlist_handler, streaming_segment_handler,

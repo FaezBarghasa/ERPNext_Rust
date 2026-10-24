@@ -6,8 +6,8 @@ authors.workspace = true
 license.workspace = true
 
 [dependencies]
-frappe-meta = { workspace = true }
-frappe-framework = { workspace = true }
+rwl-meta = { workspace = true }
+rwl-framework = { workspace = true }
 rust_decimal = { workspace = true }
 rust_decimal_macros = { workspace = true }
 serde = { workspace = true }

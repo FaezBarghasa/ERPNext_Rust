@@ -7,8 +7,8 @@
 //! 4. Sandboxed Wasm module cache eliminates JIT compilation overhead on repeated executions.
 
 use erp_accounting::payment_gateway::constant_time_eq_slices;
-use frappe_framework::wasmtime_sandbox::RealSandbox;
-use frappe_storage::surreal::open_tenant;
+use rwl_framework::wasmtime_sandbox::RealSandbox;
+use rwl_storage::surreal::open_tenant;
 use serde_json::Value;
 
 #[tokio::test]
@@ -158,7 +158,7 @@ fn test_wasmtime_high_throughput_module_caching_performance() {
 
 #[test]
 fn test_quic_h3_flow_control_enforcement() {
-    use frappe_net::quic_h3_stream::{QuicH3Error, QuicH3StreamingEngine};
+    use rwl_net::quic_h3_stream::{QuicH3Error, QuicH3StreamingEngine};
 
     let peer_addr = "127.0.0.1:4433".parse().unwrap();
     let mut engine = QuicH3StreamingEngine::new(peer_addr);

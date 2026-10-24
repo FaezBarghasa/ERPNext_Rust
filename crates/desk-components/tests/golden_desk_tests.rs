@@ -12,7 +12,7 @@ use desk_components::{
     MobileNavItem, MobileShellModel, NumberCardModel, ReportFilter, ReportPagination,
     ScriptReportColumn, TimePickerModel, TreeNode, TreeViewModel,
 };
-use frappe_meta::{DocFieldSchema, DocTypeSchema, FieldType};
+use rwl_meta::{DocFieldSchema, DocTypeSchema, FieldType};
 use rust_decimal_macros::dec;
 use serde_json::json;
 use std::collections::HashMap;

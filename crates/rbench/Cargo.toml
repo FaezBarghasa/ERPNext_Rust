@@ -14,10 +14,10 @@ name = "rbench"
 path = "src/main.rs"
 
 [dependencies]
-frappe-meta = { workspace = true }
-frappe-storage = { workspace = true }
-frappe-net = { workspace = true }
-frappe-framework = { workspace = true }
+rwl-meta = { workspace = true }
+rwl-storage = { workspace = true }
+rwl-net = { workspace = true }
+rwl-framework = { workspace = true }
 tokio = { workspace = true }
 serde = { workspace = true }
 serde_json = { workspace = true }

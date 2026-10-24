@@ -14,10 +14,10 @@ serde = { workspace = true }
 serde_json = { workspace = true }
 anyhow = { workspace = true }
 chrono = { workspace = true }
-frappe-net = { workspace = true }
-frappe-framework = { workspace = true }
-frappe-storage = { workspace = true }
-frappe-meta = { workspace = true }
+rwl-net = { workspace = true }
+rwl-framework = { workspace = true }
+rwl-storage = { workspace = true }
+rwl-meta = { workspace = true }
 desk-app = { workspace = true }
 desk-components = { workspace = true }
 actix-web = { workspace = true }

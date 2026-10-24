@@ -8,7 +8,7 @@
 
 use chrono::Utc;
 use erp_accounting::ledger::{JournalEntry, JournalEntryLine, LedgerPostingEngine};
-use frappe_storage::surreal::{execute_transaction, open_tenant_surrealkv};
+use rwl_storage::surreal::{execute_transaction, open_tenant_surrealkv};
 use rust_decimal::Decimal;
 use rust_decimal_macros::dec;
 use serde_json::Value;

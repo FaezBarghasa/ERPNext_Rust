@@ -14,11 +14,11 @@ pub mod migration_pipeline;
 pub mod packaging;
 pub mod perf_engine;
 
-use frappe_meta::{
+use rwl_meta::{
     DocFieldSchema, DocTypeRegistry, DocTypeSchema, FieldType, ProfileRegistry,
     compile_all_graph_edges, compile_to_surrealql, standard_erpnext_graph_edges,
 };
-use frappe_storage::open_tenant;
+use rwl_storage::open_tenant;
 use migration_pipeline::{MigrationPhase, ZeroDowntimeMigrationEngine};
 use packaging::UniversalDistributionBuilder;
 use sha2::{Digest, Sha256};
@@ -815,7 +815,7 @@ pub fn on_validate(ctx: &PluginContext, doc: &mut DocRecord) -> DocMutationResul
             println!(
                 "Starting Actix-Web v4 multi-tenant application server on http://{bind_addr}..."
             );
-            frappe_net::run_server(&bind_addr).await?;
+            rwl_net::run_server(&bind_addr).await?;
         }
 
         "worker" => {

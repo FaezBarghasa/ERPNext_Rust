@@ -14,9 +14,9 @@ name = "desk-app"
 path = "src/main.rs"
 
 [dependencies]
-frappe-meta = { workspace = true }
+rwl-meta = { workspace = true }
 desk-components = { workspace = true }
-frappe-storage = { workspace = true }
+rwl-storage = { workspace = true }
 chrono = { workspace = true }
 compact_str = { workspace = true }
 rust_decimal = { workspace = true }

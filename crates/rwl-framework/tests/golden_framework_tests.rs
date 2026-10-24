@@ -8,12 +8,12 @@
 //! 5. Social engine (Comments, Assignments/ToDo, Version diff tracking).
 //! 6. Background job queue priority ordering and retry mechanics.
 
-use frappe_framework::{
+use rwl_framework::{
     BackgroundJobQueue, CommentType, DocController, DocShare, Document, DocumentController,
     DocumentError, JobPriority, JobStatus, NamingEngine, NamingSeriesStore, PermType,
     PermissionEngine, SocialEngine, UserContext, WorkflowTransition,
 };
-use frappe_meta::{DocFieldSchema, DocPermSchema, DocTypeSchema, FieldType};
+use rwl_meta::{DocFieldSchema, DocPermSchema, DocTypeSchema, FieldType};
 use std::sync::Arc;
 use std::sync::atomic::{AtomicBool, Ordering};
 

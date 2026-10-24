@@ -10,7 +10,7 @@ use desk_components::{
     GanttTaskRow, GanttViewModel, OptionCard, SpcChartViewModel, SpcPointView,
     Warehouse3DViewModel, visible_slice,
 };
-use frappe_meta::{DocFieldSchema, DocPermSchema, DocTypeSchema, FieldType};
+use rwl_meta::{DocFieldSchema, DocPermSchema, DocTypeSchema, FieldType};
 
 #[tokio::main]
 async fn main() {

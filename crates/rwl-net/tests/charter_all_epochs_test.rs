@@ -30,20 +30,20 @@ use erp_trade::{
     woocommerce_ingest::{WooMigrationEngine, WooProduct},
 };
 use erp_wms::amr::{AmrState, AmrTelemetry, HandlingUnit, Vda5050FleetCoordinator, Vda5050Order};
-use frappe_framework::{
+use rwl_framework::{
     ai_tools::{ErpToolCall, ErpToolDispatcher, QuotationItemDto},
     wasmtime_sandbox::RealSandbox,
 };
-use frappe_meta::{
+use rwl_meta::{
     DocFieldSchema, DocTypeSchema, DocValue, FieldType, NamingSeriesParser,
     ai_schema::AiSchemaSynthesizer, dynamic_doc::DynamicDocument, profiles::ProfileRegistry,
     schema_compiler::compile_to_surrealql,
 };
-use frappe_net::tenant::{
+use rwl_net::tenant::{
     AcmeGateway, ConnectionPoolManager, MicroTopologyConfig, TenantContext, TenantId,
     resolve_scoped_session,
 };
-use frappe_storage::{
+use rwl_storage::{
     crdt::{LwwDocumentState, OfflineOutboxManager, PnCounter, VectorClock},
     encryption::EnvelopeEncryption,
     merkle::MerkleHasher,

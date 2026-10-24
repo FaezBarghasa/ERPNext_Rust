@@ -77,7 +77,7 @@ pub use wms_view::{AmrMarkerViewModel, BinViewModel, Warehouse3DViewModel};
 #[cfg(test)]
 mod tests {
     use super::*;
-    use frappe_meta::{DocFieldSchema, DocPermSchema, DocTypeSchema, FieldType};
+    use rwl_meta::{DocFieldSchema, DocPermSchema, DocTypeSchema, FieldType};
     use std::collections::HashMap;
 
     #[test]

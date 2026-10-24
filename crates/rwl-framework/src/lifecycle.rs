@@ -1,6 +1,6 @@
 use crate::controller::{ControllerRegistry, DocController};
 use crate::scripting::{LifecycleEvent, RhaiHookEngine, ScriptError};
-use frappe_meta::{DocTypeSchema, NamingSeriesParser};
+use rwl_meta::{DocTypeSchema, NamingSeriesParser};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use thiserror::Error;

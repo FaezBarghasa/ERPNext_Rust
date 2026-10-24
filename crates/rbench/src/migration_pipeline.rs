@@ -6,7 +6,7 @@
 //! - Background migration workers with throttled batch updates.
 //! - Automated pre-flight dry-run and rollback safety verification.
 
-use frappe_meta::{DocFieldSchema, DocTypeSchema, FieldType};
+use rwl_meta::{DocFieldSchema, DocTypeSchema, FieldType};
 use serde::{Deserialize, Serialize};
 
 /// The active lifecycle phase of an expand-and-contract migration.

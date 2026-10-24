@@ -1,4 +1,4 @@
-use frappe_meta::{
+use rwl_meta::{
     DocFieldSchema, DocPermSchema, DocTypeSchema, ExistingDatabaseSchema, ExistingFieldDef,
     ExistingTableDef, FieldType, SchemaError, compile_to_surrealql, diff_schema,
     generate_migration_ddl,

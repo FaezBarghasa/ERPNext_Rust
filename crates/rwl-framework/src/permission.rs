@@ -5,7 +5,7 @@
 //! and dynamic document sharing (`DocShare`).
 
 use crate::lifecycle::Document;
-use frappe_meta::{DocPermSchema, DocTypeSchema};
+use rwl_meta::{DocPermSchema, DocTypeSchema};
 use serde::{Deserialize, Serialize};
 use std::collections::{HashMap, HashSet};
 
@@ -269,7 +269,7 @@ impl PermissionEngine {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use frappe_meta::{DocFieldSchema, FieldType};
+    use rwl_meta::{DocFieldSchema, FieldType};
 
     fn make_secured_schema() -> DocTypeSchema {
         DocTypeSchema {

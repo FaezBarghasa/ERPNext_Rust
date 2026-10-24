@@ -1,6 +1,6 @@
 use actix_web::{App, test};
-use frappe_net::configure_app;
-use frappe_net::tenant::{ConnectionPoolManager, MicroTopologyConfig};
+use rwl_net::configure_app;
+use rwl_net::tenant::{ConnectionPoolManager, MicroTopologyConfig};
 use serde_json::json;
 use std::time::Duration;
 

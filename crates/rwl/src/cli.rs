@@ -194,7 +194,7 @@ pub async fn run() -> anyhow::Result<()> {
             tokio::fs::create_dir_all(&project_path).await?;
             let manifest_path = project_path.join("rwl.json");
 
-            let registry = frappe_framework::BlueprintRegistry::new();
+            let registry = rwl_framework::BlueprintRegistry::new();
             let bp_package = registry.get(&blueprint);
             let bp_name = bp_package
                 .map(|b| b.metadata.name.as_str())

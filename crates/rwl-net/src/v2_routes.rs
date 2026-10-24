@@ -63,41 +63,41 @@ use erp_trade::order_lifecycle::{
 use erp_trade::reviews::{ProductReview, ReviewManager, ReviewStatus};
 use erp_trade::shipping::{ShippingCalculator, ShippingMethod, ShippingZone};
 use erp_trade::wishlist::{Wishlist, WishlistItem};
-use frappe_framework::controller::ControllerRegistry;
-use frappe_framework::export_engine::{DocumentExporter, ExportColumn, ExportFormat};
-use frappe_framework::lifecycle::Document;
-use frappe_framework::notification::{
+use rwl_framework::controller::ControllerRegistry;
+use rwl_framework::export_engine::{DocumentExporter, ExportColumn, ExportFormat};
+use rwl_framework::lifecycle::Document;
+use rwl_framework::notification::{
     NotificationChannel, NotificationDispatcher, NotificationInboxRegistry, NotificationMessage,
     NotificationPriority, UserNotificationPreferences,
 };
-use frappe_framework::print_format::{InvoicePrintContext, PrintEngine, ReceiptPrintContext};
-use frappe_framework::report_engine::{PivotAggregate, ReportEngine};
-use frappe_framework::webhook::{
+use rwl_framework::print_format::{InvoicePrintContext, PrintEngine, ReceiptPrintContext};
+use rwl_framework::report_engine::{PivotAggregate, ReportEngine};
+use rwl_framework::webhook::{
     WebhookDispatcher, WebhookOutboxEntry, WebhookPayload, WebhookSubscription,
 };
-use frappe_framework::workflow_approval::{
+use rwl_framework::workflow_approval::{
     ApprovalWorkflow, DocumentVersioningEngine, WorkflowStateNode, WorkflowTransitionRule,
 };
-use frappe_meta::audit::{AuditAction, AuditEntry, AuditQueryFilter, AuditTrailRegistry};
-use frappe_meta::auth::{
+use rwl_meta::audit::{AuditAction, AuditEntry, AuditQueryFilter, AuditTrailRegistry};
+use rwl_meta::auth::{
     DEFAULT_SESSION_EXPIRY_SECS, RefreshTokenRecord, SessionClaims, hash_password,
     hash_refresh_token, issue_refresh_token, issue_token, verify_password,
 };
-use frappe_meta::mfa::{MfaRecord, TotpConfig, generate_otpauth_uri};
-use frappe_meta::rbac::{
+use rwl_meta::mfa::{MfaRecord, TotpConfig, generate_otpauth_uri};
+use rwl_meta::rbac::{
     DynamicRolePermissionRegistry, MatrixPermissionCell, Permission, PersonaAutoRouter,
     ROLE_ACCOUNTANT_USER, ROLE_ADMINISTRATOR, ROLE_CONTENT_CREATOR, ROLE_MARKETING_ADMIN,
     ROLE_SYSTEM_MANAGER, ROLE_WAREHOUSE_MANAGER, ROLE_WEBSITE_UPDATER, ROLE_WORKER_USER,
     RlsFilterRule, RlsRegistry, STANDARD_ROLES, TargetPersona, UserRecord, VisualPermissionMatrix,
     check_permission,
 };
-use frappe_meta::security_rules::{
+use rwl_meta::security_rules::{
     DetectedFileType, generate_password_reset_token, sanitize_svg, validate_file_upload,
     validate_password_complexity, verify_password_reset_token,
 };
-use frappe_meta::{DocTypeSchema, lookup_schema};
-use frappe_storage::drive::DeduplicatedStorage;
-use frappe_storage::execute_transaction;
+use rwl_meta::{DocTypeSchema, lookup_schema};
+use rwl_storage::drive::DeduplicatedStorage;
+use rwl_storage::execute_transaction;
 use regex::Regex;
 use rust_decimal::Decimal;
 use rust_decimal_macros::dec;
@@ -484,7 +484,7 @@ pub async fn v2_get_document(
 
 /// Handler for introspecting all registered DocTypes: `GET /api/v2/meta`
 pub async fn v2_list_meta_handler() -> impl Responder {
-    let registry = frappe_meta::registry::DocTypeRegistry::new_standard_erpnext();
+    let registry = rwl_meta::registry::DocTypeRegistry::new_standard_erpnext();
     HttpResponse::Ok().json(serde_json::json!({
         "doctypes": registry.list_doctypes(),
         "total": registry.len(),
@@ -494,7 +494,7 @@ pub async fn v2_list_meta_handler() -> impl Responder {
 /// Handler for fetching canonical DocType schema metadata: `GET /api/v2/meta/{doctype}`
 pub async fn v2_get_meta_handler(path: web::Path<String>) -> impl Responder {
     let target = path.into_inner();
-    let registry = frappe_meta::registry::DocTypeRegistry::new_standard_erpnext();
+    let registry = rwl_meta::registry::DocTypeRegistry::new_standard_erpnext();
 
     let found = registry.list_doctypes().into_iter().find(|name| {
         name.eq_ignore_ascii_case(&target)
@@ -615,7 +615,7 @@ pub async fn v2_create_document(
     };
 
     // 1. Schema lookup & validation via DynamicSchemaRegistry
-    let dynamic_registry = frappe_meta::global_schema_registry();
+    let dynamic_registry = rwl_meta::global_schema_registry();
     let schema_opt = dynamic_registry.get_schema(&doctype);
     if let Some(ref schema) = schema_opt {
         // Enforce required fields if strict validation requested or default missing fields
@@ -642,8 +642,8 @@ pub async fn v2_create_document(
         }
     }
 
-    static GLOBAL_SERIES_STORE: std::sync::LazyLock<frappe_framework::naming::NamingSeriesStore> =
-        std::sync::LazyLock::new(frappe_framework::naming::NamingSeriesStore::new);
+    static GLOBAL_SERIES_STORE: std::sync::LazyLock<rwl_framework::naming::NamingSeriesStore> =
+        std::sync::LazyLock::new(rwl_framework::naming::NamingSeriesStore::new);
 
     let name = if let Some(serde_json::Value::String(n)) = doc_map.get("name")
         && !n.trim().is_empty()
@@ -665,7 +665,7 @@ pub async fn v2_create_document(
                         "{}-.YYYY.-.#####",
                         schema.name.to_uppercase().replace(' ', "-")
                     );
-                    frappe_framework::naming::NamingEngine::parse_series_template(
+                    rwl_framework::naming::NamingEngine::parse_series_template(
                         &fallback_template,
                         year,
                         month,
@@ -675,7 +675,7 @@ pub async fn v2_create_document(
                 }
             }
             Some(rule) if rule.contains(".#") => {
-                frappe_framework::naming::NamingEngine::parse_series_template(
+                rwl_framework::naming::NamingEngine::parse_series_template(
                     rule,
                     year,
                     month,
@@ -690,7 +690,7 @@ pub async fn v2_create_document(
                     } else {
                         format!("{s}.#####")
                     };
-                    frappe_framework::naming::NamingEngine::parse_series_template(
+                    rwl_framework::naming::NamingEngine::parse_series_template(
                         &tmpl,
                         year,
                         month,
@@ -702,7 +702,7 @@ pub async fn v2_create_document(
                         "{}-.YYYY.-.#####",
                         schema.name.to_uppercase().replace(' ', "-")
                     );
-                    frappe_framework::naming::NamingEngine::parse_series_template(
+                    rwl_framework::naming::NamingEngine::parse_series_template(
                         &fallback_template,
                         year,
                         month,
@@ -791,7 +791,7 @@ pub async fn v2_update_document(
         serde_json::Value::String(Utc::now().to_rfc3339()),
     );
 
-    let dynamic_registry = frappe_meta::global_schema_registry();
+    let dynamic_registry = rwl_meta::global_schema_registry();
     if let Some(_schema) = dynamic_registry.get_schema(&doctype) {
         let is_strict_validation = req.headers().contains_key("x-validate-schema")
             || req.headers().contains_key("x-strict-schema");
@@ -988,7 +988,7 @@ pub async fn v2_submit_document(
         .as_ref()
         .and_then(|r| r.get(&doctype))
         .or_else(|| default_reg.get(&doctype))
-        .unwrap_or_else(|| Arc::new(frappe_framework::controller::StandardSubmittableController));
+        .unwrap_or_else(|| Arc::new(rwl_framework::controller::StandardSubmittableController));
 
     let mut framework_doc = Document::new(&doctype, current_doc.clone());
     framework_doc.name = name.clone();
@@ -1606,7 +1606,7 @@ pub async fn v2_cancel_document(
         .as_ref()
         .and_then(|r| r.get(&doctype))
         .or_else(|| default_reg.get(&doctype))
-        .unwrap_or_else(|| Arc::new(frappe_framework::controller::StandardSubmittableController));
+        .unwrap_or_else(|| Arc::new(rwl_framework::controller::StandardSubmittableController));
 
     let mut framework_doc = Document::new(&doctype, current_doc.clone());
     framework_doc.name = name.clone();
@@ -2776,7 +2776,7 @@ pub struct DynamicRbacState {
     pub storage: Arc<DeduplicatedStorage>,
     pub menus: Arc<RwLock<HashMap<desk_components::MenuTreeLocation, desk_components::MenuTree>>>,
     pub sound_configs:
-        Arc<RwLock<HashMap<String, frappe_framework::notification::SoundAlertConfig>>>,
+        Arc<RwLock<HashMap<String, rwl_framework::notification::SoundAlertConfig>>>,
     pub translations: Arc<RwLock<HashMap<String, HashMap<String, String>>>>,
     pub theme_config: Arc<RwLock<desk_components::ThemeConfig>>,
     pub upgrade_snapshots: Arc<RwLock<Vec<UpgradeSnapshot>>>,
@@ -2922,7 +2922,7 @@ impl Default for DynamicRbacState {
         let mut default_sound_configs = HashMap::new();
         default_sound_configs.insert(
             "usr_admin".into(),
-            frappe_framework::notification::SoundAlertConfig::default(),
+            rwl_framework::notification::SoundAlertConfig::default(),
         );
 
         let mut default_translations = HashMap::new();
@@ -7740,7 +7740,7 @@ pub async fn accounting_journal_entry_handler(
     }
 
     if let Ok(client) = pool_mgr.get_or_initialize_client(&tenant_id).await {
-        let repo = frappe_storage::SurrealRepository::new(client.clone());
+        let repo = rwl_storage::SurrealRepository::new(client.clone());
         let _ = repo.upsert("journal_entry", &voucher_no, &entry).await;
         for gl in &gl_entries {
             let _ = repo.upsert("gl_entry", &gl.name, gl).await;
@@ -7773,7 +7773,7 @@ pub async fn accounting_trial_balance_handler(
 
     let mut gl_entries: Vec<GlEntry> = Vec::new();
     if let Ok(client) = pool_mgr.get_or_initialize_client(&tenant_id).await {
-        let repo = frappe_storage::SurrealRepository::new(client.clone());
+        let repo = rwl_storage::SurrealRepository::new(client.clone());
         if let Ok(records) = repo.select_all::<GlEntry>("gl_entry").await {
             gl_entries = records;
         }
@@ -7892,7 +7892,7 @@ pub async fn inventory_stock_entry_handler(
     };
 
     if let Ok(client) = pool_mgr.get_or_initialize_client(&tenant_id).await {
-        let repo = frappe_storage::SurrealRepository::new(client.clone());
+        let repo = rwl_storage::SurrealRepository::new(client.clone());
         let _ = repo.upsert("stock_ledger_entry", &sle.name, &sle).await;
     }
 
@@ -8015,7 +8015,7 @@ pub async fn crm_convert_quotation_handler(
     ) {
         Ok(sales_order) => {
             if let Ok(client) = pool_mgr.get_or_initialize_client(&tenant_id).await {
-                let repo = frappe_storage::SurrealRepository::new(client.clone());
+                let repo = rwl_storage::SurrealRepository::new(client.clone());
                 let _ = repo.upsert("quotation", &quotation.name, &quotation).await;
                 let _ = repo
                     .upsert("sales_order", &sales_order.name, &sales_order)
@@ -8070,7 +8070,7 @@ pub async fn hr_process_payroll_handler(
     ) {
         Ok(slip) => {
             if let Ok(client) = pool_mgr.get_or_initialize_client(&tenant_id).await {
-                let repo = frappe_storage::SurrealRepository::new(client.clone());
+                let repo = rwl_storage::SurrealRepository::new(client.clone());
                 let _ = repo.upsert("salary_slip", &slip.name, &slip).await;
             }
 
@@ -8147,7 +8147,7 @@ pub async fn buying_purchase_order_handler(
     });
 
     if let Ok(client) = pool_mgr.get_or_initialize_client(&tenant_id).await {
-        let repo = frappe_storage::SurrealRepository::new(client.clone());
+        let repo = rwl_storage::SurrealRepository::new(client.clone());
         let _ = repo.upsert("purchase_order", &po_no, &po_doc).await;
     }
 
@@ -8234,7 +8234,7 @@ pub async fn buying_purchase_receipt_handler(
     });
 
     if let Ok(client) = pool_mgr.get_or_initialize_client(&tenant_id).await {
-        let repo = frappe_storage::SurrealRepository::new(client.clone());
+        let repo = rwl_storage::SurrealRepository::new(client.clone());
         let _ = repo.upsert("purchase_receipt", &grn_no, &pr_doc).await;
         for sle in &stock_ledger_entries {
             let _ = repo.upsert("stock_ledger_entry", &sle.name, sle).await;
@@ -8359,7 +8359,7 @@ pub async fn buying_purchase_invoice_handler(
     });
 
     if let Ok(client) = pool_mgr.get_or_initialize_client(&tenant_id).await {
-        let repo = frappe_storage::SurrealRepository::new(client.clone());
+        let repo = rwl_storage::SurrealRepository::new(client.clone());
         let _ = repo.upsert("purchase_invoice", &pi_no, &pi_doc).await;
         for gl in &gl_entries {
             let _ = repo.upsert("gl_entry", &gl.name, gl).await;
@@ -8464,7 +8464,7 @@ pub async fn selling_delivery_note_handler(
     });
 
     if let Ok(client) = pool_mgr.get_or_initialize_client(&tenant_id).await {
-        let repo = frappe_storage::SurrealRepository::new(client.clone());
+        let repo = rwl_storage::SurrealRepository::new(client.clone());
         let _ = repo.upsert("delivery_note", &dn_no, &dn_doc).await;
         for sle in &stock_ledger_entries {
             let _ = repo.upsert("stock_ledger_entry", &sle.name, sle).await;
@@ -8589,7 +8589,7 @@ pub async fn selling_sales_invoice_handler(
     });
 
     if let Ok(client) = pool_mgr.get_or_initialize_client(&tenant_id).await {
-        let repo = frappe_storage::SurrealRepository::new(client.clone());
+        let repo = rwl_storage::SurrealRepository::new(client.clone());
         let _ = repo.upsert("sales_invoice", &si_no, &si_doc).await;
         for gl in &gl_entries {
             let _ = repo.upsert("gl_entry", &gl.name, gl).await;
@@ -8709,7 +8709,7 @@ pub async fn accounting_payment_entry_handler(
     });
 
     if let Ok(client) = pool_mgr.get_or_initialize_client(&tenant_id).await {
-        let repo = frappe_storage::SurrealRepository::new(client.clone());
+        let repo = rwl_storage::SurrealRepository::new(client.clone());
         let _ = repo.upsert("payment_entry", &pe_no, &pe_doc).await;
         for gl in &gl_entries {
             let _ = repo.upsert("gl_entry", &gl.name, gl).await;
@@ -8903,7 +8903,7 @@ pub async fn payment_charge_handler(
         ) {
             settlement_jv = Some(jv.clone());
             if let Ok(client) = pool_mgr.get_or_initialize_client(&tenant_id).await {
-                let repo = frappe_storage::SurrealRepository::new(client.clone());
+                let repo = rwl_storage::SurrealRepository::new(client.clone());
                 let jv_no = format!("JV-PAY-{}", Utc::now().timestamp_millis());
                 let _ = repo.upsert("journal_entry", &jv_no, &jv).await;
 
@@ -9036,7 +9036,7 @@ pub async fn accounting_profit_loss_handler(
 
     let mut gl_entries: Vec<GlEntry> = Vec::new();
     if let Ok(client) = pool_mgr.get_or_initialize_client(&tenant_id).await {
-        let repo = frappe_storage::SurrealRepository::new(client.clone());
+        let repo = rwl_storage::SurrealRepository::new(client.clone());
         if let Ok(records) = repo.select_all::<GlEntry>("gl_entry").await {
             gl_entries = records;
         }
@@ -9111,7 +9111,7 @@ pub async fn accounting_balance_sheet_handler(
 
     let mut gl_entries: Vec<GlEntry> = Vec::new();
     if let Ok(client) = pool_mgr.get_or_initialize_client(&tenant_id).await {
-        let repo = frappe_storage::SurrealRepository::new(client.clone());
+        let repo = rwl_storage::SurrealRepository::new(client.clone());
         if let Ok(records) = repo.select_all::<GlEntry>("gl_entry").await {
             gl_entries = records;
         }
@@ -9203,7 +9203,7 @@ pub async fn accounting_period_close_handler(
     });
 
     if let Ok(client) = pool_mgr.get_or_initialize_client(&tenant_id).await {
-        let repo = frappe_storage::SurrealRepository::new(client.clone());
+        let repo = rwl_storage::SurrealRepository::new(client.clone());
         let _ = repo
             .upsert("period_close_vouchers", &voucher_no, &pcv_doc)
             .await;
@@ -9267,7 +9267,7 @@ pub async fn manufacturing_work_order_handler(
     });
 
     if let Ok(client) = pool_mgr.get_or_initialize_client(&tenant_id).await {
-        let repo = frappe_storage::SurrealRepository::new(client.clone());
+        let repo = rwl_storage::SurrealRepository::new(client.clone());
         let _ = repo.upsert("work_orders", &wo_no, &wo_doc).await;
     }
 
@@ -9295,7 +9295,7 @@ pub async fn manufacturing_complete_work_order_handler(
     let mut target_wh = "Stores - FG".to_string();
 
     if let Ok(client) = pool_mgr.get_or_initialize_client(&tenant_id).await {
-        let repo = frappe_storage::SurrealRepository::new(client.clone());
+        let repo = rwl_storage::SurrealRepository::new(client.clone());
         if let Ok(Some(mut wo)) = repo
             .select_one::<serde_json::Value>("work_orders", &payload.work_order_id)
             .await
@@ -9414,7 +9414,7 @@ pub async fn email_send_handler(
     });
 
     if let Ok(client) = pool_mgr.get_or_initialize_client(&tenant_id).await {
-        let repo = frappe_storage::SurrealRepository::new(client.clone());
+        let repo = rwl_storage::SurrealRepository::new(client.clone());
         let _ = repo.upsert("emails", &mail_id, &email_record).await;
     }
 
@@ -9434,7 +9434,7 @@ pub async fn email_list_queue_handler(
 
     let mut emails: Vec<serde_json::Value> = Vec::new();
     if let Ok(client) = pool_mgr.get_or_initialize_client(&tenant_id).await {
-        let repo = frappe_storage::SurrealRepository::new(client.clone());
+        let repo = rwl_storage::SurrealRepository::new(client.clone());
         if let Ok(records) = repo.select_all::<serde_json::Value>("emails").await {
             emails = records;
         }
@@ -9469,7 +9469,7 @@ pub async fn accounting_ar_aging_handler(
     let mut customer_breakdown: HashMap<String, Decimal> = HashMap::new();
 
     if let Ok(client) = pool_mgr.get_or_initialize_client(&tenant_id).await {
-        let repo = frappe_storage::SurrealRepository::new(client.clone());
+        let repo = rwl_storage::SurrealRepository::new(client.clone());
         if let Ok(invoices) = repo.select_all::<serde_json::Value>("sales_invoices").await {
             for inv in invoices {
                 let status = inv
@@ -9546,7 +9546,7 @@ pub async fn accounting_ap_aging_handler(
     let mut supplier_breakdown: HashMap<String, Decimal> = HashMap::new();
 
     if let Ok(client) = pool_mgr.get_or_initialize_client(&tenant_id).await {
-        let repo = frappe_storage::SurrealRepository::new(client.clone());
+        let repo = rwl_storage::SurrealRepository::new(client.clone());
         if let Ok(invoices) = repo
             .select_all::<serde_json::Value>("purchase_invoices")
             .await
@@ -9630,7 +9630,7 @@ pub async fn accounting_general_ledger_handler(
     let mut total_credit = Decimal::ZERO;
 
     if let Ok(client) = pool_mgr.get_or_initialize_client(&tenant_id).await {
-        let repo = frappe_storage::SurrealRepository::new(client.clone());
+        let repo = rwl_storage::SurrealRepository::new(client.clone());
         if let Ok(entries) = repo.select_all::<GlEntry>("gl_entries").await {
             for entry in entries {
                 if let Some(ref target_acc) = query.account
@@ -9678,7 +9678,7 @@ pub async fn accounting_cash_flow_handler(
     let mut financing_flow = Decimal::ZERO;
 
     if let Ok(client) = pool_mgr.get_or_initialize_client(&tenant_id).await {
-        let repo = frappe_storage::SurrealRepository::new(client.clone());
+        let repo = rwl_storage::SurrealRepository::new(client.clone());
         if let Ok(entries) = repo.select_all::<GlEntry>("gl_entries").await {
             for entry in entries {
                 if let Some(from) = query.from_date
@@ -9754,7 +9754,7 @@ pub async fn portal_customer_dashboard_handler(
     let mut total_due = Decimal::ZERO;
 
     if let Ok(client) = pool_mgr.get_or_initialize_client(&tenant_id).await {
-        let repo = frappe_storage::SurrealRepository::new(client.clone());
+        let repo = rwl_storage::SurrealRepository::new(client.clone());
         if let Ok(invoices) = repo.select_all::<serde_json::Value>("sales_invoices").await {
             for inv in invoices {
                 let cust = inv
@@ -9823,7 +9823,7 @@ pub async fn portal_supplier_dashboard_handler(
     let mut total_payable = Decimal::ZERO;
 
     if let Ok(client) = pool_mgr.get_or_initialize_client(&tenant_id).await {
-        let repo = frappe_storage::SurrealRepository::new(client.clone());
+        let repo = rwl_storage::SurrealRepository::new(client.clone());
         if let Ok(pos) = repo
             .select_all::<serde_json::Value>("purchase_orders")
             .await
@@ -9944,7 +9944,7 @@ pub async fn setup_wizard_handler(
     ];
 
     if let Ok(client) = pool_mgr.get_or_initialize_client(&tenant_id).await {
-        let repo = frappe_storage::SurrealRepository::new(client.clone());
+        let repo = rwl_storage::SurrealRepository::new(client.clone());
 
         // 1. Seed Company
         let company_doc = serde_json::json!({
@@ -10039,7 +10039,7 @@ pub async fn inventory_variant_matrix_handler(
     let mut created_variants = Vec::new();
 
     if let Ok(client) = pool_mgr.get_or_initialize_client(&tenant_id).await {
-        let repo = frappe_storage::SurrealRepository::new(client.clone());
+        let repo = rwl_storage::SurrealRepository::new(client.clone());
 
         for comb in combinations {
             let suffix = comb
@@ -10077,7 +10077,7 @@ pub async fn inventory_variant_matrix_handler(
 #[cfg(test)]
 mod tests {
     use super::*;
-    use frappe_meta::rbac::ROLE_PURCHASE_USER;
+    use rwl_meta::rbac::ROLE_PURCHASE_USER;
 
     #[test]
     fn test_compile_filters_to_surrealql_valid() {
@@ -10535,7 +10535,7 @@ mod tests {
 
     #[test]
     fn test_evaluate_route_permission_and_rls() {
-        use frappe_meta::rbac::HasPermissionEdge;
+        use rwl_meta::rbac::HasPermissionEdge;
 
         let state = web::Data::new(DynamicRbacState::default());
         {
@@ -10813,23 +10813,23 @@ mod tests {
         assert_eq!(list_resp.status(), actix_web::http::StatusCode::OK);
 
         // 2. Create custom doctype "FleetVehicle"
-        let custom_dt = frappe_meta::CustomDocType {
+        let custom_dt = rwl_meta::CustomDocType {
             name: "FleetVehicle".into(),
             module: "Logistics".into(),
             is_submittable: false,
             is_child_table: false,
             fields: vec![
-                frappe_meta::CustomField {
+                rwl_meta::CustomField {
                     fieldname: "license_plate".into(),
                     label: "License Plate".into(),
-                    fieldtype: frappe_meta::schema::FieldType::Data,
+                    fieldtype: rwl_meta::schema::FieldType::Data,
                     reqd: true,
                     ..Default::default()
                 },
-                frappe_meta::CustomField {
+                rwl_meta::CustomField {
                     fieldname: "mileage".into(),
                     label: "Mileage".into(),
-                    fieldtype: frappe_meta::schema::FieldType::Int,
+                    fieldtype: rwl_meta::schema::FieldType::Int,
                     ..Default::default()
                 },
             ],
@@ -10847,11 +10847,11 @@ mod tests {
         assert_eq!(get_resp.status(), actix_web::http::StatusCode::OK);
 
         // 4. Add custom field "fuel_type"
-        let new_field = frappe_meta::CustomField {
+        let new_field = rwl_meta::CustomField {
             dt: "FleetVehicle".into(),
             fieldname: "fuel_type".into(),
             label: "Fuel Type".into(),
-            fieldtype: frappe_meta::schema::FieldType::Data,
+            fieldtype: rwl_meta::schema::FieldType::Data,
             ..Default::default()
         };
         let add_field_resp = v2_add_custom_field(
@@ -10875,7 +10875,7 @@ mod tests {
 
     #[tokio::test]
     async fn test_visual_rbac_rls_persona_routing_lifecycle() {
-        use frappe_meta::rbac::{ROLE_SALES_USER, RlsConditionType};
+        use rwl_meta::rbac::{ROLE_SALES_USER, RlsConditionType};
         let rbac_state = web::Data::new(DynamicRbacState::default());
 
         // 1. GET Visual RBAC Matrix
@@ -11116,8 +11116,8 @@ mod tests {
         .respond_to(&actix_web::test::TestRequest::get().to_http_request());
         assert_eq!(sound_get_resp.status(), actix_web::http::StatusCode::OK);
 
-        let sound_update_payload = web::Json(frappe_framework::notification::SoundAlertConfig {
-            sound: frappe_framework::notification::SoundAlertKind::Ping,
+        let sound_update_payload = web::Json(rwl_framework::notification::SoundAlertConfig {
+            sound: rwl_framework::notification::SoundAlertKind::Ping,
             volume: 0.85,
             vibration: true,
             mute_all: false,
@@ -11132,14 +11132,14 @@ mod tests {
         assert_eq!(sound_upd_resp.status(), actix_web::http::StatusCode::OK);
 
         // Post a notification to inbox
-        let notif = frappe_framework::notification::NotificationMessage::new(
+        let notif = rwl_framework::notification::NotificationMessage::new(
             "notif_001",
             "default",
             "Administrator",
             "Batch Job Complete",
             "Import of 500 rows finished successfully.",
         )
-        .with_sound_alert(frappe_framework::notification::SoundAlertKind::SuccessTrill);
+        .with_sound_alert(rwl_framework::notification::SoundAlertKind::SuccessTrill);
         rbac_state.notifications_inbox.push(notif);
 
         let inbox_resp = get_notifications_inbox_handler(

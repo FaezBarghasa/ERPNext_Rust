@@ -1,4 +1,4 @@
-//! Global Multilingual, RTL & CJK Localization Matrix (`frappe_framework::localization`).
+//! Global Multilingual, RTL & CJK Localization Matrix (`rwl_framework::localization`).
 //!
 //! Implements Pillar XXII: Persian/Arabic character & ZWNJ normalization,
 //! Persian digits & currency formatters (IRR/IRT), Japan Qualified Invoice System

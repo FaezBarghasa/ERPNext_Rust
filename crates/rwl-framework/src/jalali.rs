@@ -1,4 +1,4 @@
-//! Bitemporal Multi-Calendar Engine: Native Shamsi / Jalali (Solar Hijri) (`frappe_framework::jalali`).
+//! Bitemporal Multi-Calendar Engine: Native Shamsi / Jalali (Solar Hijri) (`rwl_framework::jalali`).
 //!
 //! Implements Pillar XXIII: Precise astronomical Khayyam 2820-year leap cycle algorithm,
 //! bi-directional Gregorian <-> Jalali conversions, Persian fiscal year ranges,

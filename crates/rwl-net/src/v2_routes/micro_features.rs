@@ -17,7 +17,7 @@ use erp_importer::{
     ColumnMappingItem, ExportFormat, FuzzyMatcher, ImportExportStudio, StreamingImportConfig,
     StreamingPipelineProcessor,
 };
-use frappe_framework::notification::SoundAlertConfig;
+use rwl_framework::notification::SoundAlertConfig;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 

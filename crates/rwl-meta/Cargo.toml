@@ -1,5 +1,5 @@
 [package]
-name = "frappe-meta"
+name = "rwl-meta"
 version.workspace = true
 edition.workspace = true
 authors.workspace = true

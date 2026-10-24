@@ -1,8 +1,8 @@
 [workspace]
 members = [
-    "crates/frappe-net",
-    "crates/frappe-meta",
-    "crates/frappe-framework",
+    "crates/rwl-net",
+    "crates/rwl-meta",
+    "crates/rwl-framework",
     "crates/erp-accounting",
     "crates/erp-inventory",
     "crates/erp-manufacturing",
@@ -17,7 +17,7 @@ members = [
     "crates/erp-hr",
     "crates/erp-cms",
     "crates/erp-cms-core",
-    "crates/frappe-storage",
+    "crates/rwl-storage",
     "crates/desk-app",
     "crates/desk-components",
     "crates/erp-software",
@@ -69,10 +69,10 @@ erp-support = { path = "crates/erp-support" }
 erp-trade = { path = "crates/erp-trade" }
 erp-wms = { path = "crates/erp-wms" }
 erpnext-plugin-sdk = { path = "crates/erpnext-plugin-sdk" }
-frappe-framework = { path = "crates/frappe-framework" }
-frappe-meta = { path = "crates/frappe-meta" }
-frappe-net = { path = "crates/frappe-net" }
-frappe-storage = { path = "crates/frappe-storage" }
+rwl-framework = { path = "crates/rwl-framework" }
+rwl-meta = { path = "crates/rwl-meta" }
+rwl-net = { path = "crates/rwl-net" }
+rwl-storage = { path = "crates/rwl-storage" }
 rwl = { path = "crates/rwl" }
 
 # External shared dependencies

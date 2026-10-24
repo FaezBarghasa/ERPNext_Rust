@@ -83,8 +83,8 @@ use actix_web::{
 use desk_components::{
     get_desk_workspaces, render_desk_shell_html, render_form_view_html, render_list_view_html,
 };
-use frappe_framework::{ControllerRegistry, WebhookDispatcher};
-use frappe_meta::rbac::{Permission, check_permission};
+use rwl_framework::{ControllerRegistry, WebhookDispatcher};
+use rwl_meta::rbac::{Permission, check_permission};
 use std::sync::atomic::{AtomicU64, Ordering};
 use std::time::{Duration, Instant};
 use tracing::{info, instrument};
@@ -2556,7 +2556,7 @@ async fn get_analytics_summary_handler(
 async fn create_webhook_subscription_handler(
     req: HttpRequest,
     pool_mgr: web::Data<ConnectionPoolManager>,
-    payload: web::Json<frappe_framework::WebhookSubscription>,
+    payload: web::Json<rwl_framework::WebhookSubscription>,
     rbac_state: Option<web::Data<DynamicRbacState>>,
 ) -> impl Responder {
     TOTAL_REQUESTS.fetch_add(1, Ordering::Relaxed);
@@ -2772,7 +2772,7 @@ async fn run_plugin_handler(
 
     let inner = payload.into_inner();
     let fuel = inner.fuel_limit.unwrap_or(1_000_000);
-    let sandbox = match frappe_framework::RealSandbox::new(fuel, 32 * 1024 * 1024) {
+    let sandbox = match rwl_framework::RealSandbox::new(fuel, 32 * 1024 * 1024) {
         Ok(s) => s,
         Err(e) => {
             return HttpResponse::InternalServerError().json(serde_json::json!({

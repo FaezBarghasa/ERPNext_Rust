@@ -6,9 +6,9 @@
 //! - `Payment Entry`: Multi-invoice allocation, TDS deduction, forex variance calculation
 //! - `Journal Entry`: Arbitrary balanced multi-line debits/credits with cost center rules.
 
-use frappe_framework::controller::DocController;
-use frappe_framework::lifecycle::{Document, DocumentError};
-use frappe_meta::DocTypeSchema;
+use rwl_framework::controller::DocController;
+use rwl_framework::lifecycle::{Document, DocumentError};
+use rwl_meta::DocTypeSchema;
 use rust_decimal::Decimal;
 use std::str::FromStr;
 

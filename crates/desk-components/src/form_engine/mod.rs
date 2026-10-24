@@ -12,7 +12,7 @@
 pub mod client_script;
 
 use compact_str::CompactString;
-use frappe_meta::{DocTypeSchema, FieldType};
+use rwl_meta::{DocTypeSchema, FieldType};
 use serde::{Deserialize, Serialize};
 
 pub use client_script::{

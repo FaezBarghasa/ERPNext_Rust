@@ -8,7 +8,7 @@
 //! - `StreamingLedgerCursor` & `IncrementalGlAggregator`: Streaming cursor and running balance accumulator yielding first page < 1 s for 1M rows.
 
 use compact_str::CompactString;
-use frappe_meta::{DocFieldSchema, DocTypeSchema};
+use rwl_meta::{DocFieldSchema, DocTypeSchema};
 use rust_decimal::Decimal;
 use serde::{Deserialize, Serialize};
 use std::collections::hash_map::DefaultHasher;
@@ -424,7 +424,7 @@ impl IncrementalGlAggregator {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use frappe_meta::{DocFieldSchema, FieldType};
+    use rwl_meta::{DocFieldSchema, FieldType};
     use rust_decimal_macros::dec;
     use std::time::Instant;
 

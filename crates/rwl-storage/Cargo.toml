@@ -1,5 +1,5 @@
 [package]
-name = "frappe-storage"
+name = "rwl-storage"
 version.workspace = true
 edition.workspace = true
 authors.workspace = true
@@ -7,7 +7,7 @@ license.workspace = true
 
 [dependencies]
 anyhow = { workspace = true }
-frappe-meta = { workspace = true }
+rwl-meta = { workspace = true }
 serde = { workspace = true }
 serde_json = { workspace = true }
 thiserror = { workspace = true }

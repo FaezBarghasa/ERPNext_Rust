@@ -1,11 +1,11 @@
 //! Integration Tests for QUIC Transport & HTTP/3 Streaming Engine (`frappe-net::quic_h3_stream`).
 
 use actix_web::{App, test, web};
-use frappe_net::quic_h3_stream::{
+use rwl_net::quic_h3_stream::{
     H3Frame, H3Settings, QpackCodec, QpackField, QuicH3StreamingEngine, QuicStreamType, VarInt,
 };
-use frappe_net::tenant::{ConnectionPoolManager, MicroTopologyConfig};
-use frappe_net::{configure_app, quic_status_handler};
+use rwl_net::tenant::{ConnectionPoolManager, MicroTopologyConfig};
+use rwl_net::{configure_app, quic_status_handler};
 use std::net::SocketAddr;
 use std::time::Duration;
 

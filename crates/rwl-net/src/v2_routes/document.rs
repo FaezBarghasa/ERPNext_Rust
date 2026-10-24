@@ -77,7 +77,7 @@ pub fn configure(cfg: &mut web::ServiceConfig) {
 
 /// Handler for listing all DocTypes: `GET /api/v2/meta/doctype`
 pub async fn v2_list_meta_doctypes() -> impl Responder {
-    let registry = frappe_meta::global_schema_registry();
+    let registry = rwl_meta::global_schema_registry();
     let doctypes = registry.list_doctypes();
     HttpResponse::Ok().json(serde_json::json!({
         "data": doctypes
@@ -87,7 +87,7 @@ pub async fn v2_list_meta_doctypes() -> impl Responder {
 /// Handler for retrieving a single DocType schema: `GET /api/v2/meta/doctype/{name}`
 pub async fn v2_get_meta_doctype(path: web::Path<String>) -> impl Responder {
     let name = path.into_inner();
-    let registry = frappe_meta::global_schema_registry();
+    let registry = rwl_meta::global_schema_registry();
     match registry.get_schema(&name) {
         Some(schema) => HttpResponse::Ok().json(serde_json::json!({
             "data": schema.as_ref()
@@ -101,11 +101,11 @@ pub async fn v2_get_meta_doctype(path: web::Path<String>) -> impl Responder {
 /// Handler for creating a custom DocType: `POST /api/v2/meta/doctype`
 pub async fn v2_create_custom_doctype(
     req: HttpRequest,
-    payload: web::Json<frappe_meta::CustomDocType>,
+    payload: web::Json<rwl_meta::CustomDocType>,
     pool_mgr: Option<web::Data<ConnectionPoolManager>>,
 ) -> impl Responder {
     let custom = payload.into_inner();
-    let registry = frappe_meta::global_schema_registry();
+    let registry = rwl_meta::global_schema_registry();
     let tenant_id_opt = req.extensions().get::<TenantId>().cloned();
     match registry.create_custom_doctype(custom) {
         Ok(schema) => {
@@ -134,12 +134,12 @@ pub async fn v2_create_custom_doctype(
 pub async fn v2_update_custom_doctype(
     req: HttpRequest,
     path: web::Path<String>,
-    payload: web::Json<frappe_meta::CustomDocType>,
+    payload: web::Json<rwl_meta::CustomDocType>,
     pool_mgr: Option<web::Data<ConnectionPoolManager>>,
 ) -> impl Responder {
     let name = path.into_inner();
     let custom = payload.into_inner();
-    let registry = frappe_meta::global_schema_registry();
+    let registry = rwl_meta::global_schema_registry();
     let tenant_id_opt = req.extensions().get::<TenantId>().cloned();
     match registry.update_custom_doctype(&name, custom) {
         Ok(schema) => {
@@ -167,7 +167,7 @@ pub async fn v2_update_custom_doctype(
 /// Handler for deleting a custom DocType: `DELETE /api/v2/meta/doctype/{name}`
 pub async fn v2_delete_custom_doctype(path: web::Path<String>) -> impl Responder {
     let name = path.into_inner();
-    let registry = frappe_meta::global_schema_registry();
+    let registry = rwl_meta::global_schema_registry();
     match registry.delete_custom_doctype(&name) {
         Ok(true) => HttpResponse::Ok().json(serde_json::json!({
             "message": format!("DocType '{name}' deleted successfully")
@@ -184,14 +184,14 @@ pub async fn v2_delete_custom_doctype(path: web::Path<String>) -> impl Responder
 /// Handler for adding a custom field: `POST /api/v2/meta/doctype/{name}/custom_field`
 pub async fn v2_add_custom_field(
     path: web::Path<String>,
-    payload: web::Json<frappe_meta::CustomField>,
+    payload: web::Json<rwl_meta::CustomField>,
 ) -> impl Responder {
     let name = path.into_inner();
     let mut custom_field = payload.into_inner();
     if custom_field.dt.is_empty() {
         custom_field.dt = name.clone().into();
     }
-    let registry = frappe_meta::global_schema_registry();
+    let registry = rwl_meta::global_schema_registry();
     match registry.add_custom_field(custom_field) {
         Ok(()) => {
             let updated_schema = registry.get_schema(&name);
@@ -208,14 +208,14 @@ pub async fn v2_add_custom_field(
 
 /// Handler for exporting schema snapshot: `GET /api/v2/meta/snapshot`
 pub async fn v2_export_meta_snapshot() -> impl Responder {
-    let registry = frappe_meta::global_schema_registry();
+    let registry = rwl_meta::global_schema_registry();
     let snapshot = registry.export_snapshot();
     HttpResponse::Ok().json(snapshot)
 }
 
 /// Handler for importing schema snapshot: `POST /api/v2/meta/snapshot`
 pub async fn v2_import_meta_snapshot(payload: web::Json<serde_json::Value>) -> impl Responder {
-    let registry = frappe_meta::global_schema_registry();
+    let registry = rwl_meta::global_schema_registry();
     match registry.import_snapshot(&payload.into_inner()) {
         Ok(count) => HttpResponse::Ok().json(serde_json::json!({
             "message": format!("Successfully imported {count} schemas"),

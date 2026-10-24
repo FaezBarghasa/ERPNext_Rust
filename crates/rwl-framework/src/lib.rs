@@ -110,7 +110,7 @@ pub use webhook::{WebhookDispatcher, WebhookError, WebhookPayload, WebhookSubscr
 #[cfg(test)]
 mod tests {
     use super::*;
-    use frappe_meta::{DocFieldSchema, DocPermSchema, DocTypeSchema, FieldType};
+    use rwl_meta::{DocFieldSchema, DocPermSchema, DocTypeSchema, FieldType};
 
     fn make_test_schema() -> DocTypeSchema {
         DocTypeSchema {

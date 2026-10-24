@@ -1,14 +1,14 @@
 [package]
-name = "frappe-net"
+name = "rwl-net"
 version.workspace = true
 edition.workspace = true
 authors.workspace = true
 license.workspace = true
 
 [dependencies]
-frappe-meta = { workspace = true }
-frappe-storage = { workspace = true }
-frappe-framework = { workspace = true }
+rwl-meta = { workspace = true }
+rwl-storage = { workspace = true }
+rwl-framework = { workspace = true }
 serde = { workspace = true }
 serde_json = { workspace = true }
 thiserror = { workspace = true }
@@ -44,9 +44,9 @@ doctype-diff = { workspace = true }
 
 
 [dev-dependencies]
-frappe-meta = { workspace = true }
-frappe-storage = { workspace = true }
-frappe-framework = { workspace = true }
+rwl-meta = { workspace = true }
+rwl-storage = { workspace = true }
+rwl-framework = { workspace = true }
 erp-accounting = { workspace = true }
 erp-inventory = { workspace = true }
 erp-manufacturing = { workspace = true }

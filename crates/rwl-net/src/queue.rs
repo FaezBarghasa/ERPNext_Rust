@@ -12,7 +12,7 @@ use std::time::Duration;
 use thiserror::Error;
 use tokio::sync::mpsc;
 
-pub use frappe_storage::{QueueTask, TaskState};
+pub use rwl_storage::{QueueTask, TaskState};
 
 /// Supported task queue priority levels.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize, Deserialize)]

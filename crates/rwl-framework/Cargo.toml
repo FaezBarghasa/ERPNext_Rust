@@ -1,5 +1,5 @@
 [package]
-name = "frappe-framework"
+name = "rwl-framework"
 version.workspace = true
 edition.workspace = true
 authors.workspace = true
@@ -11,8 +11,8 @@ wasi-plugins = ["dep:wasmtime"]
 
 [dependencies]
 anyhow = { workspace = true }
-frappe-meta = { workspace = true }
-frappe-storage = { workspace = true }
+rwl-meta = { workspace = true }
+rwl-storage = { workspace = true }
 serde = { workspace = true }
 serde_json = { workspace = true }
 thiserror = { workspace = true }

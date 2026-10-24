@@ -6,7 +6,7 @@
 
 use crate::lifecycle::{Document, DocumentError};
 use compact_str::CompactString;
-use frappe_meta::DocTypeSchema;
+use rwl_meta::DocTypeSchema;
 use std::collections::HashMap;
 use std::sync::Arc;
 

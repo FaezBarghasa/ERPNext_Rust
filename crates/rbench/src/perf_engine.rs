@@ -11,8 +11,8 @@
 use chrono::NaiveDate;
 use erp_inventory::ParallelStockRepostingEngine;
 use erp_inventory::valuation::StockLedgerEntry;
-use frappe_meta::{DocTypeRegistry, standard_erpnext_schemas};
-use frappe_storage::perf::{
+use rwl_meta::{DocTypeRegistry, standard_erpnext_schemas};
+use rwl_storage::perf::{
     CachedDocument, CompiledSchemaCache, DocumentCache, FilterCriterion, GlStreamEntry,
     IncrementalGlAggregator, ListViewOptimizer, ShardedLockManager, StreamingLedgerCursor,
 };

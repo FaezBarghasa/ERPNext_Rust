@@ -1,6 +1,6 @@
 use clap::Parser;
-use frappe_net::cli::{Cli, Commands};
-use frappe_net::tenant::{ConnectionPoolManager, MicroTopologyConfig, TenantId};
+use rwl_net::cli::{Cli, Commands};
+use rwl_net::tenant::{ConnectionPoolManager, MicroTopologyConfig, TenantId};
 use std::time::Duration;
 
 #[tokio::main]
@@ -9,7 +9,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     tracing_subscriber::fmt()
         .with_env_filter(
             tracing_subscriber::EnvFilter::try_from_default_env()
-                .unwrap_or_else(|_| tracing_subscriber::EnvFilter::new("info,frappe_net=debug")),
+                .unwrap_or_else(|_| tracing_subscriber::EnvFilter::new("info,rwl_net=debug")),
         )
         .init();
 
@@ -30,7 +30,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                     "🔒 Automated In-Process ACME TLS enabled for domain: {}",
                     acme_domain
                 );
-                let gw = frappe_net::tenant::AcmeGateway::new();
+                let gw = rwl_net::tenant::AcmeGateway::new();
                 gw.register_domain(acme_domain, TenantId("default".to_string()))
                     .await;
                 Some(gw)
@@ -39,7 +39,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             };
 
             println!("⚡ Actix-web server binding to http://{}", args.bind);
-            frappe_net::run_server_with_config(&args.bind, topology, acme_gateway, args.workers)
+            rwl_net::run_server_with_config(&args.bind, topology, acme_gateway, args.workers)
                 .await?;
         }
         Commands::Migrate(args) => {
@@ -50,7 +50,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             println!("✅ All schema DDL definitions synchronized with zero lock contention.");
         }
         Commands::Tenant(args) => match args.action {
-            frappe_net::cli::TenantCommands::Create { name, domain } => {
+            rwl_net::cli::TenantCommands::Create { name, domain } => {
                 let pool = ConnectionPoolManager::new(Duration::from_secs(60));
                 let tenant_id = TenantId(name.clone());
                 let _ = pool.get_or_initialize_client(&tenant_id).await?;
@@ -61,11 +61,11 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                     name.replace('-', "_")
                 );
             }
-            frappe_net::cli::TenantCommands::List => {
+            rwl_net::cli::TenantCommands::List => {
                 println!("📋 Active Tenant Namespaces:");
                 println!("   - tenant_default (127.0.0.1)");
             }
-            frappe_net::cli::TenantCommands::Delete { name, force } => {
+            rwl_net::cli::TenantCommands::Delete { name, force } => {
                 println!("🗑️ Tenant '{}' removed (force={})", name, force);
             }
         },

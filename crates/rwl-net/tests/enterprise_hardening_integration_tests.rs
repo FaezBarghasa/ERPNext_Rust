@@ -1,6 +1,6 @@
 use actix_web::{App, test};
-use frappe_net::server::configure_app;
-use frappe_net::tenant::{ConnectionPoolManager, MicroTopologyConfig};
+use rwl_net::server::configure_app;
+use rwl_net::tenant::{ConnectionPoolManager, MicroTopologyConfig};
 use std::time::Duration;
 
 #[actix_web::test]

@@ -19,7 +19,7 @@ pub use saas::saas_blueprint;
 
 use crate::workflow_nodes::{VisualWorkflow, WorkflowEngine};
 use compact_str::CompactString;
-use frappe_meta::{DocTypeSchema, DynamicSchemaRegistry};
+use rwl_meta::{DocTypeSchema, DynamicSchemaRegistry};
 use serde::{Deserialize, Serialize};
 use thiserror::Error;
 
