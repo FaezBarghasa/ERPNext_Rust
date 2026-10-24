@@ -13,7 +13,7 @@ export default defineConfig({
     screenshot: 'only-on-failure',
   },
   webServer: {
-    command: 'cargo run -p frappe-net -- start --bind 127.0.0.1:8080',
+    command: 'cargo run -p rwl-net -- start --bind 127.0.0.1:8080',
     url: 'http://127.0.0.1:8080/health',
     reuseExistingServer: true,
     timeout: 120_000,

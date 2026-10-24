@@ -292,7 +292,7 @@ fn main() {
     let mut generated_functions = Vec::new();
     let mut schema_call_list = Vec::new();
 
-    let out_dir = Path::new("crates/frappe-meta/src/generated");
+    let out_dir = Path::new("crates/rwl-meta/src/generated");
     fs::create_dir_all(out_dir).expect("create generated dir");
 
     let mut total_generated = 0;

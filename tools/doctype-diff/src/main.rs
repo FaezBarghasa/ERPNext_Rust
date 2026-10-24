@@ -998,7 +998,7 @@ fn main() {
     let rust_canonical = canonical_rust_doctypes();
 
     // Check if generated v16 schemas exist in workspace
-    let v16_schemas_path = Path::new("crates/frappe-meta/src/generated/v16_schemas.rs");
+    let v16_schemas_path = Path::new("crates/rwl-meta/src/generated/v16_schemas.rs");
     let has_v16_full = v16_schemas_path.exists();
 
     let mut dedup_names = BTreeSet::new();
