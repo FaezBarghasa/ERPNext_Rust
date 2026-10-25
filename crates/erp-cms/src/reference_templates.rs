@@ -1,23 +1,17 @@
-//! Reference Look-Alike Template Suites (`erp_cms::reference_templates`).
+//! Reference Look-Alike Template Suites ().
 //!
-//! Provides 50 specialized look-alike enterprise template suites directly inspired by the world's
+//! Provides specialized look-alike enterprise template suites directly inspired by the world's
 //! most prominent streaming platforms, Smart TV operating systems, digital goods markets, music players,
 //! modern CMS engines, portfolios, industrial manufacturing giants, DTC eShops, and 3D spatial viewers.
 //! All naming conforms strictly to trademark-safe look-alike conventions.
-//!
-//! Combined with the 10 core base suites and 50 extended suites, this elevates the pure-Rust
-//! template catalog to 110 Universal Enterprise Template Suites.
 
 use crate::template_catalog::TemplateSuite;
 use crate::theme_engine::{DesignTokens, WorkTypeClassification};
 
-/// Constructs and returns the 50 specialized reference look-alike template suites (#61 to #110).
+/// Constructs and returns the specialized reference look-alike template suites.
 #[must_use]
 pub fn get_reference_lookalike_template_suites() -> Vec<TemplateSuite> {
     vec![
-        // =========================================================================
-        // GROUP 1: VIDEO STREAMING PLATFORMS (Look-alikes: Netflix, HBO Max, Start.ru, Disney+, Peacock)
-        // =========================================================================
         TemplateSuite {
             slug: "stream-redflix".into(),
             title: "CineStream SVOD Entertainment".into(),
@@ -44,7 +38,6 @@ pub fn get_reference_lookalike_template_suites() -> Vec<TemplateSuite> {
                 border_radius: "0.75rem".into(),
                 noise_opacity: 0.035,
             },
-        },
         TemplateSuite {
             slug: "stream-hypermax".into(),
             title: "HyperMax Prestige Cinema & Drama".into(),
@@ -71,7 +64,6 @@ pub fn get_reference_lookalike_template_suites() -> Vec<TemplateSuite> {
                 border_radius: "0.85rem".into(),
                 noise_opacity: 0.04,
             },
-        },
         TemplateSuite {
             slug: "stream-vostok".into(),
             title: "Vostok Premier Cinema Platform".into(),
@@ -98,7 +90,6 @@ pub fn get_reference_lookalike_template_suites() -> Vec<TemplateSuite> {
                 border_radius: "0.65rem".into(),
                 noise_opacity: 0.03,
             },
-        },
         TemplateSuite {
             slug: "stream-wonderworld".into(),
             title: "WonderWorld Family Storyworld+".into(),
@@ -125,7 +116,6 @@ pub fn get_reference_lookalike_template_suites() -> Vec<TemplateSuite> {
                 border_radius: "0.75rem".into(),
                 noise_opacity: 0.03,
             },
-        },
         TemplateSuite {
             slug: "stream-heritage-bird".into(),
             title: "HeritageBird Live Sports & Stream Hub".into(),
@@ -152,11 +142,32 @@ pub fn get_reference_lookalike_template_suites() -> Vec<TemplateSuite> {
                 border_radius: "0.65rem".into(),
                 noise_opacity: 0.03,
             },
-        },
-
-        // =========================================================================
-        // GROUP 2: SMART TV & LEANBACK OS (Look-alikes: LG webOS, TCL, Samsung Tizen, Apple TV 4K, Roku)
-        // =========================================================================
+        TemplateSuite {
+            slug: "stream-peacock-crest".into(),
+            title: "PeacockCrest Primetime & Live Sports Network".into(),
+            subtitle: "Universal studio catalog, next-day broadcast TV catchup, Premier League live streams & multi-tier AVOD/SVOD".into(),
+            class_reference: "PeacockCrest Network Class".into(),
+            work_type: WorkTypeClassification::SvodMediaStreaming,
+            modules_used: vec!["erp-cms".into(), "erp-software".into(), "erp-trade".into()],
+            key_capabilities: vec![
+                "Ad-Supported AVOD Dynamic Pre/Mid-Roll SSAI Stitching".into(),
+                "Next-Day Primetime Network TV Broadcast Catchup Pipeline".into(),
+                "Simultaneous 60FPS Live Sports Feeds with Stadium Camera Angle".into(),
+                "Editorial Binge-Watch Skip Intro & Auto-Play Next Hook".into(),
+                "Universal Picture-in-Picture Mini Player for Multi-Tasking".into(),
+            ],
+            default_tokens: DesignTokens {
+                color_primary: "#0284c7".into(),
+                color_secondary: "#0369a1".into(),
+                color_background: "#020610".into(),
+                color_surface: "#071324".into(),
+                color_accent: "#38bdf8".into(),
+                font_heading: "'Syne', sans-serif".into(),
+                font_body: "'Plus Jakarta Sans', sans-serif".into(),
+                font_mono: "'JetBrains Mono', monospace".into(),
+                border_radius: "0.65rem".into(),
+                noise_opacity: 0.03,
+            },
         TemplateSuite {
             slug: "tv-orbital-os".into(),
             title: "OrbitalOS Smart TV Spatial Shell".into(),
@@ -183,7 +194,6 @@ pub fn get_reference_lookalike_template_suites() -> Vec<TemplateSuite> {
                 border_radius: "1.25rem".into(),
                 noise_opacity: 0.035,
             },
-        },
         TemplateSuite {
             slug: "tv-horizon-browser".into(),
             title: "Horizon TV Living Room Web Navigator".into(),
@@ -210,7 +220,6 @@ pub fn get_reference_lookalike_template_suites() -> Vec<TemplateSuite> {
                 border_radius: "0.75rem".into(),
                 noise_opacity: 0.03,
             },
-        },
         TemplateSuite {
             slug: "tv-quantum-ambient".into(),
             title: "QuantumOS Living Room Ambient Dashboard".into(),
@@ -237,7 +246,6 @@ pub fn get_reference_lookalike_template_suites() -> Vec<TemplateSuite> {
                 border_radius: "1.0rem".into(),
                 noise_opacity: 0.035,
             },
-        },
         TemplateSuite {
             slug: "tv-bionic-glass".into(),
             title: "GlassRemote 4K Minimalist TV Portal".into(),
@@ -264,7 +272,6 @@ pub fn get_reference_lookalike_template_suites() -> Vec<TemplateSuite> {
                 border_radius: "1.25rem".into(),
                 noise_opacity: 0.025,
             },
-        },
         TemplateSuite {
             slug: "tv-channel-puck".into(),
             title: "ChannelGrid TV Puck & Streaming Box".into(),
@@ -291,11 +298,32 @@ pub fn get_reference_lookalike_template_suites() -> Vec<TemplateSuite> {
                 border_radius: "0.75rem".into(),
                 noise_opacity: 0.035,
             },
-        },
-
-        // =========================================================================
-        // GROUP 3: DIGITAL GOODS & GAMING SHOPS (Look-alikes: Steam, Balatro, Cult of the Lamb, Vampire Survivors, Hades II)
-        // =========================================================================
+        TemplateSuite {
+            slug: "tv-public-broadcast".into(),
+            title: "PublicBroadcast 10-Foot Leanback Free-to-Air Grid".into(),
+            subtitle: "Public broadcaster 10-foot TV UI, live regional broadcast guide, closed captions & parental PIN locks".into(),
+            class_reference: "PublicBroadcast TV Class".into(),
+            work_type: WorkTypeClassification::FieldLogisticsPosKiosk,
+            modules_used: vec!["erp-cms".into(), "erp-software".into(), "frappe-storage".into()],
+            key_capabilities: vec![
+                "7-Day Electronic Program Guide (EPG) Leanback Navigation".into(),
+                "D-Pad Remote Accessible Focus Rings & Voice Navigation".into(),
+                "Closed Captioning (WebVTT) Subtitle Font Customization".into(),
+                "Parental Control Age Rating Gate with 4-Digit Remote PIN".into(),
+                "Local Regional Station Feed Auto-Geolocation Matcher".into(),
+            ],
+            default_tokens: DesignTokens {
+                color_primary: "#14b8a6".into(),
+                color_secondary: "#0d9488".into(),
+                color_background: "#040e0c".into(),
+                color_surface: "#0a1f1b".into(),
+                color_accent: "#2dd4bf".into(),
+                font_heading: "'Plus Jakarta Sans', sans-serif".into(),
+                font_body: "'Plus Jakarta Sans', sans-serif".into(),
+                font_mono: "'JetBrains Mono', monospace".into(),
+                border_radius: "0.5rem".into(),
+                noise_opacity: 0.03,
+            },
         TemplateSuite {
             slug: "shop-vapor-store".into(),
             title: "VaporStore PC Gaming & Workshop Hub".into(),
@@ -322,7 +350,6 @@ pub fn get_reference_lookalike_template_suites() -> Vec<TemplateSuite> {
                 border_radius: "0.5rem".into(),
                 noise_opacity: 0.035,
             },
-        },
         TemplateSuite {
             slug: "shop-joker-deck".into(),
             title: "JokerDeck Roguelike Poker Card Bazaar".into(),
@@ -349,7 +376,6 @@ pub fn get_reference_lookalike_template_suites() -> Vec<TemplateSuite> {
                 border_radius: "0.75rem".into(),
                 noise_opacity: 0.045,
             },
-        },
         TemplateSuite {
             slug: "shop-occult-flock".into(),
             title: "OccultFlock Dungeon Ritual & Cult Shop".into(),
@@ -376,7 +402,6 @@ pub fn get_reference_lookalike_template_suites() -> Vec<TemplateSuite> {
                 border_radius: "1.0rem".into(),
                 noise_opacity: 0.04,
             },
-        },
         TemplateSuite {
             slug: "shop-bullet-swarm".into(),
             title: "BulletSwarm 8-Bit Gothic Horde Vault".into(),
@@ -403,7 +428,6 @@ pub fn get_reference_lookalike_template_suites() -> Vec<TemplateSuite> {
                 border_radius: "0.25rem".into(),
                 noise_opacity: 0.045,
             },
-        },
         TemplateSuite {
             slug: "shop-underworld-rogue".into(),
             title: "Underworld Mythic Isometric Action Store".into(),
@@ -430,11 +454,32 @@ pub fn get_reference_lookalike_template_suites() -> Vec<TemplateSuite> {
                 border_radius: "0.85rem".into(),
                 noise_opacity: 0.035,
             },
-        },
-
-        // =========================================================================
-        // GROUP 4: DIGITAL SUBSCRIPTION TIERS (Look-alikes: PS Plus, Spotify Sub, Game Pass, Creative Cloud, Amazon Prime)
-        // =========================================================================
+        TemplateSuite {
+            slug: "shop-deep-harpoon".into(),
+            title: "DeepHarpoon Spearfishing & Sushi Bistro Arcade".into(),
+            subtitle: "Aquatic day-night diving depth pressure gauges, live catch FIFO inventory, evening sushi menu price matrix & equipment shop".into(),
+            class_reference: "DeepHarpoon Nautical Class".into(),
+            work_type: WorkTypeClassification::DigitalGoodsCreator,
+            modules_used: vec!["erp-trade".into(), "erp-inventory".into(), "erp-software".into()],
+            key_capabilities: vec![
+                "Day/Night Cycle Diver Oxygen & Pressure Depth Gauge".into(),
+                "Spearfished Seafood Freshness Rating & Live FIFO Catch Ledger".into(),
+                "Evening Sushi Bar Menu Price Multiplier & Customer Review Meter".into(),
+                "Deep-Sea Harpoon & Diving Suit Equipment Upgrade Store".into(),
+                "Artisanal Sea Salt & Wasabi Add-On Merchandise Checkout".into(),
+            ],
+            default_tokens: DesignTokens {
+                color_primary: "#0284c7".into(),
+                color_secondary: "#0369a1".into(),
+                color_background: "#030c14".into(),
+                color_surface: "#071a2a".into(),
+                color_accent: "#38bdf8".into(),
+                font_heading: "'Syne', sans-serif".into(),
+                font_body: "'Plus Jakarta Sans', sans-serif".into(),
+                font_mono: "'JetBrains Mono', monospace".into(),
+                border_radius: "1.0rem".into(),
+                noise_opacity: 0.035,
+            },
         TemplateSuite {
             slug: "sub-playpass-cloud".into(),
             title: "ConsolePlay Tiered Cloud Game Subscription".into(),
@@ -461,7 +506,6 @@ pub fn get_reference_lookalike_template_suites() -> Vec<TemplateSuite> {
                 border_radius: "0.85rem".into(),
                 noise_opacity: 0.03,
             },
-        },
         TemplateSuite {
             slug: "sub-audiopass-hifi".into(),
             title: "AudioPass Lossless Hi-Fi Subscription Hub".into(),
@@ -488,7 +532,6 @@ pub fn get_reference_lookalike_template_suites() -> Vec<TemplateSuite> {
                 border_radius: "1.25rem".into(),
                 noise_opacity: 0.03,
             },
-        },
         TemplateSuite {
             slug: "sub-corepass-vault".into(),
             title: "CorePass Ultimate Game Subscription Ledger".into(),
@@ -515,7 +558,6 @@ pub fn get_reference_lookalike_template_suites() -> Vec<TemplateSuite> {
                 border_radius: "0.65rem".into(),
                 noise_opacity: 0.035,
             },
-        },
         TemplateSuite {
             slug: "sub-creative-matrix".into(),
             title: "CreativeCloud Suite Professional License Ledger".into(),
@@ -542,7 +584,6 @@ pub fn get_reference_lookalike_template_suites() -> Vec<TemplateSuite> {
                 border_radius: "0.75rem".into(),
                 noise_opacity: 0.035,
             },
-        },
         TemplateSuite {
             slug: "sub-omniprime-club".into(),
             title: "OmniPrime Express Logistics & Entertainment Club".into(),
@@ -569,11 +610,32 @@ pub fn get_reference_lookalike_template_suites() -> Vec<TemplateSuite> {
                 border_radius: "0.75rem".into(),
                 noise_opacity: 0.03,
             },
-        },
-
-        // =========================================================================
-        // GROUP 5: MUSIC STREAMING ENGINES (Look-alikes: Spotify, SoundCloud, Melon, FLO, Apple Music)
-        // =========================================================================
+        TemplateSuite {
+            slug: "sub-stream-pass".into(),
+            title: "StreamPass Cinema & Ultra HD Multi-Device Vault".into(),
+            subtitle: "Standard with Ads vs Standard vs Premium tier matrix, spatial audio entitlement & household member sub-accounts".into(),
+            class_reference: "StreamPass Membership Class".into(),
+            work_type: WorkTypeClassification::DigitalGoodsCreator,
+            modules_used: vec!["erp-accounting".into(), "erp-software".into(), "erp-trade".into()],
+            key_capabilities: vec![
+                "Tier Comparison Matrix (Standard w/ Ads vs Standard vs Premium)".into(),
+                "Concurrent Stream Limiter & Download Device Manager".into(),
+                "Extra Member Sub-Account Monthly Add-On Billing".into(),
+                "4K HDR & Spatial Audio License Entitlement Flags".into(),
+                "Instant One-Click Account Pause & Resume Retention Engine".into(),
+            ],
+            default_tokens: DesignTokens {
+                color_primary: "#e50914".into(),
+                color_secondary: "#b81d24".into(),
+                color_background: "#0a0607".into(),
+                color_surface: "#1a0c0f".into(),
+                color_accent: "#ff2a35".into(),
+                font_heading: "'Syne', sans-serif".into(),
+                font_body: "'Plus Jakarta Sans', sans-serif".into(),
+                font_mono: "'JetBrains Mono', monospace".into(),
+                border_radius: "0.75rem".into(),
+                noise_opacity: 0.035,
+            },
         TemplateSuite {
             slug: "music-sonic-pulse".into(),
             title: "SonicPulse Algorithmic Track Streaming".into(),
@@ -600,7 +662,6 @@ pub fn get_reference_lookalike_template_suites() -> Vec<TemplateSuite> {
                 border_radius: "0.85rem".into(),
                 noise_opacity: 0.03,
             },
-        },
         TemplateSuite {
             slug: "music-wave-cloud".into(),
             title: "WaveCloud Underground Audio & Waveform Depot".into(),
@@ -627,7 +688,6 @@ pub fn get_reference_lookalike_template_suites() -> Vec<TemplateSuite> {
                 border_radius: "0.65rem".into(),
                 noise_opacity: 0.04,
             },
-        },
         TemplateSuite {
             slug: "music-melon-chart".into(),
             title: "MelodyK Top-100 Charted Music Matrix".into(),
@@ -654,7 +714,6 @@ pub fn get_reference_lookalike_template_suites() -> Vec<TemplateSuite> {
                 border_radius: "0.85rem".into(),
                 noise_opacity: 0.03,
             },
-        },
         TemplateSuite {
             slug: "music-flo-mood".into(),
             title: "FloMood Sensory Minimalist Audio Player".into(),
@@ -681,7 +740,6 @@ pub fn get_reference_lookalike_template_suites() -> Vec<TemplateSuite> {
                 border_radius: "1.0rem".into(),
                 noise_opacity: 0.025,
             },
-        },
         TemplateSuite {
             slug: "music-spatial-lossless".into(),
             title: "LosslessSpatial Hi-Res Studio Streaming".into(),
@@ -708,11 +766,32 @@ pub fn get_reference_lookalike_template_suites() -> Vec<TemplateSuite> {
                 border_radius: "1.25rem".into(),
                 noise_opacity: 0.03,
             },
-        },
-
-        // =========================================================================
-        // GROUP 6: MODERN CMS & PUBLISHING ENGINES (Look-alikes: Blume, Kirki, Strapi, Storyblok, WordPress)
-        // =========================================================================
+        TemplateSuite {
+            slug: "music-tidal-master".into(),
+            title: "MasterTidal 24-Bit / 192kHz Audiophile Haven".into(),
+            subtitle: "Bit-perfect FLAC/MQA streaming, direct-to-artist royalty payout multiplier & Dolby Atmos binaural spatial audio".into(),
+            class_reference: "MasterTidal Audiophile Class".into(),
+            work_type: WorkTypeClassification::SvodMediaStreaming,
+            modules_used: vec!["erp-cms".into(), "erp-software".into(), "erp-accounting".into()],
+            key_capabilities: vec![
+                "Bit-Perfect 24-Bit / 192kHz Hi-Res FLAC Streaming Pipeline".into(),
+                "Direct-to-Artist Payout Share (10% of Subscription Direct to Top Artist)".into(),
+                "Dolby Atmos Binaural Spatial Headphone Rendering".into(),
+                "Offline Encrypted Device Cache with Audio Quality Tier Toggle".into(),
+                "Master Quality Authenticated (MQA) Hardware DAC Passthrough".into(),
+            ],
+            default_tokens: DesignTokens {
+                color_primary: "#00ffff".into(),
+                color_secondary: "#00b4d8".into(),
+                color_background: "#03080c".into(),
+                color_surface: "#08131d".into(),
+                color_accent: "#90e0ef".into(),
+                font_heading: "'Syne', sans-serif".into(),
+                font_body: "'Plus Jakarta Sans', sans-serif".into(),
+                font_mono: "'JetBrains Mono', monospace".into(),
+                border_radius: "0.5rem".into(),
+                noise_opacity: 0.03,
+            },
         TemplateSuite {
             slug: "cms-blume-visual".into(),
             title: "BlumeVisual Decoupled Reactive CMS".into(),
@@ -739,7 +818,6 @@ pub fn get_reference_lookalike_template_suites() -> Vec<TemplateSuite> {
                 border_radius: "0.65rem".into(),
                 noise_opacity: 0.035,
             },
-        },
         TemplateSuite {
             slug: "cms-kirki-customizer".into(),
             title: "CustomizerCore Real-Time Theme & Controls CMS".into(),
@@ -766,7 +844,6 @@ pub fn get_reference_lookalike_template_suites() -> Vec<TemplateSuite> {
                 border_radius: "0.75rem".into(),
                 noise_opacity: 0.03,
             },
-        },
         TemplateSuite {
             slug: "cms-strapi-forge".into(),
             title: "StrapiForge API-First Node & Rust Content Core".into(),
@@ -793,7 +870,6 @@ pub fn get_reference_lookalike_template_suites() -> Vec<TemplateSuite> {
                 border_radius: "0.65rem".into(),
                 noise_opacity: 0.035,
             },
-        },
         TemplateSuite {
             slug: "cms-storyblock-canvas".into(),
             title: "StoryBlock Component-Based Visual Canvas CMS".into(),
@@ -820,7 +896,6 @@ pub fn get_reference_lookalike_template_suites() -> Vec<TemplateSuite> {
                 border_radius: "0.75rem".into(),
                 noise_opacity: 0.03,
             },
-        },
         TemplateSuite {
             slug: "cms-press-engine".into(),
             title: "PressEngine Headless Gutenberg Block System".into(),
@@ -847,11 +922,32 @@ pub fn get_reference_lookalike_template_suites() -> Vec<TemplateSuite> {
                 border_radius: "0.5rem".into(),
                 noise_opacity: 0.03,
             },
-        },
-
-        // =========================================================================
-        // GROUP 7: INTERACTIVE PORTFOLIO EXPERIENCES (Look-alikes: Bruno Simon, Anton & Irene, Mike Kus, Adham Dannaway, Cassie Codes)
-        // =========================================================================
+        TemplateSuite {
+            slug: "cms-craft-matrix".into(),
+            title: "CraftMatrix Multi-Lingual Matrix Content Studio".into(),
+            subtitle: "Tailored matrix block field editor, live entry preview pane, asset transform pipeline & multi-site localization".into(),
+            class_reference: "CraftMatrix Studio Class".into(),
+            work_type: WorkTypeClassification::FieldLogisticsPosKiosk,
+            modules_used: vec!["erp-cms".into(), "erp-software".into(), "frappe-meta".into()],
+            key_capabilities: vec![
+                "Flexible Matrix Block Content Modeler with Drag Sorting".into(),
+                "Split-Screen Live Side-by-Side Entry Preview Pane".into(),
+                "Focal-Point Preserving Image Transform Engine".into(),
+                "Multi-Site Translation & Localization Matrix".into(),
+                "Granular Section, Entry & User Permission Hierarchy".into(),
+            ],
+            default_tokens: DesignTokens {
+                color_primary: "#da5a47".into(),
+                color_secondary: "#b84534".into(),
+                color_background: "#0f0706".into(),
+                color_surface: "#1f100e".into(),
+                color_accent: "#f0715f".into(),
+                font_heading: "'Plus Jakarta Sans', sans-serif".into(),
+                font_body: "'Plus Jakarta Sans', sans-serif".into(),
+                font_mono: "'JetBrains Mono', monospace".into(),
+                border_radius: "0.65rem".into(),
+                noise_opacity: 0.035,
+            },
         TemplateSuite {
             slug: "portfolio-toy-physic-3d".into(),
             title: "ToyPhysic3D Interactive Vehicle Portfolio".into(),
@@ -878,7 +974,6 @@ pub fn get_reference_lookalike_template_suites() -> Vec<TemplateSuite> {
                 border_radius: "1.0rem".into(),
                 noise_opacity: 0.035,
             },
-        },
         TemplateSuite {
             slug: "portfolio-editorial-duo".into(),
             title: "EditorialDuo High-Fashion Asymmetric Studio".into(),
@@ -905,7 +1000,6 @@ pub fn get_reference_lookalike_template_suites() -> Vec<TemplateSuite> {
                 border_radius: "0rem".into(),
                 noise_opacity: 0.04,
             },
-        },
         TemplateSuite {
             slug: "portfolio-illustrative-craft".into(),
             title: "IllustrativeCraft Typography & Graphic Archive".into(),
@@ -932,7 +1026,6 @@ pub fn get_reference_lookalike_template_suites() -> Vec<TemplateSuite> {
                 border_radius: "0.5rem".into(),
                 noise_opacity: 0.045,
             },
-        },
         TemplateSuite {
             slug: "portfolio-split-identity".into(),
             title: "SplitIdentity Designer & Coder Dual Portfolio".into(),
@@ -959,7 +1052,6 @@ pub fn get_reference_lookalike_template_suites() -> Vec<TemplateSuite> {
                 border_radius: "0.75rem".into(),
                 noise_opacity: 0.03,
             },
-        },
         TemplateSuite {
             slug: "portfolio-whimsical-svg".into(),
             title: "WhimsicalCanvas Interactive Kinetic SVG Studio".into(),
@@ -986,11 +1078,32 @@ pub fn get_reference_lookalike_template_suites() -> Vec<TemplateSuite> {
                 border_radius: "1.25rem".into(),
                 noise_opacity: 0.035,
             },
-        },
-
-        // =========================================================================
-        // GROUP 8: INDUSTRIAL BRAND FLAGSHIPS (Look-alikes: Hyundai, Martor, Trumpf, Kuka, Protolabs)
-        // =========================================================================
+        TemplateSuite {
+            slug: "portfolio-minimal-motion".into(),
+            title: "MinimalMotion Micro-Interaction & UI Physics Portfolio".into(),
+            subtitle: "CSS animation engineering, physics-based gesture demos, design writing journal & stark monochrome precision".into(),
+            class_reference: "MinimalMotion Design Class".into(),
+            work_type: WorkTypeClassification::LuxuryAtelier,
+            modules_used: vec!["erp-cms".into(), "erp-software".into(), "frappe-storage".into()],
+            key_capabilities: vec![
+                "Physics-Based Spring Animation Interactive Lab".into(),
+                "Stark Monochrome Typographic Hierarchy & Spacing Rhythm".into(),
+                "Deep Long-Form Technical Design Journal with Live Demos".into(),
+                "Fluid CSS Sub-Pixel Transitions with Zero Jank".into(),
+                "Lightweight Offline-First Progressive Web Architecture".into(),
+            ],
+            default_tokens: DesignTokens {
+                color_primary: "#ffffff".into(),
+                color_secondary: "#94a3b8".into(),
+                color_background: "#080808".into(),
+                color_surface: "#121212".into(),
+                color_accent: "#e2e8f0".into(),
+                font_heading: "'Plus Jakarta Sans', sans-serif".into(),
+                font_body: "'Plus Jakarta Sans', sans-serif".into(),
+                font_mono: "'JetBrains Mono', monospace".into(),
+                border_radius: "0.25rem".into(),
+                noise_opacity: 0.02,
+            },
         TemplateSuite {
             slug: "ind-mobility-dynamics".into(),
             title: "GlobalMobility Next-Gen Automotive Brand".into(),
@@ -1017,7 +1130,6 @@ pub fn get_reference_lookalike_template_suites() -> Vec<TemplateSuite> {
                 border_radius: "0.5rem".into(),
                 noise_opacity: 0.03,
             },
-        },
         TemplateSuite {
             slug: "ind-safety-blades".into(),
             title: "PrecisionBlades Industrial Safety Cutters".into(),
@@ -1044,7 +1156,6 @@ pub fn get_reference_lookalike_template_suites() -> Vec<TemplateSuite> {
                 border_radius: "0.5rem".into(),
                 noise_opacity: 0.03,
             },
-        },
         TemplateSuite {
             slug: "ind-laser-fabrication".into(),
             title: "LaserFabrication High-Power CNC Sheet Metal Matrix".into(),
@@ -1071,7 +1182,6 @@ pub fn get_reference_lookalike_template_suites() -> Vec<TemplateSuite> {
                 border_radius: "0.35rem".into(),
                 noise_opacity: 0.04,
             },
-        },
         TemplateSuite {
             slug: "ind-orange-robotics".into(),
             title: "CyberneticArm 6-Axis Industrial Robotics".into(),
@@ -1098,7 +1208,6 @@ pub fn get_reference_lookalike_template_suites() -> Vec<TemplateSuite> {
                 border_radius: "0.4rem".into(),
                 noise_opacity: 0.04,
             },
-        },
         TemplateSuite {
             slug: "ind-rapid-digital".into(),
             title: "RapidDigital On-Demand CNC & Injection Molding Portal".into(),
@@ -1125,11 +1234,32 @@ pub fn get_reference_lookalike_template_suites() -> Vec<TemplateSuite> {
                 border_radius: "0.5rem".into(),
                 noise_opacity: 0.035,
             },
-        },
-
-        // =========================================================================
-        // GROUP 9: DIRECT-TO-CONSUMER ESHOP & ECOMMERCE (Look-alikes: Graza, Caraway, Snif, Diaspora, Wild One, Oddbird, Nike, Glossier)
-        // =========================================================================
+        TemplateSuite {
+            slug: "ind-energy-schneider".into(),
+            title: "EcoStruxure Industrial Energy & Smart Grid Command".into(),
+            subtitle: "Microgrid energy telemetry, carbon accounting ledger, IoT switchgear monitoring & industrial power automation".into(),
+            class_reference: "EcoStruxure Energy Grid Class".into(),
+            work_type: WorkTypeClassification::HeavyIndustrialB2b,
+            modules_used: vec!["erp-energy".into(), "erp-manufacturing".into(), "erp-iot".into()],
+            key_capabilities: vec![
+                "Real-Time Medium/Low Voltage Switchgear IoT Telemetry".into(),
+                "Microgrid Solar & Battery Energy Storage Optimization".into(),
+                "Scope 1, 2, 3 Carbon Emission Reporting & Net-Zero Ledger".into(),
+                "Predictive Transformer Thermal Stress & Arc Flash Detection".into(),
+                "Modbus / BACnet / MQTT Industrial Protocol Gateway Ingestion".into(),
+            ],
+            default_tokens: DesignTokens {
+                color_primary: "#009530".into(),
+                color_secondary: "#007a27".into(),
+                color_background: "#030a05".into(),
+                color_surface: "#08170c".into(),
+                color_accent: "#3dd168".into(),
+                font_heading: "'Plus Jakarta Sans', sans-serif".into(),
+                font_body: "'Plus Jakarta Sans', sans-serif".into(),
+                font_mono: "'JetBrains Mono', monospace".into(),
+                border_radius: "0.5rem".into(),
+                noise_opacity: 0.035,
+            },
         TemplateSuite {
             slug: "shop-squeeze-olive".into(),
             title: "SqueezeOlive Artisanal Olive Oil Kitchen eShop".into(),
@@ -1156,7 +1286,6 @@ pub fn get_reference_lookalike_template_suites() -> Vec<TemplateSuite> {
                 border_radius: "1.0rem".into(),
                 noise_opacity: 0.035,
             },
-        },
         TemplateSuite {
             slug: "shop-ceramic-kitchen".into(),
             title: "CeramicCook Non-Toxic Mineral Ceramic Cookware".into(),
@@ -1183,7 +1312,6 @@ pub fn get_reference_lookalike_template_suites() -> Vec<TemplateSuite> {
                 border_radius: "1.0rem".into(),
                 noise_opacity: 0.03,
             },
-        },
         TemplateSuite {
             slug: "shop-direct-fragrance".into(),
             title: "ModernFragrance High-Concept Scent & Sample Atelier".into(),
@@ -1210,7 +1338,6 @@ pub fn get_reference_lookalike_template_suites() -> Vec<TemplateSuite> {
                 border_radius: "0.85rem".into(),
                 noise_opacity: 0.035,
             },
-        },
         TemplateSuite {
             slug: "shop-single-spice".into(),
             title: "SingleOrigin Direct-Trade Farm Heritage Spices".into(),
@@ -1237,7 +1364,6 @@ pub fn get_reference_lookalike_template_suites() -> Vec<TemplateSuite> {
                 border_radius: "0.85rem".into(),
                 noise_opacity: 0.04,
             },
-        },
         TemplateSuite {
             slug: "shop-canine-modern".into(),
             title: "ErgonomicPet Color-Blocked Canine Lifestyle Essentials".into(),
@@ -1264,7 +1390,6 @@ pub fn get_reference_lookalike_template_suites() -> Vec<TemplateSuite> {
                 border_radius: "1.25rem".into(),
                 noise_opacity: 0.03,
             },
-        },
         TemplateSuite {
             slug: "shop-turkish-textile".into(),
             title: "ArtisanalLoom Slow-Craft Organic Robes & Linen".into(),
@@ -1291,7 +1416,6 @@ pub fn get_reference_lookalike_template_suites() -> Vec<TemplateSuite> {
                 border_radius: "0.5rem".into(),
                 noise_opacity: 0.04,
             },
-        },
         TemplateSuite {
             slug: "shop-speed-athletics".into(),
             title: "KineticFootwear Innovation Running & Apparel Flagship".into(),
@@ -1318,7 +1442,6 @@ pub fn get_reference_lookalike_template_suites() -> Vec<TemplateSuite> {
                 border_radius: "0.25rem".into(),
                 noise_opacity: 0.035,
             },
-        },
         TemplateSuite {
             slug: "shop-dewy-skin".into(),
             title: "DewySkin Bare-Faced Clean Beauty & Lip Tint Boutique".into(),
@@ -1345,11 +1468,6 @@ pub fn get_reference_lookalike_template_suites() -> Vec<TemplateSuite> {
                 border_radius: "1.25rem".into(),
                 noise_opacity: 0.03,
             },
-        },
-
-        // =========================================================================
-        // GROUP 10: 3D OBJECT & SPATIAL PRODUCT VIEWERS (Look-alikes: IKEA Kreativ, Nike 3D, Porsche, BMW, Stripe Globe, Sketchfab, DaveTheDiver)
-        // =========================================================================
         TemplateSuite {
             slug: "viewer-spatial-room-3d".into(),
             title: "SpatialRoom 3D Mixed-Reality Interior Configurator".into(),
@@ -1376,7 +1494,6 @@ pub fn get_reference_lookalike_template_suites() -> Vec<TemplateSuite> {
                 border_radius: "0.75rem".into(),
                 noise_opacity: 0.03,
             },
-        },
         TemplateSuite {
             slug: "viewer-sneaker-spatial-3d".into(),
             title: "SneakerSpatial Real-Time 3D Footwear Inspector".into(),
@@ -1403,7 +1520,6 @@ pub fn get_reference_lookalike_template_suites() -> Vec<TemplateSuite> {
                 border_radius: "0.85rem".into(),
                 noise_opacity: 0.03,
             },
-        },
         TemplateSuite {
             slug: "viewer-stuttgart-coupe-3d".into(),
             title: "StuttgartCoupe WebGL 3D Sports Car Atelier".into(),
@@ -1430,7 +1546,6 @@ pub fn get_reference_lookalike_template_suites() -> Vec<TemplateSuite> {
                 border_radius: "0.5rem".into(),
                 noise_opacity: 0.035,
             },
-        },
         TemplateSuite {
             slug: "viewer-bavarian-luxury-3d".into(),
             title: "BavarianLuxury Executive Sedan 3D Interior & Exterior".into(),
@@ -1457,7 +1572,6 @@ pub fn get_reference_lookalike_template_suites() -> Vec<TemplateSuite> {
                 border_radius: "0.65rem".into(),
                 noise_opacity: 0.03,
             },
-        },
         TemplateSuite {
             slug: "viewer-fintech-globe-3d".into(),
             title: "FinTechGlobe Interactive WebGL Transaction Earth".into(),
@@ -1478,6 +1592,32 @@ pub fn get_reference_lookalike_template_suites() -> Vec<TemplateSuite> {
                 color_background: "#040510".into(),
                 color_surface: "#0a0c24".into(),
                 color_accent: "#818cf8".into(),
+                font_heading: "'Syne', sans-serif".into(),
+                font_body: "'Plus Jakarta Sans', sans-serif".into(),
+                font_mono: "'JetBrains Mono', monospace".into(),
+                border_radius: "1.0rem".into(),
+                noise_opacity: 0.035,
+            },
+        TemplateSuite {
+            slug: "viewer-physics-sandbox-3d".into(),
+            title: "PhysicsSandbox 3D Interactive Toy Vehicle Playground".into(),
+            subtitle: "Three.js / Cannon-es rigid body vehicle physics, interactive bowling pins, terrain ramps & customizable toy truck".into(),
+            class_reference: "PhysicsSandbox Toy World Class".into(),
+            work_type: WorkTypeClassification::LuxuryAtelier,
+            modules_used: vec!["erp-cms".into(), "erp-software".into(), "frappe-storage".into()],
+            key_capabilities: vec![
+                "Rigid Body Vehicle Suspension & Wheel Friction Physics Simulation".into(),
+                "Interactive Destructible Playground Obstacles (Bricks, Pins, Ramps)".into(),
+                "Day/Night Atmospheric Dynamic Shadow & Sun Vector Direction".into(),
+                "Custom Toy Truck Paint Colors & Wheel Rim Upgrades".into(),
+                "Keyboard WASD / Gamepad / Mobile Virtual Joystick Controls".into(),
+            ],
+            default_tokens: DesignTokens {
+                color_primary: "#f97316".into(),
+                color_secondary: "#ea580c".into(),
+                color_background: "#080604".into(),
+                color_surface: "#140e08".into(),
+                color_accent: "#fb923c".into(),
                 font_heading: "'Syne', sans-serif".into(),
                 font_body: "'Plus Jakarta Sans', sans-serif".into(),
                 font_mono: "'JetBrains Mono', monospace".into(),
@@ -1509,33 +1649,6 @@ pub fn get_reference_lookalike_template_suites() -> Vec<TemplateSuite> {
                 font_body: "'Plus Jakarta Sans', sans-serif".into(),
                 font_mono: "'JetBrains Mono', monospace".into(),
                 border_radius: "0.65rem".into(),
-                noise_opacity: 0.035,
-            },
-        },
-        TemplateSuite {
-            slug: "viewer-deep-harpoon".into(),
-            title: "DeepHarpoon Spearfishing & Sushi Bistro Depot".into(),
-            subtitle: "Nautical day-night depth pressure gauges, aquatic fish harvest inventory, evening sushi menu price matrix & shop".into(),
-            class_reference: "DeepHarpoon Nautical Class".into(),
-            work_type: WorkTypeClassification::GastronomyKitchen,
-            modules_used: vec!["erp-trade".into(), "erp-inventory".into(), "erp-software".into()],
-            key_capabilities: vec![
-                "Day/Night Cycle Diver Oxygen & Pressure Depth Gauge".into(),
-                "Spearfished Seafood Freshness Rating & Live FIFO Catch Ledger".into(),
-                "Evening Sushi Bar Menu Price Multiplier & Customer Review Meter".into(),
-                "Deep-Sea Harpoon & Diving Suit Equipment Upgrade Store".into(),
-                "Artisanal Sea Salt & Wasabi Add-On Merchandise Checkout".into(),
-            ],
-            default_tokens: DesignTokens {
-                color_primary: "#0284c7".into(),
-                color_secondary: "#0369a1".into(),
-                color_background: "#030c14".into(),
-                color_surface: "#071a2a".into(),
-                color_accent: "#38bdf8".into(),
-                font_heading: "'Syne', sans-serif".into(),
-                font_body: "'Plus Jakarta Sans', sans-serif".into(),
-                font_mono: "'JetBrains Mono', monospace".into(),
-                border_radius: "1.0rem".into(),
                 noise_opacity: 0.035,
             },
         },

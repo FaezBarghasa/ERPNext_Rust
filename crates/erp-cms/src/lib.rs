@@ -1,4 +1,5 @@
 pub mod analytics;
+pub mod archetype_showcases;
 pub mod audio_book_sync;
 pub mod audio_dsp_eq;
 pub mod audio_flac_pipeline;
