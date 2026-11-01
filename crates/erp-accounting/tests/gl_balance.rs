@@ -128,3 +128,4 @@ proptest! {
         prop_assert!(entry.validate_balance().is_ok());
     }
 }
+

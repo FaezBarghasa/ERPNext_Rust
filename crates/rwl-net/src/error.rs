@@ -109,3 +109,4 @@ impl From<surrealdb::Error> for ApiError {
         Self::Database(err.to_string())
     }
 }
+

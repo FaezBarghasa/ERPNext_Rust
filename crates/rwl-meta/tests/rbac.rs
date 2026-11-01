@@ -166,3 +166,4 @@ fn test_permlevel_security_boundary() {
         1
     ));
 }
+

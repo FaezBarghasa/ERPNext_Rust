@@ -35,3 +35,4 @@ pub async fn query_one_by_name(
 
     Ok(record)
 }
+

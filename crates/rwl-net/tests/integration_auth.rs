@@ -71,3 +71,4 @@ async fn test_forged_token_is_rejected() {
     // Without valid authorization context or missing db, returns 401 or 500/403, never 200
     assert_ne!(resp.status(), StatusCode::OK);
 }
+
