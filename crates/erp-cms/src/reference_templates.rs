@@ -38,6 +38,7 @@ pub fn get_reference_lookalike_template_suites() -> Vec<TemplateSuite> {
                 border_radius: "0.75rem".into(),
                 noise_opacity: 0.035,
             },
+        },
         TemplateSuite {
             slug: "stream-hypermax".into(),
             title: "HyperMax Prestige Cinema & Drama".into(),
@@ -64,6 +65,7 @@ pub fn get_reference_lookalike_template_suites() -> Vec<TemplateSuite> {
                 border_radius: "0.85rem".into(),
                 noise_opacity: 0.04,
             },
+        },
         TemplateSuite {
             slug: "stream-vostok".into(),
             title: "Vostok Premier Cinema Platform".into(),
@@ -90,6 +92,7 @@ pub fn get_reference_lookalike_template_suites() -> Vec<TemplateSuite> {
                 border_radius: "0.65rem".into(),
                 noise_opacity: 0.03,
             },
+        },
         TemplateSuite {
             slug: "stream-wonderworld".into(),
             title: "WonderWorld Family Storyworld+".into(),
@@ -116,6 +119,7 @@ pub fn get_reference_lookalike_template_suites() -> Vec<TemplateSuite> {
                 border_radius: "0.75rem".into(),
                 noise_opacity: 0.03,
             },
+        },
         TemplateSuite {
             slug: "stream-heritage-bird".into(),
             title: "HeritageBird Live Sports & Stream Hub".into(),
@@ -142,6 +146,7 @@ pub fn get_reference_lookalike_template_suites() -> Vec<TemplateSuite> {
                 border_radius: "0.65rem".into(),
                 noise_opacity: 0.03,
             },
+        },
         TemplateSuite {
             slug: "stream-peacock-crest".into(),
             title: "PeacockCrest Primetime & Live Sports Network".into(),
@@ -168,6 +173,7 @@ pub fn get_reference_lookalike_template_suites() -> Vec<TemplateSuite> {
                 border_radius: "0.65rem".into(),
                 noise_opacity: 0.03,
             },
+        },
         TemplateSuite {
             slug: "tv-orbital-os".into(),
             title: "OrbitalOS Smart TV Spatial Shell".into(),
@@ -194,6 +200,7 @@ pub fn get_reference_lookalike_template_suites() -> Vec<TemplateSuite> {
                 border_radius: "1.25rem".into(),
                 noise_opacity: 0.035,
             },
+        },
         TemplateSuite {
             slug: "tv-horizon-browser".into(),
             title: "Horizon TV Living Room Web Navigator".into(),
@@ -220,6 +227,7 @@ pub fn get_reference_lookalike_template_suites() -> Vec<TemplateSuite> {
                 border_radius: "0.75rem".into(),
                 noise_opacity: 0.03,
             },
+        },
         TemplateSuite {
             slug: "tv-quantum-ambient".into(),
             title: "QuantumOS Living Room Ambient Dashboard".into(),
@@ -246,6 +254,7 @@ pub fn get_reference_lookalike_template_suites() -> Vec<TemplateSuite> {
                 border_radius: "1.0rem".into(),
                 noise_opacity: 0.035,
             },
+        },
         TemplateSuite {
             slug: "tv-bionic-glass".into(),
             title: "GlassRemote 4K Minimalist TV Portal".into(),
@@ -272,6 +281,7 @@ pub fn get_reference_lookalike_template_suites() -> Vec<TemplateSuite> {
                 border_radius: "1.25rem".into(),
                 noise_opacity: 0.025,
             },
+        },
         TemplateSuite {
             slug: "tv-channel-puck".into(),
             title: "ChannelGrid TV Puck & Streaming Box".into(),
@@ -298,6 +308,7 @@ pub fn get_reference_lookalike_template_suites() -> Vec<TemplateSuite> {
                 border_radius: "0.75rem".into(),
                 noise_opacity: 0.035,
             },
+        },
         TemplateSuite {
             slug: "tv-public-broadcast".into(),
             title: "PublicBroadcast 10-Foot Leanback Free-to-Air Grid".into(),
@@ -324,6 +335,7 @@ pub fn get_reference_lookalike_template_suites() -> Vec<TemplateSuite> {
                 border_radius: "0.5rem".into(),
                 noise_opacity: 0.03,
             },
+        },
         TemplateSuite {
             slug: "shop-vapor-store".into(),
             title: "VaporStore PC Gaming & Workshop Hub".into(),
@@ -350,6 +362,7 @@ pub fn get_reference_lookalike_template_suites() -> Vec<TemplateSuite> {
                 border_radius: "0.5rem".into(),
                 noise_opacity: 0.035,
             },
+        },
         TemplateSuite {
             slug: "shop-joker-deck".into(),
             title: "JokerDeck Roguelike Poker Card Bazaar".into(),
@@ -376,6 +389,7 @@ pub fn get_reference_lookalike_template_suites() -> Vec<TemplateSuite> {
                 border_radius: "0.75rem".into(),
                 noise_opacity: 0.045,
             },
+        },
         TemplateSuite {
             slug: "shop-occult-flock".into(),
             title: "OccultFlock Dungeon Ritual & Cult Shop".into(),
@@ -402,6 +416,7 @@ pub fn get_reference_lookalike_template_suites() -> Vec<TemplateSuite> {
                 border_radius: "1.0rem".into(),
                 noise_opacity: 0.04,
             },
+        },
         TemplateSuite {
             slug: "shop-bullet-swarm".into(),
             title: "BulletSwarm 8-Bit Gothic Horde Vault".into(),
@@ -428,6 +443,7 @@ pub fn get_reference_lookalike_template_suites() -> Vec<TemplateSuite> {
                 border_radius: "0.25rem".into(),
                 noise_opacity: 0.045,
             },
+        },
         TemplateSuite {
             slug: "shop-underworld-rogue".into(),
             title: "Underworld Mythic Isometric Action Store".into(),
@@ -454,6 +470,7 @@ pub fn get_reference_lookalike_template_suites() -> Vec<TemplateSuite> {
                 border_radius: "0.85rem".into(),
                 noise_opacity: 0.035,
             },
+        },
         TemplateSuite {
             slug: "shop-deep-harpoon".into(),
             title: "DeepHarpoon Spearfishing & Sushi Bistro Arcade".into(),
@@ -480,6 +497,7 @@ pub fn get_reference_lookalike_template_suites() -> Vec<TemplateSuite> {
                 border_radius: "1.0rem".into(),
                 noise_opacity: 0.035,
             },
+        },
         TemplateSuite {
             slug: "sub-playpass-cloud".into(),
             title: "ConsolePlay Tiered Cloud Game Subscription".into(),
@@ -506,6 +524,7 @@ pub fn get_reference_lookalike_template_suites() -> Vec<TemplateSuite> {
                 border_radius: "0.85rem".into(),
                 noise_opacity: 0.03,
             },
+        },
         TemplateSuite {
             slug: "sub-audiopass-hifi".into(),
             title: "AudioPass Lossless Hi-Fi Subscription Hub".into(),
@@ -532,6 +551,7 @@ pub fn get_reference_lookalike_template_suites() -> Vec<TemplateSuite> {
                 border_radius: "1.25rem".into(),
                 noise_opacity: 0.03,
             },
+        },
         TemplateSuite {
             slug: "sub-corepass-vault".into(),
             title: "CorePass Ultimate Game Subscription Ledger".into(),
@@ -558,6 +578,7 @@ pub fn get_reference_lookalike_template_suites() -> Vec<TemplateSuite> {
                 border_radius: "0.65rem".into(),
                 noise_opacity: 0.035,
             },
+        },
         TemplateSuite {
             slug: "sub-creative-matrix".into(),
             title: "CreativeCloud Suite Professional License Ledger".into(),
@@ -584,6 +605,7 @@ pub fn get_reference_lookalike_template_suites() -> Vec<TemplateSuite> {
                 border_radius: "0.75rem".into(),
                 noise_opacity: 0.035,
             },
+        },
         TemplateSuite {
             slug: "sub-omniprime-club".into(),
             title: "OmniPrime Express Logistics & Entertainment Club".into(),
@@ -610,6 +632,7 @@ pub fn get_reference_lookalike_template_suites() -> Vec<TemplateSuite> {
                 border_radius: "0.75rem".into(),
                 noise_opacity: 0.03,
             },
+        },
         TemplateSuite {
             slug: "sub-stream-pass".into(),
             title: "StreamPass Cinema & Ultra HD Multi-Device Vault".into(),
@@ -636,6 +659,7 @@ pub fn get_reference_lookalike_template_suites() -> Vec<TemplateSuite> {
                 border_radius: "0.75rem".into(),
                 noise_opacity: 0.035,
             },
+        },
         TemplateSuite {
             slug: "music-sonic-pulse".into(),
             title: "SonicPulse Algorithmic Track Streaming".into(),
@@ -662,6 +686,7 @@ pub fn get_reference_lookalike_template_suites() -> Vec<TemplateSuite> {
                 border_radius: "0.85rem".into(),
                 noise_opacity: 0.03,
             },
+        },
         TemplateSuite {
             slug: "music-wave-cloud".into(),
             title: "WaveCloud Underground Audio & Waveform Depot".into(),
@@ -688,6 +713,7 @@ pub fn get_reference_lookalike_template_suites() -> Vec<TemplateSuite> {
                 border_radius: "0.65rem".into(),
                 noise_opacity: 0.04,
             },
+        },
         TemplateSuite {
             slug: "music-melon-chart".into(),
             title: "MelodyK Top-100 Charted Music Matrix".into(),
@@ -714,6 +740,7 @@ pub fn get_reference_lookalike_template_suites() -> Vec<TemplateSuite> {
                 border_radius: "0.85rem".into(),
                 noise_opacity: 0.03,
             },
+        },
         TemplateSuite {
             slug: "music-flo-mood".into(),
             title: "FloMood Sensory Minimalist Audio Player".into(),
@@ -740,6 +767,7 @@ pub fn get_reference_lookalike_template_suites() -> Vec<TemplateSuite> {
                 border_radius: "1.0rem".into(),
                 noise_opacity: 0.025,
             },
+        },
         TemplateSuite {
             slug: "music-spatial-lossless".into(),
             title: "LosslessSpatial Hi-Res Studio Streaming".into(),
@@ -766,6 +794,7 @@ pub fn get_reference_lookalike_template_suites() -> Vec<TemplateSuite> {
                 border_radius: "1.25rem".into(),
                 noise_opacity: 0.03,
             },
+        },
         TemplateSuite {
             slug: "music-tidal-master".into(),
             title: "MasterTidal 24-Bit / 192kHz Audiophile Haven".into(),
@@ -792,6 +821,7 @@ pub fn get_reference_lookalike_template_suites() -> Vec<TemplateSuite> {
                 border_radius: "0.5rem".into(),
                 noise_opacity: 0.03,
             },
+        },
         TemplateSuite {
             slug: "cms-blume-visual".into(),
             title: "BlumeVisual Decoupled Reactive CMS".into(),
@@ -818,6 +848,7 @@ pub fn get_reference_lookalike_template_suites() -> Vec<TemplateSuite> {
                 border_radius: "0.65rem".into(),
                 noise_opacity: 0.035,
             },
+        },
         TemplateSuite {
             slug: "cms-kirki-customizer".into(),
             title: "CustomizerCore Real-Time Theme & Controls CMS".into(),
@@ -844,6 +875,7 @@ pub fn get_reference_lookalike_template_suites() -> Vec<TemplateSuite> {
                 border_radius: "0.75rem".into(),
                 noise_opacity: 0.03,
             },
+        },
         TemplateSuite {
             slug: "cms-strapi-forge".into(),
             title: "StrapiForge API-First Node & Rust Content Core".into(),
@@ -870,6 +902,7 @@ pub fn get_reference_lookalike_template_suites() -> Vec<TemplateSuite> {
                 border_radius: "0.65rem".into(),
                 noise_opacity: 0.035,
             },
+        },
         TemplateSuite {
             slug: "cms-storyblock-canvas".into(),
             title: "StoryBlock Component-Based Visual Canvas CMS".into(),
@@ -896,6 +929,7 @@ pub fn get_reference_lookalike_template_suites() -> Vec<TemplateSuite> {
                 border_radius: "0.75rem".into(),
                 noise_opacity: 0.03,
             },
+        },
         TemplateSuite {
             slug: "cms-press-engine".into(),
             title: "PressEngine Headless Gutenberg Block System".into(),
@@ -922,6 +956,7 @@ pub fn get_reference_lookalike_template_suites() -> Vec<TemplateSuite> {
                 border_radius: "0.5rem".into(),
                 noise_opacity: 0.03,
             },
+        },
         TemplateSuite {
             slug: "cms-craft-matrix".into(),
             title: "CraftMatrix Multi-Lingual Matrix Content Studio".into(),
@@ -948,6 +983,7 @@ pub fn get_reference_lookalike_template_suites() -> Vec<TemplateSuite> {
                 border_radius: "0.65rem".into(),
                 noise_opacity: 0.035,
             },
+        },
         TemplateSuite {
             slug: "portfolio-toy-physic-3d".into(),
             title: "ToyPhysic3D Interactive Vehicle Portfolio".into(),
@@ -974,6 +1010,7 @@ pub fn get_reference_lookalike_template_suites() -> Vec<TemplateSuite> {
                 border_radius: "1.0rem".into(),
                 noise_opacity: 0.035,
             },
+        },
         TemplateSuite {
             slug: "portfolio-editorial-duo".into(),
             title: "EditorialDuo High-Fashion Asymmetric Studio".into(),
@@ -1000,6 +1037,7 @@ pub fn get_reference_lookalike_template_suites() -> Vec<TemplateSuite> {
                 border_radius: "0rem".into(),
                 noise_opacity: 0.04,
             },
+        },
         TemplateSuite {
             slug: "portfolio-illustrative-craft".into(),
             title: "IllustrativeCraft Typography & Graphic Archive".into(),
@@ -1026,6 +1064,7 @@ pub fn get_reference_lookalike_template_suites() -> Vec<TemplateSuite> {
                 border_radius: "0.5rem".into(),
                 noise_opacity: 0.045,
             },
+        },
         TemplateSuite {
             slug: "portfolio-split-identity".into(),
             title: "SplitIdentity Designer & Coder Dual Portfolio".into(),
@@ -1052,6 +1091,7 @@ pub fn get_reference_lookalike_template_suites() -> Vec<TemplateSuite> {
                 border_radius: "0.75rem".into(),
                 noise_opacity: 0.03,
             },
+        },
         TemplateSuite {
             slug: "portfolio-whimsical-svg".into(),
             title: "WhimsicalCanvas Interactive Kinetic SVG Studio".into(),
@@ -1078,6 +1118,7 @@ pub fn get_reference_lookalike_template_suites() -> Vec<TemplateSuite> {
                 border_radius: "1.25rem".into(),
                 noise_opacity: 0.035,
             },
+        },
         TemplateSuite {
             slug: "portfolio-minimal-motion".into(),
             title: "MinimalMotion Micro-Interaction & UI Physics Portfolio".into(),
@@ -1104,6 +1145,7 @@ pub fn get_reference_lookalike_template_suites() -> Vec<TemplateSuite> {
                 border_radius: "0.25rem".into(),
                 noise_opacity: 0.02,
             },
+        },
         TemplateSuite {
             slug: "ind-mobility-dynamics".into(),
             title: "GlobalMobility Next-Gen Automotive Brand".into(),
@@ -1130,6 +1172,7 @@ pub fn get_reference_lookalike_template_suites() -> Vec<TemplateSuite> {
                 border_radius: "0.5rem".into(),
                 noise_opacity: 0.03,
             },
+        },
         TemplateSuite {
             slug: "ind-safety-blades".into(),
             title: "PrecisionBlades Industrial Safety Cutters".into(),
@@ -1156,6 +1199,7 @@ pub fn get_reference_lookalike_template_suites() -> Vec<TemplateSuite> {
                 border_radius: "0.5rem".into(),
                 noise_opacity: 0.03,
             },
+        },
         TemplateSuite {
             slug: "ind-laser-fabrication".into(),
             title: "LaserFabrication High-Power CNC Sheet Metal Matrix".into(),
@@ -1182,6 +1226,7 @@ pub fn get_reference_lookalike_template_suites() -> Vec<TemplateSuite> {
                 border_radius: "0.35rem".into(),
                 noise_opacity: 0.04,
             },
+        },
         TemplateSuite {
             slug: "ind-orange-robotics".into(),
             title: "CyberneticArm 6-Axis Industrial Robotics".into(),
@@ -1208,6 +1253,7 @@ pub fn get_reference_lookalike_template_suites() -> Vec<TemplateSuite> {
                 border_radius: "0.4rem".into(),
                 noise_opacity: 0.04,
             },
+        },
         TemplateSuite {
             slug: "ind-rapid-digital".into(),
             title: "RapidDigital On-Demand CNC & Injection Molding Portal".into(),
@@ -1234,12 +1280,13 @@ pub fn get_reference_lookalike_template_suites() -> Vec<TemplateSuite> {
                 border_radius: "0.5rem".into(),
                 noise_opacity: 0.035,
             },
+        },
         TemplateSuite {
             slug: "ind-energy-schneider".into(),
             title: "EcoStruxure Industrial Energy & Smart Grid Command".into(),
             subtitle: "Microgrid energy telemetry, carbon accounting ledger, IoT switchgear monitoring & industrial power automation".into(),
             class_reference: "EcoStruxure Energy Grid Class".into(),
-            work_type: WorkTypeClassification::HeavyIndustrialB2b,
+            work_type: WorkTypeClassification::IndustrialWholesaleB2B,
             modules_used: vec!["erp-energy".into(), "erp-manufacturing".into(), "erp-iot".into()],
             key_capabilities: vec![
                 "Real-Time Medium/Low Voltage Switchgear IoT Telemetry".into(),
@@ -1260,6 +1307,7 @@ pub fn get_reference_lookalike_template_suites() -> Vec<TemplateSuite> {
                 border_radius: "0.5rem".into(),
                 noise_opacity: 0.035,
             },
+        },
         TemplateSuite {
             slug: "shop-squeeze-olive".into(),
             title: "SqueezeOlive Artisanal Olive Oil Kitchen eShop".into(),
@@ -1286,6 +1334,7 @@ pub fn get_reference_lookalike_template_suites() -> Vec<TemplateSuite> {
                 border_radius: "1.0rem".into(),
                 noise_opacity: 0.035,
             },
+        },
         TemplateSuite {
             slug: "shop-ceramic-kitchen".into(),
             title: "CeramicCook Non-Toxic Mineral Ceramic Cookware".into(),
@@ -1312,6 +1361,7 @@ pub fn get_reference_lookalike_template_suites() -> Vec<TemplateSuite> {
                 border_radius: "1.0rem".into(),
                 noise_opacity: 0.03,
             },
+        },
         TemplateSuite {
             slug: "shop-direct-fragrance".into(),
             title: "ModernFragrance High-Concept Scent & Sample Atelier".into(),
@@ -1338,6 +1388,7 @@ pub fn get_reference_lookalike_template_suites() -> Vec<TemplateSuite> {
                 border_radius: "0.85rem".into(),
                 noise_opacity: 0.035,
             },
+        },
         TemplateSuite {
             slug: "shop-single-spice".into(),
             title: "SingleOrigin Direct-Trade Farm Heritage Spices".into(),
@@ -1364,6 +1415,7 @@ pub fn get_reference_lookalike_template_suites() -> Vec<TemplateSuite> {
                 border_radius: "0.85rem".into(),
                 noise_opacity: 0.04,
             },
+        },
         TemplateSuite {
             slug: "shop-canine-modern".into(),
             title: "ErgonomicPet Color-Blocked Canine Lifestyle Essentials".into(),
@@ -1390,6 +1442,7 @@ pub fn get_reference_lookalike_template_suites() -> Vec<TemplateSuite> {
                 border_radius: "1.25rem".into(),
                 noise_opacity: 0.03,
             },
+        },
         TemplateSuite {
             slug: "shop-turkish-textile".into(),
             title: "ArtisanalLoom Slow-Craft Organic Robes & Linen".into(),
@@ -1416,6 +1469,7 @@ pub fn get_reference_lookalike_template_suites() -> Vec<TemplateSuite> {
                 border_radius: "0.5rem".into(),
                 noise_opacity: 0.04,
             },
+        },
         TemplateSuite {
             slug: "shop-speed-athletics".into(),
             title: "KineticFootwear Innovation Running & Apparel Flagship".into(),
@@ -1442,6 +1496,7 @@ pub fn get_reference_lookalike_template_suites() -> Vec<TemplateSuite> {
                 border_radius: "0.25rem".into(),
                 noise_opacity: 0.035,
             },
+        },
         TemplateSuite {
             slug: "shop-dewy-skin".into(),
             title: "DewySkin Bare-Faced Clean Beauty & Lip Tint Boutique".into(),
@@ -1468,6 +1523,7 @@ pub fn get_reference_lookalike_template_suites() -> Vec<TemplateSuite> {
                 border_radius: "1.25rem".into(),
                 noise_opacity: 0.03,
             },
+        },
         TemplateSuite {
             slug: "viewer-spatial-room-3d".into(),
             title: "SpatialRoom 3D Mixed-Reality Interior Configurator".into(),
@@ -1494,6 +1550,7 @@ pub fn get_reference_lookalike_template_suites() -> Vec<TemplateSuite> {
                 border_radius: "0.75rem".into(),
                 noise_opacity: 0.03,
             },
+        },
         TemplateSuite {
             slug: "viewer-sneaker-spatial-3d".into(),
             title: "SneakerSpatial Real-Time 3D Footwear Inspector".into(),
@@ -1520,6 +1577,7 @@ pub fn get_reference_lookalike_template_suites() -> Vec<TemplateSuite> {
                 border_radius: "0.85rem".into(),
                 noise_opacity: 0.03,
             },
+        },
         TemplateSuite {
             slug: "viewer-stuttgart-coupe-3d".into(),
             title: "StuttgartCoupe WebGL 3D Sports Car Atelier".into(),
@@ -1546,6 +1604,7 @@ pub fn get_reference_lookalike_template_suites() -> Vec<TemplateSuite> {
                 border_radius: "0.5rem".into(),
                 noise_opacity: 0.035,
             },
+        },
         TemplateSuite {
             slug: "viewer-bavarian-luxury-3d".into(),
             title: "BavarianLuxury Executive Sedan 3D Interior & Exterior".into(),
@@ -1572,6 +1631,7 @@ pub fn get_reference_lookalike_template_suites() -> Vec<TemplateSuite> {
                 border_radius: "0.65rem".into(),
                 noise_opacity: 0.03,
             },
+        },
         TemplateSuite {
             slug: "viewer-fintech-globe-3d".into(),
             title: "FinTechGlobe Interactive WebGL Transaction Earth".into(),
@@ -1598,6 +1658,7 @@ pub fn get_reference_lookalike_template_suites() -> Vec<TemplateSuite> {
                 border_radius: "1.0rem".into(),
                 noise_opacity: 0.035,
             },
+        },
         TemplateSuite {
             slug: "viewer-physics-sandbox-3d".into(),
             title: "PhysicsSandbox 3D Interactive Toy Vehicle Playground".into(),

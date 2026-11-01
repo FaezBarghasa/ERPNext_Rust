@@ -21,3 +21,6 @@ hmac = { workspace = true }
 hex = { workspace = true }
 rand = { workspace = true }
 
+[dev-dependencies]
+proptest = { workspace = true }
+

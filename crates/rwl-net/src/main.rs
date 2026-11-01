@@ -38,6 +38,24 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                 None
             };
 
+            let quic_cfg = rwl_net::QuicConfig::from_env();
+            if quic_cfg.enabled {
+                println!(
+                    "🌐 QUIC Transport & HTTP/3 Engine active on UDP {}",
+                    quic_cfg.bind_addr
+                );
+                let quic_bind = quic_cfg.bind_addr;
+                tokio::spawn(async move {
+                    if let Ok(socket) = tokio::net::UdpSocket::bind(quic_bind).await {
+                        let mut buf = [0u8; 65535];
+                        while let Ok((len, peer)) = socket.recv_from(&mut buf).await {
+                            let mut engine = rwl_net::QuicH3StreamingEngine::new(peer);
+                            let _ = engine.receive_datagram(&buf[..len]);
+                        }
+                    }
+                });
+            }
+
             println!("⚡ Actix-web server binding to http://{}", args.bind);
             rwl_net::run_server_with_config(&args.bind, topology, acme_gateway, args.workers)
                 .await?;

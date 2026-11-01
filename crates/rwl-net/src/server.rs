@@ -164,22 +164,13 @@ async fn metrics_handler() -> impl Responder {
         "# HELP rwl_http_requests_total Total number of HTTP requests processed.\n\
          # TYPE rwl_http_requests_total counter\n\
          rwl_http_requests_total {}\n\
-         # HELP rustnext_http_requests_total Total number of HTTP requests processed.\n\
-         # TYPE rustnext_http_requests_total counter\n\
-         rustnext_http_requests_total {}\n\
          # HELP rwl_uptime_seconds Total runtime uptime in seconds.\n\
          # TYPE rwl_uptime_seconds gauge\n\
          rwl_uptime_seconds {}\n\
-         # HELP rustnext_uptime_seconds Total runtime uptime in seconds.\n\
-         # TYPE rustnext_uptime_seconds gauge\n\
-         rustnext_uptime_seconds {}\n\
          # HELP rwl_active_tenant_sessions Active cached tenant sessions count.\n\
          # TYPE rwl_active_tenant_sessions gauge\n\
-         rwl_active_tenant_sessions 1\n\
-         # HELP rustnext_active_tenant_sessions Active cached tenant sessions count.\n\
-         # TYPE rustnext_active_tenant_sessions gauge\n\
-         rustnext_active_tenant_sessions 1\n",
-        total_reqs, total_reqs, uptime_secs, uptime_secs
+         rwl_active_tenant_sessions 1\n",
+        total_reqs, uptime_secs
     );
 
     HttpResponse::Ok()
@@ -385,6 +376,22 @@ async fn builder_studio_handler(page_id: Option<web::Path<String>>) -> impl Resp
             padding: 1.25rem;
             gap: 1rem;
             overflow-y: auto;
+        }}
+        @media (max-width: 900px) {{
+            body {{
+                flex-direction: column;
+                overflow-y: auto;
+                height: auto;
+            }}
+            .builder-sidebar, .builder-inspector-sidebar {{
+                width: 100%;
+                border-right: none;
+                border-left: none;
+                border-bottom: 1px solid var(--border);
+            }}
+            .builder-workspace {{
+                min-height: 500px;
+            }}
         }}
         .builder-workspace {{
             flex: 1;
@@ -3144,6 +3151,7 @@ pub fn configure_app(
         .app_data(web::Data::new(DynamicRbacState::default()))
         .app_data(web::Data::new(erp_cms::EdgeAnalyticsEngine::new()))
         .app_data(web::PayloadConfig::new(topology.max_payload_bytes))
+        .app_data(web::JsonConfig::default().limit(topology.max_payload_bytes))
         // Root storefront & Multi-Persona Shells
         .route("/", web::get().to(storefront_handler))
         .route("/desk", web::get().to(desk_handler))
@@ -3937,6 +3945,7 @@ pub async fn run_server_with_config(
             .wrap(Compress::default())
             .wrap(NormalizePath::trim())
             .wrap(crate::middleware::SecurityHeaders::new())
+            .wrap(crate::middleware::CsrfMiddleware::new())
             .wrap(RateLimitMiddleware::new(300.0, 50.0))
             .configure(|cfg| configure_app(cfg, pool_mgr_data.clone(), topo, gw))
     });
@@ -3946,7 +3955,10 @@ pub async fn run_server_with_config(
     } else {
         num_cpus()
     });
-    server = server.workers(effective_workers);
+    server = server
+        .workers(effective_workers)
+        .client_request_timeout(Duration::from_secs(30))
+        .client_disconnect_timeout(Duration::from_secs(5));
 
     server.bind(addr)?.run().await
 }

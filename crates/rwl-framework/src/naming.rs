@@ -112,6 +112,32 @@ impl NamingEngine {
         day: u32,
         store: &NamingSeriesStore,
     ) -> String {
+        let (prefix, hash_count) = Self::extract_prefix_and_width(template, year, month, day);
+        let seq = store.get_next(&prefix);
+        format!("{prefix}{seq:0width$}", width = hash_count)
+    }
+
+    /// Extracts prefix and formats template directly using an explicit counter value.
+    #[must_use]
+    pub fn format_series_with_counter(
+        template: &str,
+        year: i32,
+        month: u32,
+        day: u32,
+        seq: u64,
+    ) -> String {
+        let (prefix, hash_count) = Self::extract_prefix_and_width(template, year, month, day);
+        format!("{prefix}{seq:0width$}", width = hash_count)
+    }
+
+    /// Extracts normalized prefix and hash width from a series template.
+    #[must_use]
+    pub fn extract_prefix_and_width(
+        template: &str,
+        year: i32,
+        month: u32,
+        day: u32,
+    ) -> (String, usize) {
         // Replace date tokens
         let mut prefix = template
             .replace(".YYYY.", &format!("{year:04}"))
@@ -143,8 +169,7 @@ impl NamingEngine {
             hash_count = 5;
         }
 
-        let seq = store.get_next(&prefix);
-        format!("{prefix}{seq:0width$}", width = hash_count)
+        (prefix, hash_count)
     }
 }
 

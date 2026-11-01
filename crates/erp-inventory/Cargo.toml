@@ -17,3 +17,6 @@ thiserror = { workspace = true }
 chrono = { workspace = true }
 compact_str = { workspace = true }
 rayon = { workspace = true }
+
+[dev-dependencies]
+proptest = { workspace = true }

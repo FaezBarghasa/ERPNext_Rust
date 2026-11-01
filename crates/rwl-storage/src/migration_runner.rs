@@ -145,6 +145,20 @@ DEFINE TABLE notifications SCHEMALESS;
 DEFINE TABLE emails SCHEMALESS;
 "#,
     },
+    MigrationDefinition {
+        id: "0009_schema_integrity",
+        name: "Enforce Schema Integrity, Unique Constraints & Naming Series",
+        surql: r#"
+DEFINE TABLE naming_series_counters SCHEMAFULL;
+DEFINE FIELD prefix ON TABLE naming_series_counters TYPE string;
+DEFINE FIELD current ON TABLE naming_series_counters TYPE int;
+DEFINE INDEX idx_series_prefix ON TABLE naming_series_counters FIELDS prefix UNIQUE;
+
+DEFINE INDEX idx_journal_entry_name ON TABLE journal_entries FIELDS name UNIQUE;
+DEFINE INDEX idx_stock_ledger_name ON TABLE stock_ledger_entries FIELDS name UNIQUE;
+DEFINE INDEX idx_salary_slip_name ON TABLE salary_slips FIELDS name UNIQUE;
+"#,
+    },
 ];
 
 /// Migration Runner for orchestrating schema lifecycles on tenant databases.

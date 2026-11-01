@@ -2,6 +2,8 @@ pub mod ai_oauth;
 pub mod cache;
 pub mod cli;
 pub mod cluster_sync;
+pub mod db_helpers;
+pub mod error;
 pub mod live;
 pub mod mail_queue;
 pub mod middleware;
@@ -19,6 +21,7 @@ pub use ai_oauth::{
 pub use cache::{CachedFiscalYear, CachedPricingRule, TenantMemoryCache};
 pub use cli::{BenchmarkArgs, Cli, Commands, MigrateArgs, StartArgs, TenantArgs, TenantCommands};
 pub use cluster_sync::{ClusterPeerRecord, ClusterSyncBus, ClusterSyncError, ClusterSyncEvent};
+pub use error::ApiError;
 pub use live::{RealtimeEvent, RealtimeHub, live_query, live_ws_handler};
 pub use mail_queue::{EmailMessage, MailQueueError, MailQueueManager};
 pub use queue::{
@@ -26,8 +29,8 @@ pub use queue::{
     StaggeredMaintenanceScheduler,
 };
 pub use quic_h3_stream::{
-    H3Frame, H3FrameType, H3Settings, QpackCodec, QpackField, QuicConnectionId, QuicH3Error,
-    QuicH3StreamingEngine, QuicStreamType, VarInt,
+    H3Frame, H3FrameType, H3Settings, QpackCodec, QpackField, QuicConfig, QuicConnectionId,
+    QuicH3Error, QuicH3StreamingEngine, QuicStreamType, VarInt,
 };
 pub use rate_limit::{RateLimitMiddleware, TokenBucketRateLimiter};
 pub use routes::{create_resource, delete_resource, get_resource, list_resource};

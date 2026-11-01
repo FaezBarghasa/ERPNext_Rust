@@ -529,6 +529,33 @@ pub struct QuicH3StreamingEngine {
     pub total_frames_sent: AtomicU64,
 }
 
+/// QUIC & HTTP/3 Runtime Server Configuration.
+#[derive(Debug, Clone)]
+pub struct QuicConfig {
+    pub enabled: bool,
+    pub bind_addr: SocketAddr,
+    pub alt_svc_port: u16,
+}
+
+impl QuicConfig {
+    #[must_use]
+    pub fn from_env() -> Self {
+        let enabled = std::env::var("RWL_QUIC_ENABLED")
+            .map(|v| v == "1" || v.eq_ignore_ascii_case("true"))
+            .unwrap_or(false);
+        let port = std::env::var("RWL_QUIC_PORT")
+            .ok()
+            .and_then(|p| p.parse().ok())
+            .unwrap_or(4433);
+        let bind_addr = SocketAddr::from(([0, 0, 0, 0], port));
+        Self {
+            enabled,
+            bind_addr,
+            alt_svc_port: port,
+        }
+    }
+}
+
 impl QuicH3StreamingEngine {
     /// Initializes a new QUIC & HTTP/3 streaming session for a connected peer.
     #[must_use]
@@ -545,6 +572,16 @@ impl QuicH3StreamingEngine {
             last_activity: Instant::now(),
             total_frames_sent: AtomicU64::new(0),
         }
+    }
+
+    /// Ingests and processes an incoming QUIC datagram frame.
+    pub fn receive_datagram(&mut self, payload: &[u8]) -> Result<Option<H3Frame>, QuicH3Error> {
+        self.last_activity = Instant::now();
+        if payload.is_empty() {
+            return Ok(None);
+        }
+        let (frame, _) = H3Frame::deserialize(payload)?;
+        Ok(Some(frame))
     }
 
     /// Prunes finished streams to prevent monotonic memory leakage over long-running sessions.

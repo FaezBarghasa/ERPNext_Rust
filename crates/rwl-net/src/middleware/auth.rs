@@ -12,16 +12,39 @@ use actix_web::{
     http::{StatusCode, header},
 };
 use futures_util::future::{LocalBoxFuture, Ready, ok};
+use rand::Rng;
 use rwl_meta::auth::{AuthError, SessionClaims, verify_token};
 use rwl_meta::rbac::{HasPermissionEdge, Permission, check_permission};
 use serde::{Deserialize, Serialize};
-use std::sync::Arc;
+use std::sync::{Arc, LazyLock};
 
-/// Default master token signing secret key for tenant cluster fallback.
-pub const MASTER_JWT_SECRET: &[u8] =
-    b"rustnext_enterprise_paseto_master_secret_key_2026_offline_first";
+/// Ephemeral per-process secret used only when no env var is configured (debug/dev only).
+/// Regenerated on every restart — intentionally invalidates all sessions.
+/// In release builds, the server will panic at startup if no env var is set.
+static EPHEMERAL_DEV_SECRET: LazyLock<Vec<u8>> = LazyLock::new(|| {
+    #[cfg(not(debug_assertions))]
+    panic!(
+        "[SECURITY] RWL_MASTER_TOKEN_SECRET env var is required in release builds. \
+         Set a >=32-byte random key."
+    );
+    #[cfg(debug_assertions)]
+    {
+        tracing::warn!(
+            "[AUTH] No RWL_MASTER_TOKEN_SECRET set — using ephemeral dev key. \
+             All tokens are invalidated on restart. DO NOT use in production."
+        );
+        let mut key = vec![0u8; 64];
+        rand::rng().fill_bytes(&mut key);
+        key
+    }
+});
 
-/// Retrieves the active master token secret key from environment or fallback default.
+/// Retrieves the active master token secret key from environment variables.
+///
+/// # Panics
+/// - In **release** builds: panics immediately if no env var is configured.
+/// - In **debug** builds: falls back to a random ephemeral key (logged as WARN).
+/// - In either build: panics if the provided key is shorter than 32 bytes.
 #[must_use]
 pub fn get_master_token_secret() -> Vec<u8> {
     if let Ok(key) = std::env::var("RWL_MASTER_TOKEN_SECRET")
@@ -33,14 +56,15 @@ pub fn get_master_token_secret() -> Vec<u8> {
         if !trimmed.is_empty() {
             if trimmed.len() < 32 {
                 panic!(
-                    "Security violation: RUSTNEXT_MASTER_TOKEN_SECRET must be at least 32 bytes (got {})",
+                    "[SECURITY] RWL_MASTER_TOKEN_SECRET must be at least 32 bytes (got {}). \
+                     Generate one with: openssl rand -hex 32",
                     trimmed.len()
                 );
             }
             return trimmed.as_bytes().to_vec();
         }
     }
-    MASTER_JWT_SECRET.to_vec()
+    EPHEMERAL_DEV_SECRET.clone()
 }
 
 /// Authenticated Security Context extracted from verified session tokens.

@@ -66,6 +66,11 @@ use erp_trade::wishlist::{Wishlist, WishlistItem};
 use regex::Regex;
 use rust_decimal::Decimal;
 use rust_decimal_macros::dec;
+use rwl_meta::registry::DocTypeRegistry;
+
+/// Canonical ERPNext DocType schema registry loaded once at process initialization.
+pub static GLOBAL_DOCTYPE_REGISTRY: std::sync::LazyLock<DocTypeRegistry> =
+    std::sync::LazyLock::new(DocTypeRegistry::new_standard_erpnext);
 use rwl_framework::controller::ControllerRegistry;
 use rwl_framework::export_engine::{DocumentExporter, ExportColumn, ExportFormat};
 use rwl_framework::lifecycle::Document;
@@ -508,7 +513,7 @@ pub async fn v2_get_document(
 
 /// Handler for introspecting all registered DocTypes: `GET /api/v2/meta`
 pub async fn v2_list_meta_handler() -> impl Responder {
-    let registry = rwl_meta::registry::DocTypeRegistry::new_standard_erpnext();
+    let registry = &*GLOBAL_DOCTYPE_REGISTRY;
     HttpResponse::Ok().json(serde_json::json!({
         "doctypes": registry.list_doctypes(),
         "total": registry.len(),
@@ -518,7 +523,7 @@ pub async fn v2_list_meta_handler() -> impl Responder {
 /// Handler for fetching canonical DocType schema metadata: `GET /api/v2/meta/{doctype}`
 pub async fn v2_get_meta_handler(path: web::Path<String>) -> impl Responder {
     let target = path.into_inner();
-    let registry = rwl_meta::registry::DocTypeRegistry::new_standard_erpnext();
+    let registry = &*GLOBAL_DOCTYPE_REGISTRY;
 
     let found = registry.list_doctypes().into_iter().find(|name| {
         name.eq_ignore_ascii_case(&target)
@@ -594,6 +599,34 @@ pub async fn v2_print_document(
     }
 }
 
+/// Resolves next sequence counter atomically from the tenant database's `naming_series_counters` table.
+async fn resolve_tenant_series<C: surrealdb::Connection>(
+    client: &surrealdb::Surreal<C>,
+    template: &str,
+    year: i32,
+    month: u32,
+    day: u32,
+) -> String {
+    let (prefix, hash_count) = rwl_framework::naming::NamingEngine::extract_prefix_and_width(
+        template, year, month, day,
+    );
+    let clean_key = prefix.replace(['-', '.', '/', ' ', ':', '#'], "_");
+    let sql = format!(
+        "UPSERT naming_series_counters:{clean_key} SET prefix = $prefix, current = (current || 0) + 1 RETURN AFTER;"
+    );
+    let seq = if let Ok(mut resp) = client.query(sql).bind(("prefix", prefix.clone())).await
+        && let Ok(Some(record)) = resp.take::<Option<serde_json::Value>>(0)
+        && let Some(curr) = record.get("current").and_then(|v| v.as_u64())
+    {
+        curr
+    } else {
+        // Fallback entropy sequence if counters table offline or read fails
+        let micro = (chrono::Utc::now().timestamp_subsec_micros() as u64) % 90000 + 10000;
+        micro
+    };
+    format!("{prefix}{seq:0width$}", width = hash_count)
+}
+
 /// Handler for creating a document: `POST /api/v2/document/{doctype}`
 pub async fn v2_create_document(
     req: HttpRequest,
@@ -666,9 +699,6 @@ pub async fn v2_create_document(
         }
     }
 
-    static GLOBAL_SERIES_STORE: std::sync::LazyLock<rwl_framework::naming::NamingSeriesStore> =
-        std::sync::LazyLock::new(rwl_framework::naming::NamingSeriesStore::new);
-
     let name = if let Some(serde_json::Value::String(n)) = doc_map.get("name")
         && !n.trim().is_empty()
     {
@@ -689,23 +719,11 @@ pub async fn v2_create_document(
                         "{}-.YYYY.-.#####",
                         schema.name.to_uppercase().replace(' ', "-")
                     );
-                    rwl_framework::naming::NamingEngine::parse_series_template(
-                        &fallback_template,
-                        year,
-                        month,
-                        day,
-                        &GLOBAL_SERIES_STORE,
-                    )
+                    resolve_tenant_series(&client, &fallback_template, year, month, day).await
                 }
             }
             Some(rule) if rule.contains(".#") => {
-                rwl_framework::naming::NamingEngine::parse_series_template(
-                    rule,
-                    year,
-                    month,
-                    day,
-                    &GLOBAL_SERIES_STORE,
-                )
+                resolve_tenant_series(&client, rule, year, month, day).await
             }
             _ => {
                 if let Some(s) = doc_map.get("naming_series").and_then(|v| v.as_str()) {
@@ -714,25 +732,13 @@ pub async fn v2_create_document(
                     } else {
                         format!("{s}.#####")
                     };
-                    rwl_framework::naming::NamingEngine::parse_series_template(
-                        &tmpl,
-                        year,
-                        month,
-                        day,
-                        &GLOBAL_SERIES_STORE,
-                    )
+                    resolve_tenant_series(&client, &tmpl, year, month, day).await
                 } else {
                     let fallback_template = format!(
                         "{}-.YYYY.-.#####",
                         schema.name.to_uppercase().replace(' ', "-")
                     );
-                    rwl_framework::naming::NamingEngine::parse_series_template(
-                        &fallback_template,
-                        year,
-                        month,
-                        day,
-                        &GLOBAL_SERIES_STORE,
-                    )
+                    resolve_tenant_series(&client, &fallback_template, year, month, day).await
                 }
             }
         }
@@ -10214,11 +10220,12 @@ mod tests {
     #[tokio::test]
     async fn test_dynamic_rbac_admin_flow() {
         let state = web::Data::new(DynamicRbacState::default());
+        let test_req = actix_web::test::TestRequest::default().to_http_request();
 
         // 1. List users
-        let resp = admin_list_users_handler(state.clone())
+        let resp = admin_list_users_handler(test_req.clone(), state.clone())
             .await
-            .respond_to(&actix_web::test::TestRequest::default().to_http_request());
+            .respond_to(&test_req);
         assert_eq!(resp.status(), actix_web::http::StatusCode::OK);
 
         // 2. Create dynamic user with specific role
@@ -10228,9 +10235,9 @@ mod tests {
             email: "buyer@erpnext.rs".into(),
             roles: Some(vec![ROLE_PURCHASE_USER.into()]),
         });
-        let create_resp = admin_create_user_handler(state.clone(), create_payload)
+        let create_resp = admin_create_user_handler(test_req.clone(), state.clone(), create_payload)
             .await
-            .respond_to(&actix_web::test::TestRequest::default().to_http_request());
+            .respond_to(&test_req);
         assert_eq!(create_resp.status(), actix_web::http::StatusCode::CREATED);
 
         // 3. Assign additional roles dynamically (e.g. Warehouse Manager)
@@ -10238,12 +10245,13 @@ mod tests {
             roles: vec![ROLE_PURCHASE_USER.into(), ROLE_WAREHOUSE_MANAGER.into()],
         });
         let update_resp = admin_update_user_roles_handler(
+            test_req.clone(),
             state.clone(),
             web::Path::from("usr_lead_buyer".to_string()),
             update_roles_payload,
         )
         .await
-        .respond_to(&actix_web::test::TestRequest::default().to_http_request());
+        .respond_to(&test_req);
         assert_eq!(update_resp.status(), actix_web::http::StatusCode::OK);
 
         // 4. Query effective permissions for DocType "Warehouse"

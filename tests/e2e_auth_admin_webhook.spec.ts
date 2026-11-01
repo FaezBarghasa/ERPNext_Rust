@@ -22,8 +22,8 @@ test.describe('Phase 8: Enterprise E2E API & Infrastructure Hardening Suite', ()
     const metricsRes = await request.get(`${BASE_URL}/metrics`);
     expect(metricsRes.ok()).toBeTruthy();
     const metricsText = await metricsRes.text();
-    expect(metricsText).toContain('rustnext_http_requests_total');
-    expect(metricsText).toContain('rustnext_uptime_seconds');
+    expect(metricsText).toContain('rwl_http_requests_total');
+    expect(metricsText).toContain('rwl_uptime_seconds');
   });
 
   test('PWA Web Manifest & Offline Service Worker Endpoints', async ({ request }) => {
