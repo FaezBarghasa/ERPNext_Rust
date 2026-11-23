@@ -502,8 +502,8 @@ const DESK_BASE_HTML: &str = r#"<!DOCTYPE html>
             if (userMenu) userMenu.style.display = 'none';
         });
 
-        // Standard AwesomeBar (Frappe 1:1 Omnibar Search Navigation)
-        const awesomeItems = [
+        // Dynamic AwesomBar (Frappe 1:1 Omnibar Search Navigation)
+        const baseAwesomeItems = [
             { label: 'Open Frappe Builder Studio', url: '/builder', group: 'Studios' },
             { label: 'Open Emdash Editorial Studio', url: '/emdash', group: 'Studios' },
             { label: 'Open Sales Invoice List', url: '/desk/list/sales_invoice', group: 'DocTypes' },
@@ -530,6 +530,29 @@ const DESK_BASE_HTML: &str = r#"<!DOCTYPE html>
             { label: 'Report: Accounts Receivable', url: '/desk/list/sales_invoice', group: 'Reports' },
             { label: 'Report: Stock Balance', url: '/desk/list/stock_entry', group: 'Reports' }
         ];
+
+        let awesomeItems = [...baseAwesomeItems];
+
+        // Asynchronously fetch dynamic schema and custom DocTypes from server API
+        (async function fetchDynamicDocTypes() {
+            try {
+                const res = await fetch('/api/method/frappe.desk.desktop.get_workspace_sidebar_items');
+                if (res.ok) {
+                    const data = await res.json();
+                    if (data.message && Array.isArray(data.message.pages)) {
+                        data.message.pages.forEach(p => {
+                            if (p.name && !awesomeItems.some(i => i.label.includes(p.name))) {
+                                awesomeItems.push({
+                                    label: `Open ${p.title || p.name}`,
+                                    url: `/desk/list/${p.name.toLowerCase().replace(/ /g, '_')}`,
+                                    group: 'Custom DocTypes'
+                                });
+                            }
+                        });
+                    }
+                }
+            } catch (_) {}
+        })();
 
         const searchInput = document.getElementById('omni-search');
         const popover = document.getElementById('omni-popover');

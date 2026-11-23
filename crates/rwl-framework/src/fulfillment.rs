@@ -296,6 +296,73 @@ impl FulfillmentTracker {
             obj.insert("status".into(), Value::String(fulfillment.status));
         }
     }
+
+    /// Extracts remaining unfulfilled line items from a Sales Order for Delivery Note creation.
+    /// Only items with remaining qty > 0 are included.
+    pub fn create_downstream_delivery_items(so_doc: &Value) -> Vec<Value> {
+        let mut result = Vec::new();
+        if let Some(items) = so_doc.get("items").and_then(|v| v.as_array()) {
+            for itm in items {
+                let total_qty = Self::parse_decimal(itm.get("qty"));
+                let delivered = Self::parse_decimal(itm.get("delivered_qty"));
+                let remaining = (total_qty - delivered).max(Decimal::ZERO);
+                if remaining > Decimal::ZERO {
+                    let mut draft_item = itm.clone();
+                    if let Some(obj) = draft_item.as_object_mut() {
+                        obj.insert("qty".into(), Value::String(remaining.to_string()));
+                        if let Some(so_detail) = itm.get("name").and_then(|v| v.as_str()) {
+                            obj.insert("so_detail".into(), Value::String(so_detail.to_string()));
+                        }
+                        if let Some(so_name) = so_doc.get("name").and_then(|v| v.as_str()) {
+                            obj.insert("against_sales_order".into(), Value::String(so_name.to_string()));
+                        }
+                    }
+                    result.push(draft_item);
+                }
+            }
+        }
+        result
+    }
+
+    /// Extracts remaining unbilled line items from a Sales Order for Sales Invoice creation.
+    /// Only items with remaining billable amount > 0 are included.
+    pub fn create_downstream_invoice_items(so_doc: &Value) -> Vec<Value> {
+        let mut result = Vec::new();
+        if let Some(items) = so_doc.get("items").and_then(|v| v.as_array()) {
+            for itm in items {
+                let total_qty = Self::parse_decimal(itm.get("qty"));
+                let rate = Self::parse_decimal(itm.get("rate"));
+                let total_amt = if itm.get("amount").is_some() {
+                    Self::parse_decimal(itm.get("amount"))
+                } else {
+                    total_qty * rate
+                };
+                let billed = Self::parse_decimal(itm.get("billed_amt"));
+                let remaining_amt = (total_amt - billed).max(Decimal::ZERO);
+
+                if remaining_amt > Decimal::ZERO {
+                    let remaining_qty = if rate > Decimal::ZERO {
+                        (remaining_amt / rate).min(total_qty).normalize()
+                    } else {
+                        total_qty
+                    };
+                    let mut draft_item = itm.clone();
+                    if let Some(obj) = draft_item.as_object_mut() {
+                        obj.insert("qty".into(), Value::String(remaining_qty.to_string()));
+                        obj.insert("amount".into(), Value::String(remaining_amt.to_string()));
+                        if let Some(so_detail) = itm.get("name").and_then(|v| v.as_str()) {
+                            obj.insert("so_detail".into(), Value::String(so_detail.to_string()));
+                        }
+                        if let Some(so_name) = so_doc.get("name").and_then(|v| v.as_str()) {
+                            obj.insert("sales_order".into(), Value::String(so_name.to_string()));
+                        }
+                    }
+                    result.push(draft_item);
+                }
+            }
+        }
+        result
+    }
 }
 
 /// Formal Document Amendment Engine.

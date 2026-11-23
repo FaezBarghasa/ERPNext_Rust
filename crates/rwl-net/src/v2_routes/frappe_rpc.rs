@@ -9,7 +9,7 @@
 //! - Standard ERP mappers (`make_delivery_note`, `make_sales_invoice`, `make_purchase_receipt`, etc.)
 
 use actix_web::{web, HttpRequest, HttpResponse, Responder};
-use chrono::Utc;
+use chrono::{Datelike, Utc};
 use serde_json::{json, Value};
 use std::collections::HashMap;
 
@@ -106,24 +106,34 @@ fn sanitize_table(doctype: &str) -> Option<String> {
     }
 }
 
-/// Generates standard ERPNext doc autoname prefixes (e.g. "SO-", "SINV-", "PINV-")
+use rwl_framework::fulfillment::FulfillmentTracker;
+use rwl_framework::naming::{NamingEngine, NamingSeriesStore};
+use std::sync::OnceLock;
+
+static GLOBAL_NAMING_STORE: OnceLock<NamingSeriesStore> = OnceLock::new();
+
+fn get_naming_store() -> &'static NamingSeriesStore {
+    GLOBAL_NAMING_STORE.get_or_init(NamingSeriesStore::new)
+}
+
+/// Generates standard ERPNext sequential doc autoname (e.g. "SO-2026-00001", "ACC-SINV-2026-00001")
 fn erpnext_doc_autoname(doctype: &str) -> String {
     let prefix = match doctype {
-        "Sales Order" => "SO",
-        "Sales Invoice" => "ACC-SINV",
-        "Delivery Note" => "MAT-DN",
-        "Purchase Order" => "PO",
-        "Purchase Invoice" => "ACC-PINV",
-        "Purchase Receipt" => "MAT-PR",
-        "Payment Entry" => "ACC-PAY",
-        "Journal Entry" => "ACC-JV",
-        "Stock Entry" => "MAT-STE",
-        "Work Order" => "MFG-WO",
-        "Material Request" => "MAT-MR",
-        "Quotation" => "SAL-QTN",
-        "Customer" => "CUST",
-        "Supplier" => "SUPP",
-        "Item" => "ITEM",
+        "Sales Order" => "SO-.YYYY.-.#####",
+        "Sales Invoice" => "ACC-SINV-.YYYY.-.#####",
+        "Delivery Note" => "MAT-DN-.YYYY.-.#####",
+        "Purchase Order" => "PO-.YYYY.-.#####",
+        "Purchase Invoice" => "ACC-PINV-.YYYY.-.#####",
+        "Purchase Receipt" => "MAT-PR-.YYYY.-.#####",
+        "Payment Entry" => "ACC-PAY-.YYYY.-.#####",
+        "Journal Entry" => "ACC-JV-.YYYY.-.#####",
+        "Stock Entry" => "MAT-STE-.YYYY.-.#####",
+        "Work Order" => "MFG-WO-.YYYY.-.#####",
+        "Material Request" => "MAT-MR-.YYYY.-.#####",
+        "Quotation" => "SAL-QTN-.YYYY.-.#####",
+        "Customer" => "CUST-.#####",
+        "Supplier" => "SUPP-.#####",
+        "Item" => "ITEM-.#####",
         _ => {
             let abbrev = doctype
                 .split_whitespace()
@@ -131,13 +141,20 @@ fn erpnext_doc_autoname(doctype: &str) -> String {
                 .collect::<String>()
                 .to_uppercase();
             if abbrev.len() > 1 {
-                return format!("{}-{}", abbrev, Utc::now().timestamp_millis());
+                return format!("{abbrev}-.YYYY.-.#####");
             } else {
-                return format!("{}-{}", doctype.to_uppercase().replace(' ', "-"), Utc::now().timestamp_millis());
+                return format!("{}-.YYYY.-.#####", doctype.to_uppercase().replace(' ', "-"));
             }
         }
     };
-    format!("{}-{:04}-{}", prefix, Utc::now().format("%Y"), Utc::now().timestamp_subsec_millis())
+    let now = Utc::now();
+    NamingEngine::parse_series_template(
+        &prefix,
+        now.year(),
+        now.month(),
+        now.day(),
+        get_naming_store(),
+    )
 }
 
 /// Unified RPC method handler: `POST /api/method/{method:.*}` and `GET /api/method/{method:.*}`
@@ -345,14 +362,18 @@ pub async fn frappe_rpc_dispatcher(
                 }));
             };
 
-            let search_clause = if !txt.is_empty() {
-                format!("WHERE name CONTAINS '{txt}' OR string::lowercase(name) CONTAINS string::lowercase('{txt}')")
+            let (search_clause, has_txt) = if !txt.is_empty() {
+                ("WHERE string::lowercase(name) CONTAINS string::lowercase($txt) OR string::lowercase(title) CONTAINS string::lowercase($txt)", true)
             } else {
-                String::new()
+                ("", false)
             };
 
             let sql = format!("SELECT name, title, description, customer_name, supplier_name, item_name FROM {table} {search_clause} LIMIT {page_len};");
-            match client.query(&sql).await {
+            let mut query = client.query(&sql);
+            if has_txt {
+                query = query.bind(("txt", txt));
+            }
+            match query.await {
                 Ok(mut res) => {
                     let records: Vec<Value> = res.take(0).unwrap_or_default();
                     let results: Vec<Value> = records
@@ -485,24 +506,39 @@ pub async fn frappe_rpc_dispatcher(
                 }));
             };
 
-            let name_cond = if let Some(f) = filters {
-                if let Some(name_str) = f.as_str() {
-                    format!("WHERE name = '{name_str}'")
+            if !SAFE_FIELD_REGEX.is_match(fieldname) {
+                return HttpResponse::BadRequest().json(json!({
+                    "exc_type": "SecurityError",
+                    "message": "Invalid fieldname identifier"
+                }));
+            }
+
+            let name_str_opt = if let Some(f) = filters {
+                if let Some(s) = f.as_str() {
+                    Some(s.to_string())
                 } else if let Some(m) = f.as_object() {
-                    if let Some(n) = m.get("name").and_then(|v| v.as_str()) {
-                        format!("WHERE name = '{n}'")
-                    } else {
-                        String::new()
-                    }
+                    m.get("name").and_then(|v| v.as_str()).map(|s| s.to_string())
                 } else {
-                    String::new()
+                    None
                 }
             } else {
-                String::new()
+                None
             };
 
-            let sql = format!("SELECT {fieldname} FROM {table} {name_cond} LIMIT 1;");
-            match client.query(&sql).await {
+            let (where_clause, has_name) = if name_str_opt.is_some() {
+                ("WHERE name = $name", true)
+            } else {
+                ("", false)
+            };
+
+            let sql = format!("SELECT {fieldname} FROM {table} {where_clause} LIMIT 1;");
+            let mut query = client.query(&sql);
+            if has_name {
+                if let Some(ref n) = name_str_opt {
+                    query = query.bind(("name", n.clone()));
+                }
+            }
+            match query.await {
                 Ok(mut res) => {
                     let records: Vec<Value> = res.take(0).unwrap_or_default();
                     if let Some(r) = records.into_iter().next() {
@@ -587,6 +623,7 @@ pub async fn frappe_rpc_dispatcher(
             if let Ok(mut res) = client.query(sql).bind(("so", source_name)).await {
                 let records: Vec<Value> = res.take(0).unwrap_or_default();
                 if let Some(so) = records.into_iter().next() {
+                    let draft_items = FulfillmentTracker::create_downstream_delivery_items(&so);
                     let dn = json!({
                         "name": erpnext_doc_autoname("Delivery Note"),
                         "doctype": "Delivery Note",
@@ -594,7 +631,7 @@ pub async fn frappe_rpc_dispatcher(
                         "company": so.get("company"),
                         "sales_order": source_name,
                         "posting_date": Utc::now().date_naive().to_string(),
-                        "items": so.get("items").cloned().unwrap_or(json!([])),
+                        "items": draft_items,
                         "docstatus": 0,
                     });
                     return HttpResponse::Ok().json(json!({ "message": dn }));
@@ -619,7 +656,10 @@ pub async fn frappe_rpc_dispatcher(
             if let Ok(mut res) = client.query(sql).bind(("so", source_name)).await {
                 let records: Vec<Value> = res.take(0).unwrap_or_default();
                 if let Some(so) = records.into_iter().next() {
-                    let grand_total = so.get("grand_total").cloned().unwrap_or(json!(0));
+                    let draft_items = FulfillmentTracker::create_downstream_invoice_items(&so);
+                    let items_val: rust_decimal::Decimal = draft_items.iter().map(|it| {
+                        FulfillmentTracker::parse_decimal(it.get("amount"))
+                    }).sum();
                     let si = json!({
                         "name": erpnext_doc_autoname("Sales Invoice"),
                         "doctype": "Sales Invoice",
@@ -629,9 +669,9 @@ pub async fn frappe_rpc_dispatcher(
                         "posting_date": Utc::now().date_naive().to_string(),
                         "due_date": (Utc::now() + chrono::Duration::days(30)).date_naive().to_string(),
                         "debit_to": "Debtors - RustNext",
-                        "grand_total": grand_total.clone(),
-                        "outstanding_amount": grand_total,
-                        "items": so.get("items").cloned().unwrap_or(json!([])),
+                        "grand_total": items_val.to_string(),
+                        "outstanding_amount": items_val.to_string(),
+                        "items": draft_items,
                         "docstatus": 0,
                     });
                     return HttpResponse::Ok().json(json!({ "message": si }));
