@@ -2,6 +2,7 @@ pub mod ageing;
 pub mod batches;
 pub mod catch_weight;
 pub mod fifo;
+pub mod landed_cost_engine;
 pub mod landed_cost_voucher;
 pub mod logistics;
 pub mod reconciliation;
@@ -23,6 +24,9 @@ pub use ageing::{AgeingBucket, StockAgeingEngine, StockAgeingSummary, StockRecei
 pub use batches::{Batch, SerialNo, SerialStatus};
 pub use catch_weight::CatchWeightItem;
 pub use fifo::{FifoBatchItem, InventoryError, StockLedgerEntry, add_fifo_layer, consume_fifo};
+pub use landed_cost_engine::{
+    LandedCostAllocationOutcome, LandedCostEngine, LandedCostGlEntry, ValuationLayerAdjustment,
+};
 pub use landed_cost_voucher::{
     LandedCostAllocationMethod, LandedCostCharge, LandedCostItem, LandedCostVoucher,
 };

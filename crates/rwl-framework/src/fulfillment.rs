@@ -89,13 +89,13 @@ impl FulfillmentTracker {
         }
 
         let per_delivered = if total_ordered_val > Decimal::ZERO {
-            ((total_delivered_val / total_ordered_val) * Decimal::from(100)).min(Decimal::from(100))
+            (((total_delivered_val / total_ordered_val) * Decimal::from(100)).min(Decimal::from(100))).normalize()
         } else {
             Decimal::ZERO
         };
 
         let per_billed = if total_ordered_amt > Decimal::ZERO {
-            ((total_billed_amt / total_ordered_amt) * Decimal::from(100)).min(Decimal::from(100))
+            (((total_billed_amt / total_ordered_amt) * Decimal::from(100)).min(Decimal::from(100))).normalize()
         } else {
             Decimal::ZERO
         };
@@ -189,7 +189,7 @@ impl FulfillmentTracker {
 
                     if matches {
                         let cur_delivered = Self::parse_decimal(so_item.get("delivered_qty"));
-                        let new_delivered = (cur_delivered - dn_qty).max(Decimal::ZERO);
+                        let new_delivered = (cur_delivered - dn_qty).max(Decimal::ZERO).normalize();
                         if let Some(obj) = so_item.as_object_mut() {
                             obj.insert("delivered_qty".into(), Value::String(new_delivered.to_string()));
                         }
@@ -279,7 +279,7 @@ impl FulfillmentTracker {
 
                     if matches {
                         let cur_billed = Self::parse_decimal(so_item.get("billed_amt"));
-                        let new_billed = (cur_billed - si_amt).max(Decimal::ZERO);
+                        let new_billed = (cur_billed - si_amt).max(Decimal::ZERO).normalize();
                         if let Some(obj) = so_item.as_object_mut() {
                             obj.insert("billed_amt".into(), Value::String(new_billed.to_string()));
                         }
@@ -306,12 +306,12 @@ impl DocumentAmendmentEngine {
     /// - `SO-2026-0001` -> `SO-2026-0001-1`
     /// - `SO-2026-0001-1` -> `SO-2026-0001-2`
     pub fn compute_amended_name(original_name: &str) -> String {
-        if let Some((base, suffix)) = original_name.rsplit_once('-') {
-            if let Ok(num) = suffix.parse::<u32>() {
-                if suffix.len() <= 3 && base.contains('-') {
-                    return format!("{}-{}", base, num + 1);
-                }
-            }
+        if let Some((base, suffix)) = original_name.rsplit_once('-')
+            && let Ok(num) = suffix.parse::<u32>()
+            && suffix.len() <= 3
+            && base.contains('-')
+        {
+            return format!("{}-{}", base, num + 1);
         }
         format!("{}-1", original_name)
     }

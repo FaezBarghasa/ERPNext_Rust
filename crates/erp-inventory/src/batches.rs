@@ -72,4 +72,53 @@ impl Batch {
 
         Ok(())
     }
+
+    /// Selects batches using First-Expired-First-Out (FEFO) or FIFO (mfg_date) order
+    /// to fulfill requested item quantity, rejecting expired batches.
+    pub fn select_fifo_batches(
+        available_batches: &mut [Batch],
+        required_qty: Decimal,
+        as_of: NaiveDate,
+    ) -> Result<Vec<(String, Decimal)>, InventoryError> {
+        // Sort: perishable batches by expiry_date first, then non-perishable by mfg_date
+        available_batches.sort_by(|a, b| {
+            match (a.expiry_date, b.expiry_date) {
+                (Some(exp_a), Some(exp_b)) => exp_a.cmp(&exp_b).then_with(|| a.mfg_date.cmp(&b.mfg_date)),
+                (Some(_), None) => std::cmp::Ordering::Less,
+                (None, Some(_)) => std::cmp::Ordering::Greater,
+                (None, None) => a.mfg_date.cmp(&b.mfg_date),
+            }
+        });
+
+        let mut allocations = Vec::new();
+        let mut remaining_needed = required_qty;
+
+        for batch in available_batches.iter_mut() {
+            if remaining_needed <= Decimal::ZERO {
+                break;
+            }
+
+            if batch.remaining_qty <= Decimal::ZERO {
+                continue;
+            }
+
+            // Expiry check
+            batch.validate_usable(as_of)?;
+
+            let take_qty = batch.remaining_qty.min(remaining_needed);
+            batch.remaining_qty -= take_qty;
+            remaining_needed -= take_qty;
+
+            allocations.push((batch.batch_id.clone(), take_qty));
+        }
+
+        if remaining_needed > Decimal::ZERO {
+            return Err(InventoryError::InsufficientStock {
+                requested: required_qty,
+                available: required_qty - remaining_needed,
+            });
+        }
+
+        Ok(allocations)
+    }
 }

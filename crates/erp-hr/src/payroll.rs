@@ -13,8 +13,12 @@ pub struct SalaryStructure {
     pub base_salary: Decimal,
     /// House Rent Allowance percentage of basic (e.g. 20.0 for 20%).
     pub hra_percentage: Decimal,
+    /// Fixed monthly travel / transport allowance.
+    pub travel_allowance: Decimal,
     /// Standard statutory deduction.
     pub standard_deduction: Decimal,
+    /// Social security or pension deduction percentage.
+    pub provident_fund_rate: Decimal,
     /// Income tax withholding percentage (e.g. 10.0 for 10%).
     pub tax_withholding_rate: Decimal,
 }
@@ -74,14 +78,16 @@ impl SalaryCalculator {
         let attendance_ratio = (attended_days / total_working_days).min(Decimal::ONE);
         let earned_basic = structure.base_salary * attendance_ratio;
         let earned_hra = earned_basic * (structure.hra_percentage / Decimal::from(100));
+        let travel_allowance = structure.travel_allowance * attendance_ratio;
 
         // Overtime rate: 1.5x hourly rate (8-hour day)
         let hourly_rate = (structure.base_salary / total_working_days) / Decimal::from(8);
         let overtime_amount = overtime_hours * hourly_rate * rust_decimal_macros::dec!(1.5);
 
-        let gross_salary = earned_basic + earned_hra + overtime_amount;
+        let gross_salary = earned_basic + earned_hra + travel_allowance + overtime_amount;
         let tax_deducted = gross_salary * (structure.tax_withholding_rate / Decimal::from(100));
-        let other_deductions = structure.standard_deduction;
+        let pf_deducted = earned_basic * (structure.provident_fund_rate / Decimal::from(100));
+        let other_deductions = structure.standard_deduction + pf_deducted;
         let total_deductions = tax_deducted + other_deductions;
         let net_salary = gross_salary - total_deductions;
 

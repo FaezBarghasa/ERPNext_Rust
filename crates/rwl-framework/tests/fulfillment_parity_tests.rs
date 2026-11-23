@@ -9,7 +9,7 @@
 
 use rust_decimal_macros::dec;
 use rwl_framework::fulfillment::{DocumentAmendmentEngine, FulfillmentTracker};
-use serde_json::{Value, json};
+use serde_json::json;
 
 #[test]
 fn test_cross_document_fulfillment_and_reversal_cycle() {

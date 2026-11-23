@@ -202,6 +202,15 @@ impl WorkOrder {
         Ok(())
     }
 
+    /// Computes total planned operating costs across all operations.
+    #[must_use]
+    pub fn total_operating_cost(&self) -> Decimal {
+        self.operations
+            .iter()
+            .map(|op| (op.planned_time_mins / Decimal::from(60)) * op.hour_rate)
+            .sum()
+    }
+
     /// Generates Job Cards for each routing operation.
     #[must_use]
     pub fn make_job_cards(&self) -> Vec<JobCard> {

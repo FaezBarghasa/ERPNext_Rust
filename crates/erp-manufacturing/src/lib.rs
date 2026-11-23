@@ -1,3 +1,4 @@
+pub mod backflushing;
 pub mod bom;
 pub mod capa;
 pub mod ebr;
@@ -11,6 +12,7 @@ pub mod spc;
 pub mod subcontracting;
 pub mod work_order;
 
+pub use backflushing::{BackflushController, BackflushOutcome};
 pub use bom::{Bom, BomEngine, BomItem, BomOperation, ManufacturingError};
 pub use capa::{EightDPhase, EightDReport, IshikawaCategory};
 pub use ebr::{BatchStepRecord, ElectronicBatchRecord, WitnessSignature};
