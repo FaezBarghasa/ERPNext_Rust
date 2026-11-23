@@ -619,8 +619,7 @@ async fn resolve_tenant_series<C: surrealdb::Connection>(
         curr
     } else {
         // Fallback entropy sequence if counters table offline or read fails
-        let micro = (chrono::Utc::now().timestamp_subsec_micros() as u64) % 90000 + 10000;
-        micro
+        (chrono::Utc::now().timestamp_subsec_micros() as u64) % 90000 + 10000
     };
     format!("{prefix}{seq:0width$}", width = hash_count)
 }
@@ -9323,10 +9322,10 @@ pub struct ProfitLossQuery {
 }
 
 fn determine_account_root_type(account_name: &str, lookup: &HashMap<String, String>) -> String {
-    if let Some(rt) = lookup.get(account_name) {
-        if !rt.is_empty() {
-            return rt.clone();
-        }
+    if let Some(rt) = lookup.get(account_name)
+        && !rt.is_empty()
+    {
+        return rt.clone();
     }
     let acc_lower = account_name.to_lowercase();
     if acc_lower.contains("income")
@@ -9406,7 +9405,7 @@ pub async fn accounting_profit_loss_handler(
     if query.to_date.is_some() {
         sql.push_str(" AND posting_date <= $to_date");
     }
-    sql.push_str(";");
+    sql.push(';');
 
     let mut q = client.query(&sql);
     if let Some(ref comp) = query.company {
@@ -9534,7 +9533,7 @@ pub async fn accounting_balance_sheet_handler(
     if query.company.is_some() {
         sql.push_str(" AND (company = $comp OR company = NONE)");
     }
-    sql.push_str(";");
+    sql.push(';');
 
     let mut q = client.query(&sql).bind(("as_of", as_of));
     if let Some(ref comp) = query.company {

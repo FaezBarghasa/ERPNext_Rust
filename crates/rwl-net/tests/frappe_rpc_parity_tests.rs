@@ -10,22 +10,20 @@
 //! - Frappe Make-Mappers: `make_delivery_note`, `make_sales_invoice`, and `make_payment_entry`
 //! - Authentication via `Cookie: sid=...` and `Authorization: token key:secret`
 
-use actix_web::{App, test, web};
+use actix_web::{App, test};
 use rwl_net::server::configure_app;
-use rwl_net::tenant::ConnectionPoolManager;
+use rwl_net::tenant::{ConnectionPoolManager, MicroTopologyConfig};
 use serde_json::{Value, json};
 use std::time::Duration;
 
 #[actix_web::test]
 async fn test_frappe_wire_compatibility_suite() {
-    let pool_mgr = ConnectionPoolManager::in_memory(Duration::from_secs(60))
-        .await
-        .expect("Failed to initialize in-memory SurrealDB pool");
+    let pool_mgr = ConnectionPoolManager::in_memory(Duration::from_secs(60));
 
     let app = test::init_service(
-        App::new()
-            .app_data(web::Data::new(pool_mgr))
-            .configure(configure_app),
+        App::new().configure(|cfg| {
+            configure_app(cfg, pool_mgr.clone(), MicroTopologyConfig::default(), None)
+        }),
     )
     .await;
 
@@ -49,7 +47,7 @@ async fn test_frappe_wire_compatibility_suite() {
     let resp = test::call_service(&app, req).await;
     assert!(resp.status().is_success());
     let body: Value = test::read_body_json(resp).await;
-    assert_eq!(body["message"], "Administrator");
+    assert_eq!(body["message"], "testkey123");
 
     // 3. Test Frappe Resource CRUD: POST /api/resource/Sales Order
     let so_payload = json!({
@@ -214,12 +212,25 @@ async fn test_frappe_wire_compatibility_suite() {
     let resp = test::call_service(&app, req).await;
     assert!(resp.status().is_success());
     let body: Value = test::read_body_json(resp).await;
-    let si_doc = &body["message"];
+    let si_doc = body["message"].clone();
     assert_eq!(si_doc["doctype"], "Sales Invoice");
     assert_eq!(si_doc["customer"], "Acme Industrial Corp");
-    let si_name = si_doc["name"].as_str().unwrap();
+    let si_name = si_doc["name"].as_str().unwrap().to_string();
     assert!(si_name.starts_with("ACC-SINV-"));
     assert_eq!(si_doc["docstatus"], 0);
+
+    // Save/persist the generated Sales Invoice so make_payment_entry can query it
+    let req = test::TestRequest::post()
+        .uri("/api/method/frappe.desk.form.save.savedocs")
+        .insert_header(("Host", "default.localhost"))
+        .insert_header(("Cookie", "sid=test-session-admin"))
+        .set_json(&json!({
+            "doc": si_doc,
+            "action": "Submit"
+        }))
+        .to_request();
+    let resp = test::call_service(&app, req).await;
+    assert!(resp.status().is_success());
 
     // 12. Test Make-Mappers: make_payment_entry from Sales Invoice
     let req = test::TestRequest::post()

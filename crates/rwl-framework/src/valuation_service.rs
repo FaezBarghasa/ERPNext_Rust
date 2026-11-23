@@ -59,6 +59,7 @@ impl ValuationService {
     }
 
     /// Records an incoming inventory movement, creating a new persistent FIFO layer.
+    #[allow(clippy::too_many_arguments)]
     pub async fn add_incoming_layer<C: Connection>(
         client: &Surreal<C>,
         item_code: &str,

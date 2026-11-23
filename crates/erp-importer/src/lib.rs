@@ -7,7 +7,9 @@
 pub mod diff_reporter;
 pub mod format_decoder;
 pub mod fuzzy_matcher;
+pub mod live_streamer;
 pub mod mariadb_importer;
+pub mod reconciliation_auditor;
 pub mod streaming_pipeline;
 
 use serde::{Deserialize, Serialize};
@@ -15,9 +17,16 @@ use serde::{Deserialize, Serialize};
 pub use diff_reporter::{DiffReporter, ImportExecutionSummary, RowValidationError};
 pub use format_decoder::{CharacterEncoding, FormatDecoder, IngestionFormat, RawDataRow};
 pub use fuzzy_matcher::{FuzzyMatcher, TargetFieldSchema};
+pub use live_streamer::{
+    KeysetBatch, LiveMariaDbStreamer, MariaDbColumnMeta, MariaDbColumnType, MariaDbDirectSource,
+    MariaDbTableSchema,
+};
 pub use mariadb_importer::{
     MariaDbImportConfig, MariaDbMigrationEngine, MariaDbTableDump, MigrationReconciliationReport,
     ReconciliationDiscrepancy,
+};
+pub use reconciliation_auditor::{
+    AuditDiscrepancy, ComprehensiveAuditReport, ReconciliationAuditor,
 };
 pub use streaming_pipeline::{StreamingImportConfig, StreamingPipelineProcessor};
 

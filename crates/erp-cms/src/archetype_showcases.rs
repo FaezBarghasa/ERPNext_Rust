@@ -247,8 +247,7 @@ fn render_gaming_store_showcase(slug: &str, title: &str) -> String {
 }
 
 fn render_subscription_showcase(_slug: &str, _title: &str) -> String {
-    format!(
-        r##"<section class="archetype-showcase-container" aria-label="Subscription Showcase">
+    r##"<section class="archetype-showcase-container" aria-label="Subscription Showcase">
             <div class="showcase-header">
                 <div class="showcase-title-row">
                     <h3>Multi-Tier Membership & Digital Pass Vault</h3>
@@ -306,8 +305,7 @@ fn render_subscription_showcase(_slug: &str, _title: &str) -> String {
                     <button class="btn-sub-tier" onclick="subscribeTier('Deluxe', this)">Choose Deluxe Pass</button>
                 </div>
             </div>
-        </section>"##
-    )
+        </section>"##.to_string()
 }
 
 fn render_music_player_showcase(_slug: &str, title: &str) -> String {

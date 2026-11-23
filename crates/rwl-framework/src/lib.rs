@@ -8,6 +8,7 @@ pub mod dmn;
 pub mod email_account;
 pub mod export_engine;
 pub mod file_manager;
+pub mod fulfillment;
 pub mod jalali;
 pub mod lifecycle;
 pub mod localization;
@@ -55,6 +56,9 @@ pub use email_account::{
 };
 pub use export_engine::{DocumentExporter, ExportColumn, ExportError, ExportFormat};
 pub use file_manager::{FileError, FileManager, FileRecord};
+pub use fulfillment::{
+    DocumentAmendmentEngine, DocumentFulfillmentStatus, FulfillmentTracker, LineItemLinkage,
+};
 pub use naming::{NamingEngine, NamingSeriesStore};
 pub use notification::{
     NotificationChannel, NotificationDispatcher, NotificationError, NotificationInboxRegistry,

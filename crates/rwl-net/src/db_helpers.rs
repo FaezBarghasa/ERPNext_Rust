@@ -21,7 +21,7 @@ pub async fn query_one_by_name(
         return Err(ApiError::BadRequest(format!("Invalid table identifier: {table}")));
     }
 
-    let query = format!("SELECT * FROM type::table($table) WHERE name = $name LIMIT 1");
+    let query = "SELECT * FROM type::table($table) WHERE name = $name LIMIT 1";
     let mut response = db
         .query(query)
         .bind(("table", table.to_string()))

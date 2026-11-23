@@ -106,6 +106,40 @@ fn sanitize_table(doctype: &str) -> Option<String> {
     }
 }
 
+/// Generates standard ERPNext doc autoname prefixes (e.g. "SO-", "SINV-", "PINV-")
+fn erpnext_doc_autoname(doctype: &str) -> String {
+    let prefix = match doctype {
+        "Sales Order" => "SO",
+        "Sales Invoice" => "ACC-SINV",
+        "Delivery Note" => "MAT-DN",
+        "Purchase Order" => "PO",
+        "Purchase Invoice" => "ACC-PINV",
+        "Purchase Receipt" => "MAT-PR",
+        "Payment Entry" => "ACC-PAY",
+        "Journal Entry" => "ACC-JV",
+        "Stock Entry" => "MAT-STE",
+        "Work Order" => "MFG-WO",
+        "Material Request" => "MAT-MR",
+        "Quotation" => "SAL-QTN",
+        "Customer" => "CUST",
+        "Supplier" => "SUPP",
+        "Item" => "ITEM",
+        _ => {
+            let abbrev = doctype
+                .split_whitespace()
+                .map(|w| w.chars().next().unwrap_or('X'))
+                .collect::<String>()
+                .to_uppercase();
+            if abbrev.len() > 1 {
+                return format!("{}-{}", abbrev, Utc::now().timestamp_millis());
+            } else {
+                return format!("{}-{}", doctype.to_uppercase().replace(' ', "-"), Utc::now().timestamp_millis());
+            }
+        }
+    };
+    format!("{}-{:04}-{}", prefix, Utc::now().format("%Y"), Utc::now().timestamp_subsec_millis())
+}
+
 /// Unified RPC method handler: `POST /api/method/{method:.*}` and `GET /api/method/{method:.*}`
 pub async fn frappe_rpc_dispatcher(
     req: HttpRequest,
@@ -249,11 +283,7 @@ pub async fn frappe_rpc_dispatcher(
             };
 
             if name.is_empty() || name.starts_with("new-") {
-                name = format!(
-                    "{}-{}",
-                    doctype.to_uppercase().replace(' ', "-"),
-                    Utc::now().timestamp_millis()
-                );
+                name = erpnext_doc_autoname(&doctype);
                 if let Some(m) = doc_val.as_object_mut() {
                     m.insert("name".into(), Value::String(name.clone()));
                 }
@@ -558,6 +588,7 @@ pub async fn frappe_rpc_dispatcher(
                 let records: Vec<Value> = res.take(0).unwrap_or_default();
                 if let Some(so) = records.into_iter().next() {
                     let dn = json!({
+                        "name": erpnext_doc_autoname("Delivery Note"),
                         "doctype": "Delivery Note",
                         "customer": so.get("customer"),
                         "company": so.get("company"),
@@ -590,6 +621,7 @@ pub async fn frappe_rpc_dispatcher(
                 if let Some(so) = records.into_iter().next() {
                     let grand_total = so.get("grand_total").cloned().unwrap_or(json!(0));
                     let si = json!({
+                        "name": erpnext_doc_autoname("Sales Invoice"),
                         "doctype": "Sales Invoice",
                         "customer": so.get("customer"),
                         "company": so.get("company"),
@@ -625,6 +657,7 @@ pub async fn frappe_rpc_dispatcher(
                 let records: Vec<Value> = res.take(0).unwrap_or_default();
                 if let Some(po) = records.into_iter().next() {
                     let pr = json!({
+                        "name": erpnext_doc_autoname("Purchase Receipt"),
                         "doctype": "Purchase Receipt",
                         "supplier": po.get("supplier"),
                         "company": po.get("company"),
@@ -657,6 +690,7 @@ pub async fn frappe_rpc_dispatcher(
                 if let Some(po) = records.into_iter().next() {
                     let grand_total = po.get("grand_total").cloned().unwrap_or(json!(0));
                     let pi = json!({
+                        "name": erpnext_doc_autoname("Purchase Invoice"),
                         "doctype": "Purchase Invoice",
                         "supplier": po.get("supplier"),
                         "company": po.get("company"),
@@ -674,32 +708,61 @@ pub async fn frappe_rpc_dispatcher(
             HttpResponse::NotFound().json(json!({ "message": "Source Purchase Order not found" }))
         }
 
-        "erpnext.accounts.doctype.sales_invoice.sales_invoice.make_payment_entry" => {
+        "erpnext.accounts.doctype.sales_invoice.sales_invoice.make_payment_entry"
+        | "erpnext.accounts.doctype.payment_entry.payment_entry.get_payment_entry" => {
             let source_name = payload
                 .get("source_name")
+                .or_else(|| payload.get("dn"))
                 .and_then(|v| v.as_str())
                 .unwrap_or("");
+            let dt = payload
+                .get("dt")
+                .and_then(|v| v.as_str())
+                .unwrap_or("Sales Invoice");
+
             if source_name.is_empty() {
                 return HttpResponse::BadRequest().json(json!({
                     "exc_type": "ValidationError",
-                    "message": "'source_name' is required"
+                    "message": "'source_name' or 'dn' is required"
                 }));
             }
 
-            let sql = "SELECT * FROM sales_invoice WHERE name = $si;";
-            if let Ok(mut res) = client.query(sql).bind(("si", source_name)).await {
+            let is_sales = dt == "Sales Invoice";
+            let table = if is_sales { "sales_invoice" } else { "purchase_invoice" };
+            let sql = format!("SELECT * FROM {table} WHERE name = $doc_name;");
+
+            if let Ok(mut res) = client.query(&sql).bind(("doc_name", source_name)).await {
                 let records: Vec<Value> = res.take(0).unwrap_or_default();
-                if let Some(si) = records.into_iter().next() {
-                    let outstanding = si.get("outstanding_amount").cloned().unwrap_or(json!(0));
+                if let Some(doc) = records.into_iter().next() {
+                    let outstanding = doc.get("outstanding_amount").cloned().unwrap_or(json!(0));
+                    let (payment_type, party_type, party, paid_from, paid_to) = if is_sales {
+                        (
+                            "Receive",
+                            "Customer",
+                            doc.get("customer").cloned().unwrap_or(json!("")),
+                            doc.get("debit_to").cloned().unwrap_or(json!("Debtors - RustNext")),
+                            json!("Commercial Bank Main"),
+                        )
+                    } else {
+                        (
+                            "Pay",
+                            "Supplier",
+                            doc.get("supplier").cloned().unwrap_or(json!("")),
+                            json!("Commercial Bank Main"),
+                            doc.get("credit_to").cloned().unwrap_or(json!("Creditors - RustNext")),
+                        )
+                    };
+
                     let pe = json!({
+                        "name": erpnext_doc_autoname("Payment Entry"),
                         "doctype": "Payment Entry",
-                        "payment_type": "Receive",
-                        "party_type": "Customer",
-                        "party": si.get("customer"),
-                        "company": si.get("company"),
+                        "payment_type": payment_type,
+                        "party_type": party_type,
+                        "party": party,
+                        "company": doc.get("company"),
                         "paid_amount": outstanding,
-                        "paid_from": si.get("debit_to").unwrap_or(&json!("Debtors - RustNext")),
-                        "paid_to": "Commercial Bank Main",
+                        "paid_from": paid_from,
+                        "paid_to": paid_to,
                         "reference_invoice": source_name,
                         "posting_date": Utc::now().date_naive().to_string(),
                         "docstatus": 0,
@@ -707,7 +770,7 @@ pub async fn frappe_rpc_dispatcher(
                     return HttpResponse::Ok().json(json!({ "message": pe }));
                 }
             }
-            HttpResponse::NotFound().json(json!({ "message": "Source Sales Invoice not found" }))
+            HttpResponse::NotFound().json(json!({ "message": "Source invoice not found" }))
         }
 
         // Generic Fallback
@@ -807,13 +870,7 @@ pub async fn frappe_create_resource(
         .get("name")
         .and_then(|v| v.as_str())
         .map(|s| s.to_string())
-        .unwrap_or_else(|| {
-            format!(
-                "{}-{}",
-                doctype.to_uppercase().replace(' ', "-"),
-                Utc::now().timestamp_millis()
-            )
-        });
+        .unwrap_or_else(|| erpnext_doc_autoname(&doctype));
 
     if let Some(m) = doc.as_object_mut() {
         m.insert("name".into(), Value::String(name.clone()));
