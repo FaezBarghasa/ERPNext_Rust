@@ -45,7 +45,9 @@ use crate::v2_routes::{
     email_list_queue_handler, email_send_handler, emdash_get_document_handler,
     emdash_list_documents_handler, emdash_media_crop_handler, emdash_revisions_list_handler,
     emdash_save_document_handler, emdash_transition_handler, export_dataset_handler,
-    h3_stream_file_handler, h3_stream_telemetry_handler, hr_process_payroll_handler,
+    frappe_create_resource, frappe_delete_resource, frappe_get_resource, frappe_list_resource,
+    frappe_rpc_dispatcher, frappe_update_resource, h3_stream_file_handler,
+    h3_stream_telemetry_handler, hr_process_payroll_handler,
     inventory_stock_balance_handler, inventory_stock_entry_handler,
     inventory_variant_matrix_handler, login_handler, logout_handler,
     manufacturing_complete_work_order_handler, manufacturing_work_order_handler,
@@ -3895,6 +3897,21 @@ pub fn configure_app(
                 )
                 .route("/{doctype}/{name}/amend", web::post().to(v2_amend_document)),
         )
+        // Frappe REST Wire Compatibility: /api/resource/{doctype}
+        .service(
+            web::scope("/api/resource")
+                .wrap(TenantResolver)
+                .route("/{doctype}", web::get().to(frappe_list_resource))
+                .route("/{doctype}", web::post().to(frappe_create_resource))
+                .route("/{doctype}/{name}", web::get().to(frappe_get_resource))
+                .route("/{doctype}/{name}", web::put().to(frappe_update_resource))
+                .route("/{doctype}/{name}", web::delete().to(frappe_delete_resource)),
+        )
+        // Frappe RPC Dispatcher: /api/method/{method:.*}
+        .route("/api/method/{method:.*}", web::post().to(frappe_rpc_dispatcher))
+        .route("/api/method/{method:.*}", web::get().to(frappe_rpc_dispatcher))
+        .route("/api/v2/method/{method:.*}", web::post().to(frappe_rpc_dispatcher))
+        .route("/api/v2/method/{method:.*}", web::get().to(frappe_rpc_dispatcher))
         // DocType Metadata API Scope
         .service(
             web::scope("/api/v2/meta")

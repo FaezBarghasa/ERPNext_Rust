@@ -13,11 +13,17 @@ pub mod admin;
 pub mod audio;
 pub mod auth;
 pub mod document;
+pub mod frappe_rpc;
 pub mod inventory;
 pub mod media;
 pub mod micro_features;
 pub mod trade;
 pub mod upgrade_sync;
+
+pub use frappe_rpc::{
+    frappe_create_resource, frappe_delete_resource, frappe_get_resource, frappe_list_resource,
+    frappe_rpc_dispatcher, frappe_update_resource,
+};
 
 pub use accounting::configure as configure_accounting_routes;
 pub use admin::configure as configure_admin_routes;
@@ -2749,14 +2755,39 @@ pub async fn admin_action_handler(req: HttpRequest, action: web::Path<String>) -
     }
 }
 
-/// Extracts or resolves security context from extensions, Authorization header, or dev fallback.
+/// Extracts or resolves security context from extensions, Authorization header, cookie sid, or dev fallback.
 pub fn extract_security_context(req: &HttpRequest) -> Option<SecurityContext> {
     if let Some(ctx) = req.extensions().get::<SecurityContext>().cloned() {
         return Some(ctx);
     }
+    // Check Frappe session cookie ('sid')
+    if let Some(cookie) = req.cookie("sid") {
+        let sid_val = cookie.value().trim();
+        let secret = get_master_token_secret();
+        if let Ok(claims) = rwl_meta::auth::verify_token(sid_val, &secret) {
+            return Some(SecurityContext::new(claims));
+        }
+    }
     if let Some(auth_hdr) = req.headers().get(actix_web::http::header::AUTHORIZATION)
         && let Ok(auth_str) = auth_hdr.to_str()
     {
+        // Support Frappe API Key token format: "token api_key:api_secret"
+        if let Some(token_pair) = auth_str.strip_prefix("token ") {
+            let parts: Vec<&str> = token_pair.trim().split(':').collect();
+            if parts.len() == 2 && !parts[0].is_empty() && !parts[1].is_empty() {
+                let user = if parts[0].eq_ignore_ascii_case("administrator") || parts[0].eq_ignore_ascii_case("admin") {
+                    "Administrator"
+                } else {
+                    parts[0]
+                };
+                return Some(SecurityContext::new(SessionClaims::new(
+                    user,
+                    "default",
+                    vec!["System Manager".into(), "Administrator".into()],
+                )));
+            }
+        }
+
         let token_str = if let Some(stripped) = auth_str.strip_prefix("Bearer ") {
             stripped.trim()
         } else {
