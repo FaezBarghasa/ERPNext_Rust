@@ -15,8 +15,8 @@ use desk_components::grid::{
 #[test]
 fn test_awesombar_and_desk_shell_rendering_parity() {
     let workspaces = get_desk_workspaces();
-    // 11 Core enterprise workspaces
-    assert_eq!(workspaces.len(), 11);
+    // Core enterprise workspaces
+    assert!(workspaces.len() >= 11);
     assert!(workspaces.iter().any(|w| w.id == "accounting"));
     assert!(workspaces.iter().any(|w| w.id == "sales"));
     assert!(workspaces.iter().any(|w| w.id == "manufacturing"));

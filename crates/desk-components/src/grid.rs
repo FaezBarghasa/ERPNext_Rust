@@ -103,9 +103,17 @@ impl VirtualizedGridState {
             GridNavDirection::Left => {
                 next.col = next.col.saturating_sub(1);
             }
-            GridNavDirection::Right | GridNavDirection::NextCell => {
+            GridNavDirection::Right => {
                 if next.col + 1 < self.total_cols {
                     next.col += 1;
+                }
+            }
+            GridNavDirection::NextCell => {
+                if next.col + 1 < self.total_cols {
+                    next.col += 1;
+                } else if next.row + 1 < self.total_rows {
+                    next.row += 1;
+                    next.col = 0;
                 }
             }
             GridNavDirection::PrevCell => {

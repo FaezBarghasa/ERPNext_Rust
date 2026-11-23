@@ -262,4 +262,38 @@ async fn test_frappe_wire_compatibility_suite() {
     assert!(resp.status().is_success());
     let body: Value = test::read_body_json(resp).await;
     assert_eq!(body["message"], "ok");
+
+    // 14. Test Security: Unauthenticated request to get_logged_user returns "Guest"
+    let req = test::TestRequest::get()
+        .uri("/api/method/frappe.auth.get_logged_user")
+        .insert_header(("Host", "default.localhost"))
+        .to_request();
+    let resp = test::call_service(&app, req).await;
+    assert!(resp.status().is_success());
+    let body: Value = test::read_body_json(resp).await;
+    assert_eq!(body["message"], "Guest");
+
+    // 15. Test Security: Unauthenticated request with Guest cookie to savedocs returns 401 Unauthorized
+    let req = test::TestRequest::post()
+        .uri("/api/method/frappe.desk.form.save.savedocs")
+        .insert_header(("Host", "default.localhost"))
+        .insert_header(("Cookie", "sid=Guest"))
+        .set_json(&submit_payload)
+        .to_request();
+    let resp = test::call_service(&app, req).await;
+    assert_eq!(resp.status().as_u16(), 401);
+    let body: Value = test::read_body_json(resp).await;
+    assert_eq!(body["exc_type"], "AuthenticationError");
+
+    // 16. Test RPC Not Found: Unhandled RPC method returns 404 with DoesNotExistError
+    let req = test::TestRequest::post()
+        .uri("/api/method/frappe.non_existent.method")
+        .insert_header(("Host", "default.localhost"))
+        .insert_header(("Cookie", "sid=test-session-admin"))
+        .set_json(&json!({}))
+        .to_request();
+    let resp = test::call_service(&app, req).await;
+    assert_eq!(resp.status().as_u16(), 404);
+    let body: Value = test::read_body_json(resp).await;
+    assert_eq!(body["exc_type"], "DoesNotExistError");
 }

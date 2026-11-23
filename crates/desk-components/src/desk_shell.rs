@@ -365,7 +365,7 @@ const DESK_BASE_HTML: &str = r#"<!DOCTYPE html>
             <div class="omnibar">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color:var(--text-secondary)"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
                 <input type="text" placeholder="Search DocTypes, records, methods, or shortcuts..." id="omni-search" autocomplete="off" />
-                <kbd>Ctrl+K</kbd>
+                <kbd>Cmd+K / Ctrl+K</kbd>
             </div>
             <div class="omni-popover" id="omni-popover"></div>
         </div>
