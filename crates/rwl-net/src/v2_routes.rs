@@ -308,16 +308,13 @@ pub async fn v2_list_document(
     rbac_state: Option<web::Data<DynamicRbacState>>,
 ) -> impl Responder {
     let doctype = path.into_inner();
-    let tenant_id = match req.extensions().get::<TenantId>() {
-        Some(t) => t.clone(),
-        None => return HttpResponse::BadRequest().body("Missing tenant context"),
-    };
+    let tenant_id = resolve_tenant_id(&req);
 
     let is_public = matches!(
         doctype.to_lowercase().as_str(),
         "item" | "website item" | "web page" | "blog post"
     );
-    let ctx = req.extensions().get::<SecurityContext>().cloned();
+    let ctx = extract_security_context(&req);
     if !is_public && ctx.is_none() {
         return HttpResponse::Unauthorized().json(serde_json::json!({
             "error": format!("Authentication required: Bearer token must be provided to access DocType '{doctype}'")
@@ -458,16 +455,13 @@ pub async fn v2_get_document(
     rbac_state: Option<web::Data<DynamicRbacState>>,
 ) -> impl Responder {
     let (doctype, name) = path.into_inner();
-    let tenant_id = match req.extensions().get::<TenantId>() {
-        Some(t) => t.clone(),
-        None => return HttpResponse::BadRequest().body("Missing tenant context"),
-    };
+    let tenant_id = resolve_tenant_id(&req);
 
     let is_public = matches!(
         doctype.to_lowercase().as_str(),
         "item" | "website item" | "web page" | "blog post"
     );
-    let ctx = req.extensions().get::<SecurityContext>().cloned();
+    let ctx = extract_security_context(&req);
     if !is_public && ctx.is_none() {
         return HttpResponse::Unauthorized().json(serde_json::json!({
             "error": format!("Authentication required: Bearer token must be provided to access DocType '{doctype}'")
@@ -551,14 +545,11 @@ pub async fn v2_print_document(
     rbac_state: Option<web::Data<DynamicRbacState>>,
 ) -> impl Responder {
     let (doctype, name) = path.into_inner();
-    let tenant_id = match req.extensions().get::<TenantId>() {
-        Some(t) => t.clone(),
-        None => return HttpResponse::BadRequest().body("Missing tenant context"),
-    };
+    let tenant_id = resolve_tenant_id(&req);
 
-    if let Some(ctx) = req.extensions().get::<SecurityContext>() {
+    if let Some(ctx) = extract_security_context(&req) {
         let allowed = evaluate_route_permission(
-            Some(ctx),
+            Some(&ctx),
             rbac_state.as_ref(),
             &doctype,
             Permission::Read,
@@ -637,14 +628,11 @@ pub async fn v2_create_document(
     rbac_state: Option<web::Data<DynamicRbacState>>,
 ) -> impl Responder {
     let doctype = path.into_inner();
-    let tenant_id = match req.extensions().get::<TenantId>() {
-        Some(t) => t.clone(),
-        None => return HttpResponse::BadRequest().body("Missing tenant context"),
-    };
+    let tenant_id = resolve_tenant_id(&req);
 
-    if let Some(ctx) = req.extensions().get::<SecurityContext>() {
+    if let Some(ctx) = extract_security_context(&req) {
         let allowed = evaluate_route_permission(
-            Some(ctx),
+            Some(&ctx),
             rbac_state.as_ref(),
             &doctype,
             Permission::Create,
@@ -782,14 +770,11 @@ pub async fn v2_update_document(
     rbac_state: Option<web::Data<DynamicRbacState>>,
 ) -> impl Responder {
     let (doctype, name) = path.into_inner();
-    let tenant_id = match req.extensions().get::<TenantId>() {
-        Some(t) => t.clone(),
-        None => return HttpResponse::BadRequest().body("Missing tenant context"),
-    };
+    let tenant_id = resolve_tenant_id(&req);
 
-    if let Some(ctx) = req.extensions().get::<SecurityContext>() {
+    if let Some(ctx) = extract_security_context(&req) {
         let allowed = evaluate_route_permission(
-            Some(ctx),
+            Some(&ctx),
             rbac_state.as_ref(),
             &doctype,
             Permission::Write,
@@ -876,14 +861,11 @@ pub async fn v2_delete_document(
     rbac_state: Option<web::Data<DynamicRbacState>>,
 ) -> impl Responder {
     let (doctype, name) = path.into_inner();
-    let tenant_id = match req.extensions().get::<TenantId>() {
-        Some(t) => t.clone(),
-        None => return HttpResponse::BadRequest().body("Missing tenant context"),
-    };
+    let tenant_id = resolve_tenant_id(&req);
 
-    if let Some(ctx) = req.extensions().get::<SecurityContext>() {
+    if let Some(ctx) = extract_security_context(&req) {
         let allowed = evaluate_route_permission(
-            Some(ctx),
+            Some(&ctx),
             rbac_state.as_ref(),
             &doctype,
             Permission::Delete,
@@ -939,10 +921,7 @@ pub async fn v2_submit_document(
     rbac_state: Option<web::Data<DynamicRbacState>>,
 ) -> impl Responder {
     let (doctype, name) = path.into_inner();
-    let tenant_id = match req.extensions().get::<TenantId>() {
-        Some(t) => t.clone(),
-        None => return HttpResponse::BadRequest().body("Missing tenant context"),
-    };
+    let tenant_id = resolve_tenant_id(&req);
 
     let schema = lookup_schema(&doctype).unwrap_or_else(|| DocTypeSchema {
         name: doctype.clone(),
@@ -968,9 +947,9 @@ pub async fn v2_submit_document(
         permissions: vec![],
     });
 
-    if let Some(ctx) = req.extensions().get::<SecurityContext>() {
+    if let Some(ctx) = extract_security_context(&req) {
         let allowed = evaluate_route_permission(
-            Some(ctx),
+            Some(&ctx),
             rbac_state.as_ref(),
             &doctype,
             Permission::Submit,
@@ -1642,10 +1621,7 @@ pub async fn v2_cancel_document(
     rbac_state: Option<web::Data<DynamicRbacState>>,
 ) -> impl Responder {
     let (doctype, name) = path.into_inner();
-    let tenant_id = match req.extensions().get::<TenantId>() {
-        Some(t) => t.clone(),
-        None => return HttpResponse::BadRequest().body("Missing tenant context"),
-    };
+    let tenant_id = resolve_tenant_id(&req);
 
     let schema = lookup_schema(&doctype).unwrap_or_else(|| DocTypeSchema {
         name: doctype.clone(),
@@ -1671,9 +1647,9 @@ pub async fn v2_cancel_document(
         permissions: vec![],
     });
 
-    if let Some(ctx) = req.extensions().get::<SecurityContext>() {
+    if let Some(ctx) = extract_security_context(&req) {
         let allowed = evaluate_route_permission(
-            Some(ctx),
+            Some(&ctx),
             rbac_state.as_ref(),
             &doctype,
             Permission::Cancel,
@@ -1913,14 +1889,11 @@ pub async fn v2_amend_document(
     rbac_state: Option<web::Data<DynamicRbacState>>,
 ) -> impl Responder {
     let (doctype, name) = path.into_inner();
-    let tenant_id = match req.extensions().get::<TenantId>() {
-        Some(t) => t.clone(),
-        None => return HttpResponse::BadRequest().body("Missing tenant context"),
-    };
+    let tenant_id = resolve_tenant_id(&req);
 
-    if let Some(ctx) = req.extensions().get::<SecurityContext>() {
+    if let Some(ctx) = extract_security_context(&req) {
         let allowed = evaluate_route_permission(
-            Some(ctx),
+            Some(&ctx),
             rbac_state.as_ref(),
             &doctype,
             Permission::Create,

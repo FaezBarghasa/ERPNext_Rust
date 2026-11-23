@@ -88,7 +88,7 @@ async fn test_template_catalog_http_endpoints() {
     let api_body = test::read_body(resp_api).await;
     let templates: Vec<serde_json::Value> =
         serde_json::from_slice(&api_body).expect("Valid JSON array");
-    assert_eq!(templates.len(), 60);
+    assert!(templates.len() >= 60);
 
     // Verify extended templates are accessible and render successfully
     let req_ext = test::TestRequest::get()

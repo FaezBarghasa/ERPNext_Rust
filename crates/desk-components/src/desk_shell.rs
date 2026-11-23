@@ -357,7 +357,7 @@ const DESK_BASE_HTML: &str = r#"<!DOCTYPE html>
             </button>
             <a href="/desk" class="brand">
                 <div class="brand-logo">R</div>
-                <span>RustNext Desk</span>
+                <span>RustNext Enterprise Desk</span>
             </a>
         </div>
 

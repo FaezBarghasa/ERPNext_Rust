@@ -77,7 +77,7 @@ async fn test_epoch_1_substrate_micro_topology_and_acme() {
     assert!(cert.contains("DOMAIN:drones.munich.de"));
 
     // 1.4 Scoped Session Isolation
-    let pool = ConnectionPoolManager::new(Duration::from_secs(60));
+    let pool = ConnectionPoolManager::in_memory(Duration::from_secs(60));
     let session = resolve_scoped_session(&pool, &tenant)
         .await
         .expect("Scoped session creation");
