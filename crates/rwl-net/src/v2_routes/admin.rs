@@ -102,5 +102,9 @@ pub fn configure(cfg: &mut web::ServiceConfig) {
         .route(
             "/api/v2/admin/persona/route",
             web::post().to(admin_resolve_persona_route_handler),
+        )
+        .route(
+            "/api/v2/admin/import/mariadb",
+            web::post().to(admin_mariadb_import_handler),
         );
 }

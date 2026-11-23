@@ -5,6 +5,11 @@ edition.workspace = true
 authors.workspace = true
 license.workspace = true
 
+[features]
+default = ["standard-erp", "media-studio"]
+standard-erp = []
+media-studio = []
+
 [dependencies]
 rwl-meta = { workspace = true }
 rwl-storage = { workspace = true }

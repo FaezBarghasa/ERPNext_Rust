@@ -1100,6 +1100,10 @@ pub fn render_form_view_html(doctype: &str, docname: &str, user_name: &str) -> S
             | "purchase_order"
             | "purchase_invoice"
             | "stock_entry"
+            | "delivery_note"
+            | "purchase_receipt"
+            | "journal_entry"
+            | "payment_entry"
             | "bom"
     );
     let child_table_display = if is_itemized { "block" } else { "none" };
@@ -1346,7 +1350,44 @@ pub fn render_form_view_html(doctype: &str, docname: &str, user_name: &str) -> S
             }}
         }}
 
-        function addChildTableRow(item = {{ item_code: '', item_name: '', qty: 1, rate: 0, amount: 0 }}) {{
+        let childTableFieldName = (doctype === 'journal_entry' || doctype === 'Journal Entry') ? 'accounts' : 'items';
+
+        function updateChildTableHeaders() {{
+            const thead = document.querySelector('.child-table thead');
+            if (!thead) return;
+            if (doctype === 'journal_entry' || doctype === 'Journal Entry') {{
+                thead.innerHTML = `
+                    <tr>
+                        <th style="width:40px;">#</th>
+                        <th style="width:45%;">Account</th>
+                        <th style="width:25%;">Debit</th>
+                        <th style="width:25%;">Credit</th>
+                        <th style="width:40px;"></th>
+                    </tr>
+                `;
+            }} else {{
+                thead.innerHTML = `
+                    <tr>
+                        <th style="width:40px;">#</th>
+                        <th style="width:25%;">Item Code</th>
+                        <th>Item Name / Description</th>
+                        <th style="width:15%;">Qty</th>
+                        <th style="width:15%;">Rate</th>
+                        <th style="width:15%;">Amount</th>
+                        <th style="width:40px;"></th>
+                    </tr>
+                `;
+            }}
+        }}
+
+        function addChildTableRow(item) {{
+            if (!item) {{
+                if (doctype === 'journal_entry' || doctype === 'Journal Entry') {{
+                    item = {{ account: '', debit: 0, credit: 0 }};
+                }} else {{
+                    item = {{ item_code: '', item_name: '', qty: 1, rate: 0, amount: 0 }};
+                }}
+            }}
             childItems.push(item);
             renderChildTable();
         }}
@@ -1360,17 +1401,29 @@ pub fn render_form_view_html(doctype: &str, docname: &str, user_name: &str) -> S
         function renderChildTable() {{
             const tbody = document.getElementById('child-table-body');
             if (!tbody) return;
-            tbody.innerHTML = childItems.map((item, idx) => `
-                <tr>
-                    <td style="color:var(--text-secondary); text-align:center;">${{idx + 1}}</td>
-                    <td><input type="text" value="${{item.item_code || ''}}" placeholder="Item Code" oninput="updateChildItem(${{idx}}, 'item_code', this.value)" /></td>
-                    <td><input type="text" value="${{item.item_name || ''}}" placeholder="Description" oninput="updateChildItem(${{idx}}, 'item_name', this.value)" /></td>
-                    <td><input type="number" step="1" value="${{item.qty || 1}}" oninput="updateChildItem(${{idx}}, 'qty', parseFloat(this.value)||0)" /></td>
-                    <td><input type="number" step="0.01" value="${{item.rate || 0}}" oninput="updateChildItem(${{idx}}, 'rate', parseFloat(this.value)||0)" /></td>
-                    <td><input type="number" step="0.01" value="${{(item.qty || 1) * (item.rate || 0)}}" readonly style="opacity:0.8;" /></td>
-                    <td style="text-align:center;"><button type="button" class="btn btn-danger" style="padding:0.2rem 0.5rem;font-size:0.75rem;" onclick="removeChildTableRow(${{idx}})">✕</button></td>
-                </tr>
-            `).join('');
+            if (doctype === 'journal_entry' || doctype === 'Journal Entry') {{
+                tbody.innerHTML = childItems.map((item, idx) => `
+                    <tr>
+                        <td style="color:var(--text-secondary); text-align:center;">${{idx + 1}}</td>
+                        <td><input type="text" value="${{item.account || ''}}" placeholder="Account Name (e.g. 1110 - Bank Account)" oninput="updateChildItem(${{idx}}, 'account', this.value)" /></td>
+                        <td><input type="number" step="0.01" value="${{item.debit || 0}}" oninput="updateChildItem(${{idx}}, 'debit', parseFloat(this.value)||0)" /></td>
+                        <td><input type="number" step="0.01" value="${{item.credit || 0}}" oninput="updateChildItem(${{idx}}, 'credit', parseFloat(this.value)||0)" /></td>
+                        <td style="text-align:center;"><button type="button" class="btn btn-danger" style="padding:0.2rem 0.5rem;font-size:0.75rem;" onclick="removeChildTableRow(${{idx}})">✕</button></td>
+                    </tr>
+                `).join('');
+            }} else {{
+                tbody.innerHTML = childItems.map((item, idx) => `
+                    <tr>
+                        <td style="color:var(--text-secondary); text-align:center;">${{idx + 1}}</td>
+                        <td><input type="text" value="${{item.item_code || ''}}" placeholder="Item Code" oninput="updateChildItem(${{idx}}, 'item_code', this.value)" /></td>
+                        <td><input type="text" value="${{item.item_name || ''}}" placeholder="Description" oninput="updateChildItem(${{idx}}, 'item_name', this.value)" /></td>
+                        <td><input type="number" step="1" value="${{item.qty || 1}}" oninput="updateChildItem(${{idx}}, 'qty', parseFloat(this.value)||0)" /></td>
+                        <td><input type="number" step="0.01" value="${{item.rate || 0}}" oninput="updateChildItem(${{idx}}, 'rate', parseFloat(this.value)||0)" /></td>
+                        <td><input type="number" step="0.01" value="${{(item.qty || 1) * (item.rate || 0)}}" readonly style="opacity:0.8;" /></td>
+                        <td style="text-align:center;"><button type="button" class="btn btn-danger" style="padding:0.2rem 0.5rem;font-size:0.75rem;" onclick="removeChildTableRow(${{idx}})">✕</button></td>
+                    </tr>
+                `).join('');
+            }}
         }}
 
         function updateChildItem(idx, key, val) {{
@@ -1378,21 +1431,33 @@ pub fn render_form_view_html(doctype: &str, docname: &str, user_name: &str) -> S
                 childItems[idx][key] = val;
                 if (key === 'qty' || key === 'rate') {{
                     childItems[idx].amount = (childItems[idx].qty || 1) * (childItems[idx].rate || 0);
-                    recalcChildTable();
                 }}
+                recalcChildTable();
             }}
         }}
 
         function recalcChildTable() {{
-            let total = 0;
-            childItems.forEach(it => {{
-                total += (it.qty || 1) * (it.rate || 0);
-            }});
-            const totalInput = document.getElementById('field-total');
-            if (totalInput) totalInput.value = total.toFixed(2);
+            if (doctype === 'journal_entry' || doctype === 'Journal Entry') {{
+                let totalDebit = 0;
+                let totalCredit = 0;
+                childItems.forEach(it => {{
+                    totalDebit += (it.debit || 0);
+                    totalCredit += (it.credit || 0);
+                }});
+                const totalInput = document.getElementById('field-total');
+                if (totalInput) totalInput.value = totalDebit.toFixed(2);
+            }} else {{
+                let total = 0;
+                childItems.forEach(it => {{
+                    total += (it.qty || 1) * (it.rate || 0);
+                }});
+                const totalInput = document.getElementById('field-total');
+                if (totalInput) totalInput.value = total.toFixed(2);
+            }}
         }}
 
         async function initSchema() {{
+            updateChildTableHeaders();
             try {{
                 const res = await fetch(`/api/v2/meta/${{doctype}}`);
                 if (res.ok) {{
@@ -1400,6 +1465,12 @@ pub fn render_form_view_html(doctype: &str, docname: &str, user_name: &str) -> S
                     if (meta && meta.fields && meta.fields.length > 0) {{
                         schemaMeta = meta;
                         renderDynamicForm(meta);
+                        const tbl = meta.fields.find(f => f.fieldtype === 'Table' || (f.fieldtype && f.fieldtype.type === 'Table'));
+                        if (tbl) {{
+                            childTableFieldName = tbl.fieldname;
+                            const container = document.getElementById('child-table-container');
+                            if (container) container.style.display = 'block';
+                        }}
                     }}
                 }}
             }} catch (e) {{
@@ -1518,7 +1589,10 @@ pub fn render_form_view_html(doctype: &str, docname: &str, user_name: &str) -> S
                 }}
 
                 // Populate child items if present
-                if (d.items && Array.isArray(d.items)) {{
+                if (d[childTableFieldName] && Array.isArray(d[childTableFieldName])) {{
+                    childItems = d[childTableFieldName];
+                    renderChildTable();
+                }} else if (d.items && Array.isArray(d.items)) {{
                     childItems = d.items;
                     renderChildTable();
                 }} else if (childItems.length === 0) {{
@@ -1563,7 +1637,10 @@ pub fn render_form_view_html(doctype: &str, docname: &str, user_name: &str) -> S
                 }}
             }});
             if (childItems.length > 0) {{
-                body.items = childItems;
+                body[childTableFieldName] = childItems;
+                if (childTableFieldName !== 'items' && !body.items) {{
+                    body.items = childItems;
+                }}
             }}
             return body;
         }}

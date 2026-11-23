@@ -159,6 +159,16 @@ DEFINE INDEX idx_stock_ledger_name ON TABLE stock_ledger_entries FIELDS name UNI
 DEFINE INDEX idx_salary_slip_name ON TABLE salary_slips FIELDS name UNIQUE;
 "#,
     },
+    MigrationDefinition {
+        id: "0010_stock_valuation_layers",
+        name: "Persistent Stock Valuation Layers for FIFO & Moving Average",
+        surql: r#"
+DEFINE TABLE stock_valuation_layers SCHEMALESS;
+DEFINE INDEX idx_svl_item_warehouse ON TABLE stock_valuation_layers FIELDS item_code, warehouse;
+DEFINE INDEX idx_svl_posting ON TABLE stock_valuation_layers FIELDS item_code, warehouse, posting_date;
+DEFINE INDEX idx_svl_voucher ON TABLE stock_valuation_layers FIELDS voucher_type, voucher_no;
+"#,
+    },
 ];
 
 /// Migration Runner for orchestrating schema lifecycles on tenant databases.

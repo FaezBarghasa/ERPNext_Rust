@@ -48,7 +48,6 @@ use chrono::{Datelike, NaiveDate, Utc};
 use erp_accounting::{
     GlEntry, JournalEntry, JournalEntryLine, MockPaymentGateway, PaymentGatewayProcessor,
     PaymentIntent, PaymentMethod, PaymentReconciliationEngine, PaymentStatus, PrintableInvoice,
-    StatementGenerator,
 };
 use erp_cms::media_library::{MediaAsset, MediaLibraryRegistry};
 use erp_cms::seo_engine::SeoMetadata;
@@ -71,8 +70,10 @@ use rwl_meta::registry::DocTypeRegistry;
 /// Canonical ERPNext DocType schema registry loaded once at process initialization.
 pub static GLOBAL_DOCTYPE_REGISTRY: std::sync::LazyLock<DocTypeRegistry> =
     std::sync::LazyLock::new(DocTypeRegistry::new_standard_erpnext);
+use erp_importer::{MariaDbImportConfig, MariaDbMigrationEngine, MariaDbTableDump};
 use rwl_framework::controller::ControllerRegistry;
 use rwl_framework::export_engine::{DocumentExporter, ExportColumn, ExportFormat};
+use rwl_framework::valuation_service::{ValuationOutcome, ValuationService};
 use rwl_framework::lifecycle::Document;
 use rwl_framework::notification::{
     NotificationChannel, NotificationDispatcher, NotificationInboxRegistry, NotificationMessage,
@@ -1426,18 +1427,60 @@ pub async fn v2_submit_document(
                         })
                         .unwrap_or(Decimal::ZERO);
 
+                    let outcome = match ValuationService::consume_fifo(&client, &item_code, &warehouse, qty).await {
+                        Ok(o) => o,
+                        Err(e) => {
+                            return HttpResponse::BadRequest().json(serde_json::json!({
+                                "error": format!("Insufficient stock for item {item_code} in warehouse {warehouse}: {e}")
+                            }));
+                        }
+                    };
+
+                    let valuation_rate = if qty.is_zero() {
+                        rate
+                    } else {
+                        outcome.consumed_cost / qty
+                    };
+
                     generated_sle_entries.push(StockLedgerEntry {
                         name: format!("{name}-sle-{idx}"),
-                        item_code,
-                        warehouse,
+                        item_code: item_code.clone(),
+                        warehouse: warehouse.clone(),
                         actual_qty: -qty, // deduct on delivery
                         incoming_rate: rate,
-                        valuation_rate: rate,
-                        stock_value_difference: -(qty * rate),
+                        valuation_rate,
+                        stock_value_difference: -outcome.consumed_cost,
                         posting_date: posting_date_val,
                         voucher_type: "Delivery Note".to_string(),
                         voucher_no: name.clone(),
                     });
+
+                    if !outcome.consumed_cost.is_zero() {
+                        generated_gl_entries.push(GlEntry {
+                            name: format!("{name}-dr-cogs-{idx}"),
+                            posting_date: posting_date_val,
+                            account: "Cost of Goods Sold - Enterprise".to_string(),
+                            debit: outcome.consumed_cost,
+                            credit: Decimal::ZERO,
+                            voucher_type: "Delivery Note".to_string(),
+                            voucher_no: name.clone(),
+                            party_type: None,
+                            party: None,
+                            company: company_val.clone(),
+                        });
+                        generated_gl_entries.push(GlEntry {
+                            name: format!("{name}-cr-stock-{idx}"),
+                            posting_date: posting_date_val,
+                            account: "Stock In Hand - Enterprise".to_string(),
+                            debit: Decimal::ZERO,
+                            credit: outcome.consumed_cost,
+                            voucher_type: "Delivery Note".to_string(),
+                            voucher_no: name.clone(),
+                            party_type: None,
+                            party: None,
+                            company: company_val.clone(),
+                        });
+                    }
                 }
             }
         }
@@ -1475,10 +1518,25 @@ pub async fn v2_submit_document(
                         })
                         .unwrap_or(Decimal::ZERO);
 
+                    if let Err(e) = ValuationService::add_incoming_layer(
+                        &client,
+                        &item_code,
+                        &warehouse,
+                        posting_date_val,
+                        qty,
+                        rate,
+                        "Purchase Receipt",
+                        &name,
+                    ).await {
+                        return HttpResponse::InternalServerError().json(serde_json::json!({
+                            "error": format!("Failed to record stock layer: {e}")
+                        }));
+                    }
+
                     generated_sle_entries.push(StockLedgerEntry {
                         name: format!("{name}-sle-{idx}"),
-                        item_code,
-                        warehouse,
+                        item_code: item_code.clone(),
+                        warehouse: warehouse.clone(),
                         actual_qty: qty, // add on receipt
                         incoming_rate: rate,
                         valuation_rate: rate,
@@ -1487,6 +1545,34 @@ pub async fn v2_submit_document(
                         voucher_type: "Purchase Receipt".to_string(),
                         voucher_no: name.clone(),
                     });
+
+                    let total_cost = qty * rate;
+                    if !total_cost.is_zero() {
+                        generated_gl_entries.push(GlEntry {
+                            name: format!("{name}-dr-stock-{idx}"),
+                            posting_date: posting_date_val,
+                            account: "Stock In Hand - Enterprise".to_string(),
+                            debit: total_cost,
+                            credit: Decimal::ZERO,
+                            voucher_type: "Purchase Receipt".to_string(),
+                            voucher_no: name.clone(),
+                            party_type: None,
+                            party: None,
+                            company: company_val.clone(),
+                        });
+                        generated_gl_entries.push(GlEntry {
+                            name: format!("{name}-cr-accrued-{idx}"),
+                            posting_date: posting_date_val,
+                            account: "Stock Received But Not Billed - Enterprise".to_string(),
+                            debit: Decimal::ZERO,
+                            credit: total_cost,
+                            voucher_type: "Purchase Receipt".to_string(),
+                            voucher_no: name.clone(),
+                            party_type: None,
+                            party: None,
+                            company: company_val.clone(),
+                        });
+                    }
                 }
             }
         }
@@ -1756,6 +1842,48 @@ pub async fn v2_cancel_document(
         return HttpResponse::InternalServerError().json(serde_json::json!({
             "error": format!("Transaction rollback on cancel: {e}")
         }));
+    }
+
+    let norm_doctype = doctype.trim().to_lowercase().replace(['_', '-'], " ");
+    if norm_doctype == "purchase receipt" {
+        let _ = client
+            .query("DELETE FROM stock_valuation_layers WHERE voucher_type = 'Purchase Receipt' AND voucher_no = $vno;")
+            .bind(("vno", name.clone()))
+            .await;
+    } else if norm_doctype == "delivery note" {
+        let sle_restore_query = "SELECT item_code, warehouse, actual_qty, valuation_rate FROM stock_ledger_entry WHERE voucher_no = $vno;";
+        if let Ok(mut sle_res) = client
+            .query(sle_restore_query)
+            .bind(("vno", name.clone()))
+            .await
+        {
+            let sles: Vec<serde_json::Value> = sle_res.take(0).unwrap_or_default();
+            for s in sles {
+                if let (Some(ic), Some(wh), Some(qty_val), Some(rate_val)) = (
+                    s.get("item_code").and_then(|v| v.as_str()),
+                    s.get("warehouse").and_then(|v| v.as_str()),
+                    s.get("actual_qty")
+                        .and_then(|v| serde_json::from_value::<Decimal>(v.clone()).ok()),
+                    s.get("valuation_rate")
+                        .and_then(|v| serde_json::from_value::<Decimal>(v.clone()).ok()),
+                ) {
+                    let restore_qty = -qty_val;
+                    if restore_qty > Decimal::ZERO {
+                        let _ = ValuationService::add_incoming_layer(
+                            &client,
+                            ic,
+                            wh,
+                            Utc::now().date_naive(),
+                            restore_qty,
+                            rate_val,
+                            "Delivery Note Reversal",
+                            &name,
+                        )
+                        .await;
+                    }
+                }
+            }
+        }
     }
 
     let fetch_updated_sql = format!("SELECT * FROM {table} WHERE name = $name;");
@@ -2562,6 +2690,47 @@ pub async fn render_receipt_handler(payload: web::Json<ReceiptPrintContext>) -> 
 pub async fn logout_handler() -> impl Responder {
     HttpResponse::Ok().json(serde_json::json!({
         "message": "Logged Out"
+    }))
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct MariaDbImportPayload {
+    pub tables: Vec<MariaDbTableDump>,
+    pub config: Option<MariaDbImportConfig>,
+}
+
+/// Handler for importing and reconciling MariaDB dumps: `POST /api/v2/admin/import/mariadb`
+pub async fn admin_mariadb_import_handler(
+    req: HttpRequest,
+    pool_mgr: web::Data<ConnectionPoolManager>,
+    payload: web::Json<MariaDbImportPayload>,
+) -> impl Responder {
+    let tenant_id = resolve_tenant_id(&req);
+    let client = match pool_mgr.get_or_initialize_client(&tenant_id).await {
+        Ok(c) => c,
+        Err(e) => return HttpResponse::InternalServerError().body(e.to_string()),
+    };
+
+    let config = payload.config.unwrap_or_default();
+    let (documents, report) = MariaDbMigrationEngine::process_migration(&payload.tables, &config);
+
+    if !config.dry_run {
+        let repo = rwl_storage::SurrealRepository::new(client);
+        for (doctype, docs) in &documents {
+            let table_name = doctype.to_lowercase().replace(' ', "_");
+            for doc in docs {
+                if let Some(name) = doc.get("name").and_then(|v| v.as_str()) {
+                    let _ = repo.upsert(&table_name, name, doc).await;
+                }
+            }
+        }
+    }
+
+    HttpResponse::Ok().json(serde_json::json!({
+        "status": "SUCCESS",
+        "dry_run": config.dry_run,
+        "report": report,
+        "imported_doctypes": documents.len(),
     }))
 }
 
@@ -7872,24 +8041,59 @@ pub async fn accounting_trial_balance_handler(
 
     let as_of = query.as_of.unwrap_or_else(|| Utc::now().date_naive());
 
-    let mut gl_entries: Vec<GlEntry> = Vec::new();
-    if let Ok(client) = pool_mgr.get_or_initialize_client(&tenant_id).await {
-        let repo = rwl_storage::SurrealRepository::new(client.clone());
-        if let Ok(records) = repo.select_all::<GlEntry>("gl_entry").await {
-            gl_entries = records;
+    let client = match pool_mgr.get_or_initialize_client(&tenant_id).await {
+        Ok(c) => c,
+        Err(e) => return HttpResponse::InternalServerError().body(e.to_string()),
+    };
+
+    let comp_filter = query.company.clone().unwrap_or_else(|| "Default Company".into());
+    let tb_sql = "SELECT account, math::sum(debit) AS total_debit, math::sum(credit) AS total_credit FROM gl_entry WHERE (company = $comp OR company = NONE) AND posting_date <= $as_of GROUP BY account;";
+
+    let mut gl_res = match client
+        .query(tb_sql)
+        .bind(("comp", comp_filter))
+        .bind(("as_of", as_of))
+        .await
+    {
+        Ok(r) => r,
+        Err(e) => return HttpResponse::InternalServerError().body(e.to_string()),
+    };
+
+    let aggs: Vec<serde_json::Value> = gl_res.take(0).unwrap_or_default();
+    let mut rows = Vec::new();
+    let mut grand_debit = Decimal::ZERO;
+    let mut grand_credit = Decimal::ZERO;
+
+    for row in aggs {
+        let acc = row.get("account").and_then(|v| v.as_str()).unwrap_or("").to_string();
+        if acc.is_empty() {
+            continue;
         }
+        let debit: Decimal = row
+            .get("total_debit")
+            .and_then(|v| serde_json::from_value(v.clone()).ok())
+            .unwrap_or(Decimal::ZERO);
+        let credit: Decimal = row
+            .get("total_credit")
+            .and_then(|v| serde_json::from_value(v.clone()).ok())
+            .unwrap_or(Decimal::ZERO);
+        grand_debit += debit;
+        grand_credit += credit;
+        rows.push(serde_json::json!({
+            "account": acc,
+            "debit": debit,
+            "credit": credit,
+            "net": debit - credit,
+        }));
     }
-
-    if let Some(ref comp) = query.company {
-        gl_entries.retain(|e| &e.company == comp);
-    }
-
-    let trial_balance = StatementGenerator::generate_trial_balance(&gl_entries, as_of);
 
     HttpResponse::Ok().json(serde_json::json!({
         "as_of": as_of,
         "company": query.company,
-        "rows": trial_balance,
+        "rows": rows,
+        "total_debit": grand_debit,
+        "total_credit": grand_credit,
+        "is_balanced": grand_debit == grand_credit,
     }))
 }
 
@@ -7909,7 +8113,7 @@ pub struct StockEntryPayload {
 /// Handler for posting Stock Entries with FIFO valuation: `POST /api/v2/inventory/stock_entry`
 pub async fn inventory_stock_entry_handler(
     req: HttpRequest,
-    rbac_state: web::Data<DynamicRbacState>,
+    _rbac_state: web::Data<DynamicRbacState>,
     pool_mgr: web::Data<ConnectionPoolManager>,
     payload: web::Json<StockEntryPayload>,
 ) -> impl Responder {
@@ -7919,56 +8123,59 @@ pub async fn inventory_stock_entry_handler(
         .cloned()
         .unwrap_or_else(|| TenantId("default".into()));
 
-    let key = format!("{}:{}", payload.warehouse, payload.item_code);
+    let client = match pool_mgr.get_or_initialize_client(&tenant_id).await {
+        Ok(c) => c,
+        Err(e) => return HttpResponse::InternalServerError().body(e.to_string()),
+    };
+
     let posting_date = payload
         .posting_date
         .unwrap_or_else(|| Utc::now().date_naive());
 
-    let (valuation_rate, consumed_cogs, remaining_qty, total_inventory_value) = {
-        let mut fifo_guard = match rbac_state.fifo_layers.write() {
-            Ok(g) => g,
-            Err(_) => return HttpResponse::InternalServerError().body("FIFO State Lock Failed"),
-        };
-
-        let queue = fifo_guard.entry(key.clone()).or_default();
-
-        let (valuation_rate, consumed_cogs) = if payload.is_incoming {
-            add_fifo_layer(queue, payload.qty, payload.rate);
-            (payload.rate, Decimal::ZERO)
-        } else {
-            match consume_fifo(queue, payload.qty) {
-                Ok(cogs) => {
-                    let unit_rate = if payload.qty.is_zero() {
-                        Decimal::ZERO
-                    } else {
-                        cogs / payload.qty
-                    };
-                    (unit_rate, cogs)
-                }
-                Err(e) => {
-                    return HttpResponse::BadRequest().json(serde_json::json!({
-                        "status": "ERROR",
-                        "error": e.to_string(),
-                    }));
-                }
-            }
-        };
-
-        let remaining_qty: Decimal = queue.iter().map(|item| item.qty).sum();
-        let total_inventory_value: Decimal = queue.iter().map(|item| item.qty * item.rate).sum();
-
-        (
-            valuation_rate,
-            consumed_cogs,
-            remaining_qty,
-            total_inventory_value,
+    let outcome = if payload.is_incoming {
+        match ValuationService::add_incoming_layer(
+            &client,
+            &payload.item_code,
+            &payload.warehouse,
+            posting_date,
+            payload.qty,
+            payload.rate,
+            &payload.voucher_type,
+            &payload.voucher_no,
         )
+        .await
+        {
+            Ok(o) => o,
+            Err(e) => {
+                return HttpResponse::InternalServerError().json(serde_json::json!({
+                    "status": "ERROR",
+                    "error": e.to_string(),
+                }));
+            }
+        }
+    } else {
+        match ValuationService::consume_fifo(
+            &client,
+            &payload.item_code,
+            &payload.warehouse,
+            payload.qty,
+        )
+        .await
+        {
+            Ok(o) => o,
+            Err(e) => {
+                return HttpResponse::BadRequest().json(serde_json::json!({
+                    "status": "ERROR",
+                    "error": e.to_string(),
+                }));
+            }
+        }
     };
 
     let stock_value_diff = if payload.is_incoming {
         payload.qty * payload.rate
     } else {
-        -consumed_cogs
+        -outcome.consumed_cogs
     };
 
     let sle = StockLedgerEntry {
@@ -7986,16 +8193,14 @@ pub async fn inventory_stock_entry_handler(
         } else {
             Decimal::ZERO
         },
-        valuation_rate,
+        valuation_rate: outcome.valuation_rate,
         stock_value_difference: stock_value_diff,
         voucher_type: payload.voucher_type.clone(),
         voucher_no: payload.voucher_no.clone(),
     };
 
-    if let Ok(client) = pool_mgr.get_or_initialize_client(&tenant_id).await {
-        let repo = rwl_storage::SurrealRepository::new(client.clone());
-        let _ = repo.upsert("stock_ledger_entry", &sle.name, &sle).await;
-    }
+    let repo = rwl_storage::SurrealRepository::new(client.clone());
+    let _ = repo.upsert("stock_ledger_entry", &sle.name, &sle).await;
 
     HttpResponse::Created().json(serde_json::json!({
         "status": "SUCCESS",
@@ -8004,87 +8209,48 @@ pub async fn inventory_stock_entry_handler(
         "warehouse": payload.warehouse,
         "is_incoming": payload.is_incoming,
         "qty": payload.qty,
-        "valuation_rate": valuation_rate,
-        "consumed_cogs": consumed_cogs,
-        "remaining_qty": remaining_qty,
-        "total_inventory_value": total_inventory_value,
+        "valuation_rate": outcome.valuation_rate,
+        "consumed_cogs": outcome.consumed_cogs,
+        "remaining_qty": outcome.remaining_qty,
+        "total_inventory_value": outcome.total_inventory_value,
     }))
 }
 
 /// Handler for querying current stock balance and FIFO valuation: `GET /api/v2/inventory/balance/{warehouse}/{item_code}`
 pub async fn inventory_stock_balance_handler(
     req: HttpRequest,
-    rbac_state: web::Data<DynamicRbacState>,
+    _rbac_state: web::Data<DynamicRbacState>,
     path: web::Path<(String, String)>,
     pool_mgr: Option<web::Data<ConnectionPoolManager>>,
 ) -> impl Responder {
     let (warehouse, item_code) = path.into_inner();
-    let key = format!("{warehouse}:{item_code}");
+    let tenant_id = req
+        .extensions()
+        .get::<TenantId>()
+        .cloned()
+        .unwrap_or_else(|| TenantId("default".into()));
 
-    let mut layers = {
-        let fifo_guard = match rbac_state.fifo_layers.read() {
-            Ok(g) => g,
-            Err(_) => return HttpResponse::InternalServerError().body("FIFO State Lock Failed"),
-        };
-        fifo_guard.get(&key).cloned().unwrap_or_default()
+    let client = if let Some(mgr) = &pool_mgr {
+        match mgr.get_or_initialize_client(&tenant_id).await {
+            Ok(c) => c,
+            Err(e) => return HttpResponse::InternalServerError().body(e.to_string()),
+        }
+    } else {
+        return HttpResponse::InternalServerError().body("Database connection unavailable");
     };
 
-    // If cache is empty, rebuild from SurrealDB stock_ledger_entry
-    if layers.is_empty()
-        && let Some(mgr) = &pool_mgr
-    {
-        let tenant_id = req
-            .extensions()
-            .get::<TenantId>()
-            .cloned()
-            .unwrap_or_else(|| TenantId("default".into()));
-        if let Ok(client) = mgr.get_or_initialize_client(&tenant_id).await {
-            let sql = "SELECT * FROM stock_ledger_entry WHERE warehouse = $wh AND item_code = $item ORDER BY posting_date ASC, name ASC;";
-            if let Ok(mut res) = client
-                .query(sql)
-                .bind(("wh", warehouse.clone()))
-                .bind(("item", item_code.clone()))
-                .await
-            {
-                let rows: Vec<serde_json::Value> = res.take(0).unwrap_or_default();
-                let entries: Vec<StockLedgerEntry> = rows
-                    .into_iter()
-                    .filter_map(|r| serde_json::from_value(r).ok())
-                    .collect();
-                let mut queue = Vec::new();
-                for entry in entries {
-                    if entry.actual_qty > Decimal::ZERO {
-                        add_fifo_layer(&mut queue, entry.actual_qty, entry.incoming_rate);
-                    } else if entry.actual_qty < Decimal::ZERO {
-                        let _ = consume_fifo(&mut queue, -entry.actual_qty);
-                    }
-                }
-                if !queue.is_empty() {
-                    if let Ok(mut write_guard) = rbac_state.fifo_layers.write() {
-                        write_guard.insert(key.clone(), queue.clone());
-                    }
-                    layers = queue;
-                }
-            }
-        }
-    }
-
-    let total_qty: Decimal = layers.iter().map(|i| i.qty).sum();
-    let total_value: Decimal = layers.iter().map(|i| i.qty * i.rate).sum();
-
-    let avg_valuation_rate = if total_qty.is_zero() {
-        Decimal::ZERO
-    } else {
-        total_value / total_qty
+    let outcome = match ValuationService::get_stock_balance(&client, &item_code, &warehouse).await {
+        Ok(o) => o,
+        Err(e) => return HttpResponse::InternalServerError().body(e.to_string()),
     };
 
     HttpResponse::Ok().json(serde_json::json!({
         "warehouse": warehouse,
         "item_code": item_code,
-        "total_qty": total_qty,
-        "total_value": total_value,
-        "average_valuation_rate": avg_valuation_rate,
-        "fifo_layers": layers,
+        "total_qty": outcome.remaining_qty,
+        "balance_qty": outcome.remaining_qty,
+        "total_value": outcome.total_inventory_value,
+        "average_valuation_rate": outcome.valuation_rate,
     }))
 }
 
@@ -8281,11 +8447,16 @@ pub struct PurchaseReceiptPayload {
 /// Handler for receiving goods via Goods Receipt Note (GRN): `POST /api/v2/buying/purchase_receipt`
 pub async fn buying_purchase_receipt_handler(
     req: HttpRequest,
-    rbac_state: web::Data<DynamicRbacState>,
+    _rbac_state: web::Data<DynamicRbacState>,
     pool_mgr: web::Data<ConnectionPoolManager>,
     payload: web::Json<PurchaseReceiptPayload>,
 ) -> impl Responder {
     let tenant_id = resolve_tenant_id(&req);
+
+    let client = match pool_mgr.get_or_initialize_client(&tenant_id).await {
+        Ok(c) => c,
+        Err(e) => return HttpResponse::InternalServerError().body(e.to_string()),
+    };
 
     let grn_no = payload
         .name
@@ -8294,31 +8465,36 @@ pub async fn buying_purchase_receipt_handler(
 
     let mut stock_ledger_entries = Vec::new();
 
-    // Increment FIFO inventory layers for each received item
-    {
-        let mut fifo_guard = match rbac_state.fifo_layers.write() {
-            Ok(g) => g,
-            Err(_) => return HttpResponse::InternalServerError().body("FIFO State Lock Failed"),
-        };
-
-        for item in &payload.items {
-            let key = format!("{}:{}", item.warehouse, item.item_code);
-            let queue = fifo_guard.entry(key).or_default();
-            add_fifo_layer(queue, item.qty, item.rate);
-
-            stock_ledger_entries.push(StockLedgerEntry {
-                name: format!("{grn_no}-{}", item.item_code),
-                item_code: item.item_code.clone(),
-                warehouse: item.warehouse.clone(),
-                posting_date: payload.posting_date,
-                actual_qty: item.qty,
-                incoming_rate: item.rate,
-                valuation_rate: item.rate,
-                stock_value_difference: item.amount,
-                voucher_type: "Purchase Receipt".to_string(),
-                voucher_no: grn_no.clone(),
-            });
+    // Increment FIFO inventory layers for each received item using persistent ValuationService
+    for item in &payload.items {
+        if let Err(e) = ValuationService::add_incoming_layer(
+            &client,
+            &item.item_code,
+            &item.warehouse,
+            payload.posting_date,
+            item.qty,
+            item.rate,
+            "Purchase Receipt",
+            &grn_no,
+        )
+        .await
+        {
+            return HttpResponse::InternalServerError()
+                .body(format!("Failed to record stock layer: {e}"));
         }
+
+        stock_ledger_entries.push(StockLedgerEntry {
+            name: format!("{grn_no}-{}", item.item_code),
+            item_code: item.item_code.clone(),
+            warehouse: item.warehouse.clone(),
+            posting_date: payload.posting_date,
+            actual_qty: item.qty,
+            incoming_rate: item.rate,
+            valuation_rate: item.rate,
+            stock_value_difference: item.amount,
+            voucher_type: "Purchase Receipt".to_string(),
+            voucher_no: grn_no.clone(),
+        });
     }
 
     let pr_doc = serde_json::json!({
@@ -8334,12 +8510,11 @@ pub async fn buying_purchase_receipt_handler(
         "created_at": Utc::now().to_rfc3339(),
     });
 
-    if let Ok(client) = pool_mgr.get_or_initialize_client(&tenant_id).await {
-        let repo = rwl_storage::SurrealRepository::new(client.clone());
-        let _ = repo.upsert("purchase_receipt", &grn_no, &pr_doc).await;
-        for sle in &stock_ledger_entries {
-            let _ = repo.upsert("stock_ledger_entry", &sle.name, sle).await;
-        }
+    let repo = rwl_storage::SurrealRepository::new(client.clone());
+    let _ = repo.upsert("purchase_receipt", &grn_no, &pr_doc).await;
+    for sle in &stock_ledger_entries {
+        let _ = repo.upsert("stock_ledger_entry", &sle.name, sle).await;
+    }
     }
 
     HttpResponse::Created().json(serde_json::json!({
@@ -8498,11 +8673,16 @@ pub struct DeliveryNotePayload {
 /// Handler for dispatching customer orders via Delivery Note: `POST /api/v2/selling/delivery_note`
 pub async fn selling_delivery_note_handler(
     req: HttpRequest,
-    rbac_state: web::Data<DynamicRbacState>,
+    _rbac_state: web::Data<DynamicRbacState>,
     pool_mgr: web::Data<ConnectionPoolManager>,
     payload: web::Json<DeliveryNotePayload>,
 ) -> impl Responder {
     let tenant_id = resolve_tenant_id(&req);
+
+    let client = match pool_mgr.get_or_initialize_client(&tenant_id).await {
+        Ok(c) => c,
+        Err(e) => return HttpResponse::InternalServerError().body(e.to_string()),
+    };
 
     let dn_no = payload
         .name
@@ -8511,44 +8691,36 @@ pub async fn selling_delivery_note_handler(
 
     let mut stock_ledger_entries = Vec::new();
 
-    // Deduct inventory FIFO layers
-    {
-        let mut fifo_guard = match rbac_state.fifo_layers.write() {
-            Ok(g) => g,
-            Err(_) => return HttpResponse::InternalServerError().body("FIFO State Lock Failed"),
+    // Deduct inventory FIFO layers using persistent ValuationService
+    for item in &payload.items {
+        let outcome = match ValuationService::consume_fifo(&client, &item.item_code, &item.warehouse, item.qty).await {
+            Ok(o) => o,
+            Err(e) => {
+                return HttpResponse::BadRequest().json(serde_json::json!({
+                    "status": "ERROR",
+                    "error": format!("Insufficient inventory for {}: {}", item.item_code, e),
+                }));
+            }
         };
 
-        for item in &payload.items {
-            let key = format!("{}:{}", item.warehouse, item.item_code);
-            let queue = fifo_guard.entry(key).or_default();
-            let cost_of_goods = match consume_fifo(queue, item.qty) {
-                Ok(c) => c,
-                Err(e) => {
-                    return HttpResponse::BadRequest().json(serde_json::json!({
-                        "status": "ERROR",
-                        "error": format!("Insufficient inventory for {}: {}", item.item_code, e),
-                    }));
-                }
-            };
-            let valuation_rate = if item.qty.is_zero() {
-                Decimal::ZERO
-            } else {
-                cost_of_goods / item.qty
-            };
+        let valuation_rate = if item.qty.is_zero() {
+            Decimal::ZERO
+        } else {
+            outcome.consumed_cost / item.qty
+        };
 
-            stock_ledger_entries.push(StockLedgerEntry {
-                name: format!("{dn_no}-{}", item.item_code),
-                item_code: item.item_code.clone(),
-                warehouse: item.warehouse.clone(),
-                posting_date: payload.posting_date,
-                actual_qty: -item.qty,
-                incoming_rate: Decimal::ZERO,
-                valuation_rate,
-                stock_value_difference: -cost_of_goods,
-                voucher_type: "Delivery Note".to_string(),
-                voucher_no: dn_no.clone(),
-            });
-        }
+        stock_ledger_entries.push(StockLedgerEntry {
+            name: format!("{dn_no}-{}", item.item_code),
+            item_code: item.item_code.clone(),
+            warehouse: item.warehouse.clone(),
+            posting_date: payload.posting_date,
+            actual_qty: -item.qty,
+            incoming_rate: Decimal::ZERO,
+            valuation_rate,
+            stock_value_difference: -outcome.consumed_cost,
+            voucher_type: "Delivery Note".to_string(),
+            voucher_no: dn_no.clone(),
+        });
     }
 
     let dn_doc = serde_json::json!({
@@ -8564,12 +8736,10 @@ pub async fn selling_delivery_note_handler(
         "created_at": Utc::now().to_rfc3339(),
     });
 
-    if let Ok(client) = pool_mgr.get_or_initialize_client(&tenant_id).await {
-        let repo = rwl_storage::SurrealRepository::new(client.clone());
-        let _ = repo.upsert("delivery_note", &dn_no, &dn_doc).await;
-        for sle in &stock_ledger_entries {
-            let _ = repo.upsert("stock_ledger_entry", &sle.name, sle).await;
-        }
+    let repo = rwl_storage::SurrealRepository::new(client.clone());
+    let _ = repo.upsert("delivery_note", &dn_no, &dn_doc).await;
+    for sle in &stock_ledger_entries {
+        let _ = repo.upsert("stock_ledger_entry", &sle.name, sle).await;
     }
 
     HttpResponse::Created().json(serde_json::json!({
@@ -9127,6 +9297,41 @@ pub struct ProfitLossQuery {
     pub company: Option<String>,
 }
 
+fn determine_account_root_type(account_name: &str, lookup: &HashMap<String, String>) -> String {
+    if let Some(rt) = lookup.get(account_name) {
+        if !rt.is_empty() {
+            return rt.clone();
+        }
+    }
+    let acc_lower = account_name.to_lowercase();
+    if acc_lower.contains("income")
+        || acc_lower.contains("sale")
+        || acc_lower.contains("revenue")
+    {
+        "Income".to_string()
+    } else if acc_lower.contains("expense")
+        || acc_lower.contains("cost")
+        || acc_lower.contains("cogs")
+        || acc_lower.contains("salary")
+    {
+        "Expense".to_string()
+    } else if acc_lower.contains("liability")
+        || acc_lower.contains("creditor")
+        || acc_lower.contains("payable")
+        || acc_lower.contains("vat")
+        || acc_lower.contains("tax")
+    {
+        "Liability".to_string()
+    } else if acc_lower.contains("equity")
+        || acc_lower.contains("capital")
+        || acc_lower.contains("retained")
+    {
+        "Equity".to_string()
+    } else {
+        "Asset".to_string()
+    }
+}
+
 /// Handler for generating Profit & Loss statement: `GET /api/v2/accounting/profit_loss`
 pub async fn accounting_profit_loss_handler(
     req: HttpRequest,
@@ -9135,46 +9340,94 @@ pub async fn accounting_profit_loss_handler(
 ) -> impl Responder {
     let tenant_id = resolve_tenant_id(&req);
 
-    let mut gl_entries: Vec<GlEntry> = Vec::new();
-    if let Ok(client) = pool_mgr.get_or_initialize_client(&tenant_id).await {
-        let repo = rwl_storage::SurrealRepository::new(client.clone());
-        if let Ok(records) = repo.select_all::<GlEntry>("gl_entry").await {
-            gl_entries = records;
+    let client = match pool_mgr.get_or_initialize_client(&tenant_id).await {
+        Ok(c) => c,
+        Err(e) => return HttpResponse::InternalServerError().body(e.to_string()),
+    };
+
+    let mut account_root_types: HashMap<String, String> = HashMap::new();
+    if let Ok(mut res) = client
+        .query("SELECT name, account_name, account_number, root_type FROM accounts;")
+        .await
+    {
+        let acc_list: Vec<serde_json::Value> = res.take(0).unwrap_or_default();
+        for acc in acc_list {
+            let root = acc
+                .get("root_type")
+                .and_then(|v| v.as_str())
+                .unwrap_or("")
+                .to_string();
+            if !root.is_empty() {
+                if let Some(n) = acc.get("name").and_then(|v| v.as_str()) {
+                    account_root_types.insert(n.to_string(), root.clone());
+                }
+                if let Some(an) = acc.get("account_name").and_then(|v| v.as_str()) {
+                    account_root_types.insert(an.to_string(), root.clone());
+                }
+                if let Some(num) = acc.get("account_number").and_then(|v| v.as_str()) {
+                    account_root_types.insert(num.to_string(), root);
+                }
+            }
         }
     }
 
+    let mut sql = "SELECT account, math::sum(debit) AS total_debit, math::sum(credit) AS total_credit FROM gl_entry WHERE 1=1".to_string();
+    if query.company.is_some() {
+        sql.push_str(" AND (company = $comp OR company = NONE)");
+    }
+    if query.from_date.is_some() {
+        sql.push_str(" AND posting_date >= $from_date");
+    }
+    if query.to_date.is_some() {
+        sql.push_str(" AND posting_date <= $to_date");
+    }
+    sql.push_str(" GROUP BY account;");
+
+    let mut q = client.query(&sql);
     if let Some(ref comp) = query.company {
-        gl_entries.retain(|e| &e.company == comp);
+        q = q.bind(("comp", comp.clone()));
     }
     if let Some(from) = query.from_date {
-        gl_entries.retain(|e| e.posting_date >= from);
+        q = q.bind(("from_date", from));
     }
     if let Some(to) = query.to_date {
-        gl_entries.retain(|e| e.posting_date <= to);
+        q = q.bind(("to_date", to));
     }
+
+    let mut gl_res = match q.await {
+        Ok(r) => r,
+        Err(e) => return HttpResponse::InternalServerError().body(e.to_string()),
+    };
 
     let mut income_map: HashMap<String, Decimal> = HashMap::new();
     let mut expense_map: HashMap<String, Decimal> = HashMap::new();
 
-    for gl in &gl_entries {
-        let acc_lower = gl.account.to_lowercase();
-        if acc_lower.contains("income")
-            || acc_lower.contains("sale")
-            || acc_lower.contains("revenue")
-        {
-            let net = gl.credit - gl.debit;
-            *income_map
-                .entry(gl.account.clone())
-                .or_insert(Decimal::ZERO) += net;
-        } else if acc_lower.contains("expense")
-            || acc_lower.contains("cost")
-            || acc_lower.contains("cogs")
-            || acc_lower.contains("salary")
-        {
-            let net = gl.debit - gl.credit;
-            *expense_map
-                .entry(gl.account.clone())
-                .or_insert(Decimal::ZERO) += net;
+    let aggs: Vec<serde_json::Value> = gl_res.take(0).unwrap_or_default();
+    for row in aggs {
+        let acc = row
+            .get("account")
+            .and_then(|v| v.as_str())
+            .unwrap_or("")
+            .to_string();
+        if acc.is_empty() {
+            continue;
+        }
+        let debit: Decimal = row
+            .get("total_debit")
+            .and_then(|v| serde_json::from_value(v.clone()).ok())
+            .unwrap_or(Decimal::ZERO);
+        let credit: Decimal = row
+            .get("total_credit")
+            .and_then(|v| serde_json::from_value(v.clone()).ok())
+            .unwrap_or(Decimal::ZERO);
+
+        let root_type = determine_account_root_type(&acc, &account_root_types);
+        if root_type == "Income" {
+            let net = credit - debit;
+            *income_map.entry(acc).or_insert(Decimal::ZERO) += net;
+        } else if root_type == "Expense" {
+            let net = debit - credit;
+            *expense_map.entry(acc).or_insert(Decimal::ZERO) += net;
         }
     }
 
@@ -9207,54 +9460,114 @@ pub async fn accounting_balance_sheet_handler(
     query: web::Query<BalanceSheetQuery>,
 ) -> impl Responder {
     let tenant_id = resolve_tenant_id(&req);
-
     let as_of = query.as_of_date.unwrap_or_else(|| Utc::now().date_naive());
 
-    let mut gl_entries: Vec<GlEntry> = Vec::new();
-    if let Ok(client) = pool_mgr.get_or_initialize_client(&tenant_id).await {
-        let repo = rwl_storage::SurrealRepository::new(client.clone());
-        if let Ok(records) = repo.select_all::<GlEntry>("gl_entry").await {
-            gl_entries = records;
+    let client = match pool_mgr.get_or_initialize_client(&tenant_id).await {
+        Ok(c) => c,
+        Err(e) => return HttpResponse::InternalServerError().body(e.to_string()),
+    };
+
+    let mut account_root_types: HashMap<String, String> = HashMap::new();
+    if let Ok(mut res) = client
+        .query("SELECT name, account_name, account_number, root_type FROM accounts;")
+        .await
+    {
+        let acc_list: Vec<serde_json::Value> = res.take(0).unwrap_or_default();
+        for acc in acc_list {
+            let root = acc
+                .get("root_type")
+                .and_then(|v| v.as_str())
+                .unwrap_or("")
+                .to_string();
+            if !root.is_empty() {
+                if let Some(n) = acc.get("name").and_then(|v| v.as_str()) {
+                    account_root_types.insert(n.to_string(), root.clone());
+                }
+                if let Some(an) = acc.get("account_name").and_then(|v| v.as_str()) {
+                    account_root_types.insert(an.to_string(), root.clone());
+                }
+                if let Some(num) = acc.get("account_number").and_then(|v| v.as_str()) {
+                    account_root_types.insert(num.to_string(), root);
+                }
+            }
         }
     }
 
-    if let Some(ref comp) = query.company {
-        gl_entries.retain(|e| &e.company == comp);
+    let mut sql = "SELECT account, math::sum(debit) AS total_debit, math::sum(credit) AS total_credit FROM gl_entry WHERE posting_date <= $as_of".to_string();
+    if query.company.is_some() {
+        sql.push_str(" AND (company = $comp OR company = NONE)");
     }
-    gl_entries.retain(|e| e.posting_date <= as_of);
+    sql.push_str(" GROUP BY account;");
+
+    let mut q = client.query(&sql).bind(("as_of", as_of));
+    if let Some(ref comp) = query.company {
+        q = q.bind(("comp", comp.clone()));
+    }
+
+    let mut gl_res = match q.await {
+        Ok(r) => r,
+        Err(e) => return HttpResponse::InternalServerError().body(e.to_string()),
+    };
 
     let mut assets: HashMap<String, Decimal> = HashMap::new();
     let mut liabilities: HashMap<String, Decimal> = HashMap::new();
     let mut equity: HashMap<String, Decimal> = HashMap::new();
+    let mut unclosed_income = Decimal::ZERO;
+    let mut unclosed_expense = Decimal::ZERO;
 
-    for gl in &gl_entries {
-        let acc_lower = gl.account.to_lowercase();
-        if acc_lower.contains("asset")
-            || acc_lower.contains("bank")
-            || acc_lower.contains("cash")
-            || acc_lower.contains("debtor")
-            || acc_lower.contains("receivable")
-            || acc_lower.contains("stock")
-        {
-            let balance = gl.debit - gl.credit;
-            *assets.entry(gl.account.clone()).or_insert(Decimal::ZERO) += balance;
-        } else if acc_lower.contains("liability")
-            || acc_lower.contains("creditor")
-            || acc_lower.contains("payable")
-            || acc_lower.contains("vat")
-            || acc_lower.contains("tax")
-        {
-            let balance = gl.credit - gl.debit;
-            *liabilities
-                .entry(gl.account.clone())
-                .or_insert(Decimal::ZERO) += balance;
-        } else if acc_lower.contains("equity")
-            || acc_lower.contains("capital")
-            || acc_lower.contains("retained")
-        {
-            let balance = gl.credit - gl.debit;
-            *equity.entry(gl.account.clone()).or_insert(Decimal::ZERO) += balance;
+    let aggs: Vec<serde_json::Value> = gl_res.take(0).unwrap_or_default();
+    for row in aggs {
+        let acc = row
+            .get("account")
+            .and_then(|v| v.as_str())
+            .unwrap_or("")
+            .to_string();
+        if acc.is_empty() {
+            continue;
         }
+        let debit: Decimal = row
+            .get("total_debit")
+            .and_then(|v| serde_json::from_value(v.clone()).ok())
+            .unwrap_or(Decimal::ZERO);
+        let credit: Decimal = row
+            .get("total_credit")
+            .and_then(|v| serde_json::from_value(v.clone()).ok())
+            .unwrap_or(Decimal::ZERO);
+
+        let root_type = determine_account_root_type(&acc, &account_root_types);
+        match root_type.as_str() {
+            "Asset" => {
+                let balance = debit - credit;
+                *assets.entry(acc).or_insert(Decimal::ZERO) += balance;
+            }
+            "Liability" => {
+                let balance = credit - debit;
+                *liabilities.entry(acc).or_insert(Decimal::ZERO) += balance;
+            }
+            "Equity" => {
+                let balance = credit - debit;
+                *equity.entry(acc).or_insert(Decimal::ZERO) += balance;
+            }
+            "Income" => {
+                let balance = credit - debit;
+                unclosed_income += balance;
+            }
+            "Expense" => {
+                let balance = debit - credit;
+                unclosed_expense += balance;
+            }
+            _ => {
+                let balance = debit - credit;
+                *assets.entry(acc).or_insert(Decimal::ZERO) += balance;
+            }
+        }
+    }
+
+    let unclosed_earnings = unclosed_income - unclosed_expense;
+    if !unclosed_earnings.is_zero() {
+        *equity
+            .entry("Retained Earnings (Unclosed)".to_string())
+            .or_insert(Decimal::ZERO) += unclosed_earnings;
     }
 
     let total_assets: Decimal = assets.values().sum();

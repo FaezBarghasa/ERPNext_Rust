@@ -10,6 +10,7 @@ default = ["wasi-plugins"]
 wasi-plugins = ["dep:wasmtime"]
 
 [dependencies]
+surrealdb = { workspace = true }
 anyhow = { workspace = true }
 rwl-meta = { workspace = true }
 rwl-storage = { workspace = true }

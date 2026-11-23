@@ -21,6 +21,7 @@ pub mod scripting;
 pub mod settings;
 pub mod social;
 pub mod typestate;
+pub mod valuation_service;
 #[cfg(feature = "wasi-plugins")]
 pub mod wasmtime_sandbox;
 #[cfg(not(feature = "wasi-plugins"))]
@@ -103,6 +104,9 @@ pub use scripting::{LifecycleEvent, RhaiHookEngine, ScriptError};
 pub use typestate::{
     CancelledState, Doc, DocumentLifecycle, DocumentState, DraftState, SecurityContext,
     SubmittedState,
+};
+pub use valuation_service::{
+    StockValuationLayer, ValuationError, ValuationOutcome, ValuationService,
 };
 pub use wasmtime_sandbox::RealSandbox;
 pub use webhook::{WebhookDispatcher, WebhookError, WebhookPayload, WebhookSubscription};

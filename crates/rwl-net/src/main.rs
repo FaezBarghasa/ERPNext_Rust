@@ -94,6 +94,48 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             );
             println!("📊 Benchmark Target Invariant: p99 < 2ms, Throughput > 150,000 req/s");
         }
+        Commands::ImportMariaDb(args) => {
+            println!(
+                "📥 Importing MariaDB table dump from '{}' into tenant '{}' (dry_run: {})...",
+                args.file, args.tenant, args.dry_run
+            );
+            let content = std::fs::read_to_string(&args.file)?;
+            let tables: Vec<erp_importer::MariaDbTableDump> = serde_json::from_str(&content)?;
+            let config = erp_importer::MariaDbImportConfig {
+                dry_run: args.dry_run,
+                ..Default::default()
+            };
+            let (documents, report) =
+                erp_importer::MariaDbMigrationEngine::process_migration(&tables, &config);
+            println!("📊 Migration Reconciliation Report:");
+            println!("   - Is Reconciled: {}", report.is_reconciled);
+            println!(
+                "   - GL Debits (Source / Imported): {} / {}",
+                report.gl_debits_source, report.gl_debits_imported
+            );
+            println!(
+                "   - GL Credits (Source / Imported): {} / {}",
+                report.gl_credits_source, report.gl_credits_imported
+            );
+            println!(
+                "   - Stock Qty (Source / Imported): {} / {}",
+                report.stock_qty_source, report.stock_qty_imported
+            );
+            println!(
+                "   - Stock Valuation (Source / Imported): {} / {}",
+                report.stock_val_source, report.stock_val_imported
+            );
+            println!("   - Total Imported DocTypes: {}", documents.len());
+            if !report.discrepancies.is_empty() {
+                println!("⚠️ Discrepancies detected ({}):", report.discrepancies.len());
+                for d in &report.discrepancies {
+                    println!(
+                        "     * [{}] {}: expected={}, actual={}, delta={}",
+                        d.category, d.entity, d.expected, d.actual, d.delta
+                    );
+                }
+            }
+        }
     }
 
     Ok(())

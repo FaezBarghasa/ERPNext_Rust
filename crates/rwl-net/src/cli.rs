@@ -26,6 +26,23 @@ pub enum Commands {
     Tenant(TenantArgs),
     /// Run synthetic load generator and latency micro-benchmarks.
     Benchmark(BenchmarkArgs),
+    /// Ingest upstream MariaDB JSON table dumps and reconcile General Ledger & Stock.
+    ImportMariaDb(ImportMariaDbArgs),
+}
+
+#[derive(Args, Debug, Clone)]
+pub struct ImportMariaDbArgs {
+    /// Path to JSON file containing MariaDB table dumps array.
+    #[arg(short, long)]
+    pub file: String,
+
+    /// Target tenant identifier (default: "default").
+    #[arg(short, long, default_value = "default")]
+    pub tenant: String,
+
+    /// Dry run mode (validate mapping and calculate reconciliation without writing).
+    #[arg(long, default_value_t = false)]
+    pub dry_run: bool,
 }
 
 #[derive(Args, Debug, Clone)]
