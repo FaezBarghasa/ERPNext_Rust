@@ -54,7 +54,7 @@ use erp_cms::seo_engine::SeoMetadata;
 use erp_cms::taxonomy::{TaxonomyRegistry, TaxonomyTerm};
 use erp_crm::{CrmPipeline, Quotation};
 use erp_hr::{SalaryCalculator, SalaryStructure};
-use erp_inventory::{FifoBatchItem, StockLedgerEntry, add_fifo_layer, consume_fifo};
+use erp_inventory::{FifoBatchItem, StockLedgerEntry, add_fifo_layer};
 use erp_trade::coupon::{CartItemLine, CouponCode, CouponDiscountType, CouponEngine};
 use erp_trade::order_lifecycle::{
     OrderState, OrderStateMachine, OrderTransitionEvent, RmaItemLine, RmaRecord,
@@ -73,7 +73,7 @@ pub static GLOBAL_DOCTYPE_REGISTRY: std::sync::LazyLock<DocTypeRegistry> =
 use erp_importer::{MariaDbImportConfig, MariaDbMigrationEngine, MariaDbTableDump};
 use rwl_framework::controller::ControllerRegistry;
 use rwl_framework::export_engine::{DocumentExporter, ExportColumn, ExportFormat};
-use rwl_framework::valuation_service::{ValuationOutcome, ValuationService};
+use rwl_framework::valuation_service::ValuationService;
 use rwl_framework::lifecycle::Document;
 use rwl_framework::notification::{
     NotificationChannel, NotificationDispatcher, NotificationInboxRegistry, NotificationMessage,
@@ -1439,7 +1439,7 @@ pub async fn v2_submit_document(
                     let valuation_rate = if qty.is_zero() {
                         rate
                     } else {
-                        outcome.consumed_cost / qty
+                        outcome.consumed_cogs / qty
                     };
 
                     generated_sle_entries.push(StockLedgerEntry {
@@ -1449,18 +1449,18 @@ pub async fn v2_submit_document(
                         actual_qty: -qty, // deduct on delivery
                         incoming_rate: rate,
                         valuation_rate,
-                        stock_value_difference: -outcome.consumed_cost,
+                        stock_value_difference: -outcome.consumed_cogs,
                         posting_date: posting_date_val,
                         voucher_type: "Delivery Note".to_string(),
                         voucher_no: name.clone(),
                     });
 
-                    if !outcome.consumed_cost.is_zero() {
+                    if !outcome.consumed_cogs.is_zero() {
                         generated_gl_entries.push(GlEntry {
                             name: format!("{name}-dr-cogs-{idx}"),
                             posting_date: posting_date_val,
                             account: "Cost of Goods Sold - Enterprise".to_string(),
-                            debit: outcome.consumed_cost,
+                            debit: outcome.consumed_cogs,
                             credit: Decimal::ZERO,
                             voucher_type: "Delivery Note".to_string(),
                             voucher_no: name.clone(),
@@ -1473,7 +1473,7 @@ pub async fn v2_submit_document(
                             posting_date: posting_date_val,
                             account: "Stock In Hand - Enterprise".to_string(),
                             debit: Decimal::ZERO,
-                            credit: outcome.consumed_cost,
+                            credit: outcome.consumed_cogs,
                             voucher_type: "Delivery Note".to_string(),
                             voucher_no: name.clone(),
                             party_type: None,
@@ -2776,13 +2776,39 @@ pub async fn admin_action_handler(req: HttpRequest, action: web::Path<String>) -
     }
 }
 
+/// Extracts or resolves security context from extensions, Authorization header, or dev fallback.
+pub fn extract_security_context(req: &HttpRequest) -> Option<SecurityContext> {
+    if let Some(ctx) = req.extensions().get::<SecurityContext>().cloned() {
+        return Some(ctx);
+    }
+    if let Some(auth_hdr) = req.headers().get(actix_web::http::header::AUTHORIZATION)
+        && let Ok(auth_str) = auth_hdr.to_str()
+    {
+        let token_str = if let Some(stripped) = auth_str.strip_prefix("Bearer ") {
+            stripped.trim()
+        } else {
+            auth_str.trim()
+        };
+        let secret = get_master_token_secret();
+        if let Ok(claims) = rwl_meta::auth::verify_token(token_str, &secret) {
+            return Some(SecurityContext::new(claims));
+        } else {
+            return None;
+        }
+    }
+    if cfg!(debug_assertions) {
+        return Some(SecurityContext::root("default"));
+    }
+    None
+}
+
 /// Handler for Admin Interactive SurrealQL Query: `POST /api/v2/admin/query`
 pub async fn admin_query_handler(
     req: HttpRequest,
     pool_mgr: web::Data<ConnectionPoolManager>,
     payload: web::Json<serde_json::Value>,
 ) -> impl Responder {
-    let Some(ctx) = req.extensions().get::<SecurityContext>().cloned() else {
+    let Some(ctx) = extract_security_context(&req) else {
         return HttpResponse::Unauthorized().json(serde_json::json!({
             "status": "UNAUTHORIZED",
             "error": "Authentication required. Bearer token must be provided."
@@ -3250,7 +3276,7 @@ pub async fn admin_list_users_handler(
     req: HttpRequest,
     rbac_state: web::Data<DynamicRbacState>,
 ) -> impl Responder {
-    let Some(ctx) = req.extensions().get::<SecurityContext>().cloned() else {
+    let Some(ctx) = extract_security_context(&req) else {
         return HttpResponse::Unauthorized().json(serde_json::json!({
             "status": "UNAUTHORIZED",
             "error": "Authentication required. Bearer token must be provided."
@@ -3281,7 +3307,7 @@ pub async fn admin_create_user_handler(
     rbac_state: web::Data<DynamicRbacState>,
     payload: web::Json<CreateUserPayload>,
 ) -> impl Responder {
-    let Some(ctx) = req.extensions().get::<SecurityContext>().cloned() else {
+    let Some(ctx) = extract_security_context(&req) else {
         return HttpResponse::Unauthorized().json(serde_json::json!({
             "status": "UNAUTHORIZED",
             "error": "Authentication required. Bearer token must be provided."
@@ -3350,7 +3376,7 @@ pub async fn admin_update_user_roles_handler(
     user_id: web::Path<String>,
     payload: web::Json<UpdateUserRolesPayload>,
 ) -> impl Responder {
-    let Some(ctx) = req.extensions().get::<SecurityContext>().cloned() else {
+    let Some(ctx) = extract_security_context(&req) else {
         return HttpResponse::Unauthorized().json(serde_json::json!({
             "status": "UNAUTHORIZED",
             "error": "Authentication required. Bearer token must be provided."
@@ -3411,7 +3437,7 @@ pub async fn admin_delete_user_handler(
     rbac_state: web::Data<DynamicRbacState>,
     user_id: web::Path<String>,
 ) -> impl Responder {
-    let Some(ctx) = req.extensions().get::<SecurityContext>().cloned() else {
+    let Some(ctx) = extract_security_context(&req) else {
         return HttpResponse::Unauthorized().json(serde_json::json!({
             "status": "UNAUTHORIZED",
             "error": "Authentication required. Bearer token must be provided."
@@ -7972,11 +7998,7 @@ pub async fn accounting_journal_entry_handler(
     pool_mgr: web::Data<ConnectionPoolManager>,
     payload: web::Json<JournalEntryPayload>,
 ) -> impl Responder {
-    let tenant_id = req
-        .extensions()
-        .get::<TenantId>()
-        .cloned()
-        .unwrap_or_else(|| TenantId("default".into()));
+    let tenant_id = resolve_tenant_id(&req);
 
     let entry = JournalEntry {
         posting_date: payload.posting_date,
@@ -8033,11 +8055,7 @@ pub async fn accounting_trial_balance_handler(
     pool_mgr: web::Data<ConnectionPoolManager>,
     query: web::Query<TrialBalanceQuery>,
 ) -> impl Responder {
-    let tenant_id = req
-        .extensions()
-        .get::<TenantId>()
-        .cloned()
-        .unwrap_or_else(|| TenantId("default".into()));
+    let tenant_id = resolve_tenant_id(&req);
 
     let as_of = query.as_of.unwrap_or_else(|| Utc::now().date_naive());
 
@@ -8047,7 +8065,7 @@ pub async fn accounting_trial_balance_handler(
     };
 
     let comp_filter = query.company.clone().unwrap_or_else(|| "Default Company".into());
-    let tb_sql = "SELECT account, math::sum(debit) AS total_debit, math::sum(credit) AS total_credit FROM gl_entry WHERE (company = $comp OR company = NONE) AND posting_date <= $as_of GROUP BY account;";
+    let tb_sql = "SELECT account, debit, credit FROM gl_entry WHERE (company = $comp OR company = NONE) AND posting_date <= $as_of;";
 
     let mut gl_res = match client
         .query(tb_sql)
@@ -8059,24 +8077,44 @@ pub async fn accounting_trial_balance_handler(
         Err(e) => return HttpResponse::InternalServerError().body(e.to_string()),
     };
 
-    let aggs: Vec<serde_json::Value> = gl_res.take(0).unwrap_or_default();
-    let mut rows = Vec::new();
-    let mut grand_debit = Decimal::ZERO;
-    let mut grand_credit = Decimal::ZERO;
-
-    for row in aggs {
+    let entries: Vec<serde_json::Value> = gl_res.take(0).unwrap_or_default();
+    let mut acc_map: HashMap<String, (Decimal, Decimal)> = HashMap::new();
+    for row in entries {
         let acc = row.get("account").and_then(|v| v.as_str()).unwrap_or("").to_string();
         if acc.is_empty() {
             continue;
         }
         let debit: Decimal = row
-            .get("total_debit")
-            .and_then(|v| serde_json::from_value(v.clone()).ok())
+            .get("debit")
+            .and_then(|v| {
+                if let Some(s) = v.as_str() {
+                    s.parse::<Decimal>().ok()
+                } else {
+                    serde_json::from_value(v.clone()).ok()
+                }
+            })
             .unwrap_or(Decimal::ZERO);
         let credit: Decimal = row
-            .get("total_credit")
-            .and_then(|v| serde_json::from_value(v.clone()).ok())
+            .get("credit")
+            .and_then(|v| {
+                if let Some(s) = v.as_str() {
+                    s.parse::<Decimal>().ok()
+                } else {
+                    serde_json::from_value(v.clone()).ok()
+                }
+            })
             .unwrap_or(Decimal::ZERO);
+
+        let entry = acc_map.entry(acc).or_insert((Decimal::ZERO, Decimal::ZERO));
+        entry.0 += debit;
+        entry.1 += credit;
+    }
+
+    let mut rows = Vec::new();
+    let mut grand_debit = Decimal::ZERO;
+    let mut grand_credit = Decimal::ZERO;
+
+    for (acc, (debit, credit)) in acc_map {
         grand_debit += debit;
         grand_credit += credit;
         rows.push(serde_json::json!({
@@ -8117,11 +8155,7 @@ pub async fn inventory_stock_entry_handler(
     pool_mgr: web::Data<ConnectionPoolManager>,
     payload: web::Json<StockEntryPayload>,
 ) -> impl Responder {
-    let tenant_id = req
-        .extensions()
-        .get::<TenantId>()
-        .cloned()
-        .unwrap_or_else(|| TenantId("default".into()));
+    let tenant_id = resolve_tenant_id(&req);
 
     let client = match pool_mgr.get_or_initialize_client(&tenant_id).await {
         Ok(c) => c,
@@ -8224,11 +8258,7 @@ pub async fn inventory_stock_balance_handler(
     pool_mgr: Option<web::Data<ConnectionPoolManager>>,
 ) -> impl Responder {
     let (warehouse, item_code) = path.into_inner();
-    let tenant_id = req
-        .extensions()
-        .get::<TenantId>()
-        .cloned()
-        .unwrap_or_else(|| TenantId("default".into()));
+    let tenant_id = resolve_tenant_id(&req);
 
     let client = if let Some(mgr) = &pool_mgr {
         match mgr.get_or_initialize_client(&tenant_id).await {
@@ -8268,11 +8298,7 @@ pub async fn crm_convert_quotation_handler(
     pool_mgr: web::Data<ConnectionPoolManager>,
     payload: web::Json<CrmConvertQuotationPayload>,
 ) -> impl Responder {
-    let tenant_id = req
-        .extensions()
-        .get::<TenantId>()
-        .cloned()
-        .unwrap_or_else(|| TenantId("default".into()));
+    let tenant_id = resolve_tenant_id(&req);
 
     let mut quotation = payload.quotation.clone();
     match CrmPipeline::convert_to_sales_order(
@@ -8320,11 +8346,7 @@ pub async fn hr_process_payroll_handler(
     pool_mgr: web::Data<ConnectionPoolManager>,
     payload: web::Json<ProcessPayrollPayload>,
 ) -> impl Responder {
-    let tenant_id = req
-        .extensions()
-        .get::<TenantId>()
-        .cloned()
-        .unwrap_or_else(|| TenantId("default".into()));
+    let tenant_id = resolve_tenant_id(&req);
 
     match SalaryCalculator::calculate_slip(
         &payload.employee_id,
@@ -8514,7 +8536,6 @@ pub async fn buying_purchase_receipt_handler(
     let _ = repo.upsert("purchase_receipt", &grn_no, &pr_doc).await;
     for sle in &stock_ledger_entries {
         let _ = repo.upsert("stock_ledger_entry", &sle.name, sle).await;
-    }
     }
 
     HttpResponse::Created().json(serde_json::json!({
@@ -8706,7 +8727,7 @@ pub async fn selling_delivery_note_handler(
         let valuation_rate = if item.qty.is_zero() {
             Decimal::ZERO
         } else {
-            outcome.consumed_cost / item.qty
+            outcome.consumed_cogs / item.qty
         };
 
         stock_ledger_entries.push(StockLedgerEntry {
@@ -8717,7 +8738,7 @@ pub async fn selling_delivery_note_handler(
             actual_qty: -item.qty,
             incoming_rate: Decimal::ZERO,
             valuation_rate,
-            stock_value_difference: -outcome.consumed_cost,
+            stock_value_difference: -outcome.consumed_cogs,
             voucher_type: "Delivery Note".to_string(),
             voucher_no: dn_no.clone(),
         });
@@ -9371,7 +9392,7 @@ pub async fn accounting_profit_loss_handler(
         }
     }
 
-    let mut sql = "SELECT account, math::sum(debit) AS total_debit, math::sum(credit) AS total_credit FROM gl_entry WHERE 1=1".to_string();
+    let mut sql = "SELECT account, debit, credit FROM gl_entry WHERE 1=1".to_string();
     if query.company.is_some() {
         sql.push_str(" AND (company = $comp OR company = NONE)");
     }
@@ -9381,7 +9402,7 @@ pub async fn accounting_profit_loss_handler(
     if query.to_date.is_some() {
         sql.push_str(" AND posting_date <= $to_date");
     }
-    sql.push_str(" GROUP BY account;");
+    sql.push_str(";");
 
     let mut q = client.query(&sql);
     if let Some(ref comp) = query.company {
@@ -9402,8 +9423,8 @@ pub async fn accounting_profit_loss_handler(
     let mut income_map: HashMap<String, Decimal> = HashMap::new();
     let mut expense_map: HashMap<String, Decimal> = HashMap::new();
 
-    let aggs: Vec<serde_json::Value> = gl_res.take(0).unwrap_or_default();
-    for row in aggs {
+    let entries: Vec<serde_json::Value> = gl_res.take(0).unwrap_or_default();
+    for row in entries {
         let acc = row
             .get("account")
             .and_then(|v| v.as_str())
@@ -9413,12 +9434,24 @@ pub async fn accounting_profit_loss_handler(
             continue;
         }
         let debit: Decimal = row
-            .get("total_debit")
-            .and_then(|v| serde_json::from_value(v.clone()).ok())
+            .get("debit")
+            .and_then(|v| {
+                if let Some(s) = v.as_str() {
+                    s.parse::<Decimal>().ok()
+                } else {
+                    serde_json::from_value(v.clone()).ok()
+                }
+            })
             .unwrap_or(Decimal::ZERO);
         let credit: Decimal = row
-            .get("total_credit")
-            .and_then(|v| serde_json::from_value(v.clone()).ok())
+            .get("credit")
+            .and_then(|v| {
+                if let Some(s) = v.as_str() {
+                    s.parse::<Decimal>().ok()
+                } else {
+                    serde_json::from_value(v.clone()).ok()
+                }
+            })
             .unwrap_or(Decimal::ZERO);
 
         let root_type = determine_account_root_type(&acc, &account_root_types);
@@ -9493,11 +9526,11 @@ pub async fn accounting_balance_sheet_handler(
         }
     }
 
-    let mut sql = "SELECT account, math::sum(debit) AS total_debit, math::sum(credit) AS total_credit FROM gl_entry WHERE posting_date <= $as_of".to_string();
+    let mut sql = "SELECT account, debit, credit FROM gl_entry WHERE posting_date <= $as_of".to_string();
     if query.company.is_some() {
         sql.push_str(" AND (company = $comp OR company = NONE)");
     }
-    sql.push_str(" GROUP BY account;");
+    sql.push_str(";");
 
     let mut q = client.query(&sql).bind(("as_of", as_of));
     if let Some(ref comp) = query.company {
@@ -9515,8 +9548,8 @@ pub async fn accounting_balance_sheet_handler(
     let mut unclosed_income = Decimal::ZERO;
     let mut unclosed_expense = Decimal::ZERO;
 
-    let aggs: Vec<serde_json::Value> = gl_res.take(0).unwrap_or_default();
-    for row in aggs {
+    let entries: Vec<serde_json::Value> = gl_res.take(0).unwrap_or_default();
+    for row in entries {
         let acc = row
             .get("account")
             .and_then(|v| v.as_str())
@@ -9526,12 +9559,24 @@ pub async fn accounting_balance_sheet_handler(
             continue;
         }
         let debit: Decimal = row
-            .get("total_debit")
-            .and_then(|v| serde_json::from_value(v.clone()).ok())
+            .get("debit")
+            .and_then(|v| {
+                if let Some(s) = v.as_str() {
+                    s.parse::<Decimal>().ok()
+                } else {
+                    serde_json::from_value(v.clone()).ok()
+                }
+            })
             .unwrap_or(Decimal::ZERO);
         let credit: Decimal = row
-            .get("total_credit")
-            .and_then(|v| serde_json::from_value(v.clone()).ok())
+            .get("credit")
+            .and_then(|v| {
+                if let Some(s) = v.as_str() {
+                    s.parse::<Decimal>().ok()
+                } else {
+                    serde_json::from_value(v.clone()).ok()
+                }
+            })
             .unwrap_or(Decimal::ZERO);
 
         let root_type = determine_account_root_type(&acc, &account_root_types);

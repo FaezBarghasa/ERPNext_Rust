@@ -71,7 +71,7 @@ impl ValuationService {
     ) -> Result<ValuationOutcome, ValuationError> {
         let timestamp = Utc::now().timestamp_nanos_opt().unwrap_or(0);
         let layer_name = format!(
-            "SVL-{}-{}-{}",
+            "SVL_{}_{}_{}",
             Self::clean_id(warehouse),
             Self::clean_id(item_code),
             timestamp
@@ -90,7 +90,7 @@ impl ValuationService {
 
         let layer_val = serde_json::to_value(&layer)
             .map_err(|e| ValuationError::DatabaseError(e.to_string()))?;
-        let create_sql = format!("UPSERT stock_valuation_layers:{} CONTENT $layer;", layer_name);
+        let create_sql = format!("UPSERT stock_valuation_layers:`{}` CONTENT $layer;", layer_name);
         client
             .query(&create_sql)
             .bind(("layer", layer_val))
@@ -152,9 +152,10 @@ impl ValuationService {
             layer.remaining_qty -= take;
             needed -= take;
 
+            let clean_name = Self::clean_id(&layer.name);
             let update_sql = format!(
-                "UPDATE stock_valuation_layers:{} SET remaining_qty = $rem;",
-                layer.name
+                "UPDATE stock_valuation_layers:`{}` SET remaining_qty = $rem;",
+                clean_name
             );
             client
                 .query(&update_sql)

@@ -68,7 +68,11 @@ async fn test_erpnext_v16_procure_to_pay_full_flow() {
         .to_request();
 
     let resp = call_service(&app, req).await;
-    assert_eq!(resp.status(), StatusCode::CREATED);
+    let status = resp.status();
+    let body = to_bytes(resp.into_body()).await.unwrap();
+    if status != StatusCode::CREATED {
+        panic!("Delivery note failed: {}", String::from_utf8_lossy(&body));
+    }
 
     // 2. Receive Goods via Purchase Receipt (GRN) -> Adds FIFO Layers & SLE
     let pr_payload = PurchaseReceiptPayload {
@@ -104,7 +108,11 @@ async fn test_erpnext_v16_procure_to_pay_full_flow() {
         .to_request();
 
     let resp = call_service(&app, req).await;
-    assert_eq!(resp.status(), StatusCode::CREATED);
+    let status = resp.status();
+    let body = to_bytes(resp.into_body()).await.unwrap();
+    if status != StatusCode::CREATED {
+        panic!("Delivery note failed: {}", String::from_utf8_lossy(&body));
+    }
 
     // 3. Issue Purchase Invoice -> Posts Double-Entry General Ledger (Dr Expense/Stock, Cr Payables, Dr Tax)
     let pi_payload = PurchaseInvoicePayload {
@@ -143,8 +151,11 @@ async fn test_erpnext_v16_procure_to_pay_full_flow() {
         .to_request();
 
     let resp = call_service(&app, req).await;
-    assert_eq!(resp.status(), StatusCode::CREATED);
+    let status = resp.status();
     let body = to_bytes(resp.into_body()).await.unwrap();
+    if status != StatusCode::CREATED {
+        panic!("Purchase invoice failed: {}", String::from_utf8_lossy(&body));
+    }
     let json: serde_json::Value = serde_json::from_slice(&body).unwrap();
     assert_eq!(json["status"], "SUCCESS");
     assert_eq!(json["purchase_invoice"]["grand_total"], "379.50");
@@ -176,7 +187,11 @@ async fn test_erpnext_v16_order_to_cash_and_settlement_flow() {
         .set_json(&stock_in)
         .to_request();
     let resp = call_service(&app, req).await;
-    assert_eq!(resp.status(), StatusCode::CREATED);
+    let status = resp.status();
+    let body = to_bytes(resp.into_body()).await.unwrap();
+    if status != StatusCode::CREATED {
+        panic!("Delivery note failed: {}", String::from_utf8_lossy(&body));
+    }
 
     // 2. Dispatch Goods via Delivery Note -> Consumes FIFO layers
     let dn_payload = DeliveryNotePayload {
@@ -199,7 +214,11 @@ async fn test_erpnext_v16_order_to_cash_and_settlement_flow() {
         .set_json(&dn_payload)
         .to_request();
     let resp = call_service(&app, req).await;
-    assert_eq!(resp.status(), StatusCode::CREATED);
+    let status = resp.status();
+    let body = to_bytes(resp.into_body()).await.unwrap();
+    if status != StatusCode::CREATED {
+        panic!("Delivery note failed: {}", String::from_utf8_lossy(&body));
+    }
 
     // 3. Issue Sales Invoice -> Auto Posts GL (Dr Debtors 1320, Cr Sales 1200, Cr Output Tax 120)
     let si_payload = SalesInvoicePayload {
@@ -227,8 +246,11 @@ async fn test_erpnext_v16_order_to_cash_and_settlement_flow() {
         .set_json(&si_payload)
         .to_request();
     let resp = call_service(&app, req).await;
-    assert_eq!(resp.status(), StatusCode::CREATED);
+    let status = resp.status();
     let body = to_bytes(resp.into_body()).await.unwrap();
+    if status != StatusCode::CREATED {
+        panic!("Purchase invoice failed: {}", String::from_utf8_lossy(&body));
+    }
     let json: serde_json::Value = serde_json::from_slice(&body).unwrap();
     assert_eq!(json["sales_invoice"]["grand_total"], "1320.00");
 
@@ -253,7 +275,11 @@ async fn test_erpnext_v16_order_to_cash_and_settlement_flow() {
         .set_json(&pe_payload)
         .to_request();
     let resp = call_service(&app, req).await;
-    assert_eq!(resp.status(), StatusCode::CREATED);
+    let status = resp.status();
+    let body = to_bytes(resp.into_body()).await.unwrap();
+    if status != StatusCode::CREATED {
+        panic!("Delivery note failed: {}", String::from_utf8_lossy(&body));
+    }
 
     // 5. Query Financial Statements: Profit & Loss
     let req = TestRequest::get()
@@ -303,7 +329,11 @@ async fn test_erpnext_v16_manufacturing_and_period_close_flow() {
         .set_json(&wo_payload)
         .to_request();
     let resp = call_service(&app, req).await;
-    assert_eq!(resp.status(), StatusCode::CREATED);
+    let status = resp.status();
+    let body = to_bytes(resp.into_body()).await.unwrap();
+    if status != StatusCode::CREATED {
+        panic!("Delivery note failed: {}", String::from_utf8_lossy(&body));
+    }
 
     // 2. Complete Work Order
     let complete_payload = CompleteWorkOrderPayload {
@@ -335,7 +365,11 @@ async fn test_erpnext_v16_manufacturing_and_period_close_flow() {
         .set_json(&pcv_payload)
         .to_request();
     let resp = call_service(&app, req).await;
-    assert_eq!(resp.status(), StatusCode::CREATED);
+    let status = resp.status();
+    let body = to_bytes(resp.into_body()).await.unwrap();
+    if status != StatusCode::CREATED {
+        panic!("Delivery note failed: {}", String::from_utf8_lossy(&body));
+    }
 
     // 4. Test Universal Print Preview Engine
     let print_payload = PrintDocumentPayload {
@@ -408,8 +442,11 @@ async fn test_erpnext_v16_reporting_portals_setup_and_pwa_flow() {
         .set_json(&setup_payload)
         .to_request();
     let resp = call_service(&app, req).await;
-    assert_eq!(resp.status(), StatusCode::CREATED);
+    let status = resp.status();
     let body = to_bytes(resp.into_body()).await.unwrap();
+    if status != StatusCode::CREATED {
+        panic!("Purchase invoice failed: {}", String::from_utf8_lossy(&body));
+    }
     let json: serde_json::Value = serde_json::from_slice(&body).unwrap();
     assert_eq!(json["status"], "SUCCESS");
     assert_eq!(json["company"], "Apex Global Dynamics");
@@ -435,8 +472,11 @@ async fn test_erpnext_v16_reporting_portals_setup_and_pwa_flow() {
         .set_json(&variant_payload)
         .to_request();
     let resp = call_service(&app, req).await;
-    assert_eq!(resp.status(), StatusCode::CREATED);
+    let status = resp.status();
     let body = to_bytes(resp.into_body()).await.unwrap();
+    if status != StatusCode::CREATED {
+        panic!("Purchase invoice failed: {}", String::from_utf8_lossy(&body));
+    }
     let json: serde_json::Value = serde_json::from_slice(&body).unwrap();
     assert_eq!(json["variants_count"], 4);
 
