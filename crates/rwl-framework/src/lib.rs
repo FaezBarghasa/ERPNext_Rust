@@ -12,6 +12,7 @@ pub mod fulfillment;
 pub mod jalali;
 pub mod lifecycle;
 pub mod localization;
+pub mod minijinja_engine;
 pub mod naming;
 pub mod notification;
 pub mod permission;
@@ -58,6 +59,9 @@ pub use export_engine::{DocumentExporter, ExportColumn, ExportError, ExportForma
 pub use file_manager::{FileError, FileManager, FileRecord};
 pub use fulfillment::{
     DocumentAmendmentEngine, DocumentFulfillmentStatus, FulfillmentTracker, LineItemLinkage,
+};
+pub use minijinja_engine::{
+    escpos_consts, EscPosCompiler, EscPosItem, EscPosReceipt, MiniJinjaPrintEngine, PrintEngineError,
 };
 pub use naming::{NamingEngine, NamingSeriesStore};
 pub use notification::{
