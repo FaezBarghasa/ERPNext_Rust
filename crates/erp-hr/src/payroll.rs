@@ -115,6 +115,7 @@ pub struct PayrollGlAccounts {
     pub salary_expense_account: String,
     pub payroll_payable_account: String,
     pub taxes_withheld_account: String,
+    pub bank_account: String,
     pub company: String,
 }
 
@@ -221,6 +222,48 @@ impl EnterprisePayrollCoordinator {
             company: gl_config.company.clone(),
             lines,
             remarks: format!("Batch Payroll for {} employees", slips.len()),
+        }
+    }
+
+    /// Generates Bank Disbursement Entry settling payroll liabilities:
+    /// - Debit: Payroll Payable
+    /// - Credit: Operating Bank Account
+    #[must_use]
+    pub fn create_payroll_payment_entry(
+        slips: &[SalarySlip],
+        gl_config: &PayrollGlAccounts,
+        payment_date: NaiveDate,
+    ) -> JournalEntry {
+        let total_net: Decimal = slips.iter().map(|s| s.net_salary).sum();
+
+        let lines = vec![
+            JournalEntryLine {
+                account: gl_config.payroll_payable_account.clone(),
+                debit: total_net,
+                credit: Decimal::ZERO,
+                debit_in_account_currency: total_net,
+                credit_in_account_currency: Decimal::ZERO,
+                exchange_rate: Decimal::ONE,
+                party_type: None,
+                party: None,
+            },
+            JournalEntryLine {
+                account: gl_config.bank_account.clone(),
+                debit: Decimal::ZERO,
+                credit: total_net,
+                debit_in_account_currency: Decimal::ZERO,
+                credit_in_account_currency: total_net,
+                exchange_rate: Decimal::ONE,
+                party_type: None,
+                party: None,
+            },
+        ];
+
+        JournalEntry {
+            posting_date: payment_date,
+            company: gl_config.company.clone(),
+            lines,
+            remarks: format!("Disbursement of Payroll for {} employees via Bank", slips.len()),
         }
     }
 }

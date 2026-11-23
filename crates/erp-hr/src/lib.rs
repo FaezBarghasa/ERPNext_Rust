@@ -4,6 +4,7 @@ pub mod attendance;
 pub mod benefits;
 pub mod dynamic_compensation;
 pub mod employee;
+pub mod leave_management;
 pub mod overtime;
 pub mod payroll;
 
@@ -21,6 +22,7 @@ pub use dynamic_compensation::{
 pub use employee::{
     Department, Designation, Employee, EmployeeError, EmployeeStatus, EmploymentType,
 };
+pub use leave_management::{HolidayList as CalendarHolidayList, LeaveAllocation, LeaveType};
 pub use overtime::{OvertimeEngine, OvertimeMultiplier, OvertimeSlip};
 pub use payroll::{
     EnterprisePayrollCoordinator, LeaveApplication, LeaveEngine, PayrollGlAccounts,
@@ -85,7 +87,9 @@ mod tests {
         let structure = SalaryStructure {
             base_salary: dec!(4000.00),
             hra_percentage: dec!(20.0), // 20% of basic
+            travel_allowance: dec!(0.0),
             standard_deduction: dec!(100.00),
+            provident_fund_rate: dec!(0.0),
             tax_withholding_rate: dec!(10.0), // 10% of gross
         };
 
@@ -145,6 +149,7 @@ mod tests {
             salary_expense_account: "5110 - Salary Expense".into(),
             payroll_payable_account: "2110 - Payroll Payable".into(),
             taxes_withheld_account: "2230 - Taxes Withheld Payable".into(),
+            bank_account: "1110 - Bank Operating".into(),
             company: "Acme Corp".into(),
         };
 

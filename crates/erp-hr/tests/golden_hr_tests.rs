@@ -104,7 +104,9 @@ fn test_golden_hr_employee_attendance_payroll_and_gl_flow() {
     let structure = SalaryStructure {
         base_salary: dec!(8000.0),
         hra_percentage: dec!(20.0),
+        travel_allowance: Decimal::ZERO,
         standard_deduction: dec!(500.0),
+        provident_fund_rate: Decimal::ZERO,
         tax_withholding_rate: dec!(10.0),
     };
 
@@ -143,6 +145,7 @@ fn test_golden_hr_employee_attendance_payroll_and_gl_flow() {
         salary_expense_account: "5100 - Salary Expense".into(),
         payroll_payable_account: "2110 - Payroll Payable".into(),
         taxes_withheld_account: "2120 - Taxes Withheld Payable".into(),
+        bank_account: "1110 - Cash at Bank".into(),
         company: "Acme Engineering Corp".into(),
     };
 
