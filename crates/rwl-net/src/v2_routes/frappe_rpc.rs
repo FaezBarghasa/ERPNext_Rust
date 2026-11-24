@@ -314,7 +314,61 @@ pub async fn frappe_rpc_dispatcher(
             match client.query(&sql).bind(("name", name)).await {
                 Ok(mut res) => {
                     let records: Vec<Value> = res.take(0).unwrap_or_default();
-                    if let Some(doc) = records.into_iter().next() {
+                    if let Some(mut doc) = records.into_iter().next() {
+                        // Re-hydrate relational child tables if defined in DocType schema
+                        if let Some(schema) = lookup_schema(doctype) {
+                            for field in &schema.fields {
+                                if let rwl_meta::FieldType::Table { child_doctype: _ } = &field.fieldtype {
+                                    let child_table = format!("{table}_{}", field.fieldname);
+                                    if SAFE_FIELD_REGEX.is_match(&child_table) {
+                                        let child_sql = format!("SELECT * FROM {child_table} WHERE parent = $name ORDER BY idx ASC;");
+                                        if let Ok(mut child_res) = client.query(&child_sql).bind(("name", name)).await {
+                                            let child_rows: Vec<Value> = child_res.take(0).unwrap_or_default();
+                                            if !child_rows.is_empty()
+                                                && let Some(m) = doc.as_object_mut()
+                                            {
+                                                m.insert(field.fieldname.clone(), Value::Array(child_rows));
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+
+                        // Evaluate dynamic RBAC permissions for the requesting user
+                        let mut can_read = 0;
+                        let mut can_write = 0;
+                        let mut can_create = 0;
+                        let mut can_delete = 0;
+                        let mut can_submit = 0;
+                        let mut can_cancel = 0;
+                        let mut can_amend = 0;
+
+                        if let Some(ref u_ctx) = ctx {
+                            let roles = &u_ctx.claims.roles;
+                            if roles.iter().any(|r| r == "Administrator" || r == "System Manager") {
+                                can_read = 1;
+                                can_write = 1;
+                                can_create = 1;
+                                can_delete = 1;
+                                can_submit = 1;
+                                can_cancel = 1;
+                                can_amend = 1;
+                            } else if let Some(schema) = lookup_schema(doctype) {
+                                for p in &schema.permissions {
+                                    if roles.contains(&p.role) {
+                                        if p.read { can_read = 1; }
+                                        if p.write { can_write = 1; }
+                                        if p.create { can_create = 1; }
+                                        if p.delete { can_delete = 1; }
+                                        if p.submit { can_submit = 1; }
+                                        if p.cancel { can_cancel = 1; }
+                                        if p.amend { can_amend = 1; }
+                                    }
+                                }
+                            }
+                        }
+
                         HttpResponse::Ok().json(json!({
                             "docs": [doc],
                             "docinfo": {
@@ -324,13 +378,13 @@ pub async fn frappe_rpc_dispatcher(
                                 "attachments": [],
                                 "views": 1,
                                 "permissions": {
-                                    "read": 1,
-                                    "write": 1,
-                                    "create": 1,
-                                    "delete": 1,
-                                    "submit": 1,
-                                    "cancel": 1,
-                                    "amend": 1
+                                    "read": can_read,
+                                    "write": can_write,
+                                    "create": can_create,
+                                    "delete": can_delete,
+                                    "submit": can_submit,
+                                    "cancel": can_cancel,
+                                    "amend": can_amend
                                 }
                             }
                         }))
@@ -522,12 +576,18 @@ pub async fn frappe_rpc_dispatcher(
                 m.insert("docstatus".into(), json!(framework_doc.docstatus));
             }
 
+            // Build atomic SurrealDB transaction query batch
+            let mut tx_sql = String::from("BEGIN TRANSACTION;\n");
+
             // Extract child tables (items, taxes, etc.) into relational tables
             if let Some(m) = doc_val.as_object() {
                 for (field, val) in m {
                     if let Some(child_rows) = val.as_array() {
                         let child_table = format!("{table}_{field}");
                         if SAFE_FIELD_REGEX.is_match(&child_table) {
+                            // Ensure child table exists, then purge existing child rows for this parent
+                            tx_sql.push_str(&format!("DEFINE TABLE IF NOT EXISTS {child_table};\n"));
+                            tx_sql.push_str(&format!("DELETE FROM {child_table} WHERE parent = '{name}';\n"));
                             for (idx, row) in child_rows.iter().enumerate() {
                                 if let Some(mut row_map) = row.as_object().cloned() {
                                     row_map.insert("parent".into(), json!(name));
@@ -539,8 +599,9 @@ pub async fn frappe_rpc_dispatcher(
                                         .and_then(|v| v.as_str())
                                         .map(|s| s.replace([':', ' ', '-'], "_"))
                                         .unwrap_or_else(|| format!("{clean_id}_{idx}"));
-                                    let child_sql = format!("UPSERT {child_table}:{row_id} MERGE $child_payload;");
-                                    let _ = client.query(&child_sql).bind(("child_payload", Value::Object(row_map))).await;
+                                    if let Ok(child_json) = serde_json::to_string(&Value::Object(row_map)) {
+                                        tx_sql.push_str(&format!("UPSERT {child_table}:{row_id} CONTENT {child_json};\n"));
+                                    }
                                 }
                             }
                         }
@@ -548,10 +609,222 @@ pub async fn frappe_rpc_dispatcher(
                 }
             }
 
-            let sql = format!("UPSERT {table}:{clean_id} MERGE $payload;");
-            match client.query(&sql).bind(("payload", doc_val.clone())).await {
-                Ok(mut res) => {
-                    let _ = res.take::<Option<Value>>(0);
+            // Upsert parent record
+            if let Ok(parent_json) = serde_json::to_string(&doc_val) {
+                tx_sql.push_str(&format!("UPSERT {table}:{clean_id} CONTENT {parent_json};\n"));
+            }
+
+            // Automated Subledger Postings on Submit or Cancel
+            if action == "Submit" {
+                let posting_date = doc_val
+                    .get("posting_date")
+                    .or_else(|| doc_val.get("transaction_date"))
+                    .and_then(|v| v.as_str())
+                    .unwrap_or("2026-11-24");
+                let company = doc_val.get("company").and_then(|v| v.as_str()).unwrap_or("Default Company");
+
+                match doctype.as_str() {
+                    "Sales Invoice" => {
+                        let grand_total = doc_val
+                            .get("grand_total")
+                            .and_then(|v| v.as_str().or_else(|| v.as_f64().map(|_| "")))
+                            .and_then(|s| s.parse::<f64>().ok())
+                            .or_else(|| doc_val.get("grand_total").and_then(|v| v.as_f64()))
+                            .unwrap_or(0.0);
+                        let net_total = doc_val
+                            .get("net_total")
+                            .and_then(|v| v.as_str())
+                            .and_then(|s| s.parse::<f64>().ok())
+                            .or_else(|| doc_val.get("net_total").and_then(|v| v.as_f64()))
+                            .unwrap_or(grand_total);
+                        let tax_total = grand_total - net_total;
+                        let customer = doc_val.get("customer").and_then(|v| v.as_str()).unwrap_or("Unknown Customer");
+
+                        if grand_total > 0.0 {
+                            // 1. Debit Accounts Receivable
+                            let gle_dr = json!({
+                                "posting_date": posting_date,
+                                "account": "1310 - Accounts Receivable - Default",
+                                "party_type": "Customer",
+                                "party": customer,
+                                "debit": grand_total,
+                                "credit": 0.0,
+                                "voucher_type": "Sales Invoice",
+                                "voucher_no": name,
+                                "company": company,
+                                "remarks": format!("Accounting entry for Sales Invoice {name}"),
+                                "is_cancelled": 0
+                            });
+                            tx_sql.push_str(&format!("CREATE tab_gl_entry CONTENT {};\n", serde_json::to_string(&gle_dr).unwrap()));
+
+                            // 2. Credit Sales / Income
+                            let gle_cr_sales = json!({
+                                "posting_date": posting_date,
+                                "account": "4110 - Sales - Default",
+                                "party_type": null,
+                                "party": null,
+                                "debit": 0.0,
+                                "credit": net_total,
+                                "voucher_type": "Sales Invoice",
+                                "voucher_no": name,
+                                "company": company,
+                                "remarks": format!("Sales income for {name}"),
+                                "is_cancelled": 0
+                            });
+                            tx_sql.push_str(&format!("CREATE tab_gl_entry CONTENT {};\n", serde_json::to_string(&gle_cr_sales).unwrap()));
+
+                            // 3. Credit Tax Liability if applicable
+                            if tax_total > 0.0 {
+                                let gle_cr_tax = json!({
+                                    "posting_date": posting_date,
+                                    "account": "2210 - Output Tax - Default",
+                                    "party_type": null,
+                                    "party": null,
+                                    "debit": 0.0,
+                                    "credit": tax_total,
+                                    "voucher_type": "Sales Invoice",
+                                    "voucher_no": name,
+                                    "company": company,
+                                    "remarks": format!("Tax liability for {name}"),
+                                    "is_cancelled": 0
+                                });
+                                tx_sql.push_str(&format!("CREATE tab_gl_entry CONTENT {};\n", serde_json::to_string(&gle_cr_tax).unwrap()));
+                            }
+                        }
+                    }
+                    "Purchase Invoice" => {
+                        let grand_total = doc_val
+                            .get("grand_total")
+                            .and_then(|v| v.as_str())
+                            .and_then(|s| s.parse::<f64>().ok())
+                            .or_else(|| doc_val.get("grand_total").and_then(|v| v.as_f64()))
+                            .unwrap_or(0.0);
+                        let supplier = doc_val.get("supplier").and_then(|v| v.as_str()).unwrap_or("Unknown Supplier");
+
+                        if grand_total > 0.0 {
+                            // 1. Credit Accounts Payable
+                            let gle_cr = json!({
+                                "posting_date": posting_date,
+                                "account": "2110 - Accounts Payable - Default",
+                                "party_type": "Supplier",
+                                "party": supplier,
+                                "debit": 0.0,
+                                "credit": grand_total,
+                                "voucher_type": "Purchase Invoice",
+                                "voucher_no": name,
+                                "company": company,
+                                "remarks": format!("AP entry for Purchase Invoice {name}"),
+                                "is_cancelled": 0
+                            });
+                            tx_sql.push_str(&format!("CREATE tab_gl_entry CONTENT {};\n", serde_json::to_string(&gle_cr).unwrap()));
+
+                            // 2. Debit Expenses / Cost of Goods Sold
+                            let gle_dr = json!({
+                                "posting_date": posting_date,
+                                "account": "5110 - Cost of Goods Sold - Default",
+                                "party_type": null,
+                                "party": null,
+                                "debit": grand_total,
+                                "credit": 0.0,
+                                "voucher_type": "Purchase Invoice",
+                                "voucher_no": name,
+                                "company": company,
+                                "remarks": format!("Expense entry for {name}"),
+                                "is_cancelled": 0
+                            });
+                            tx_sql.push_str(&format!("CREATE tab_gl_entry CONTENT {};\n", serde_json::to_string(&gle_dr).unwrap()));
+                        }
+                    }
+                    "Payment Entry" => {
+                        let paid_amount = doc_val
+                            .get("paid_amount")
+                            .and_then(|v| v.as_f64())
+                            .unwrap_or(0.0);
+                        let payment_type = doc_val.get("payment_type").and_then(|v| v.as_str()).unwrap_or("Receive");
+                        let party = doc_val.get("party").and_then(|v| v.as_str()).unwrap_or("Unknown Party");
+
+                        if paid_amount > 0.0 {
+                            if payment_type == "Receive" {
+                                // Debit Bank/Cash, Credit AR
+                                let gle_bank = json!({
+                                    "posting_date": posting_date,
+                                    "account": "1110 - Bank Account - Default",
+                                    "party_type": null,
+                                    "party": null,
+                                    "debit": paid_amount,
+                                    "credit": 0.0,
+                                    "voucher_type": "Payment Entry",
+                                    "voucher_no": name,
+                                    "company": company,
+                                    "remarks": format!("Receipt payment entry {name}"),
+                                    "is_cancelled": 0
+                                });
+                                let gle_ar = json!({
+                                    "posting_date": posting_date,
+                                    "account": "1310 - Accounts Receivable - Default",
+                                    "party_type": "Customer",
+                                    "party": party,
+                                    "debit": 0.0,
+                                    "credit": paid_amount,
+                                    "voucher_type": "Payment Entry",
+                                    "voucher_no": name,
+                                    "company": company,
+                                    "remarks": format!("Receipt from {party} for {name}"),
+                                    "is_cancelled": 0
+                                });
+                                tx_sql.push_str(&format!("CREATE tab_gl_entry CONTENT {};\n", serde_json::to_string(&gle_bank).unwrap()));
+                                tx_sql.push_str(&format!("CREATE tab_gl_entry CONTENT {};\n", serde_json::to_string(&gle_ar).unwrap()));
+                            } else {
+                                // Pay: Debit AP, Credit Bank
+                                let gle_ap = json!({
+                                    "posting_date": posting_date,
+                                    "account": "2110 - Accounts Payable - Default",
+                                    "party_type": "Supplier",
+                                    "party": party,
+                                    "debit": paid_amount,
+                                    "credit": 0.0,
+                                    "voucher_type": "Payment Entry",
+                                    "voucher_no": name,
+                                    "company": company,
+                                    "remarks": format!("Payment to {party} for {name}"),
+                                    "is_cancelled": 0
+                                });
+                                let gle_bank = json!({
+                                    "posting_date": posting_date,
+                                    "account": "1110 - Bank Account - Default",
+                                    "party_type": null,
+                                    "party": null,
+                                    "debit": 0.0,
+                                    "credit": paid_amount,
+                                    "voucher_type": "Payment Entry",
+                                    "voucher_no": name,
+                                    "company": company,
+                                    "remarks": format!("Payment disbursement {name}"),
+                                    "is_cancelled": 0
+                                });
+                                tx_sql.push_str(&format!("CREATE tab_gl_entry CONTENT {};\n", serde_json::to_string(&gle_ap).unwrap()));
+                                tx_sql.push_str(&format!("CREATE tab_gl_entry CONTENT {};\n", serde_json::to_string(&gle_bank).unwrap()));
+                            }
+                        }
+                    }
+                    _ => {}
+                }
+            } else if action == "Cancel" {
+                // Invert GL entries or mark as cancelled
+                tx_sql.push_str(&format!("UPDATE tab_gl_entry SET is_cancelled = 1 WHERE voucher_no = '{name}';\n"));
+            }
+
+            tx_sql.push_str("COMMIT TRANSACTION;");
+
+            match client.query(&tx_sql).await {
+                Ok(res) => {
+                    if let Err(e) = res.check() {
+                        return HttpResponse::InternalServerError().json(json!({
+                            "exc_type": "DatabaseSaveError",
+                            "exception": e.to_string(),
+                            "_server_messages": json!([format!("Transaction check error: {e}")]).to_string()
+                        }));
+                    }
                     HttpResponse::Ok().json(json!({
                         "docs": [doc_val]
                     }))

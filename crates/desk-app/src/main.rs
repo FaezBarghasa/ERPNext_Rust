@@ -289,13 +289,15 @@ async fn main() {
     println!("Dioxus Reactive Desk & Mobile Substrate fully initialized and verified.");
 
     let args: Vec<String> = std::env::args().collect();
-    if args.iter().any(|a| a == "serve") {
+    // Default to starting standalone server if "serve" or "start" is passed, or if run without args with --gui/--serve flags
+    if args.iter().any(|a| a == "serve" || a == "start" || a == "--serve") || args.len() == 1 {
         let port = args
             .iter()
-            .position(|a| a == "serve")
+            .position(|a| a == "serve" || a == "start" || a == "--serve")
             .and_then(|idx| args.get(idx + 1))
             .and_then(|p| p.parse::<u16>().ok())
             .unwrap_or(8081);
+        println!("Starting interactive enterprise desk web/desktop host on http://127.0.0.1:{port}...");
         run_standalone_desk_server(port).await;
     }
 }

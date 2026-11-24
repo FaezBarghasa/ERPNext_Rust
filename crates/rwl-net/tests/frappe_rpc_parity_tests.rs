@@ -34,7 +34,12 @@ async fn test_frappe_wire_compatibility_suite() {
         .insert_header(("Cookie", "sid=test-session-admin"))
         .to_request();
     let resp = test::call_service(&app, req).await;
-    assert!(resp.status().is_success());
+    if !resp.status().is_success() {
+        let status = resp.status();
+        let body_bytes = test::read_body(resp).await;
+        let err_str = String::from_utf8_lossy(&body_bytes);
+        panic!("get_payment_entry failed with status {status}: {err_str}");
+    }
     let body: Value = test::read_body_json(resp).await;
     assert_eq!(body["message"], "Administrator");
 
@@ -45,7 +50,12 @@ async fn test_frappe_wire_compatibility_suite() {
         .insert_header(("Authorization", "token testkey123:testsecret456"))
         .to_request();
     let resp = test::call_service(&app, req).await;
-    assert!(resp.status().is_success());
+    if !resp.status().is_success() {
+        let status = resp.status();
+        let body_bytes = test::read_body(resp).await;
+        let err_str = String::from_utf8_lossy(&body_bytes);
+        panic!("get_payment_entry failed with status {status}: {err_str}");
+    }
     let body: Value = test::read_body_json(resp).await;
     assert_eq!(body["message"], "testkey123");
 
@@ -69,7 +79,12 @@ async fn test_frappe_wire_compatibility_suite() {
         .set_json(&so_payload)
         .to_request();
     let resp = test::call_service(&app, req).await;
-    assert!(resp.status().is_success());
+    if !resp.status().is_success() {
+        let status = resp.status();
+        let body_bytes = test::read_body(resp).await;
+        let err_str = String::from_utf8_lossy(&body_bytes);
+        panic!("get_payment_entry failed with status {status}: {err_str}");
+    }
     let body: Value = test::read_body_json(resp).await;
     let so_name = body["data"]["name"].as_str().expect("name must be string");
     assert!(so_name.starts_with("SO-"));
@@ -82,7 +97,12 @@ async fn test_frappe_wire_compatibility_suite() {
         .insert_header(("Cookie", "sid=test-session-admin"))
         .to_request();
     let resp = test::call_service(&app, req).await;
-    assert!(resp.status().is_success());
+    if !resp.status().is_success() {
+        let status = resp.status();
+        let body_bytes = test::read_body(resp).await;
+        let err_str = String::from_utf8_lossy(&body_bytes);
+        panic!("get_payment_entry failed with status {status}: {err_str}");
+    }
     let body: Value = test::read_body_json(resp).await;
     assert_eq!(body["data"]["name"], so_name);
     assert_eq!(body["data"]["customer"], "Acme Industrial Corp");
@@ -98,7 +118,12 @@ async fn test_frappe_wire_compatibility_suite() {
         }))
         .to_request();
     let resp = test::call_service(&app, req).await;
-    assert!(resp.status().is_success());
+    if !resp.status().is_success() {
+        let status = resp.status();
+        let body_bytes = test::read_body(resp).await;
+        let err_str = String::from_utf8_lossy(&body_bytes);
+        panic!("get_payment_entry failed with status {status}: {err_str}");
+    }
     let body: Value = test::read_body_json(resp).await;
     assert!(body["docs"].is_array());
     assert_eq!(body["docs"][0]["name"], so_name);
@@ -128,7 +153,12 @@ async fn test_frappe_wire_compatibility_suite() {
         .set_json(&submit_payload)
         .to_request();
     let resp = test::call_service(&app, req).await;
-    assert!(resp.status().is_success());
+    if !resp.status().is_success() {
+        let status = resp.status();
+        let body_bytes = test::read_body(resp).await;
+        let err_str = String::from_utf8_lossy(&body_bytes);
+        panic!("get_payment_entry failed with status {status}: {err_str}");
+    }
     let body: Value = test::read_body_json(resp).await;
     assert_eq!(body["docs"][0]["docstatus"], 1);
 
@@ -144,7 +174,12 @@ async fn test_frappe_wire_compatibility_suite() {
         }))
         .to_request();
     let resp = test::call_service(&app, req).await;
-    assert!(resp.status().is_success());
+    if !resp.status().is_success() {
+        let status = resp.status();
+        let body_bytes = test::read_body(resp).await;
+        let err_str = String::from_utf8_lossy(&body_bytes);
+        panic!("get_payment_entry failed with status {status}: {err_str}");
+    }
     let body: Value = test::read_body_json(resp).await;
     assert_eq!(body["message"]["customer"], "Acme Industrial Corp");
 
@@ -161,7 +196,12 @@ async fn test_frappe_wire_compatibility_suite() {
         }))
         .to_request();
     let resp = test::call_service(&app, req).await;
-    assert!(resp.status().is_success());
+    if !resp.status().is_success() {
+        let status = resp.status();
+        let body_bytes = test::read_body(resp).await;
+        let err_str = String::from_utf8_lossy(&body_bytes);
+        panic!("get_payment_entry failed with status {status}: {err_str}");
+    }
     let body: Value = test::read_body_json(resp).await;
     assert_eq!(body["message"]["title"], "Priority Order - Industrial Gear");
 
@@ -176,7 +216,12 @@ async fn test_frappe_wire_compatibility_suite() {
         }))
         .to_request();
     let resp = test::call_service(&app, req).await;
-    assert!(resp.status().is_success());
+    if !resp.status().is_success() {
+        let status = resp.status();
+        let body_bytes = test::read_body(resp).await;
+        let err_str = String::from_utf8_lossy(&body_bytes);
+        panic!("get_payment_entry failed with status {status}: {err_str}");
+    }
     let body: Value = test::read_body_json(resp).await;
     let results = body["results"].as_array().expect("results must be array");
     assert!(!results.is_empty());
@@ -192,7 +237,12 @@ async fn test_frappe_wire_compatibility_suite() {
         }))
         .to_request();
     let resp = test::call_service(&app, req).await;
-    assert!(resp.status().is_success());
+    if !resp.status().is_success() {
+        let status = resp.status();
+        let body_bytes = test::read_body(resp).await;
+        let err_str = String::from_utf8_lossy(&body_bytes);
+        panic!("get_payment_entry failed with status {status}: {err_str}");
+    }
     let body: Value = test::read_body_json(resp).await;
     let dn_doc = &body["message"];
     assert_eq!(dn_doc["doctype"], "Delivery Note");
@@ -210,7 +260,12 @@ async fn test_frappe_wire_compatibility_suite() {
         }))
         .to_request();
     let resp = test::call_service(&app, req).await;
-    assert!(resp.status().is_success());
+    if !resp.status().is_success() {
+        let status = resp.status();
+        let body_bytes = test::read_body(resp).await;
+        let err_str = String::from_utf8_lossy(&body_bytes);
+        panic!("get_payment_entry failed with status {status}: {err_str}");
+    }
     let body: Value = test::read_body_json(resp).await;
     let si_doc = body["message"].clone();
     assert_eq!(si_doc["doctype"], "Sales Invoice");
@@ -230,7 +285,14 @@ async fn test_frappe_wire_compatibility_suite() {
         }))
         .to_request();
     let resp = test::call_service(&app, req).await;
-    assert!(resp.status().is_success());
+    if !resp.status().is_success() {
+        let status = resp.status();
+        let body_bytes = test::read_body(resp).await;
+        let err_str = String::from_utf8_lossy(&body_bytes);
+        panic!("savedocs Submit of Sales Invoice failed with status {status}: {err_str}");
+    }
+    let si_submit_resp: Value = test::read_body_json(resp).await;
+    let si_submitted_name = si_submit_resp["docs"][0]["name"].as_str().unwrap().to_string();
 
     // 12. Test Make-Mappers: make_payment_entry from Sales Invoice
     let req = test::TestRequest::post()
@@ -239,11 +301,16 @@ async fn test_frappe_wire_compatibility_suite() {
         .insert_header(("Cookie", "sid=test-session-admin"))
         .set_json(&json!({
             "dt": "Sales Invoice",
-            "dn": si_name
+            "dn": si_submitted_name
         }))
         .to_request();
     let resp = test::call_service(&app, req).await;
-    assert!(resp.status().is_success());
+    if !resp.status().is_success() {
+        let status = resp.status();
+        let body_bytes = test::read_body(resp).await;
+        let err_str = String::from_utf8_lossy(&body_bytes);
+        panic!("get_payment_entry failed with status {status}: {err_str}");
+    }
     let body: Value = test::read_body_json(resp).await;
     let pe_doc = &body["message"];
     assert_eq!(pe_doc["doctype"], "Payment Entry");
@@ -259,7 +326,12 @@ async fn test_frappe_wire_compatibility_suite() {
         .insert_header(("Cookie", "sid=test-session-admin"))
         .to_request();
     let resp = test::call_service(&app, req).await;
-    assert!(resp.status().is_success());
+    if !resp.status().is_success() {
+        let status = resp.status();
+        let body_bytes = test::read_body(resp).await;
+        let err_str = String::from_utf8_lossy(&body_bytes);
+        panic!("get_payment_entry failed with status {status}: {err_str}");
+    }
     let body: Value = test::read_body_json(resp).await;
     assert_eq!(body["message"], "ok");
 
@@ -269,7 +341,12 @@ async fn test_frappe_wire_compatibility_suite() {
         .insert_header(("Host", "default.localhost"))
         .to_request();
     let resp = test::call_service(&app, req).await;
-    assert!(resp.status().is_success());
+    if !resp.status().is_success() {
+        let status = resp.status();
+        let body_bytes = test::read_body(resp).await;
+        let err_str = String::from_utf8_lossy(&body_bytes);
+        panic!("get_payment_entry failed with status {status}: {err_str}");
+    }
     let body: Value = test::read_body_json(resp).await;
     assert_eq!(body["message"], "Guest");
 
